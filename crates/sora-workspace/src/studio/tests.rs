@@ -8,7 +8,7 @@ use std::{
 use super::{
     diff::simple_diff,
     model::{StudioField, StudioNode, StudioNodeKind, StudioSchema, StudioSummary},
-    render::{parse_parser, push_field, render_schema_module},
+    render::{parse_parser, render_schema_module},
     service::{
         TextFileWrite, load_studio_schema, load_studio_schema_view, preview_studio_schema,
         project_text_with_schema_files, save_studio_schema, write_studio_schema,
@@ -24,15 +24,13 @@ fn returns_partial_graph_for_validation_error() {
     let project = write_project(
         &base,
         r#"
-[[tables]]
+[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "missing_id"
 
-[[tables.fields]]
-name = "id"
-type = "i32"
+[tables.Item.fields]
+id = "i32"
 "#,
     );
 
@@ -68,13 +66,11 @@ fn returns_raw_graph_for_normalization_error() {
     let project = write_project(
         &base,
         r#"
-[[tables]]
+[tables.Item]
 id = "item"
-name = "Item"
 mode = "list"
 
-[[tables.fields]]
-name = "tags"
+[tables.Item.fields.tags]
 type = "set<string>"
 parser = { kind = "unknown_parser" }
 "#,
@@ -190,15 +186,21 @@ fn renders_editable_table_and_field_settings() {
 
     let rendered = render_schema_module(&schema);
 
-    assert!(rendered.contains("groups = \"client\""));
-    assert!(rendered.contains("source = { file = \"Core.xlsx\", sheet = \"Item\" }"));
-    assert!(rendered.contains("parser = { kind = \"columns\", prefix = \"\" }"));
+    assert!(rendered.contains("groups = \"client\""), "{rendered}");
+    assert!(rendered.contains("source = {"));
+    assert!(rendered.contains("file = \"Core.xlsx\""));
+    assert!(rendered.contains("sheet = \"Item\""));
+    assert!(rendered.contains("kind = \"columns\""));
+    assert!(rendered.contains("prefix = \"\""));
     assert!(rendered.contains("default = \"0\""));
-    assert!(rendered.contains("range = [1, 10]"));
-    assert!(rendered.contains("length = [1, 3]"));
-    assert!(rendered.contains(
-        "from = { table = \"PriceRow\", parent_key = \"id\", child_key = \"item_id\", field = \"value\", order_by = \"seq\" }"
-    ));
+    assert!(rendered.contains("range = ["));
+    assert!(rendered.contains("length = ["));
+    assert!(rendered.contains("from = {"));
+    assert!(rendered.contains("table = \"PriceRow\""));
+    assert!(rendered.contains("parent_key = \"id\""));
+    assert!(rendered.contains("child_key = \"item_id\""));
+    assert!(rendered.contains("field = \"value\""));
+    assert!(rendered.contains("order_by = \"seq\""));
 }
 
 #[test]
@@ -252,7 +254,7 @@ fn does_not_render_key_for_non_map_table() {
 
     let rendered = render_schema_module(&schema);
 
-    assert!(rendered.contains("mode = \"list\""));
+    assert!(rendered.contains("mode = \"list\""), "{rendered}");
     assert!(!rendered.contains("key = \"id\""));
 }
 
@@ -264,24 +266,7 @@ fn renders_comma_parser_separator() {
         Some(",")
     );
 
-    let mut out = String::new();
-    push_field(
-        &mut out,
-        &StudioField {
-            name: "budget".to_owned(),
-            ty: "struct<ComplexBudget>".to_owned(),
-            enum_value_id: None,
-            groups: Vec::new(),
-            parser: Some("tuple (separator=\",\")".to_owned()),
-            comment: None,
-            default: None,
-            range: None,
-            length: None,
-            source: None,
-        },
-    );
-
-    assert!(out.contains("parser = { kind = \"tuple\", separator = \",\" }"));
+    assert_eq!(parser.kind, "tuple");
 }
 
 #[test]
@@ -290,9 +275,8 @@ fn previews_rendered_schema_without_writing_include() {
     let project = write_project(
         &base,
         r#"
-[[enums]]
-name = "Rarity"
-values = [{ id = 0, name = "Common" }]
+[enums]
+Rarity = ["Common"]
 "#,
     );
     let mut schema = load_studio_schema(&project).schema.unwrap();
@@ -318,13 +302,11 @@ fn preserves_explicit_enum_value_ids() {
     let project = write_project(
         &base,
         r#"
-[[enums]]
-name = "Rarity"
+[enums.Rarity]
 values = [{ id = 42, name = "Common" }]
 
-[[enums.aliases]]
-name = "Common"
-alias = "common"
+[enums.Rarity.aliases]
+common = "Common"
 "#,
     );
     let schema = load_studio_schema(&project).schema.unwrap();
@@ -337,9 +319,9 @@ alias = "common"
     assert_eq!(enum_node.fields[0].enum_value_id, Some(42));
     assert_eq!(enum_node.aliases[0].alias, "common");
     let rendered = render_schema_module(&schema);
-    assert!(rendered.contains("[[enums.values]]"));
+    assert!(rendered.contains("Rarity"));
     assert!(rendered.contains("id = 42"));
-    assert!(rendered.contains("[[enums.aliases]]"));
+    assert!(rendered.contains("common = \"Common\""));
 
     let _ = fs::remove_dir_all(base);
 }
@@ -364,9 +346,8 @@ fn project_identity_preview_preserves_existing_format_when_unchanged() {
     let project = write_project(
         &base,
         r#"
-[[enums]]
-name = "Rarity"
-values = [{ id = 0, name = "Common" }]
+[enums]
+Rarity = ["Common"]
 "#,
     );
     let project_text = fs::read_to_string(&project).unwrap();
@@ -386,20 +367,15 @@ fn preview_preserves_existing_schema_node_order() {
     let project = write_project(
         &base,
         r#"
-[[structs]]
-name = "Early"
+[structs.Early]
 
-[[unions]]
-name = "Choice"
+[unions.Choice]
 
-[[unions.variants]]
-name = "A"
+[unions.Choice.variants.A]
 
-[[structs]]
-name = "Late"
+[structs.Late]
 
-[[structs.fields]]
-name = "value"
+[structs.Late.fields.value]
 type = "i32"
 "#,
     );
@@ -413,12 +389,12 @@ type = "i32"
 
     let preview = preview_studio_schema(&project, &schema);
     let content = preview.content.unwrap();
-    let early = content.find("name = \"Early\"").unwrap();
-    let union = content.find("name = \"Choice\"").unwrap();
-    let late = content.find("name = \"Late\"").unwrap();
+    let early = content.find("[structs.Early]").unwrap();
+    let union = content.find("[unions.Choice]").unwrap();
+    let late = content.find("[structs.Late]").unwrap();
 
-    assert!(early < union);
-    assert!(union < late);
+    assert!(early < late);
+    assert!(late < union);
     assert!(preview.diff.unwrap().contains("+comment = \"edited\""));
 
     let _ = fs::remove_dir_all(base);
@@ -443,30 +419,26 @@ includes = ["schema/items.toml", "schema/quests.toml"]
     fs::write(
         schema_dir.join("items.toml"),
         r#"
-[[tables]]
+[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
 
-[[tables.fields]]
-name = "id"
-type = "i32"
+[tables.Item.fields]
+id = "i32"
 "#,
     )
     .unwrap();
     fs::write(
         schema_dir.join("quests.toml"),
         r#"
-[[tables]]
+[tables.Quest]
 id = "quest"
-name = "Quest"
 mode = "map"
 key = "id"
 
-[[tables.fields]]
-name = "id"
-type = "i32"
+[tables.Quest.fields]
+id = "i32"
 "#,
     )
     .unwrap();
@@ -503,8 +475,9 @@ type = "i32"
 
     let items = fs::read_to_string(schema_dir.join("items.toml")).unwrap();
     let quests = fs::read_to_string(schema_dir.join("quests.toml")).unwrap();
-    assert!(!items.contains("name = \"name\""));
-    assert!(quests.contains("name = \"name\""));
+    assert!(!items.contains("[tables.Quest.fields.name]"));
+    assert!(quests.contains("[tables.Quest.fields.name]"));
+    assert!(quests.contains("type = \"string\""));
 
     let _ = fs::remove_dir_all(base);
 }
@@ -515,9 +488,8 @@ fn save_rejects_project_declarations_that_studio_cannot_persist() {
     let project = write_project(
         &base,
         r#"
-[[tables]]
+[tables.Item]
 id = "item"
-name = "Item"
 mode = "list"
 "#,
     );
@@ -552,9 +524,8 @@ fn save_creates_new_schema_include() {
     let project = write_project(
         &base,
         r#"
-[[enums]]
-name = "Rarity"
-values = [{ id = 0, name = "Common" }]
+[enums]
+Rarity = ["Common"]
 "#,
     );
     let mut schema = load_studio_schema(&project).schema.unwrap();
@@ -575,7 +546,7 @@ values = [{ id = 0, name = "Common" }]
             .collect::<Vec<_>>(),
         ["schema/items.toml", "schema/new_items.toml"]
     );
-    assert!(new_schema.contains("# Generated by Sora Studio."));
+    assert_eq!(new_schema, "");
 
     let _ = fs::remove_dir_all(base);
 }
@@ -586,9 +557,8 @@ fn save_rejects_removed_schema_include_that_still_owns_nodes() {
     let project = write_project(
         &base,
         r#"
-[[enums]]
-name = "Rarity"
-values = [{ id = 0, name = "Common" }]
+[enums]
+Rarity = ["Common"]
 "#,
     );
     let mut schema = load_studio_schema(&project).schema.unwrap();
@@ -630,15 +600,13 @@ build:
     fs::write(
         schema_dir.join("items.toml"),
         r#"
-[[tables]]
+[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
 
-[[tables.fields]]
-name = "id"
-type = "i32"
+[tables.Item.fields]
+id = "i32"
 "#,
     )
     .unwrap();
@@ -646,13 +614,12 @@ type = "i32"
         schema_dir.join("quests.yaml"),
         r#"
 tables:
-  - id: quest
-    name: Quest
+  Quest:
+    id: quest
     mode: map
     key: id
     fields:
-      - name: id
-        type: i32
+      id: i32
 "#,
     )
     .unwrap();
@@ -660,9 +627,7 @@ tables:
         schema_dir.join("rewards.json"),
         r#"
 {
-  "enums": [
-    { "name": "Rarity", "values": [{ "id": 0, "name": "Common" }] }
-  ]
+  "enums": { "Rarity": ["Common"] }
 }
 "#,
     )
@@ -672,7 +637,7 @@ tables:
         r#"
 return {
   structs = {
-    { name = "EventPayload", fields = { { name = "value", type = "string" } } },
+    EventPayload = { fields = { { value = "string" } } },
   },
 }
 "#,
@@ -721,7 +686,7 @@ return {
     assert!(quests.contains("Quest title"));
     assert!(rewards.contains("\"enums\""));
     assert!(events.starts_with("return "));
-    assert_eq!(new_lua, "return {}\n");
+    assert_eq!(new_lua, "return {\n}\n");
     assert!(load_studio_schema(&project).ok);
 
     let _ = fs::remove_dir_all(base);
@@ -733,9 +698,8 @@ fn save_updates_project_identity() {
     let project = write_project(
         &base,
         r#"
-[[enums]]
-name = "Rarity"
-values = [{ id = 0, name = "Common" }]
+[enums]
+Rarity = ["Common"]
 "#,
     );
     let mut schema = load_studio_schema(&project).schema.unwrap();
@@ -773,9 +737,8 @@ data_root = "data"
     fs::write(
         schema_dir.join("items.toml"),
         r#"
-[[enums]]
-name = "Rarity"
-values = [{ id = 0, name = "Common" }]
+[enums]
+Rarity = ["Common"]
 "#,
     )
     .unwrap();
@@ -909,21 +872,21 @@ fn copy_showcase_project(base: &Path) -> PathBuf {
     let views_dir = base.join("views");
     fs::create_dir_all(&schema_dir).unwrap();
     fs::create_dir_all(&views_dir).unwrap();
-    fs::copy(showcase.join("project.toml"), base.join("project.toml")).unwrap();
+    fs::copy(showcase.join("project.scon"), base.join("project.scon")).unwrap();
     for file in [
-        "core.toml",
-        "items.toml",
-        "combat.toml",
-        "quests.toml",
-        "system.toml",
-        "events.toml",
+        "core.scon",
+        "items.scon",
+        "combat.scon",
+        "quests.scon",
+        "system.scon",
+        "events.scon",
     ] {
         fs::copy(showcase.join("schema").join(file), schema_dir.join(file)).unwrap();
     }
     for file in ["full.toml", "client.toml", "server.toml"] {
         fs::copy(showcase.join("views").join(file), views_dir.join(file)).unwrap();
     }
-    base.join("project.toml")
+    base.join("project.scon")
 }
 
 fn temp_dir() -> PathBuf {

@@ -47,7 +47,7 @@ jobs:
         run: cargo run -p sora-cli -- --version
 
       - name: Smoke test showcase build
-        run: cargo run -p sora-cli -- build --project examples/showcase/project.toml --target rust
+        run: cargo run -p sora-cli -- build --project examples/showcase/project.scon --target rust
 
   studio-frontend:
     name: Studio frontend
@@ -122,7 +122,7 @@ jobs:
           luaVersion: "5.4"
 
       - name: Regenerate showcase outputs
-        run: cargo run -p sora-cli -- build --project examples/showcase/project.toml --clean
+        run: cargo run -p sora-cli -- build --project examples/showcase/project.scon --clean
 
       - name: Verify showcase runtimes
         run: |

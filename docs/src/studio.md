@@ -5,22 +5,22 @@ Sora Studio is the browser-based schema editor embedded in the `sora` CLI. It is
 Start it with a project file:
 
 ```bash
-sora studio --project project.toml
+sora studio --project project.scon
 ```
 
 By default Studio binds to `127.0.0.1:5174` and prints the local URL. Use `--host` or `--port` when that address is not suitable:
 
 ```bash
-sora studio --project project.toml --port 5180
+sora studio --project project.scon --port 5180
 ```
 
 ## What It Edits
 
-Studio loads the project file and every schema module listed in `includes`. Project files and schema modules can be TOML, YAML, JSON, or Lua, and a project can mix those formats.
+Studio loads the project file and every schema module listed in `includes`. Project files and modules can be SCON, TOML, YAML, JSON, or Lua, and a project can mix those formats. New modules default to the recommended `.scon` extension.
 
 The editor can update:
 
-- project package name and schema include list;
+- project ID and schema include list;
 - schema module files, including creating and removing included files;
 - tables, structs, enums, and unions;
 - table fields, struct fields, enum values, and union variants;

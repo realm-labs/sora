@@ -145,7 +145,7 @@ mod tests {
     use super::*;
     use crate::options::{EnumRepr, JavaScriptCodegenOptions, RuntimeFormat};
     use sora_ir::{model::ConfigIr, normalize::normalize_schema};
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
     use std::{
         path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
@@ -269,7 +269,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

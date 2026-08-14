@@ -1,0 +1,171 @@
+tables = {
+  Item = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Core.xlsx"
+      sheet = "Item"
+    }
+    fields = {
+      id = {
+        type = "i32"
+        comment = "Item id"
+      }
+      name = {
+        type = "string"
+        comment = "Display name"
+        length = [
+          2,
+          32,
+        ]
+      }
+      item_type = {
+        type = "enum<ItemType>"
+        comment = "Item category"
+      }
+      max_stack = {
+        type = "i32"
+        comment = "Stack limit; blank cells use the default"
+        default = "1"
+        range = [
+          1,
+          9999,
+        ]
+      }
+      price = {
+        type = "struct<ResourceCost>"
+        comment = "Struct columns: price_kind, price_id, price_count"
+        parser = {
+          kind = "columns"
+          prefix = "price_"
+        }
+      }
+      tags = {
+        type = "set<string>"
+        comment = "JSON string set"
+        default = "[\"misc\"]"
+        length = [
+          1,
+          5,
+        ]
+        parser = "json"
+      }
+      attributes = {
+        type = "map<string,i32>"
+        comment = "Map pairs: key,value|key,value"
+        parser = "map"
+      }
+    }
+    indexes = {
+      by_name = {
+        fields = [
+          "name",
+        ]
+        unique = true
+      }
+      by_item_type = [
+        "item_type",
+      ]
+    }
+  }
+  Shop = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Economy.xlsx"
+      sheet = "Shop"
+    }
+    fields = {
+      id = "i32"
+      name = "string"
+      currency = "enum<ResourceKind>"
+    }
+  }
+  ShopItem = {
+    mode = "list"
+    source = {
+      file = "Economy.xlsx"
+      sheet = "ShopItem"
+    }
+    fields = {
+      shop_id = "ref<Shop.id>"
+      seq = "i32"
+      item_id = "ref<Item.id>"
+      price = {
+        type = "struct<ResourceCost>"
+        parser = "tuple"
+      }
+      daily_limit = "optional<i32>"
+    }
+  }
+  Recipe = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Economy.xlsx"
+      sheet = "Recipe"
+    }
+    fields = {
+      id = "i32"
+      result_item = "ref<Item.id>"
+      materials = {
+        type = "list<ResourceCost>"
+        length = [
+          1,
+          4,
+        ]
+        parser = "tuple_list"
+      }
+    }
+  }
+  GachaPool = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Economy.xlsx"
+      sheet = "GachaPool"
+    }
+    fields = {
+      id = "i32"
+      name = "string"
+      cost = {
+        type = "struct<ResourceCost>"
+        parser = "tuple"
+      }
+    }
+  }
+  GachaItem = {
+    mode = "list"
+    source = {
+      file = "Economy.xlsx"
+      sheet = "GachaItem"
+    }
+    fields = {
+      pool_id = "ref<GachaPool.id>"
+      item_id = "ref<Item.id>"
+      rarity = "enum<Rarity>"
+      weight = "f32"
+    }
+  }
+  EquipmentSet = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Economy.xlsx"
+      sheet = "EquipmentSet"
+    }
+    fields = {
+      id = "i32"
+      name = "string"
+      item_ids = {
+        type = "list<ref<Item.id>>"
+        length = [
+          2,
+          4,
+        ]
+        parser = "json"
+      }
+      bonus_effect = "struct<SkillEffect>"
+    }
+  }
+}

@@ -1,0 +1,234 @@
+build = {
+  codegen = [
+    {
+      format = "auto"
+      out = "rust/src/generated"
+      target = "rust"
+    },
+    {
+      out = "kotlin/src/generated/kotlin"
+      target = "kotlin"
+    },
+    {
+      out = "csharp/src/generated/csharp"
+      target = "csharp"
+    },
+    {
+      out = "java/src/generated/java"
+      target = "java"
+    },
+    {
+      out = "scala/src/generated/scala"
+      target = "scala"
+    },
+    {
+      format = "auto"
+      out = "go/internal/showcase"
+      target = "go"
+    },
+    {
+      out = "dart/lib/src/generated"
+      view = "client"
+      target = "dart"
+    },
+    {
+      out = "godot/addons/sora_config/generated"
+      view = "client"
+      target = "godot"
+    },
+    {
+      format = "auto"
+      out = "c/generated"
+      target = "c"
+    },
+    {
+      format = "auto"
+      out = "cpp/generated"
+      target = "cpp"
+    },
+    {
+      out = "typescript/generated"
+      target = "typescript"
+    },
+    {
+      out = "javascript/generated"
+      target = "javascript"
+    },
+    {
+      format = "auto"
+      out = "erlang/generated"
+      target = "erlang"
+    },
+    {
+      out = "lua/generated"
+      target = "lua"
+    },
+    {
+      format = "auto"
+      out = "python/generated"
+      target = "python"
+    },
+    {
+      out = "generated/proto"
+      target = "proto-schema"
+    },
+  ]
+  data_root = "data"
+  default_source_format = "xlsx"
+  excel_templates = "generated/excel"
+  view = "full"
+  exports = [
+    {
+      compression = "zstd"
+      compression_level = 3
+      format = "binary"
+      out = "generated/config.sora"
+    },
+    {
+      format = "json"
+      out = "generated/config.json"
+    },
+    {
+      format = "i18n-binary"
+      locale = "zh_cn"
+      out = "generated/i18n/zh_cn.sora-i18n"
+    },
+    {
+      format = "i18n-json"
+      locale = "zh_cn"
+      out = "generated/i18n/zh_cn.json"
+    },
+    {
+      format = "i18n-binary"
+      locale = "en_us"
+      out = "generated/i18n/en_us.sora-i18n"
+    },
+    {
+      format = "i18n-json"
+      locale = "en_us"
+      out = "generated/i18n/en_us.json"
+    },
+    {
+      format = "json"
+      out = "generated/client/config.json"
+      view = "client"
+    },
+    {
+      format = "json"
+      out = "godot/config/config.json"
+      view = "client"
+    },
+    {
+      format = "json"
+      out = "generated/server/config.json"
+      view = "server"
+    },
+    {
+      format = "sora-protobuf"
+      out = "generated/config.sora.pb"
+    },
+    {
+      format = "proto"
+      out = "generated/config.pb"
+    },
+    {
+      format = "cbor"
+      out = "generated/config.cbor"
+    },
+    {
+      format = "json-debug"
+      out = "generated/debug-json"
+    },
+  ]
+  schema_lock = "generated/schema.lock"
+}
+codegen = {
+  c = {
+    c_standard = "c11"
+    runtime_format = "sora"
+  }
+  cpp = {
+    cpp_standard = "c++17"
+    runtime_format = "sora"
+  }
+  csharp = {
+    runtime_format = "sora"
+  }
+  dart = {
+    runtime_format = "json"
+  }
+  erlang = {
+    enum_repr = "atom"
+    runtime_format = "sora"
+  }
+  go = {
+    runtime_format = "sora"
+  }
+  godot = {
+    godot_version = "4.3"
+    runtime_format = "json"
+  }
+  java = {
+    runtime_format = "sora"
+  }
+  javascript = {
+    emit_dts = true
+    enum_repr = "string"
+    runtime_format = "sora"
+  }
+  kotlin = {
+    runtime_format = "sora"
+  }
+  lua = {
+    enum_repr = "string"
+    lua_version = "5.4"
+    runtime_format = "sora"
+  }
+  python = {
+    runtime_format = "sora"
+  }
+  rust = {
+    map_type = "fx_hash_map"
+    runtime_format = "sora"
+    string_storage = "arc"
+  }
+  scala = {
+    runtime_format = "sora"
+    scala_version = "3"
+  }
+  typescript = {
+    enum_repr = "string"
+    runtime_format = "sora"
+  }
+}
+includes = [
+  "schema/core.scon",
+  "schema/items.scon",
+  "schema/combat.scon",
+  "schema/quests.scon",
+  "schema/system.scon",
+  "schema/events.scon",
+]
+localization = {
+  default_locale = "zh_cn"
+  fallback_locale = "en_us"
+  locales = [
+    "zh_cn",
+    "en_us",
+  ]
+  sources = {
+    Localization = {
+      file = "Core.xlsx"
+      sheet = "Localization"
+    }
+  }
+}
+project {
+  id = "com.sora.showcase"
+  views = ["views/full.toml", "views/client.toml", "views/server.toml"]
+}
+
+groups {
+  common { default = true }
+  server { default = false }
+}

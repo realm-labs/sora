@@ -10,124 +10,124 @@ from .sora_runtime import (
     TextKey,
     format_text,
 )
-from .item import ItemTable, Item
-from .shop import ShopTable, Shop
-from .shop_item import ShopItemTable, ShopItem
-from .recipe import RecipeTable, Recipe
-from .gacha_pool import GachaPoolTable, GachaPool
-from .gacha_item import GachaItemTable, GachaItem
-from .equipment_set import EquipmentSetTable, EquipmentSet
-from .skill import SkillTable, Skill
+from .achievement import AchievementTable, Achievement
+from .buff import BuffTable, Buff
 from .character import CharacterTable, Character
 from .character_skill import CharacterSkillTable, CharacterSkill
-from .buff import BuffTable, Buff
-from .drop_group import DropGroupTable, DropGroup
-from .drop_entry import DropEntryTable, DropEntry
-from .monster import MonsterTable, Monster
-from .stage import StageTable, Stage
-from .stage_reward import StageRewardTable, StageReward
-from .dungeon import DungeonTable, Dungeon
-from .quest import QuestTable, Quest
-from .quest_reward import QuestRewardTable, QuestReward
-from .level_exp import LevelExpTable, LevelExp
-from .achievement import AchievementTable, Achievement
-from .vip_level import VipLevelTable, VipLevel
-from .game_settings import GameSettingsTable, GameSettings
-from .maintenance_window import MaintenanceWindowTable, MaintenanceWindow
-from .mail_template import MailTemplateTable, MailTemplate
-from .mail_reward import MailRewardTable, MailReward
-from .dialogue import DialogueTable, Dialogue
-from .event_rule import EventRuleTable, EventRule
-from .complex_rule import ComplexRuleTable, ComplexRule
+from .complex_action_entry import ComplexActionEntryTable, ComplexActionEntry
+from .complex_action_group import ComplexActionGroupTable, ComplexActionGroup
 from .complex_condition_group import ComplexConditionGroupTable, ComplexConditionGroup
 from .complex_condition_group_entry import ComplexConditionGroupEntryTable, ComplexConditionGroupEntry
+from .complex_rule import ComplexRuleTable, ComplexRule
 from .complex_rule_condition import ComplexRuleConditionTable, ComplexRuleCondition
-from .complex_action_group import ComplexActionGroupTable, ComplexActionGroup
-from .complex_action_entry import ComplexActionEntryTable, ComplexActionEntry
-from .item_type import ItemType
-from .resource_kind import ResourceKind
+from .dialogue import DialogueTable, Dialogue
+from .drop_entry import DropEntryTable, DropEntry
+from .drop_group import DropGroupTable, DropGroup
+from .dungeon import DungeonTable, Dungeon
+from .equipment_set import EquipmentSetTable, EquipmentSet
+from .event_rule import EventRuleTable, EventRule
+from .gacha_item import GachaItemTable, GachaItem
+from .gacha_pool import GachaPoolTable, GachaPool
+from .game_settings import GameSettingsTable, GameSettings
+from .item import ItemTable, Item
+from .level_exp import LevelExpTable, LevelExp
+from .mail_reward import MailRewardTable, MailReward
+from .mail_template import MailTemplateTable, MailTemplate
+from .maintenance_window import MaintenanceWindowTable, MaintenanceWindow
+from .monster import MonsterTable, Monster
+from .quest import QuestTable, Quest
+from .quest_reward import QuestRewardTable, QuestReward
+from .recipe import RecipeTable, Recipe
+from .shop import ShopTable, Shop
+from .shop_item import ShopItemTable, ShopItem
+from .skill import SkillTable, Skill
+from .stage import StageTable, Stage
+from .stage_reward import StageRewardTable, StageReward
+from .vip_level import VipLevelTable, VipLevel
 from .element_type import ElementType
+from .item_type import ItemType
+from .mail_type import MailType
 from .quest_type import QuestType
 from .rarity import Rarity
+from .resource_kind import ResourceKind
 from .stat_type import StatType
-from .mail_type import MailType
 
 
-SCHEMA_FINGERPRINT = "9552056f96151363"
+SCHEMA_FINGERPRINT = "5ae7c095b011eddf"
 
 
 class SoraConfig:
     def __init__(
         self,
-        item: ItemTable,
-        shop: ShopTable,
-        shop_item: ShopItemTable,
-        recipe: RecipeTable,
-        gacha_pool: GachaPoolTable,
-        gacha_item: GachaItemTable,
-        equipment_set: EquipmentSetTable,
-        skill: SkillTable,
+        achievement: AchievementTable,
+        buff: BuffTable,
         character: CharacterTable,
         character_skill: CharacterSkillTable,
-        buff: BuffTable,
-        drop_group: DropGroupTable,
-        drop_entry: DropEntryTable,
-        monster: MonsterTable,
-        stage: StageTable,
-        stage_reward: StageRewardTable,
-        dungeon: DungeonTable,
-        quest: QuestTable,
-        quest_reward: QuestRewardTable,
-        level_exp: LevelExpTable,
-        achievement: AchievementTable,
-        vip_level: VipLevelTable,
-        game_settings: GameSettingsTable,
-        maintenance_window: MaintenanceWindowTable,
-        mail_template: MailTemplateTable,
-        mail_reward: MailRewardTable,
-        dialogue: DialogueTable,
-        event_rule: EventRuleTable,
-        complex_rule: ComplexRuleTable,
+        complex_action_entry: ComplexActionEntryTable,
+        complex_action_group: ComplexActionGroupTable,
         complex_condition_group: ComplexConditionGroupTable,
         complex_condition_group_entry: ComplexConditionGroupEntryTable,
+        complex_rule: ComplexRuleTable,
         complex_rule_condition: ComplexRuleConditionTable,
-        complex_action_group: ComplexActionGroupTable,
-        complex_action_entry: ComplexActionEntryTable,
+        dialogue: DialogueTable,
+        drop_entry: DropEntryTable,
+        drop_group: DropGroupTable,
+        dungeon: DungeonTable,
+        equipment_set: EquipmentSetTable,
+        event_rule: EventRuleTable,
+        gacha_item: GachaItemTable,
+        gacha_pool: GachaPoolTable,
+        game_settings: GameSettingsTable,
+        item: ItemTable,
+        level_exp: LevelExpTable,
+        mail_reward: MailRewardTable,
+        mail_template: MailTemplateTable,
+        maintenance_window: MaintenanceWindowTable,
+        monster: MonsterTable,
+        quest: QuestTable,
+        quest_reward: QuestRewardTable,
+        recipe: RecipeTable,
+        shop: ShopTable,
+        shop_item: ShopItemTable,
+        skill: SkillTable,
+        stage: StageTable,
+        stage_reward: StageRewardTable,
+        vip_level: VipLevelTable,
     ) -> None:
-        self._item = item
-        self._shop = shop
-        self._shop_item = shop_item
-        self._recipe = recipe
-        self._gacha_pool = gacha_pool
-        self._gacha_item = gacha_item
-        self._equipment_set = equipment_set
-        self._skill = skill
+        self._achievement = achievement
+        self._buff = buff
         self._character = character
         self._character_skill = character_skill
-        self._buff = buff
-        self._drop_group = drop_group
-        self._drop_entry = drop_entry
-        self._monster = monster
-        self._stage = stage
-        self._stage_reward = stage_reward
-        self._dungeon = dungeon
-        self._quest = quest
-        self._quest_reward = quest_reward
-        self._level_exp = level_exp
-        self._achievement = achievement
-        self._vip_level = vip_level
-        self._game_settings = game_settings
-        self._maintenance_window = maintenance_window
-        self._mail_template = mail_template
-        self._mail_reward = mail_reward
-        self._dialogue = dialogue
-        self._event_rule = event_rule
-        self._complex_rule = complex_rule
+        self._complex_action_entry = complex_action_entry
+        self._complex_action_group = complex_action_group
         self._complex_condition_group = complex_condition_group
         self._complex_condition_group_entry = complex_condition_group_entry
+        self._complex_rule = complex_rule
         self._complex_rule_condition = complex_rule_condition
-        self._complex_action_group = complex_action_group
-        self._complex_action_entry = complex_action_entry
+        self._dialogue = dialogue
+        self._drop_entry = drop_entry
+        self._drop_group = drop_group
+        self._dungeon = dungeon
+        self._equipment_set = equipment_set
+        self._event_rule = event_rule
+        self._gacha_item = gacha_item
+        self._gacha_pool = gacha_pool
+        self._game_settings = game_settings
+        self._item = item
+        self._level_exp = level_exp
+        self._mail_reward = mail_reward
+        self._mail_template = mail_template
+        self._maintenance_window = maintenance_window
+        self._monster = monster
+        self._quest = quest
+        self._quest_reward = quest_reward
+        self._recipe = recipe
+        self._shop = shop
+        self._shop_item = shop_item
+        self._skill = skill
+        self._stage = stage
+        self._stage_reward = stage_reward
+        self._vip_level = vip_level
 
     @staticmethod
     def from_bytes(bytes_data: bytes) -> SoraConfig:
@@ -138,29 +138,11 @@ class SoraConfig:
                 f"bundle contains {bundle.schema_fingerprint}"
             )
         return SoraConfig(
-            ItemTable.decode(
-                bundle.decode_table(ItemTable.NAME, Item.decode)
+            AchievementTable.decode(
+                bundle.decode_table(AchievementTable.NAME, Achievement.decode)
             ),
-            ShopTable.decode(
-                bundle.decode_table(ShopTable.NAME, Shop.decode)
-            ),
-            ShopItemTable.decode(
-                bundle.decode_table(ShopItemTable.NAME, ShopItem.decode)
-            ),
-            RecipeTable.decode(
-                bundle.decode_table(RecipeTable.NAME, Recipe.decode)
-            ),
-            GachaPoolTable.decode(
-                bundle.decode_table(GachaPoolTable.NAME, GachaPool.decode)
-            ),
-            GachaItemTable.decode(
-                bundle.decode_table(GachaItemTable.NAME, GachaItem.decode)
-            ),
-            EquipmentSetTable.decode(
-                bundle.decode_table(EquipmentSetTable.NAME, EquipmentSet.decode)
-            ),
-            SkillTable.decode(
-                bundle.decode_table(SkillTable.NAME, Skill.decode)
+            BuffTable.decode(
+                bundle.decode_table(BuffTable.NAME, Buff.decode)
             ),
             CharacterTable.decode(
                 bundle.decode_table(CharacterTable.NAME, Character.decode)
@@ -168,62 +150,11 @@ class SoraConfig:
             CharacterSkillTable.decode(
                 bundle.decode_table(CharacterSkillTable.NAME, CharacterSkill.decode)
             ),
-            BuffTable.decode(
-                bundle.decode_table(BuffTable.NAME, Buff.decode)
+            ComplexActionEntryTable.decode(
+                bundle.decode_table(ComplexActionEntryTable.NAME, ComplexActionEntry.decode)
             ),
-            DropGroupTable.decode(
-                bundle.decode_table(DropGroupTable.NAME, DropGroup.decode)
-            ),
-            DropEntryTable.decode(
-                bundle.decode_table(DropEntryTable.NAME, DropEntry.decode)
-            ),
-            MonsterTable.decode(
-                bundle.decode_table(MonsterTable.NAME, Monster.decode)
-            ),
-            StageTable.decode(
-                bundle.decode_table(StageTable.NAME, Stage.decode)
-            ),
-            StageRewardTable.decode(
-                bundle.decode_table(StageRewardTable.NAME, StageReward.decode)
-            ),
-            DungeonTable.decode(
-                bundle.decode_table(DungeonTable.NAME, Dungeon.decode)
-            ),
-            QuestTable.decode(
-                bundle.decode_table(QuestTable.NAME, Quest.decode)
-            ),
-            QuestRewardTable.decode(
-                bundle.decode_table(QuestRewardTable.NAME, QuestReward.decode)
-            ),
-            LevelExpTable.decode(
-                bundle.decode_table(LevelExpTable.NAME, LevelExp.decode)
-            ),
-            AchievementTable.decode(
-                bundle.decode_table(AchievementTable.NAME, Achievement.decode)
-            ),
-            VipLevelTable.decode(
-                bundle.decode_table(VipLevelTable.NAME, VipLevel.decode)
-            ),
-            GameSettingsTable.decode(
-                bundle.decode_table(GameSettingsTable.NAME, GameSettings.decode)
-            ),
-            MaintenanceWindowTable.decode(
-                bundle.decode_table(MaintenanceWindowTable.NAME, MaintenanceWindow.decode)
-            ),
-            MailTemplateTable.decode(
-                bundle.decode_table(MailTemplateTable.NAME, MailTemplate.decode)
-            ),
-            MailRewardTable.decode(
-                bundle.decode_table(MailRewardTable.NAME, MailReward.decode)
-            ),
-            DialogueTable.decode(
-                bundle.decode_table(DialogueTable.NAME, Dialogue.decode)
-            ),
-            EventRuleTable.decode(
-                bundle.decode_table(EventRuleTable.NAME, EventRule.decode)
-            ),
-            ComplexRuleTable.decode(
-                bundle.decode_table(ComplexRuleTable.NAME, ComplexRule.decode)
+            ComplexActionGroupTable.decode(
+                bundle.decode_table(ComplexActionGroupTable.NAME, ComplexActionGroup.decode)
             ),
             ComplexConditionGroupTable.decode(
                 bundle.decode_table(ComplexConditionGroupTable.NAME, ComplexConditionGroup.decode)
@@ -231,53 +162,122 @@ class SoraConfig:
             ComplexConditionGroupEntryTable.decode(
                 bundle.decode_table(ComplexConditionGroupEntryTable.NAME, ComplexConditionGroupEntry.decode)
             ),
+            ComplexRuleTable.decode(
+                bundle.decode_table(ComplexRuleTable.NAME, ComplexRule.decode)
+            ),
             ComplexRuleConditionTable.decode(
                 bundle.decode_table(ComplexRuleConditionTable.NAME, ComplexRuleCondition.decode)
             ),
-            ComplexActionGroupTable.decode(
-                bundle.decode_table(ComplexActionGroupTable.NAME, ComplexActionGroup.decode)
+            DialogueTable.decode(
+                bundle.decode_table(DialogueTable.NAME, Dialogue.decode)
             ),
-            ComplexActionEntryTable.decode(
-                bundle.decode_table(ComplexActionEntryTable.NAME, ComplexActionEntry.decode)
+            DropEntryTable.decode(
+                bundle.decode_table(DropEntryTable.NAME, DropEntry.decode)
+            ),
+            DropGroupTable.decode(
+                bundle.decode_table(DropGroupTable.NAME, DropGroup.decode)
+            ),
+            DungeonTable.decode(
+                bundle.decode_table(DungeonTable.NAME, Dungeon.decode)
+            ),
+            EquipmentSetTable.decode(
+                bundle.decode_table(EquipmentSetTable.NAME, EquipmentSet.decode)
+            ),
+            EventRuleTable.decode(
+                bundle.decode_table(EventRuleTable.NAME, EventRule.decode)
+            ),
+            GachaItemTable.decode(
+                bundle.decode_table(GachaItemTable.NAME, GachaItem.decode)
+            ),
+            GachaPoolTable.decode(
+                bundle.decode_table(GachaPoolTable.NAME, GachaPool.decode)
+            ),
+            GameSettingsTable.decode(
+                bundle.decode_table(GameSettingsTable.NAME, GameSettings.decode)
+            ),
+            ItemTable.decode(
+                bundle.decode_table(ItemTable.NAME, Item.decode)
+            ),
+            LevelExpTable.decode(
+                bundle.decode_table(LevelExpTable.NAME, LevelExp.decode)
+            ),
+            MailRewardTable.decode(
+                bundle.decode_table(MailRewardTable.NAME, MailReward.decode)
+            ),
+            MailTemplateTable.decode(
+                bundle.decode_table(MailTemplateTable.NAME, MailTemplate.decode)
+            ),
+            MaintenanceWindowTable.decode(
+                bundle.decode_table(MaintenanceWindowTable.NAME, MaintenanceWindow.decode)
+            ),
+            MonsterTable.decode(
+                bundle.decode_table(MonsterTable.NAME, Monster.decode)
+            ),
+            QuestTable.decode(
+                bundle.decode_table(QuestTable.NAME, Quest.decode)
+            ),
+            QuestRewardTable.decode(
+                bundle.decode_table(QuestRewardTable.NAME, QuestReward.decode)
+            ),
+            RecipeTable.decode(
+                bundle.decode_table(RecipeTable.NAME, Recipe.decode)
+            ),
+            ShopTable.decode(
+                bundle.decode_table(ShopTable.NAME, Shop.decode)
+            ),
+            ShopItemTable.decode(
+                bundle.decode_table(ShopItemTable.NAME, ShopItem.decode)
+            ),
+            SkillTable.decode(
+                bundle.decode_table(SkillTable.NAME, Skill.decode)
+            ),
+            StageTable.decode(
+                bundle.decode_table(StageTable.NAME, Stage.decode)
+            ),
+            StageRewardTable.decode(
+                bundle.decode_table(StageRewardTable.NAME, StageReward.decode)
+            ),
+            VipLevelTable.decode(
+                bundle.decode_table(VipLevelTable.NAME, VipLevel.decode)
             ),
         )
 
     def tables(self) -> list[SoraConfigTable]:
         return [
-            self._item,
-            self._shop,
-            self._shop_item,
-            self._recipe,
-            self._gacha_pool,
-            self._gacha_item,
-            self._equipment_set,
-            self._skill,
+            self._achievement,
+            self._buff,
             self._character,
             self._character_skill,
-            self._buff,
-            self._drop_group,
-            self._drop_entry,
-            self._monster,
-            self._stage,
-            self._stage_reward,
-            self._dungeon,
-            self._quest,
-            self._quest_reward,
-            self._level_exp,
-            self._achievement,
-            self._vip_level,
-            self._game_settings,
-            self._maintenance_window,
-            self._mail_template,
-            self._mail_reward,
-            self._dialogue,
-            self._event_rule,
-            self._complex_rule,
+            self._complex_action_entry,
+            self._complex_action_group,
             self._complex_condition_group,
             self._complex_condition_group_entry,
+            self._complex_rule,
             self._complex_rule_condition,
-            self._complex_action_group,
-            self._complex_action_entry,
+            self._dialogue,
+            self._drop_entry,
+            self._drop_group,
+            self._dungeon,
+            self._equipment_set,
+            self._event_rule,
+            self._gacha_item,
+            self._gacha_pool,
+            self._game_settings,
+            self._item,
+            self._level_exp,
+            self._mail_reward,
+            self._mail_template,
+            self._maintenance_window,
+            self._monster,
+            self._quest,
+            self._quest_reward,
+            self._recipe,
+            self._shop,
+            self._shop_item,
+            self._skill,
+            self._stage,
+            self._stage_reward,
+            self._vip_level,
         ]
     def validate_locale_pack(self, pack: LocalePack) -> None:
         for key in self._text_keys():
@@ -293,105 +293,81 @@ class SoraConfig:
 
     def _text_keys(self) -> list[TextKey]:
         keys: list[TextKey] = []
-        for row in self.item().values():
+        for row in self.achievement().values():
             row.collect_text_keys(keys)
-        for row in self.shop().values():
-            row.collect_text_keys(keys)
-        for row in self.shop_item():
-            row.collect_text_keys(keys)
-        for row in self.recipe().values():
-            row.collect_text_keys(keys)
-        for row in self.gacha_pool().values():
-            row.collect_text_keys(keys)
-        for row in self.gacha_item():
-            row.collect_text_keys(keys)
-        for row in self.equipment_set().values():
-            row.collect_text_keys(keys)
-        for row in self.skill().values():
+        for row in self.buff().values():
             row.collect_text_keys(keys)
         for row in self.character().values():
             row.collect_text_keys(keys)
         for row in self.character_skill():
             row.collect_text_keys(keys)
-        for row in self.buff().values():
+        for row in self.complex_action_entry().values():
             row.collect_text_keys(keys)
-        for row in self.drop_group().values():
-            row.collect_text_keys(keys)
-        for row in self.drop_entry():
-            row.collect_text_keys(keys)
-        for row in self.monster().values():
-            row.collect_text_keys(keys)
-        for row in self.stage().values():
-            row.collect_text_keys(keys)
-        for row in self.stage_reward():
-            row.collect_text_keys(keys)
-        for row in self.dungeon().values():
-            row.collect_text_keys(keys)
-        for row in self.quest().values():
-            row.collect_text_keys(keys)
-        for row in self.quest_reward():
-            row.collect_text_keys(keys)
-        for row in self.level_exp().values():
-            row.collect_text_keys(keys)
-        for row in self.achievement().values():
-            row.collect_text_keys(keys)
-        for row in self.vip_level().values():
-            row.collect_text_keys(keys)
-        self.game_settings().row.collect_text_keys(keys)
-        for row in self.maintenance_window():
-            row.collect_text_keys(keys)
-        for row in self.mail_template().values():
-            row.collect_text_keys(keys)
-        for row in self.mail_reward():
-            row.collect_text_keys(keys)
-        for row in self.dialogue().values():
-            row.collect_text_keys(keys)
-        for row in self.event_rule().values():
-            row.collect_text_keys(keys)
-        for row in self.complex_rule().values():
+        for row in self.complex_action_group().values():
             row.collect_text_keys(keys)
         for row in self.complex_condition_group().values():
             row.collect_text_keys(keys)
         for row in self.complex_condition_group_entry().values():
             row.collect_text_keys(keys)
+        for row in self.complex_rule().values():
+            row.collect_text_keys(keys)
         for row in self.complex_rule_condition().values():
             row.collect_text_keys(keys)
-        for row in self.complex_action_group().values():
+        for row in self.dialogue().values():
             row.collect_text_keys(keys)
-        for row in self.complex_action_entry().values():
+        for row in self.drop_entry():
+            row.collect_text_keys(keys)
+        for row in self.drop_group().values():
+            row.collect_text_keys(keys)
+        for row in self.dungeon().values():
+            row.collect_text_keys(keys)
+        for row in self.equipment_set().values():
+            row.collect_text_keys(keys)
+        for row in self.event_rule().values():
+            row.collect_text_keys(keys)
+        for row in self.gacha_item():
+            row.collect_text_keys(keys)
+        for row in self.gacha_pool().values():
+            row.collect_text_keys(keys)
+        self.game_settings().row.collect_text_keys(keys)
+        for row in self.item().values():
+            row.collect_text_keys(keys)
+        for row in self.level_exp().values():
+            row.collect_text_keys(keys)
+        for row in self.mail_reward():
+            row.collect_text_keys(keys)
+        for row in self.mail_template().values():
+            row.collect_text_keys(keys)
+        for row in self.maintenance_window():
+            row.collect_text_keys(keys)
+        for row in self.monster().values():
+            row.collect_text_keys(keys)
+        for row in self.quest().values():
+            row.collect_text_keys(keys)
+        for row in self.quest_reward():
+            row.collect_text_keys(keys)
+        for row in self.recipe().values():
+            row.collect_text_keys(keys)
+        for row in self.shop().values():
+            row.collect_text_keys(keys)
+        for row in self.shop_item():
+            row.collect_text_keys(keys)
+        for row in self.skill().values():
+            row.collect_text_keys(keys)
+        for row in self.stage().values():
+            row.collect_text_keys(keys)
+        for row in self.stage_reward():
+            row.collect_text_keys(keys)
+        for row in self.vip_level().values():
             row.collect_text_keys(keys)
         return keys
 
-    def item(self) -> ItemTable:
-        return self._item
+    def achievement(self) -> AchievementTable:
+        return self._achievement
 
 
-    def shop(self) -> ShopTable:
-        return self._shop
-
-
-    def shop_item(self) -> ShopItemTable:
-        return self._shop_item
-
-
-    def recipe(self) -> RecipeTable:
-        return self._recipe
-
-
-    def gacha_pool(self) -> GachaPoolTable:
-        return self._gacha_pool
-
-
-    def gacha_item(self) -> GachaItemTable:
-        return self._gacha_item
-
-
-    def equipment_set(self) -> EquipmentSetTable:
-        return self._equipment_set
-
-
-    def skill(self) -> SkillTable:
-        return self._skill
+    def buff(self) -> BuffTable:
+        return self._buff
 
 
     def character(self) -> CharacterTable:
@@ -402,80 +378,12 @@ class SoraConfig:
         return self._character_skill
 
 
-    def buff(self) -> BuffTable:
-        return self._buff
+    def complex_action_entry(self) -> ComplexActionEntryTable:
+        return self._complex_action_entry
 
 
-    def drop_group(self) -> DropGroupTable:
-        return self._drop_group
-
-
-    def drop_entry(self) -> DropEntryTable:
-        return self._drop_entry
-
-
-    def monster(self) -> MonsterTable:
-        return self._monster
-
-
-    def stage(self) -> StageTable:
-        return self._stage
-
-
-    def stage_reward(self) -> StageRewardTable:
-        return self._stage_reward
-
-
-    def dungeon(self) -> DungeonTable:
-        return self._dungeon
-
-
-    def quest(self) -> QuestTable:
-        return self._quest
-
-
-    def quest_reward(self) -> QuestRewardTable:
-        return self._quest_reward
-
-
-    def level_exp(self) -> LevelExpTable:
-        return self._level_exp
-
-
-    def achievement(self) -> AchievementTable:
-        return self._achievement
-
-
-    def vip_level(self) -> VipLevelTable:
-        return self._vip_level
-
-
-    def game_settings(self) -> GameSettingsTable:
-        return self._game_settings
-
-
-    def maintenance_window(self) -> MaintenanceWindowTable:
-        return self._maintenance_window
-
-
-    def mail_template(self) -> MailTemplateTable:
-        return self._mail_template
-
-
-    def mail_reward(self) -> MailRewardTable:
-        return self._mail_reward
-
-
-    def dialogue(self) -> DialogueTable:
-        return self._dialogue
-
-
-    def event_rule(self) -> EventRuleTable:
-        return self._event_rule
-
-
-    def complex_rule(self) -> ComplexRuleTable:
-        return self._complex_rule
+    def complex_action_group(self) -> ComplexActionGroupTable:
+        return self._complex_action_group
 
 
     def complex_condition_group(self) -> ComplexConditionGroupTable:
@@ -486,16 +394,108 @@ class SoraConfig:
         return self._complex_condition_group_entry
 
 
+    def complex_rule(self) -> ComplexRuleTable:
+        return self._complex_rule
+
+
     def complex_rule_condition(self) -> ComplexRuleConditionTable:
         return self._complex_rule_condition
 
 
-    def complex_action_group(self) -> ComplexActionGroupTable:
-        return self._complex_action_group
+    def dialogue(self) -> DialogueTable:
+        return self._dialogue
 
 
-    def complex_action_entry(self) -> ComplexActionEntryTable:
-        return self._complex_action_entry
+    def drop_entry(self) -> DropEntryTable:
+        return self._drop_entry
+
+
+    def drop_group(self) -> DropGroupTable:
+        return self._drop_group
+
+
+    def dungeon(self) -> DungeonTable:
+        return self._dungeon
+
+
+    def equipment_set(self) -> EquipmentSetTable:
+        return self._equipment_set
+
+
+    def event_rule(self) -> EventRuleTable:
+        return self._event_rule
+
+
+    def gacha_item(self) -> GachaItemTable:
+        return self._gacha_item
+
+
+    def gacha_pool(self) -> GachaPoolTable:
+        return self._gacha_pool
+
+
+    def game_settings(self) -> GameSettingsTable:
+        return self._game_settings
+
+
+    def item(self) -> ItemTable:
+        return self._item
+
+
+    def level_exp(self) -> LevelExpTable:
+        return self._level_exp
+
+
+    def mail_reward(self) -> MailRewardTable:
+        return self._mail_reward
+
+
+    def mail_template(self) -> MailTemplateTable:
+        return self._mail_template
+
+
+    def maintenance_window(self) -> MaintenanceWindowTable:
+        return self._maintenance_window
+
+
+    def monster(self) -> MonsterTable:
+        return self._monster
+
+
+    def quest(self) -> QuestTable:
+        return self._quest
+
+
+    def quest_reward(self) -> QuestRewardTable:
+        return self._quest_reward
+
+
+    def recipe(self) -> RecipeTable:
+        return self._recipe
+
+
+    def shop(self) -> ShopTable:
+        return self._shop
+
+
+    def shop_item(self) -> ShopItemTable:
+        return self._shop_item
+
+
+    def skill(self) -> SkillTable:
+        return self._skill
+
+
+    def stage(self) -> StageTable:
+        return self._stage
+
+
+    def stage_reward(self) -> StageRewardTable:
+        return self._stage_reward
+
+
+    def vip_level(self) -> VipLevelTable:
+        return self._vip_level
 
 
 

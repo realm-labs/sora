@@ -2,7 +2,7 @@ use anyhow::{Context, Result, bail};
 use sora_excel::sync::ExcelSyncReport;
 use sora_execution::ExecutionOptions;
 use sora_export::exporter::{ExportCompression, ExportOptions, ExportOutput, OutputKind};
-use sora_input_schema::input::SchemaFileInput;
+use sora_input_schema::input::ProjectSchemaInput;
 use sora_workspace::{ProjectRuntime, RuntimeOptions, source::MixedProjectInput};
 use std::sync::Arc;
 
@@ -67,7 +67,7 @@ fn command_project_path(command: &Command) -> Option<&std::path::Path> {
 }
 
 fn check(args: CheckArgs, context: &ProjectRuntime) -> Result<()> {
-    let input = SchemaFileInput::new(&args.project);
+    let input = ProjectSchemaInput::new(&args.project);
     match &args.lock {
         Some(lock) => sora_core::pipeline::check_schema_with_lock_and_parsers(
             &input,
@@ -87,7 +87,7 @@ fn check(args: CheckArgs, context: &ProjectRuntime) -> Result<()> {
 }
 
 fn generate(args: GenArgs, target: &str, context: &ProjectRuntime) -> Result<()> {
-    let input = SchemaFileInput::new(&args.project);
+    let input = ProjectSchemaInput::new(&args.project);
     sora_core::pipeline::generate_code_with_view_format_and_parsers(
         &input,
         target,
@@ -107,7 +107,7 @@ fn generate(args: GenArgs, target: &str, context: &ProjectRuntime) -> Result<()>
 }
 
 fn excel_template(args: ExcelTemplateArgs, context: &ProjectRuntime) -> Result<()> {
-    let input = SchemaFileInput::new(&args.project);
+    let input = ProjectSchemaInput::new(&args.project);
     sora_core::pipeline::generate_excel_template_with_view_and_parsers(
         &input,
         &args.out,
@@ -123,7 +123,7 @@ fn excel_template(args: ExcelTemplateArgs, context: &ProjectRuntime) -> Result<(
 }
 
 fn excel_sync(args: ExcelSyncArgs, context: &ProjectRuntime) -> Result<()> {
-    let input = SchemaFileInput::new(&args.project);
+    let input = ProjectSchemaInput::new(&args.project);
     let report = if args.write {
         sora_core::pipeline::write_excel_sync_with_parsers(
             &input,
@@ -205,7 +205,7 @@ fn print_excel_sync_report(report: &ExcelSyncReport, write: bool) {
 }
 
 fn schema_lock(args: SchemaLockArgs, context: &ProjectRuntime) -> Result<()> {
-    let input = SchemaFileInput::new(&args.project);
+    let input = ProjectSchemaInput::new(&args.project);
     sora_core::pipeline::generate_schema_lock_with_view_and_parsers(
         &input,
         &args.out,
@@ -240,7 +240,7 @@ fn export(args: ExportArgs, context: &ProjectRuntime) -> Result<()> {
         }
     };
 
-    let schema_input = SchemaFileInput::new(&args.project);
+    let schema_input = ProjectSchemaInput::new(&args.project);
     let input = MixedProjectInput::with_source_registry(
         schema_input,
         &args.data_root,
@@ -290,8 +290,8 @@ fn export_options(
 
 fn diff(args: DiffArgs, context: &ProjectRuntime) -> Result<()> {
     let default_source_format = args.default_source_format.map(SourceFormatArg::as_str);
-    let left_schema = SchemaFileInput::new(&args.project);
-    let right_schema = SchemaFileInput::new(&args.project);
+    let left_schema = ProjectSchemaInput::new(&args.project);
+    let right_schema = ProjectSchemaInput::new(&args.project);
     let parser_registry = Arc::clone(context.cell_parsers());
     let left = MixedProjectInput::with_source_registry(
         left_schema,
@@ -488,9 +488,7 @@ includes = ["schema/items.toml"]
         .unwrap();
         let name_field = if include_name {
             r#"
-[[tables.fields]]
-name = "name"
-type = "string"
+name = "string"
 "#
         } else {
             ""
@@ -499,18 +497,16 @@ type = "string"
             schema_dir.join("items.toml"),
             format!(
                 r#"
-[[tables]]
+[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
 
-[tables.source]
+[tables.Item.source]
 file = "Item.xlsx"
 
-[[tables.fields]]
-name = "id"
-type = "i32"
+[tables.Item.fields]
+id = "i32"
 {name_field}
 "#
             ),
@@ -549,21 +545,18 @@ includes = ["schema/items.toml"]
         fs::write(
             schema_dir.join("items.toml"),
             r#"
-[[tables]]
+[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
 
-[tables.source]
+[tables.Item.source]
 file = "Item.csv"
 
-[[tables.fields]]
-name = "id"
-type = "i32"
+[tables.Item.fields]
+id = "i32"
 
-[[tables.fields]]
-name = "cooldown"
+[tables.Item.fields.cooldown]
 type = "i32"
 parser = { kind = "scale", factor = "1000" }
 "#,

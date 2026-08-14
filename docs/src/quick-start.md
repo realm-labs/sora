@@ -21,84 +21,78 @@ cargo install --path crates/sora-cli
 The fastest path is to scaffold the same minimal project:
 
 ```bash
-sora init --out my-config --schema-format toml
+sora init --out my-config
 cd my-config
 ```
 
-`--schema-format` accepts `toml`, `yaml`, `json`, or `lua`. The scaffold creates this layout:
+SCON is the default. `--schema-format` can explicitly select `scon`, `toml`, `yaml`, `json`, or `lua`. The scaffold creates this layout:
 
 | Path | Who edits it | Purpose |
 | --- | --- | --- |
-| `project.toml` | You | Project entry point, build outputs, default data location. |
-| `schema/items.toml` | You | Schema for the `Item` table. |
+| `project.scon` | You | Project entry point, build outputs, default data location. |
+| `schema/items.scon` | You | Schema for the `Item` table. |
 | `data/Item.xlsx` | Designers or tools | Editable row data. |
 | `generated/` | Sora | Schema lock, Excel templates, generated code, exported data. |
 
-The rest of this section shows the generated files so you can understand the project shape. `project.toml` looks like this:
+The rest of this section shows the generated files so you can understand the project shape. `project.scon` looks like this:
 
-```toml
-project = { id = "game_config" }
-groups = { common = { default = true } }
-views = { default = { contract = "game_config/default", groups = ["common"] } }
-includes = ["schema/items.toml"]
+```scon
+project { id = "game_config" }
+groups { common { default = true } }
+views {
+  default {
+    contract = "game_config/default"
+    groups = ["common"]
+  }
+}
+includes = ["schema/items.scon"]
 
-[build]
-default_source_format = "xlsx"
-data_root = "data"
-schema_lock = "generated/schema.lock"
-excel_templates = "generated/excel"
-
-[[build.codegen]]
-target = "rust"
-out = "generated/rust"
-format = "auto"
-
-[[build.exports]]
-format = "binary"
-out = "generated/config.sora"
+build {
+  default_source_format = "xlsx"
+  data_root = "data"
+  view = "default"
+  schema_lock = "generated/schema.lock"
+  excel_templates = "generated/excel"
+  codegen = [
+    { target = "rust", out = "generated/rust", format = "auto" },
+  ]
+  exports = [
+    { format = "binary", out = "generated/config.sora" },
+  ]
+}
 ```
 
 In this file, `default_source_format = "xlsx"` means table sources default to Excel. `data_root = "data"` means `Item.xlsx` is read from `data/Item.xlsx` during export and build. `excel_templates = "generated/excel"` is only the generated template output directory. It is where Sora writes fresh workbooks with schema headers; it is not the source data directory. Keep it separate from `data` so regenerating templates cannot overwrite edited row data. The `binary` export writes the runtime bundle that Rust code will load because Rust defaults to `runtime_format = "sora"`.
 
-Create `schema/items.toml`:
+Create `schema/items.scon`:
 
-```toml
-[[enums]]
-name = "ItemType"
-values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
+```scon
+enums {
+  ItemType = ["Weapon", "Armor", "Material", "Consumable"]
+}
 
-[[tables]]
-id = "item"
-name = "Item"
-mode = "map"
-key = "id"
-
-[tables.source]
-format = "xlsx"
-file = "Item.xlsx"
-sheet = "Item"
-
-[[tables.fields]]
-name = "id"
-type = "i32"
-comment = "Item id"
-
-[[tables.fields]]
-name = "name"
-type = "string"
-comment = "Display name"
-
-[[tables.fields]]
-name = "item_type"
-type = "enum<ItemType>"
-comment = "Item category"
-
-[[tables.fields]]
-name = "max_stack"
-type = "i32"
-default = "1"
-range = [1, 9999]
-comment = "Stack limit"
+tables {
+  Item {
+    mode = "map"
+    key = "id"
+    source {
+      format = "xlsx"
+      file = "Item.xlsx"
+      sheet = "Item"
+    }
+    fields {
+      id { type = "i32" comment = "Item id" }
+      name { type = "string" comment = "Display name" }
+      item_type { type = "enum<ItemType>" comment = "Item category" }
+      max_stack {
+        type = "i32"
+        default = "1"
+        range = [1, 9999]
+        comment = "Stack limit"
+      }
+    }
+  }
+}
 ```
 
 ## 2. Generate the Excel Template
@@ -106,7 +100,7 @@ comment = "Stack limit"
 The workbook header is generated from the schema:
 
 ```bash
-sora excel-template --project project.toml --out generated/excel
+sora excel-template --project project.scon --out generated/excel
 ```
 
 This creates `generated/excel/Item.xlsx`. Treat that file as a template artifact that can be regenerated after schema changes. For a new table, copy it to `data/Item.xlsx` and fill rows below the generated header:
@@ -121,8 +115,8 @@ After you have real data in `data/Item.xlsx`, do not run `excel-template --out d
 For existing data workbooks, prefer syncing headers in place:
 
 ```bash
-sora excel-sync --project project.toml --data-root data
-sora excel-sync --project project.toml --data-root data --write
+sora excel-sync --project project.scon --data-root data
+sora excel-sync --project project.scon --data-root data --write
 ```
 
 The preview command shows added fields and legacy columns. The `--write` command refreshes generated header rows while preserving data rows; fields removed from schema stay in Excel as legacy columns that Sora ignores.
@@ -132,19 +126,19 @@ The preview command shows added fields and legacy columns. The `--write` command
 Validate the schema without reading row data:
 
 ```bash
-sora check --project project.toml
+sora check --project project.scon
 ```
 
 Run every output declared in `[build]`. This also loads and validates source data before writing exports:
 
 ```bash
-sora build --project project.toml
+sora build --project project.scon
 ```
 
 You can also open the project in Sora Studio, the schema editor embedded in the CLI:
 
 ```bash
-sora studio --project project.toml
+sora studio --project project.scon
 ```
 
 The command prints a local URL. Open it in a browser to visualize schema relationships, edit schema modules, preview the generated changes, and save them back to the project.
@@ -152,16 +146,16 @@ The command prints a local URL. Open it in a browser to visualize schema relatio
 Or run the steps separately:
 
 ```bash
-sora gen --target rust --project project.toml --out generated/rust
+sora gen --target rust --project project.scon --out generated/rust
 
 sora export \
   --format binary \
   --default-source-format xlsx \
-  --project project.toml \
+  --project project.scon \
   --data-root data \
   --out generated/config.sora
 ```
 
 ## 4. Next Steps
 
-Read [Sora Studio](studio.md) if you want to edit schemas visually. Read [First Config](tutorial/first-config.md) for the same example with the generated runtime usage, or inspect `examples/showcase/project.toml` for a larger multi-language setup.
+Read [Sora Studio](studio.md) if you want to edit schemas visually. Read [First Config](tutorial/first-config.md) for the same example with the generated runtime usage, or inspect `examples/showcase/project.scon` for a larger multi-language setup.

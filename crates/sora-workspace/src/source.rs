@@ -23,7 +23,7 @@ use sora_input_xlsx::reader::{
     load_xlsx_localization_source_data, load_xlsx_table_data_with_ir_and_parsers,
 };
 use sora_ir::model::{ConfigIr, TableIr};
-use sora_schema::model::SchemaFile;
+use sora_schema::model::ProjectSchema;
 
 #[derive(Clone)]
 pub struct MixedProjectInput<S> {
@@ -68,7 +68,7 @@ impl<S> MixedProjectInput<S> {
 }
 
 impl<S: SchemaInput> SchemaInput for MixedProjectInput<S> {
-    fn load_schema(&self) -> Result<SchemaFile> {
+    fn load_schema(&self) -> Result<ProjectSchema> {
         self.schema_input.load_schema()
     }
 }

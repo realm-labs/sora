@@ -1,0 +1,247 @@
+unions = {
+  EventCondition = {
+    variants = {
+      LevelAtLeast = {
+        fields = {
+          level = "ref<LevelExp.level>"
+        }
+      }
+      QuestCompleted = {
+        fields = {
+          quest_id = "ref<Quest.id>"
+        }
+      }
+      HasItem = {
+        fields = {
+          item_id = "ref<Item.id>"
+          count = {
+            type = "i32"
+            range = [
+              1,
+              9999,
+            ]
+          }
+        }
+      }
+      AllConditions = {
+        fields = {
+          condition_group_id = "ref<ComplexConditionGroup.id>"
+        }
+      }
+      AnyCondition = {
+        fields = {
+          condition_group_id = "ref<ComplexConditionGroup.id>"
+        }
+      }
+    }
+  }
+  RewardAction = {
+    variants = {
+      AddItem = {
+        fields = {
+          item_id = "ref<Item.id>"
+          count = {
+            type = "i32"
+            range = [
+              1,
+              9999,
+            ]
+          }
+        }
+      }
+      AddBuff = {
+        fields = {
+          buff_id = "ref<Buff.id>"
+          duration = {
+            type = "f32"
+            default = "10.0"
+          }
+        }
+      }
+      UnlockStage = {
+        fields = {
+          stage_id = "ref<Stage.id>"
+        }
+      }
+      SendMail = {
+        fields = {
+          mail_id = "ref<MailTemplate.id>"
+        }
+      }
+      RunActionGroup = {
+        fields = {
+          action_group_id = "ref<ComplexActionGroup.id>"
+        }
+      }
+    }
+  }
+}
+tables = {
+  EventRule = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Quest.xlsx"
+      sheet = "EventRule"
+    }
+    fields = {
+      id = "i32"
+      name = "string"
+      condition = "union<EventCondition>"
+      actions = {
+        type = "list<union<RewardAction>>"
+        length = [
+          1,
+          4,
+        ]
+        parser = "json"
+      }
+    }
+  }
+  ComplexRule = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Complex.xlsx"
+      sheet = "ComplexRule"
+    }
+    fields = {
+      id = "i32"
+      name = "string"
+      root_condition = {
+        type = "union<EventCondition>"
+        comment = "Single union value derived from a tagged_columns child row"
+        from = {
+          table = "ComplexRuleCondition"
+          parent_key = "id"
+          child_key = "rule_id"
+          field = "value"
+        }
+      }
+      root_action_group = "ref<ComplexActionGroup.id>"
+      actions = {
+        type = "list<union<RewardAction>>"
+        comment = "Non-JSON list<union<RewardAction>> assembled from child rows"
+        from = {
+          table = "ComplexActionEntry"
+          parent_key = "root_action_group"
+          child_key = "group_id"
+          field = "value"
+          order_by = "seq"
+        }
+      }
+      budget = {
+        type = "struct<ComplexBudget>"
+        comment = "Nested tuple, tuple_list, split, and map parsers in one cell"
+        parser = {
+          kind = "tuple"
+          separator = ","
+        }
+      }
+    }
+  }
+  ComplexConditionGroup = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Complex.xlsx"
+      sheet = "ComplexConditionGroup"
+    }
+    fields = {
+      id = "i32"
+      name = "string"
+      conditions = {
+        type = "list<union<EventCondition>>"
+        comment = "A derived list of union values; each child row is edited without JSON"
+        from = {
+          table = "ComplexConditionGroupEntry"
+          parent_key = "id"
+          child_key = "group_id"
+          field = "value"
+          order_by = "seq"
+        }
+      }
+    }
+  }
+  ComplexConditionGroupEntry = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Complex.xlsx"
+      sheet = "ComplexConditionGroupEntry"
+    }
+    fields = {
+      id = "i32"
+      group_id = "ref<ComplexConditionGroup.id>"
+      seq = "i32"
+      value = {
+        type = "union<EventCondition>"
+        parser = {
+          kind = "tagged_columns"
+          prefix = ""
+        }
+      }
+    }
+  }
+  ComplexRuleCondition = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Complex.xlsx"
+      sheet = "ComplexRuleCondition"
+    }
+    fields = {
+      id = "i32"
+      rule_id = "ref<ComplexRule.id>"
+      value = {
+        type = "union<EventCondition>"
+        parser = {
+          kind = "tagged_columns"
+          prefix = ""
+        }
+      }
+    }
+  }
+  ComplexActionGroup = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Complex.xlsx"
+      sheet = "ComplexActionGroup"
+    }
+    fields = {
+      id = "i32"
+      name = "string"
+      actions = {
+        type = "list<union<RewardAction>>"
+        from = {
+          table = "ComplexActionEntry"
+          parent_key = "id"
+          child_key = "group_id"
+          field = "value"
+          order_by = "seq"
+        }
+      }
+    }
+  }
+  ComplexActionEntry = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Complex.xlsx"
+      sheet = "ComplexActionEntry"
+    }
+    fields = {
+      id = "i32"
+      group_id = "ref<ComplexActionGroup.id>"
+      seq = "i32"
+      value = {
+        type = "union<RewardAction>"
+        parser = {
+          kind = "tagged_columns"
+          prefix = ""
+        }
+      }
+    }
+  }
+}

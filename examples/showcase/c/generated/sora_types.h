@@ -4,13 +4,13 @@
 #define SORA_SHOWCASE_SORA_TYPES_H
 
 #include "sora_runtime.h"
-#include "item_type.h"
-#include "resource_kind.h"
 #include "element_type.h"
+#include "item_type.h"
+#include "mail_type.h"
 #include "quest_type.h"
 #include "rarity.h"
+#include "resource_kind.h"
 #include "stat_type.h"
-#include "mail_type.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -18,48 +18,48 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-typedef struct sora_showcase_resource_cost sora_showcase_resource_cost;
-typedef struct sora_showcase_vec3 sora_showcase_vec3;
-typedef struct sora_showcase_skill_effect sora_showcase_skill_effect;
-typedef struct sora_showcase_reward sora_showcase_reward;
-typedef struct sora_showcase_stat_modifier sora_showcase_stat_modifier;
-typedef struct sora_showcase_reward_bundle sora_showcase_reward_bundle;
 typedef struct sora_showcase_complex_budget sora_showcase_complex_budget;
 typedef struct sora_showcase_maintenance_info sora_showcase_maintenance_info;
-typedef struct sora_showcase_item sora_showcase_item;
-typedef struct sora_showcase_shop sora_showcase_shop;
-typedef struct sora_showcase_shop_item sora_showcase_shop_item;
-typedef struct sora_showcase_recipe sora_showcase_recipe;
-typedef struct sora_showcase_gacha_pool sora_showcase_gacha_pool;
-typedef struct sora_showcase_gacha_item sora_showcase_gacha_item;
-typedef struct sora_showcase_equipment_set sora_showcase_equipment_set;
-typedef struct sora_showcase_skill sora_showcase_skill;
+typedef struct sora_showcase_resource_cost sora_showcase_resource_cost;
+typedef struct sora_showcase_reward sora_showcase_reward;
+typedef struct sora_showcase_reward_bundle sora_showcase_reward_bundle;
+typedef struct sora_showcase_skill_effect sora_showcase_skill_effect;
+typedef struct sora_showcase_stat_modifier sora_showcase_stat_modifier;
+typedef struct sora_showcase_vec3 sora_showcase_vec3;
+typedef struct sora_showcase_achievement sora_showcase_achievement;
+typedef struct sora_showcase_buff sora_showcase_buff;
 typedef struct sora_showcase_character sora_showcase_character;
 typedef struct sora_showcase_character_skill sora_showcase_character_skill;
-typedef struct sora_showcase_buff sora_showcase_buff;
-typedef struct sora_showcase_drop_group sora_showcase_drop_group;
-typedef struct sora_showcase_drop_entry sora_showcase_drop_entry;
-typedef struct sora_showcase_monster sora_showcase_monster;
-typedef struct sora_showcase_stage sora_showcase_stage;
-typedef struct sora_showcase_stage_reward sora_showcase_stage_reward;
-typedef struct sora_showcase_dungeon sora_showcase_dungeon;
-typedef struct sora_showcase_quest sora_showcase_quest;
-typedef struct sora_showcase_quest_reward sora_showcase_quest_reward;
-typedef struct sora_showcase_level_exp sora_showcase_level_exp;
-typedef struct sora_showcase_achievement sora_showcase_achievement;
-typedef struct sora_showcase_vip_level sora_showcase_vip_level;
-typedef struct sora_showcase_game_settings sora_showcase_game_settings;
-typedef struct sora_showcase_maintenance_window sora_showcase_maintenance_window;
-typedef struct sora_showcase_mail_template sora_showcase_mail_template;
-typedef struct sora_showcase_mail_reward sora_showcase_mail_reward;
-typedef struct sora_showcase_dialogue sora_showcase_dialogue;
-typedef struct sora_showcase_event_rule sora_showcase_event_rule;
-typedef struct sora_showcase_complex_rule sora_showcase_complex_rule;
+typedef struct sora_showcase_complex_action_entry sora_showcase_complex_action_entry;
+typedef struct sora_showcase_complex_action_group sora_showcase_complex_action_group;
 typedef struct sora_showcase_complex_condition_group sora_showcase_complex_condition_group;
 typedef struct sora_showcase_complex_condition_group_entry sora_showcase_complex_condition_group_entry;
+typedef struct sora_showcase_complex_rule sora_showcase_complex_rule;
 typedef struct sora_showcase_complex_rule_condition sora_showcase_complex_rule_condition;
-typedef struct sora_showcase_complex_action_group sora_showcase_complex_action_group;
-typedef struct sora_showcase_complex_action_entry sora_showcase_complex_action_entry;
+typedef struct sora_showcase_dialogue sora_showcase_dialogue;
+typedef struct sora_showcase_drop_entry sora_showcase_drop_entry;
+typedef struct sora_showcase_drop_group sora_showcase_drop_group;
+typedef struct sora_showcase_dungeon sora_showcase_dungeon;
+typedef struct sora_showcase_equipment_set sora_showcase_equipment_set;
+typedef struct sora_showcase_event_rule sora_showcase_event_rule;
+typedef struct sora_showcase_gacha_item sora_showcase_gacha_item;
+typedef struct sora_showcase_gacha_pool sora_showcase_gacha_pool;
+typedef struct sora_showcase_game_settings sora_showcase_game_settings;
+typedef struct sora_showcase_item sora_showcase_item;
+typedef struct sora_showcase_level_exp sora_showcase_level_exp;
+typedef struct sora_showcase_mail_reward sora_showcase_mail_reward;
+typedef struct sora_showcase_mail_template sora_showcase_mail_template;
+typedef struct sora_showcase_maintenance_window sora_showcase_maintenance_window;
+typedef struct sora_showcase_monster sora_showcase_monster;
+typedef struct sora_showcase_quest sora_showcase_quest;
+typedef struct sora_showcase_quest_reward sora_showcase_quest_reward;
+typedef struct sora_showcase_recipe sora_showcase_recipe;
+typedef struct sora_showcase_shop sora_showcase_shop;
+typedef struct sora_showcase_shop_item sora_showcase_shop_item;
+typedef struct sora_showcase_skill sora_showcase_skill;
+typedef struct sora_showcase_stage sora_showcase_stage;
+typedef struct sora_showcase_stage_reward sora_showcase_stage_reward;
+typedef struct sora_showcase_vip_level sora_showcase_vip_level;
 typedef struct sora_showcase_event_condition sora_showcase_event_condition;
 typedef struct sora_showcase_reward_action sora_showcase_reward_action;
 

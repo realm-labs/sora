@@ -5,77 +5,56 @@
 ## 项目结构
 
 ```text
-project.toml
-schema/items.toml
+project.scon
+schema/items.scon
 data/Item.xlsx
 generated/
 ```
 
 ## 项目清单
 
-```toml
-project = { id = "game_config" }
-groups = { common = { default = true } }
-views = { default = { contract = "game_config/default", groups = ["common"] } }
-includes = ["schema/items.toml"]
+```scon
+project { id = "game_config" }
+groups { common { default = true } }
+views {
+  default {
+    contract = "game_config/default"
+    groups = ["common"]
+  }
+}
+includes = ["schema/items.scon"]
 
-[build]
-default_source_format = "xlsx"
-data_root = "data"
-schema_lock = "generated/schema.lock"
-excel_templates = "generated/excel"
-
-[[build.codegen]]
-target = "rust"
-out = "generated/rust"
-format = "auto"
-
-[[build.exports]]
-format = "binary"
-out = "generated/config.sora"
+build {
+  default_source_format = "xlsx"
+  data_root = "data"
+  view = "default"
+  schema_lock = "generated/schema.lock"
+  excel_templates = "generated/excel"
+  codegen = [{ target = "rust", out = "generated/rust", format = "auto" }]
+  exports = [{ format = "binary", out = "generated/config.sora" }]
+}
 ```
 
 `schema_lock` 保存归一化 schema，`excel_templates` 写出带生成表头的工作簿，`build.codegen` 声明语言输出，`build.exports` 声明运行时数据输出。
 
 ## Schema
 
-```toml
-[[enums]]
-name = "ItemType"
-values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
+```scon
+enums { ItemType = ["Weapon", "Armor", "Material", "Consumable"] }
 
-[[tables]]
-id = "item"
-name = "Item"
-mode = "map"
-key = "id"
-
-[tables.source]
-format = "xlsx"
-file = "Item.xlsx"
-sheet = "Item"
-
-[[tables.fields]]
-name = "id"
-type = "i32"
-comment = "Item id"
-
-[[tables.fields]]
-name = "name"
-type = "string"
-comment = "Display name"
-
-[[tables.fields]]
-name = "item_type"
-type = "enum<ItemType>"
-comment = "Item category"
-
-[[tables.fields]]
-name = "max_stack"
-type = "i32"
-default = "1"
-range = [1, 9999]
-comment = "Stack limit"
+tables {
+  Item {
+    mode = "map"
+    key = "id"
+    source { format = "xlsx" file = "Item.xlsx" sheet = "Item" }
+    fields {
+      id { type = "i32" comment = "Item id" }
+      name { type = "string" comment = "Display name" }
+      item_type { type = "enum<ItemType>" comment = "Item category" }
+      max_stack { type = "i32" default = "1" range = [1, 9999] comment = "Stack limit" }
+    }
+  }
+}
 ```
 
 这个表使用 `mode = "map"`，因此生成运行时会提供按 `id` 查找的接口。
@@ -85,7 +64,7 @@ comment = "Stack limit"
 生成工作簿：
 
 ```bash
-sora excel-template --project project.toml --out generated/excel
+sora excel-template --project project.scon --out generated/excel
 ```
 
 生成出的 sheet 在可编辑数据区上方有多行元数据：
@@ -110,7 +89,7 @@ sora excel-template --project project.toml --out generated/excel
 运行配置好的所有输出：
 
 ```bash
-sora build --project project.toml
+sora build --project project.scon
 ```
 
 预期产物：
@@ -120,4 +99,4 @@ sora build --project project.toml
 - `generated/rust`
 - `generated/config.sora`
 
-如果只想校验 schema，可以运行 `sora check --project project.toml`。
+如果只想校验 schema，可以运行 `sora check --project project.scon`。

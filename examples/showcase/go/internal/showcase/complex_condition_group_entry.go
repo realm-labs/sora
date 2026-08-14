@@ -3,122 +3,123 @@
 package showcase
 
 type ComplexConditionGroupEntry struct {
-	ID      int32
-	GroupID int32
-	Seq     int32
-	Value   EventCondition
+    ID int32
+    GroupID int32
+    Seq int32
+    Value EventCondition
 }
 
 func decodeComplexConditionGroupEntry(reader *SoraReader) (ComplexConditionGroupEntry, error) {
-	var value ComplexConditionGroupEntry
-	var err error
-	value.ID, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.GroupID, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Seq, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Value, err = decodeEventCondition(reader)
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value ComplexConditionGroupEntry
+    var err error
+    value.ID, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.GroupID, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Seq, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Value, err = decodeEventCondition(reader)
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func decodeComplexConditionGroupEntryValue(input SoraValue) (ComplexConditionGroupEntry, error) {
-	var value ComplexConditionGroupEntry
-	obj, err := input.AsObject()
-	if err != nil {
-		return value, err
-	}
-	value.ID, err = obj.Get("id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.GroupID, err = obj.Get("group_id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Seq, err = obj.Get("seq").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Value, err = decodeEventConditionValue(obj.Get("value"))
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value ComplexConditionGroupEntry
+    obj, err := input.AsObject()
+    if err != nil {
+        return value, err
+    }
+    value.ID, err = obj.Get("id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.GroupID, err = obj.Get("group_id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Seq, err = obj.Get("seq").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Value, err = decodeEventConditionValue(obj.Get("value"))
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func (value ComplexConditionGroupEntry) collectTextKeys(out *[]TextKey) {
-	collectEventConditionTextKeys(value.Value, out)
+    collectEventConditionTextKeys(value.Value, out)
 }
 
 const complexConditionGroupEntryTableName = "ComplexConditionGroupEntry"
 
 var complexConditionGroupEntryTableInfo = SoraTableInfo{
-	Name:       complexConditionGroupEntryTableName,
-	RowType:    "ComplexConditionGroupEntry",
-	Shape:      SoraTableShapeKeyed,
-	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-	Indexes:    []SoraIndexInfo{},
+    Name: complexConditionGroupEntryTableName,
+    RowType: "ComplexConditionGroupEntry",
+    Shape: SoraTableShapeKeyed,
+    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+    Indexes: []SoraIndexInfo{
+    },
 }
 
 type ComplexConditionGroupEntryTable struct {
-	keys []int32
-	rows map[int32]ComplexConditionGroupEntry
+    keys []int32
+    rows map[int32]ComplexConditionGroupEntry
 }
 
 func buildComplexConditionGroupEntryTable(rows []ComplexConditionGroupEntry) (*ComplexConditionGroupEntryTable, error) {
-	keys := make([]int32, 0, len(rows))
-	for _, row := range rows {
-		keys = append(keys, row.ID)
-	}
-	return &ComplexConditionGroupEntryTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexConditionGroupEntry) int32 { return row.ID })}, nil
+    keys := make([]int32, 0, len(rows))
+    for _, row := range rows {
+        keys = append(keys, row.ID)
+    }
+    return &ComplexConditionGroupEntryTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexConditionGroupEntry) int32 { return row.ID })}, nil
 }
 
 func decodeComplexConditionGroupEntryTable(source SoraTableSource) (*ComplexConditionGroupEntryTable, error) {
-	rows, err := DecodeSourceTable(source, complexConditionGroupEntryTableName, decodeComplexConditionGroupEntry, decodeComplexConditionGroupEntryValue)
-	if err != nil {
-		return nil, err
-	}
-	return buildComplexConditionGroupEntryTable(rows)
+    rows, err := DecodeSourceTable(source, complexConditionGroupEntryTableName, decodeComplexConditionGroupEntry, decodeComplexConditionGroupEntryValue)
+    if err != nil {
+        return nil, err
+    }
+    return buildComplexConditionGroupEntryTable(rows)
 }
 func (table *ComplexConditionGroupEntryTable) Rows() map[int32]ComplexConditionGroupEntry {
-	rows := make(map[int32]ComplexConditionGroupEntry, len(table.rows))
-	for key, row := range table.rows {
-		rows[key] = row
-	}
-	return rows
+    rows := make(map[int32]ComplexConditionGroupEntry, len(table.rows))
+    for key, row := range table.rows {
+        rows[key] = row
+    }
+    return rows
 }
 func (table *ComplexConditionGroupEntryTable) Get(key int32) (ComplexConditionGroupEntry, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 
 func (table *ComplexConditionGroupEntryTable) Keys() []int32 {
-	return append([]int32(nil), table.keys...)
+    return append([]int32(nil), table.keys...)
 }
 
 func (table *ComplexConditionGroupEntryTable) OrderedRows() []ComplexConditionGroupEntry {
-	rows := make([]ComplexConditionGroupEntry, 0, len(table.keys))
-	for _, key := range table.keys {
-		if row, ok := table.rows[key]; ok {
-			rows = append(rows, row)
-		}
-	}
-	return rows
+    rows := make([]ComplexConditionGroupEntry, 0, len(table.keys))
+    for _, key := range table.keys {
+        if row, ok := table.rows[key]; ok {
+            rows = append(rows, row)
+        }
+    }
+    return rows
 }
 func (table *ComplexConditionGroupEntryTable) Info() SoraTableInfo {
-	return complexConditionGroupEntryTableInfo
+    return complexConditionGroupEntryTableInfo
 }
 
 func (table *ComplexConditionGroupEntryTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }

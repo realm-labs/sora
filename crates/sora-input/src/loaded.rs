@@ -1,19 +1,19 @@
 use sora_data::model::{ConfigData, LocalizationData};
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::ConfigIr;
-use sora_schema::model::SchemaFile;
+use sora_schema::model::ProjectSchema;
 
 use crate::traits::{DataInput, SchemaInput};
 
 #[derive(Debug, Clone)]
 pub struct LoadedInput {
-    schema: SchemaFile,
+    schema: ProjectSchema,
     data: Option<ConfigData>,
     localization_data: LocalizationData,
 }
 
 impl LoadedInput {
-    pub fn schema_only(schema: SchemaFile) -> Self {
+    pub fn schema_only(schema: ProjectSchema) -> Self {
         Self {
             schema,
             data: None,
@@ -21,7 +21,7 @@ impl LoadedInput {
         }
     }
 
-    pub fn with_data(schema: SchemaFile, data: ConfigData) -> Self {
+    pub fn with_data(schema: ProjectSchema, data: ConfigData) -> Self {
         Self {
             schema,
             data: Some(data),
@@ -30,7 +30,7 @@ impl LoadedInput {
     }
 
     pub fn with_data_and_localization(
-        schema: SchemaFile,
+        schema: ProjectSchema,
         data: ConfigData,
         localization_data: LocalizationData,
     ) -> Self {
@@ -43,7 +43,7 @@ impl LoadedInput {
 }
 
 impl SchemaInput for LoadedInput {
-    fn load_schema(&self) -> Result<SchemaFile> {
+    fn load_schema(&self) -> Result<ProjectSchema> {
         Ok(self.schema.clone())
     }
 }

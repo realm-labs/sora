@@ -2,7 +2,7 @@
 
 ## Project
 
-A project manifest declares the package name, schema modules, build outputs, codegen targets, and export targets. It is the entry point used by `sora check`, `sora build`, `sora gen`, and `sora export`.
+A project manifest declares the project ID, schema modules, views, build outputs, codegen targets, and export targets. It is the entry point used by `sora check`, `sora build`, `sora gen`, and `sora export`.
 
 ## Schema
 

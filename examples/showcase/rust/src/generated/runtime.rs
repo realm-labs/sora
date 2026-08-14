@@ -568,9 +568,47 @@ impl SoraDecode for bool {
     }
 }
 
+impl SoraDecode for i8 {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        let value = reader.read_i32()?;
+        Self::try_from(value)
+            .map_err(|_| SoraReadError::new(format!("decoded i8 is out of range: {}", value)))
+    }
+}
+
+impl SoraDecode for u8 {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        let value = reader.read_var_u32()?;
+        Self::try_from(value)
+            .map_err(|_| SoraReadError::new(format!("decoded u8 is out of range: {}", value)))
+    }
+}
+
+impl SoraDecode for i16 {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        let value = reader.read_i32()?;
+        Self::try_from(value)
+            .map_err(|_| SoraReadError::new(format!("decoded i16 is out of range: {}", value)))
+    }
+}
+
+impl SoraDecode for u16 {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        let value = reader.read_var_u32()?;
+        Self::try_from(value)
+            .map_err(|_| SoraReadError::new(format!("decoded u16 is out of range: {}", value)))
+    }
+}
+
 impl SoraDecode for i32 {
     fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
         reader.read_i32()
+    }
+}
+
+impl SoraDecode for u32 {
+    fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {
+        reader.read_var_u32()
     }
 }
 

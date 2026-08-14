@@ -3,7 +3,7 @@
 class_name SoraConfig
 extends RefCounted
 
-const SORA_SCHEMA_FINGERPRINT := "89c4dd879f839a58"
+const SORA_SCHEMA_FINGERPRINT := "a738802174e37792"
 var _tables: Dictionary = {}
 
 static func load_json_file(path: String) -> SoraConfig:
@@ -23,29 +23,11 @@ static func from_json_root(root: Dictionary) -> SoraConfig:
 		return null
 	var bundle := SoraRuntime.decode_bundle(root, "json")
 	var config := SoraConfig.new()
-	config._tables[Item.ItemTable.TABLE_NAME] = Item.ItemTable.decode(
-		SoraRuntime.decode_table(bundle, Item.ItemTable.TABLE_NAME, Item.decode)
+	config._tables[Achievement.AchievementTable.TABLE_NAME] = Achievement.AchievementTable.decode(
+		SoraRuntime.decode_table(bundle, Achievement.AchievementTable.TABLE_NAME, Achievement.decode)
 	)
-	config._tables[Shop.ShopTable.TABLE_NAME] = Shop.ShopTable.decode(
-		SoraRuntime.decode_table(bundle, Shop.ShopTable.TABLE_NAME, Shop.decode)
-	)
-	config._tables[ShopItem.ShopItemTable.TABLE_NAME] = ShopItem.ShopItemTable.decode(
-		SoraRuntime.decode_table(bundle, ShopItem.ShopItemTable.TABLE_NAME, ShopItem.decode)
-	)
-	config._tables[Recipe.RecipeTable.TABLE_NAME] = Recipe.RecipeTable.decode(
-		SoraRuntime.decode_table(bundle, Recipe.RecipeTable.TABLE_NAME, Recipe.decode)
-	)
-	config._tables[GachaPool.GachaPoolTable.TABLE_NAME] = GachaPool.GachaPoolTable.decode(
-		SoraRuntime.decode_table(bundle, GachaPool.GachaPoolTable.TABLE_NAME, GachaPool.decode)
-	)
-	config._tables[GachaItem.GachaItemTable.TABLE_NAME] = GachaItem.GachaItemTable.decode(
-		SoraRuntime.decode_table(bundle, GachaItem.GachaItemTable.TABLE_NAME, GachaItem.decode)
-	)
-	config._tables[EquipmentSet.EquipmentSetTable.TABLE_NAME] = EquipmentSet.EquipmentSetTable.decode(
-		SoraRuntime.decode_table(bundle, EquipmentSet.EquipmentSetTable.TABLE_NAME, EquipmentSet.decode)
-	)
-	config._tables[Skill.SkillTable.TABLE_NAME] = Skill.SkillTable.decode(
-		SoraRuntime.decode_table(bundle, Skill.SkillTable.TABLE_NAME, Skill.decode)
+	config._tables[Buff.BuffTable.TABLE_NAME] = Buff.BuffTable.decode(
+		SoraRuntime.decode_table(bundle, Buff.BuffTable.TABLE_NAME, Buff.decode)
 	)
 	config._tables[Character.CharacterTable.TABLE_NAME] = Character.CharacterTable.decode(
 		SoraRuntime.decode_table(bundle, Character.CharacterTable.TABLE_NAME, Character.decode)
@@ -53,59 +35,11 @@ static func from_json_root(root: Dictionary) -> SoraConfig:
 	config._tables[CharacterSkill.CharacterSkillTable.TABLE_NAME] = CharacterSkill.CharacterSkillTable.decode(
 		SoraRuntime.decode_table(bundle, CharacterSkill.CharacterSkillTable.TABLE_NAME, CharacterSkill.decode)
 	)
-	config._tables[Buff.BuffTable.TABLE_NAME] = Buff.BuffTable.decode(
-		SoraRuntime.decode_table(bundle, Buff.BuffTable.TABLE_NAME, Buff.decode)
+	config._tables[ComplexActionEntry.ComplexActionEntryTable.TABLE_NAME] = ComplexActionEntry.ComplexActionEntryTable.decode(
+		SoraRuntime.decode_table(bundle, ComplexActionEntry.ComplexActionEntryTable.TABLE_NAME, ComplexActionEntry.decode)
 	)
-	config._tables[DropGroup.DropGroupTable.TABLE_NAME] = DropGroup.DropGroupTable.decode(
-		SoraRuntime.decode_table(bundle, DropGroup.DropGroupTable.TABLE_NAME, DropGroup.decode)
-	)
-	config._tables[DropEntry.DropEntryTable.TABLE_NAME] = DropEntry.DropEntryTable.decode(
-		SoraRuntime.decode_table(bundle, DropEntry.DropEntryTable.TABLE_NAME, DropEntry.decode)
-	)
-	config._tables[Monster.MonsterTable.TABLE_NAME] = Monster.MonsterTable.decode(
-		SoraRuntime.decode_table(bundle, Monster.MonsterTable.TABLE_NAME, Monster.decode)
-	)
-	config._tables[Stage.StageTable.TABLE_NAME] = Stage.StageTable.decode(
-		SoraRuntime.decode_table(bundle, Stage.StageTable.TABLE_NAME, Stage.decode)
-	)
-	config._tables[StageReward.StageRewardTable.TABLE_NAME] = StageReward.StageRewardTable.decode(
-		SoraRuntime.decode_table(bundle, StageReward.StageRewardTable.TABLE_NAME, StageReward.decode)
-	)
-	config._tables[Dungeon.DungeonTable.TABLE_NAME] = Dungeon.DungeonTable.decode(
-		SoraRuntime.decode_table(bundle, Dungeon.DungeonTable.TABLE_NAME, Dungeon.decode)
-	)
-	config._tables[Quest.QuestTable.TABLE_NAME] = Quest.QuestTable.decode(
-		SoraRuntime.decode_table(bundle, Quest.QuestTable.TABLE_NAME, Quest.decode)
-	)
-	config._tables[QuestReward.QuestRewardTable.TABLE_NAME] = QuestReward.QuestRewardTable.decode(
-		SoraRuntime.decode_table(bundle, QuestReward.QuestRewardTable.TABLE_NAME, QuestReward.decode)
-	)
-	config._tables[LevelExp.LevelExpTable.TABLE_NAME] = LevelExp.LevelExpTable.decode(
-		SoraRuntime.decode_table(bundle, LevelExp.LevelExpTable.TABLE_NAME, LevelExp.decode)
-	)
-	config._tables[Achievement.AchievementTable.TABLE_NAME] = Achievement.AchievementTable.decode(
-		SoraRuntime.decode_table(bundle, Achievement.AchievementTable.TABLE_NAME, Achievement.decode)
-	)
-	config._tables[VipLevel.VipLevelTable.TABLE_NAME] = VipLevel.VipLevelTable.decode(
-		SoraRuntime.decode_table(bundle, VipLevel.VipLevelTable.TABLE_NAME, VipLevel.decode)
-	)
-	config._tables[GameSettings.GameSettingsTable.TABLE_NAME] = GameSettings.GameSettingsTable.decode(
-		SoraRuntime.decode_table(bundle, GameSettings.GameSettingsTable.TABLE_NAME, GameSettings.decode)
-	)
-	config._tables[MailTemplate.MailTemplateTable.TABLE_NAME] = MailTemplate.MailTemplateTable.decode(
-		SoraRuntime.decode_table(bundle, MailTemplate.MailTemplateTable.TABLE_NAME, MailTemplate.decode)
-	)
-	config._tables[MailReward.MailRewardTable.TABLE_NAME] = MailReward.MailRewardTable.decode(
-		SoraRuntime.decode_table(bundle, MailReward.MailRewardTable.TABLE_NAME, MailReward.decode)
-	)
-	config._tables[Dialogue.DialogueTable.TABLE_NAME] = Dialogue.DialogueTable.decode(
-		SoraRuntime.decode_table(bundle, Dialogue.DialogueTable.TABLE_NAME, Dialogue.decode)
-	)
-	config._tables[EventRule.EventRuleTable.TABLE_NAME] = EventRule.EventRuleTable.decode(
-		SoraRuntime.decode_table(bundle, EventRule.EventRuleTable.TABLE_NAME, EventRule.decode)
-	)
-	config._tables[ComplexRule.ComplexRuleTable.TABLE_NAME] = ComplexRule.ComplexRuleTable.decode(
-		SoraRuntime.decode_table(bundle, ComplexRule.ComplexRuleTable.TABLE_NAME, ComplexRule.decode)
+	config._tables[ComplexActionGroup.ComplexActionGroupTable.TABLE_NAME] = ComplexActionGroup.ComplexActionGroupTable.decode(
+		SoraRuntime.decode_table(bundle, ComplexActionGroup.ComplexActionGroupTable.TABLE_NAME, ComplexActionGroup.decode)
 	)
 	config._tables[ComplexConditionGroup.ComplexConditionGroupTable.TABLE_NAME] = ComplexConditionGroup.ComplexConditionGroupTable.decode(
 		SoraRuntime.decode_table(bundle, ComplexConditionGroup.ComplexConditionGroupTable.TABLE_NAME, ComplexConditionGroup.decode)
@@ -113,14 +47,80 @@ static func from_json_root(root: Dictionary) -> SoraConfig:
 	config._tables[ComplexConditionGroupEntry.ComplexConditionGroupEntryTable.TABLE_NAME] = ComplexConditionGroupEntry.ComplexConditionGroupEntryTable.decode(
 		SoraRuntime.decode_table(bundle, ComplexConditionGroupEntry.ComplexConditionGroupEntryTable.TABLE_NAME, ComplexConditionGroupEntry.decode)
 	)
+	config._tables[ComplexRule.ComplexRuleTable.TABLE_NAME] = ComplexRule.ComplexRuleTable.decode(
+		SoraRuntime.decode_table(bundle, ComplexRule.ComplexRuleTable.TABLE_NAME, ComplexRule.decode)
+	)
 	config._tables[ComplexRuleCondition.ComplexRuleConditionTable.TABLE_NAME] = ComplexRuleCondition.ComplexRuleConditionTable.decode(
 		SoraRuntime.decode_table(bundle, ComplexRuleCondition.ComplexRuleConditionTable.TABLE_NAME, ComplexRuleCondition.decode)
 	)
-	config._tables[ComplexActionGroup.ComplexActionGroupTable.TABLE_NAME] = ComplexActionGroup.ComplexActionGroupTable.decode(
-		SoraRuntime.decode_table(bundle, ComplexActionGroup.ComplexActionGroupTable.TABLE_NAME, ComplexActionGroup.decode)
+	config._tables[Dialogue.DialogueTable.TABLE_NAME] = Dialogue.DialogueTable.decode(
+		SoraRuntime.decode_table(bundle, Dialogue.DialogueTable.TABLE_NAME, Dialogue.decode)
 	)
-	config._tables[ComplexActionEntry.ComplexActionEntryTable.TABLE_NAME] = ComplexActionEntry.ComplexActionEntryTable.decode(
-		SoraRuntime.decode_table(bundle, ComplexActionEntry.ComplexActionEntryTable.TABLE_NAME, ComplexActionEntry.decode)
+	config._tables[DropEntry.DropEntryTable.TABLE_NAME] = DropEntry.DropEntryTable.decode(
+		SoraRuntime.decode_table(bundle, DropEntry.DropEntryTable.TABLE_NAME, DropEntry.decode)
+	)
+	config._tables[DropGroup.DropGroupTable.TABLE_NAME] = DropGroup.DropGroupTable.decode(
+		SoraRuntime.decode_table(bundle, DropGroup.DropGroupTable.TABLE_NAME, DropGroup.decode)
+	)
+	config._tables[Dungeon.DungeonTable.TABLE_NAME] = Dungeon.DungeonTable.decode(
+		SoraRuntime.decode_table(bundle, Dungeon.DungeonTable.TABLE_NAME, Dungeon.decode)
+	)
+	config._tables[EquipmentSet.EquipmentSetTable.TABLE_NAME] = EquipmentSet.EquipmentSetTable.decode(
+		SoraRuntime.decode_table(bundle, EquipmentSet.EquipmentSetTable.TABLE_NAME, EquipmentSet.decode)
+	)
+	config._tables[EventRule.EventRuleTable.TABLE_NAME] = EventRule.EventRuleTable.decode(
+		SoraRuntime.decode_table(bundle, EventRule.EventRuleTable.TABLE_NAME, EventRule.decode)
+	)
+	config._tables[GachaItem.GachaItemTable.TABLE_NAME] = GachaItem.GachaItemTable.decode(
+		SoraRuntime.decode_table(bundle, GachaItem.GachaItemTable.TABLE_NAME, GachaItem.decode)
+	)
+	config._tables[GachaPool.GachaPoolTable.TABLE_NAME] = GachaPool.GachaPoolTable.decode(
+		SoraRuntime.decode_table(bundle, GachaPool.GachaPoolTable.TABLE_NAME, GachaPool.decode)
+	)
+	config._tables[GameSettings.GameSettingsTable.TABLE_NAME] = GameSettings.GameSettingsTable.decode(
+		SoraRuntime.decode_table(bundle, GameSettings.GameSettingsTable.TABLE_NAME, GameSettings.decode)
+	)
+	config._tables[Item.ItemTable.TABLE_NAME] = Item.ItemTable.decode(
+		SoraRuntime.decode_table(bundle, Item.ItemTable.TABLE_NAME, Item.decode)
+	)
+	config._tables[LevelExp.LevelExpTable.TABLE_NAME] = LevelExp.LevelExpTable.decode(
+		SoraRuntime.decode_table(bundle, LevelExp.LevelExpTable.TABLE_NAME, LevelExp.decode)
+	)
+	config._tables[MailReward.MailRewardTable.TABLE_NAME] = MailReward.MailRewardTable.decode(
+		SoraRuntime.decode_table(bundle, MailReward.MailRewardTable.TABLE_NAME, MailReward.decode)
+	)
+	config._tables[MailTemplate.MailTemplateTable.TABLE_NAME] = MailTemplate.MailTemplateTable.decode(
+		SoraRuntime.decode_table(bundle, MailTemplate.MailTemplateTable.TABLE_NAME, MailTemplate.decode)
+	)
+	config._tables[Monster.MonsterTable.TABLE_NAME] = Monster.MonsterTable.decode(
+		SoraRuntime.decode_table(bundle, Monster.MonsterTable.TABLE_NAME, Monster.decode)
+	)
+	config._tables[Quest.QuestTable.TABLE_NAME] = Quest.QuestTable.decode(
+		SoraRuntime.decode_table(bundle, Quest.QuestTable.TABLE_NAME, Quest.decode)
+	)
+	config._tables[QuestReward.QuestRewardTable.TABLE_NAME] = QuestReward.QuestRewardTable.decode(
+		SoraRuntime.decode_table(bundle, QuestReward.QuestRewardTable.TABLE_NAME, QuestReward.decode)
+	)
+	config._tables[Recipe.RecipeTable.TABLE_NAME] = Recipe.RecipeTable.decode(
+		SoraRuntime.decode_table(bundle, Recipe.RecipeTable.TABLE_NAME, Recipe.decode)
+	)
+	config._tables[Shop.ShopTable.TABLE_NAME] = Shop.ShopTable.decode(
+		SoraRuntime.decode_table(bundle, Shop.ShopTable.TABLE_NAME, Shop.decode)
+	)
+	config._tables[ShopItem.ShopItemTable.TABLE_NAME] = ShopItem.ShopItemTable.decode(
+		SoraRuntime.decode_table(bundle, ShopItem.ShopItemTable.TABLE_NAME, ShopItem.decode)
+	)
+	config._tables[Skill.SkillTable.TABLE_NAME] = Skill.SkillTable.decode(
+		SoraRuntime.decode_table(bundle, Skill.SkillTable.TABLE_NAME, Skill.decode)
+	)
+	config._tables[Stage.StageTable.TABLE_NAME] = Stage.StageTable.decode(
+		SoraRuntime.decode_table(bundle, Stage.StageTable.TABLE_NAME, Stage.decode)
+	)
+	config._tables[StageReward.StageRewardTable.TABLE_NAME] = StageReward.StageRewardTable.decode(
+		SoraRuntime.decode_table(bundle, StageReward.StageRewardTable.TABLE_NAME, StageReward.decode)
+	)
+	config._tables[VipLevel.VipLevelTable.TABLE_NAME] = VipLevel.VipLevelTable.decode(
+		SoraRuntime.decode_table(bundle, VipLevel.VipLevelTable.TABLE_NAME, VipLevel.decode)
 	)
 	return config
 
@@ -131,69 +131,69 @@ func tables() -> Array[SoraRuntime.SoraConfigTable]:
 
 func table(name: String) -> SoraRuntime.SoraConfigTable:
 	return _tables.get(name)
-func item() -> Item.ItemTable:
-	return _tables[Item.ItemTable.TABLE_NAME]
-func shop() -> Shop.ShopTable:
-	return _tables[Shop.ShopTable.TABLE_NAME]
-func shop_item() -> ShopItem.ShopItemTable:
-	return _tables[ShopItem.ShopItemTable.TABLE_NAME]
-func recipe() -> Recipe.RecipeTable:
-	return _tables[Recipe.RecipeTable.TABLE_NAME]
-func gacha_pool() -> GachaPool.GachaPoolTable:
-	return _tables[GachaPool.GachaPoolTable.TABLE_NAME]
-func gacha_item() -> GachaItem.GachaItemTable:
-	return _tables[GachaItem.GachaItemTable.TABLE_NAME]
-func equipment_set() -> EquipmentSet.EquipmentSetTable:
-	return _tables[EquipmentSet.EquipmentSetTable.TABLE_NAME]
-func skill() -> Skill.SkillTable:
-	return _tables[Skill.SkillTable.TABLE_NAME]
+func achievement() -> Achievement.AchievementTable:
+	return _tables[Achievement.AchievementTable.TABLE_NAME]
+func buff() -> Buff.BuffTable:
+	return _tables[Buff.BuffTable.TABLE_NAME]
 func character() -> Character.CharacterTable:
 	return _tables[Character.CharacterTable.TABLE_NAME]
 func character_skill() -> CharacterSkill.CharacterSkillTable:
 	return _tables[CharacterSkill.CharacterSkillTable.TABLE_NAME]
-func buff() -> Buff.BuffTable:
-	return _tables[Buff.BuffTable.TABLE_NAME]
-func drop_group() -> DropGroup.DropGroupTable:
-	return _tables[DropGroup.DropGroupTable.TABLE_NAME]
-func drop_entry() -> DropEntry.DropEntryTable:
-	return _tables[DropEntry.DropEntryTable.TABLE_NAME]
-func monster() -> Monster.MonsterTable:
-	return _tables[Monster.MonsterTable.TABLE_NAME]
-func stage() -> Stage.StageTable:
-	return _tables[Stage.StageTable.TABLE_NAME]
-func stage_reward() -> StageReward.StageRewardTable:
-	return _tables[StageReward.StageRewardTable.TABLE_NAME]
-func dungeon() -> Dungeon.DungeonTable:
-	return _tables[Dungeon.DungeonTable.TABLE_NAME]
-func quest() -> Quest.QuestTable:
-	return _tables[Quest.QuestTable.TABLE_NAME]
-func quest_reward() -> QuestReward.QuestRewardTable:
-	return _tables[QuestReward.QuestRewardTable.TABLE_NAME]
-func level_exp() -> LevelExp.LevelExpTable:
-	return _tables[LevelExp.LevelExpTable.TABLE_NAME]
-func achievement() -> Achievement.AchievementTable:
-	return _tables[Achievement.AchievementTable.TABLE_NAME]
-func vip_level() -> VipLevel.VipLevelTable:
-	return _tables[VipLevel.VipLevelTable.TABLE_NAME]
-func game_settings() -> GameSettings.GameSettingsTable:
-	return _tables[GameSettings.GameSettingsTable.TABLE_NAME]
-func mail_template() -> MailTemplate.MailTemplateTable:
-	return _tables[MailTemplate.MailTemplateTable.TABLE_NAME]
-func mail_reward() -> MailReward.MailRewardTable:
-	return _tables[MailReward.MailRewardTable.TABLE_NAME]
-func dialogue() -> Dialogue.DialogueTable:
-	return _tables[Dialogue.DialogueTable.TABLE_NAME]
-func event_rule() -> EventRule.EventRuleTable:
-	return _tables[EventRule.EventRuleTable.TABLE_NAME]
-func complex_rule() -> ComplexRule.ComplexRuleTable:
-	return _tables[ComplexRule.ComplexRuleTable.TABLE_NAME]
+func complex_action_entry() -> ComplexActionEntry.ComplexActionEntryTable:
+	return _tables[ComplexActionEntry.ComplexActionEntryTable.TABLE_NAME]
+func complex_action_group() -> ComplexActionGroup.ComplexActionGroupTable:
+	return _tables[ComplexActionGroup.ComplexActionGroupTable.TABLE_NAME]
 func complex_condition_group() -> ComplexConditionGroup.ComplexConditionGroupTable:
 	return _tables[ComplexConditionGroup.ComplexConditionGroupTable.TABLE_NAME]
 func complex_condition_group_entry() -> ComplexConditionGroupEntry.ComplexConditionGroupEntryTable:
 	return _tables[ComplexConditionGroupEntry.ComplexConditionGroupEntryTable.TABLE_NAME]
+func complex_rule() -> ComplexRule.ComplexRuleTable:
+	return _tables[ComplexRule.ComplexRuleTable.TABLE_NAME]
 func complex_rule_condition() -> ComplexRuleCondition.ComplexRuleConditionTable:
 	return _tables[ComplexRuleCondition.ComplexRuleConditionTable.TABLE_NAME]
-func complex_action_group() -> ComplexActionGroup.ComplexActionGroupTable:
-	return _tables[ComplexActionGroup.ComplexActionGroupTable.TABLE_NAME]
-func complex_action_entry() -> ComplexActionEntry.ComplexActionEntryTable:
-	return _tables[ComplexActionEntry.ComplexActionEntryTable.TABLE_NAME]
+func dialogue() -> Dialogue.DialogueTable:
+	return _tables[Dialogue.DialogueTable.TABLE_NAME]
+func drop_entry() -> DropEntry.DropEntryTable:
+	return _tables[DropEntry.DropEntryTable.TABLE_NAME]
+func drop_group() -> DropGroup.DropGroupTable:
+	return _tables[DropGroup.DropGroupTable.TABLE_NAME]
+func dungeon() -> Dungeon.DungeonTable:
+	return _tables[Dungeon.DungeonTable.TABLE_NAME]
+func equipment_set() -> EquipmentSet.EquipmentSetTable:
+	return _tables[EquipmentSet.EquipmentSetTable.TABLE_NAME]
+func event_rule() -> EventRule.EventRuleTable:
+	return _tables[EventRule.EventRuleTable.TABLE_NAME]
+func gacha_item() -> GachaItem.GachaItemTable:
+	return _tables[GachaItem.GachaItemTable.TABLE_NAME]
+func gacha_pool() -> GachaPool.GachaPoolTable:
+	return _tables[GachaPool.GachaPoolTable.TABLE_NAME]
+func game_settings() -> GameSettings.GameSettingsTable:
+	return _tables[GameSettings.GameSettingsTable.TABLE_NAME]
+func item() -> Item.ItemTable:
+	return _tables[Item.ItemTable.TABLE_NAME]
+func level_exp() -> LevelExp.LevelExpTable:
+	return _tables[LevelExp.LevelExpTable.TABLE_NAME]
+func mail_reward() -> MailReward.MailRewardTable:
+	return _tables[MailReward.MailRewardTable.TABLE_NAME]
+func mail_template() -> MailTemplate.MailTemplateTable:
+	return _tables[MailTemplate.MailTemplateTable.TABLE_NAME]
+func monster() -> Monster.MonsterTable:
+	return _tables[Monster.MonsterTable.TABLE_NAME]
+func quest() -> Quest.QuestTable:
+	return _tables[Quest.QuestTable.TABLE_NAME]
+func quest_reward() -> QuestReward.QuestRewardTable:
+	return _tables[QuestReward.QuestRewardTable.TABLE_NAME]
+func recipe() -> Recipe.RecipeTable:
+	return _tables[Recipe.RecipeTable.TABLE_NAME]
+func shop() -> Shop.ShopTable:
+	return _tables[Shop.ShopTable.TABLE_NAME]
+func shop_item() -> ShopItem.ShopItemTable:
+	return _tables[ShopItem.ShopItemTable.TABLE_NAME]
+func skill() -> Skill.SkillTable:
+	return _tables[Skill.SkillTable.TABLE_NAME]
+func stage() -> Stage.StageTable:
+	return _tables[Stage.StageTable.TABLE_NAME]
+func stage_reward() -> StageReward.StageRewardTable:
+	return _tables[StageReward.StageRewardTable.TABLE_NAME]
+func vip_level() -> VipLevel.VipLevelTable:
+	return _tables[VipLevel.VipLevelTable.TABLE_NAME]

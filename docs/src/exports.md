@@ -33,7 +33,7 @@ The `binary` export is selected by `runtime_format = "sora"` in codegen options.
 sora export \
   --format binary \
   --default-source-format xlsx \
-  --project project.toml \
+  --project project.scon \
   --data-root data \
   --out generated/config.sora
 ```

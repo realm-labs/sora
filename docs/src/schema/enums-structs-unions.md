@@ -4,50 +4,45 @@ These definitions let schemas model more than flat tables.
 
 ## Enums
 
-```toml
-[[enums]]
-name = "Rarity"
-values = [{ id = 0, name = "Common" }, { id = 1, name = "Uncommon" }, { id = 2, name = "Rare" }, { id = 3, name = "Epic" }, { id = 4, name = "Legendary" }]
+```scon
+enums {
+  Rarity = ["Common", "Uncommon", "Rare", "Epic", "Legendary"]
+}
 ```
 
 Enums keep source data readable while generated code receives a constrained type.
-Every enum value has an explicit, stable integer `id`. IDs must be unique within
-the enum and range from `0` to `2147483647`. Reordering values does not change
-their encoded representation; keep the existing ID when renaming a value. The
-binary format, integer enum representations, native enum values where supported,
-and generated Protobuf schemas all use this ID.
 
 Aliases can keep imported or legacy names readable:
 
-```toml
-[[enums.aliases]]
-name = "Epic"
-alias = "Purple"
+```scon
+enums {
+  Rarity {
+    values = ["Common", "Uncommon", "Rare", "Epic", "Legendary"]
+    aliases { Purple = "Epic" }
+  }
+}
 ```
 
 ## Structs
 
-```toml
-[[structs]]
-name = "ResourceCost"
-
-[[structs.fields]]
-name = "kind"
-type = "enum<ResourceKind>"
-
-[[structs.fields]]
-name = "id"
-type = "i32"
-
-[[structs.fields]]
-name = "count"
-type = "i32"
-range = [1, 999999]
+```scon
+structs {
+  ResourceCost {
+    fields {
+      kind = "enum<ResourceKind>"
+      id = "i32"
+      count {
+        type = "i32"
+        range = [1, 999999]
+      }
+    }
+  }
+}
 ```
 
 Use structs for nested values that appear in many places. A field can reference a struct with `type = "struct<ResourceCost>"`.
 
-Struct fields use the same field properties as table fields, including `name`, `type`, `default`, `comment`, `range`, `length`, `parser`, and `groups`. Table-specific properties such as `key` and `from` are not meaningful for normal struct fields. See [Types](types.md#field-rules) for the full field reference.
+Struct fields use the same field properties as table fields, including `type`, `default`, `comment`, `range`, `length`, `parser`, and `groups`. The field name comes from its key. Table-specific properties such as `key` and `from` are not meaningful for normal struct fields. See [Types](types.md#field-rules) for the full field reference.
 
 In cell-based inputs, a struct field can be written as JSON object text by default:
 
@@ -75,28 +70,23 @@ Use a union when one field can contain different shapes. For example, an event c
 
 The `type` value selects which variant is present. The rest of the fields depend on that variant.
 
-```toml
-[[unions]]
-name = "RewardAction"
-tag = "type"
-
-[[unions.variants]]
-name = "AddItem"
-
-[[unions.variants.fields]]
-name = "item_id"
-type = "ref<Item.id>"
-
-[[unions.variants.fields]]
-name = "count"
-type = "i32"
-
-[[unions.variants]]
-name = "UnlockStage"
-
-[[unions.variants.fields]]
-name = "stage_id"
-type = "ref<Stage.id>"
+```scon
+unions {
+  RewardAction {
+    tag = "type"
+    variants {
+      AddItem {
+        fields {
+          item_id = "ref<Item.id>"
+          count = "i32"
+        }
+      }
+      UnlockStage {
+        fields { stage_id = "ref<Stage.id>" }
+      }
+    }
+  }
+}
 ```
 
 Use unions when a field can contain one of several tagged shapes. Examples include conditions, rewards, triggers, and scripted actions.
@@ -111,11 +101,10 @@ The most direct Excel or CSV form is JSON object text in one cell:
 
 For a list of union values, declare `parser = { kind = "json" }` and write a JSON array:
 
-```toml
-[[tables.fields]]
-name = "actions"
-type = "list<union<RewardAction>>"
-parser = { kind = "json" }
+```scon
+fields {
+  actions { type = "list<union<RewardAction>>" parser = "json" }
+}
 ```
 
 ```json
@@ -127,11 +116,10 @@ parser = { kind = "json" }
 
 If you do not want JSON in Excel or CSV cells, a single `union<T>` field can be expanded into several columns. This `action` field is one union value:
 
-```toml
-[[tables.fields]]
-name = "action"
-type = "union<RewardAction>"
-parser = { kind = "tagged_columns" }
+```scon
+fields {
+  action { type = "union<RewardAction>" parser = "tagged_columns" }
+}
 ```
 
 The Excel sheet then has columns like this:
@@ -146,29 +134,28 @@ The Excel sheet then has columns like this:
 
 `tagged_columns` is only valid on a field whose type is exactly `union<T>`; it cannot be applied directly to `list<union<T>>`. When a parent field needs several union values, put each union value in a child row and derive the parent list from that child table:
 
-```toml
-[[tables.fields]]
-name = "actions"
-type = "list<union<RewardAction>>"
-from = { table = "EventActionEntry", parent_key = "id", child_key = "event_id", field = "value", order_by = "seq" }
-
-[[tables]]
-id = "eventactionentry"
-name = "EventActionEntry"
-mode = "list"
-
-[[tables.fields]]
-name = "event_id"
-type = "ref<EventRule.id>"
-
-[[tables.fields]]
-name = "seq"
-type = "i32"
-
-[[tables.fields]]
-name = "value"
-type = "union<RewardAction>"
-parser = { kind = "tagged_columns", prefix = "" }
+```scon
+tables {
+  EventRule {
+    fields {
+      actions {
+        type = "list<union<RewardAction>>"
+        from = { table = "EventActionEntry", parent_key = "id", child_key = "event_id", field = "value", order_by = "seq" }
+      }
+    }
+  }
+  EventActionEntry {
+    mode = "list"
+    fields {
+      event_id = "ref<EventRule.id>"
+      seq = "i32"
+      value {
+        type = "union<RewardAction>"
+        parser = { kind = "tagged_columns", prefix = "" }
+      }
+    }
+  }
+}
 ```
 
 The parent `EventRule` sheet keeps ordinary columns:

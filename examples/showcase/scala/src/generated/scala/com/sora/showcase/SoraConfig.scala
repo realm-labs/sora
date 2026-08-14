@@ -43,40 +43,40 @@ final class SoraConfig private (
 
   private def textKeys: scala.collection.mutable.ArrayBuffer[TextKey] = {
     val keys = scala.collection.mutable.ArrayBuffer.empty[TextKey]
-    item.values.foreach(_.collectTextKeys(keys))
-    shop.values.foreach(_.collectTextKeys(keys))
-    shopItem.values.foreach(_.collectTextKeys(keys))
-    recipe.values.foreach(_.collectTextKeys(keys))
-    gachaPool.values.foreach(_.collectTextKeys(keys))
-    gachaItem.values.foreach(_.collectTextKeys(keys))
-    equipmentSet.values.foreach(_.collectTextKeys(keys))
-    skill.values.foreach(_.collectTextKeys(keys))
+    achievement.values.foreach(_.collectTextKeys(keys))
+    buff.values.foreach(_.collectTextKeys(keys))
     character.values.foreach(_.collectTextKeys(keys))
     characterSkill.values.foreach(_.collectTextKeys(keys))
-    buff.values.foreach(_.collectTextKeys(keys))
-    dropGroup.values.foreach(_.collectTextKeys(keys))
-    dropEntry.values.foreach(_.collectTextKeys(keys))
-    monster.values.foreach(_.collectTextKeys(keys))
-    stage.values.foreach(_.collectTextKeys(keys))
-    stageReward.values.foreach(_.collectTextKeys(keys))
-    dungeon.values.foreach(_.collectTextKeys(keys))
-    quest.values.foreach(_.collectTextKeys(keys))
-    questReward.values.foreach(_.collectTextKeys(keys))
-    levelExp.values.foreach(_.collectTextKeys(keys))
-    achievement.values.foreach(_.collectTextKeys(keys))
-    vipLevel.values.foreach(_.collectTextKeys(keys))
-    gameSettings.value.collectTextKeys(keys)
-    maintenanceWindow.values.foreach(_.collectTextKeys(keys))
-    mailTemplate.values.foreach(_.collectTextKeys(keys))
-    mailReward.values.foreach(_.collectTextKeys(keys))
-    dialogue.values.foreach(_.collectTextKeys(keys))
-    eventRule.values.foreach(_.collectTextKeys(keys))
-    complexRule.values.foreach(_.collectTextKeys(keys))
+    complexActionEntry.values.foreach(_.collectTextKeys(keys))
+    complexActionGroup.values.foreach(_.collectTextKeys(keys))
     complexConditionGroup.values.foreach(_.collectTextKeys(keys))
     complexConditionGroupEntry.values.foreach(_.collectTextKeys(keys))
+    complexRule.values.foreach(_.collectTextKeys(keys))
     complexRuleCondition.values.foreach(_.collectTextKeys(keys))
-    complexActionGroup.values.foreach(_.collectTextKeys(keys))
-    complexActionEntry.values.foreach(_.collectTextKeys(keys))
+    dialogue.values.foreach(_.collectTextKeys(keys))
+    dropEntry.values.foreach(_.collectTextKeys(keys))
+    dropGroup.values.foreach(_.collectTextKeys(keys))
+    dungeon.values.foreach(_.collectTextKeys(keys))
+    equipmentSet.values.foreach(_.collectTextKeys(keys))
+    eventRule.values.foreach(_.collectTextKeys(keys))
+    gachaItem.values.foreach(_.collectTextKeys(keys))
+    gachaPool.values.foreach(_.collectTextKeys(keys))
+    gameSettings.value.collectTextKeys(keys)
+    item.values.foreach(_.collectTextKeys(keys))
+    levelExp.values.foreach(_.collectTextKeys(keys))
+    mailReward.values.foreach(_.collectTextKeys(keys))
+    mailTemplate.values.foreach(_.collectTextKeys(keys))
+    maintenanceWindow.values.foreach(_.collectTextKeys(keys))
+    monster.values.foreach(_.collectTextKeys(keys))
+    quest.values.foreach(_.collectTextKeys(keys))
+    questReward.values.foreach(_.collectTextKeys(keys))
+    recipe.values.foreach(_.collectTextKeys(keys))
+    shop.values.foreach(_.collectTextKeys(keys))
+    shopItem.values.foreach(_.collectTextKeys(keys))
+    skill.values.foreach(_.collectTextKeys(keys))
+    stage.values.foreach(_.collectTextKeys(keys))
+    stageReward.values.foreach(_.collectTextKeys(keys))
+    vipLevel.values.foreach(_.collectTextKeys(keys))
     keys
   }
 
@@ -85,78 +85,78 @@ final class SoraConfig private (
       case Some(value) => value.asInstanceOf[T]
       case None => throw new SoraReadException(s"generated SoraConfig is missing table `$name`")
     }
-  def item: ItemTable =
-    table(ItemTable.Name)
-  def shop: ShopTable =
-    table(ShopTable.Name)
-  def shopItem: ShopItemTable =
-    table(ShopItemTable.Name)
-  def recipe: RecipeTable =
-    table(RecipeTable.Name)
-  def gachaPool: GachaPoolTable =
-    table(GachaPoolTable.Name)
-  def gachaItem: GachaItemTable =
-    table(GachaItemTable.Name)
-  def equipmentSet: EquipmentSetTable =
-    table(EquipmentSetTable.Name)
-  def skill: SkillTable =
-    table(SkillTable.Name)
+  def achievement: AchievementTable =
+    table(AchievementTable.Name)
+  def buff: BuffTable =
+    table(BuffTable.Name)
   def character: CharacterTable =
     table(CharacterTable.Name)
   def characterSkill: CharacterSkillTable =
     table(CharacterSkillTable.Name)
-  def buff: BuffTable =
-    table(BuffTable.Name)
-  def dropGroup: DropGroupTable =
-    table(DropGroupTable.Name)
-  def dropEntry: DropEntryTable =
-    table(DropEntryTable.Name)
-  def monster: MonsterTable =
-    table(MonsterTable.Name)
-  def stage: StageTable =
-    table(StageTable.Name)
-  def stageReward: StageRewardTable =
-    table(StageRewardTable.Name)
-  def dungeon: DungeonTable =
-    table(DungeonTable.Name)
-  def quest: QuestTable =
-    table(QuestTable.Name)
-  def questReward: QuestRewardTable =
-    table(QuestRewardTable.Name)
-  def levelExp: LevelExpTable =
-    table(LevelExpTable.Name)
-  def achievement: AchievementTable =
-    table(AchievementTable.Name)
-  def vipLevel: VipLevelTable =
-    table(VipLevelTable.Name)
-  def gameSettings: GameSettingsTable =
-    table(GameSettingsTable.Name)
-  def maintenanceWindow: MaintenanceWindowTable =
-    table(MaintenanceWindowTable.Name)
-  def mailTemplate: MailTemplateTable =
-    table(MailTemplateTable.Name)
-  def mailReward: MailRewardTable =
-    table(MailRewardTable.Name)
-  def dialogue: DialogueTable =
-    table(DialogueTable.Name)
-  def eventRule: EventRuleTable =
-    table(EventRuleTable.Name)
-  def complexRule: ComplexRuleTable =
-    table(ComplexRuleTable.Name)
+  def complexActionEntry: ComplexActionEntryTable =
+    table(ComplexActionEntryTable.Name)
+  def complexActionGroup: ComplexActionGroupTable =
+    table(ComplexActionGroupTable.Name)
   def complexConditionGroup: ComplexConditionGroupTable =
     table(ComplexConditionGroupTable.Name)
   def complexConditionGroupEntry: ComplexConditionGroupEntryTable =
     table(ComplexConditionGroupEntryTable.Name)
+  def complexRule: ComplexRuleTable =
+    table(ComplexRuleTable.Name)
   def complexRuleCondition: ComplexRuleConditionTable =
     table(ComplexRuleConditionTable.Name)
-  def complexActionGroup: ComplexActionGroupTable =
-    table(ComplexActionGroupTable.Name)
-  def complexActionEntry: ComplexActionEntryTable =
-    table(ComplexActionEntryTable.Name)
+  def dialogue: DialogueTable =
+    table(DialogueTable.Name)
+  def dropEntry: DropEntryTable =
+    table(DropEntryTable.Name)
+  def dropGroup: DropGroupTable =
+    table(DropGroupTable.Name)
+  def dungeon: DungeonTable =
+    table(DungeonTable.Name)
+  def equipmentSet: EquipmentSetTable =
+    table(EquipmentSetTable.Name)
+  def eventRule: EventRuleTable =
+    table(EventRuleTable.Name)
+  def gachaItem: GachaItemTable =
+    table(GachaItemTable.Name)
+  def gachaPool: GachaPoolTable =
+    table(GachaPoolTable.Name)
+  def gameSettings: GameSettingsTable =
+    table(GameSettingsTable.Name)
+  def item: ItemTable =
+    table(ItemTable.Name)
+  def levelExp: LevelExpTable =
+    table(LevelExpTable.Name)
+  def mailReward: MailRewardTable =
+    table(MailRewardTable.Name)
+  def mailTemplate: MailTemplateTable =
+    table(MailTemplateTable.Name)
+  def maintenanceWindow: MaintenanceWindowTable =
+    table(MaintenanceWindowTable.Name)
+  def monster: MonsterTable =
+    table(MonsterTable.Name)
+  def quest: QuestTable =
+    table(QuestTable.Name)
+  def questReward: QuestRewardTable =
+    table(QuestRewardTable.Name)
+  def recipe: RecipeTable =
+    table(RecipeTable.Name)
+  def shop: ShopTable =
+    table(ShopTable.Name)
+  def shopItem: ShopItemTable =
+    table(ShopItemTable.Name)
+  def skill: SkillTable =
+    table(SkillTable.Name)
+  def stage: StageTable =
+    table(StageTable.Name)
+  def stageReward: StageRewardTable =
+    table(StageRewardTable.Name)
+  def vipLevel: VipLevelTable =
+    table(VipLevelTable.Name)
 }
 
 object SoraConfig {
-  val SchemaFingerprint = "9552056f96151363"
+  val SchemaFingerprint = "5ae7c095b011eddf"
 
   def fromSource(source: SoraTableSource): SoraConfig = {
     if (source.schemaFingerprint != SchemaFingerprint) {
@@ -165,40 +165,40 @@ object SoraConfig {
       )
     }
     val tables = Map[String, SoraTable](
-      ItemTable.Name -> ItemTable.decode(source),
-      ShopTable.Name -> ShopTable.decode(source),
-      ShopItemTable.Name -> ShopItemTable.decode(source),
-      RecipeTable.Name -> RecipeTable.decode(source),
-      GachaPoolTable.Name -> GachaPoolTable.decode(source),
-      GachaItemTable.Name -> GachaItemTable.decode(source),
-      EquipmentSetTable.Name -> EquipmentSetTable.decode(source),
-      SkillTable.Name -> SkillTable.decode(source),
+      AchievementTable.Name -> AchievementTable.decode(source),
+      BuffTable.Name -> BuffTable.decode(source),
       CharacterTable.Name -> CharacterTable.decode(source),
       CharacterSkillTable.Name -> CharacterSkillTable.decode(source),
-      BuffTable.Name -> BuffTable.decode(source),
-      DropGroupTable.Name -> DropGroupTable.decode(source),
-      DropEntryTable.Name -> DropEntryTable.decode(source),
-      MonsterTable.Name -> MonsterTable.decode(source),
-      StageTable.Name -> StageTable.decode(source),
-      StageRewardTable.Name -> StageRewardTable.decode(source),
-      DungeonTable.Name -> DungeonTable.decode(source),
-      QuestTable.Name -> QuestTable.decode(source),
-      QuestRewardTable.Name -> QuestRewardTable.decode(source),
-      LevelExpTable.Name -> LevelExpTable.decode(source),
-      AchievementTable.Name -> AchievementTable.decode(source),
-      VipLevelTable.Name -> VipLevelTable.decode(source),
-      GameSettingsTable.Name -> GameSettingsTable.decode(source),
-      MaintenanceWindowTable.Name -> MaintenanceWindowTable.decode(source),
-      MailTemplateTable.Name -> MailTemplateTable.decode(source),
-      MailRewardTable.Name -> MailRewardTable.decode(source),
-      DialogueTable.Name -> DialogueTable.decode(source),
-      EventRuleTable.Name -> EventRuleTable.decode(source),
-      ComplexRuleTable.Name -> ComplexRuleTable.decode(source),
+      ComplexActionEntryTable.Name -> ComplexActionEntryTable.decode(source),
+      ComplexActionGroupTable.Name -> ComplexActionGroupTable.decode(source),
       ComplexConditionGroupTable.Name -> ComplexConditionGroupTable.decode(source),
       ComplexConditionGroupEntryTable.Name -> ComplexConditionGroupEntryTable.decode(source),
+      ComplexRuleTable.Name -> ComplexRuleTable.decode(source),
       ComplexRuleConditionTable.Name -> ComplexRuleConditionTable.decode(source),
-      ComplexActionGroupTable.Name -> ComplexActionGroupTable.decode(source),
-      ComplexActionEntryTable.Name -> ComplexActionEntryTable.decode(source)
+      DialogueTable.Name -> DialogueTable.decode(source),
+      DropEntryTable.Name -> DropEntryTable.decode(source),
+      DropGroupTable.Name -> DropGroupTable.decode(source),
+      DungeonTable.Name -> DungeonTable.decode(source),
+      EquipmentSetTable.Name -> EquipmentSetTable.decode(source),
+      EventRuleTable.Name -> EventRuleTable.decode(source),
+      GachaItemTable.Name -> GachaItemTable.decode(source),
+      GachaPoolTable.Name -> GachaPoolTable.decode(source),
+      GameSettingsTable.Name -> GameSettingsTable.decode(source),
+      ItemTable.Name -> ItemTable.decode(source),
+      LevelExpTable.Name -> LevelExpTable.decode(source),
+      MailRewardTable.Name -> MailRewardTable.decode(source),
+      MailTemplateTable.Name -> MailTemplateTable.decode(source),
+      MaintenanceWindowTable.Name -> MaintenanceWindowTable.decode(source),
+      MonsterTable.Name -> MonsterTable.decode(source),
+      QuestTable.Name -> QuestTable.decode(source),
+      QuestRewardTable.Name -> QuestRewardTable.decode(source),
+      RecipeTable.Name -> RecipeTable.decode(source),
+      ShopTable.Name -> ShopTable.decode(source),
+      ShopItemTable.Name -> ShopItemTable.decode(source),
+      SkillTable.Name -> SkillTable.decode(source),
+      StageTable.Name -> StageTable.decode(source),
+      StageRewardTable.Name -> StageRewardTable.decode(source),
+      VipLevelTable.Name -> VipLevelTable.decode(source)
     )
     new SoraConfig(tables)
   }

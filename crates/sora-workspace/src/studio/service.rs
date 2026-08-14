@@ -5,18 +5,17 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use serde::Deserialize;
 use serde_json::Value;
-use sora_config_format::load_document;
+use sora_config_format::{load_document, render_document};
 use sora_diagnostics::SoraError;
-use sora_input_schema::schema::load_project_schema_file;
+use sora_input_schema::schema::{
+    LoadedProjectSchema, SchemaDeclarationKind, load_project_schema_with_modules,
+};
 use sora_ir::{
     normalize::normalize_schema_with_parsers, parser::ParserRegistry as SchemaParserRegistry,
     projection::project_config_ir, validate::validate_config_ir,
 };
-use sora_schema::model::{
-    CodegenSchema, EnumSchema, SchemaFile, StructSchema, TableSchema, UnionSchema, ViewSchema,
-};
+use sora_schema::model::{ProjectSchema, ViewSchema};
 
 use super::{
     diff::simple_diff,
@@ -45,8 +44,8 @@ pub(super) fn load_studio_schema_with_parsers(
     parser_registry: &SchemaParserRegistry,
     view: Option<&str>,
 ) -> StudioSchemaResponse {
-    let source_index = match schema_source_index(project) {
-        Ok(index) => index,
+    let loaded = match load_project_schema_with_modules(project) {
+        Ok(loaded) => loaded,
         Err(error) => {
             return StudioSchemaResponse {
                 ok: false,
@@ -56,17 +55,8 @@ pub(super) fn load_studio_schema_with_parsers(
             };
         }
     };
-    let raw_schema = match load_project_schema_file(project) {
-        Ok(schema) => schema,
-        Err(error) => {
-            return StudioSchemaResponse {
-                ok: false,
-                project: project.display().to_string(),
-                diagnostics: studio_diagnostics(&error),
-                schema: None,
-            };
-        }
-    };
+    let source_index = schema_source_index(project, &loaded);
+    let raw_schema = loaded.schema;
 
     let raw_fallback = || {
         build_schema_from_raw(
@@ -339,61 +329,45 @@ struct SchemaSourceIndex {
     source_by_node: BTreeMap<String, String>,
 }
 
-fn schema_source_index(project: &Path) -> Result<SchemaSourceIndex> {
-    let includes = schema_include_paths(project)?;
+fn schema_source_index(project: &Path, loaded: &LoadedProjectSchema) -> SchemaSourceIndex {
+    let base_dir = project.parent().unwrap_or_else(|| Path::new("."));
+    let canonical_base = base_dir
+        .canonicalize()
+        .unwrap_or_else(|_| base_dir.to_path_buf());
+    let root = project
+        .canonicalize()
+        .unwrap_or_else(|_| project.to_path_buf());
+    let mut source_by_path = BTreeMap::new();
+    let mut sources = Vec::new();
+    for module in &loaded.modules {
+        if module.path == root {
+            continue;
+        }
+        let relative = module
+            .path
+            .strip_prefix(&canonical_base)
+            .unwrap_or(&module.path)
+            .to_string_lossy()
+            .replace('\\', "/");
+        source_by_path.insert(module.path.clone(), relative.clone());
+        sources.push(relative);
+    }
     let mut source_by_node = BTreeMap::new();
-    for include in &includes {
-        let module = load_schema_document(&include.path)?;
-        for id in schema_document_node_order(&module) {
-            source_by_node.insert(id, include.source.clone());
+    for (declaration, path) in &loaded.declaration_sources {
+        if let Some(source) = source_by_path.get(path) {
+            let kind = match declaration.kind {
+                SchemaDeclarationKind::Enum => StudioNodeKind::Enum,
+                SchemaDeclarationKind::Struct => StudioNodeKind::Struct,
+                SchemaDeclarationKind::Union => StudioNodeKind::Union,
+                SchemaDeclarationKind::Table => StudioNodeKind::Table,
+            };
+            source_by_node.insert(node_id(kind, &declaration.name), source.clone());
         }
     }
-    Ok(SchemaSourceIndex {
-        sources: includes.into_iter().map(|include| include.source).collect(),
+    SchemaSourceIndex {
+        sources,
         source_by_node,
-    })
-}
-
-fn load_schema_document(path: &Path) -> Result<SchemaDocument> {
-    load_document(path).with_context(|| format!("failed to load schema `{}`", path.display()))
-}
-
-fn schema_document_node_order(module: &SchemaDocument) -> Vec<String> {
-    module
-        .enums
-        .iter()
-        .map(|item| node_id(StudioNodeKind::Enum, &item.name))
-        .chain(
-            module
-                .structs
-                .iter()
-                .map(|item| node_id(StudioNodeKind::Struct, &item.name)),
-        )
-        .chain(
-            module
-                .unions
-                .iter()
-                .map(|item| node_id(StudioNodeKind::Union, &item.name)),
-        )
-        .chain(
-            module
-                .tables
-                .iter()
-                .map(|item| node_id(StudioNodeKind::Table, &item.name)),
-        )
-        .collect()
-}
-
-#[derive(Debug, Deserialize)]
-struct SchemaDocument {
-    #[serde(default)]
-    pub enums: Vec<EnumSchema>,
-    #[serde(default)]
-    pub structs: Vec<StructSchema>,
-    #[serde(default)]
-    pub unions: Vec<UnionSchema>,
-    #[serde(default)]
-    pub tables: Vec<TableSchema>,
+    }
 }
 
 #[cfg(test)]
@@ -439,7 +413,7 @@ pub(crate) fn render_studio_schema_writes(
 }
 
 fn validate_studio_project_declarations(project: &Path, schema: &StudioSchema) -> Result<()> {
-    let current = load_project_schema_file(project)?;
+    let current = load_project_schema_with_modules(project)?.schema;
     let current_groups = current
         .groups
         .into_iter()
@@ -490,7 +464,7 @@ pub(crate) fn validate_studio_schema_with_parsers(
         "views".to_owned(),
         Value::Object(schema.views.clone().into_iter().collect()),
     );
-    let raw: SchemaFile =
+    let raw: ProjectSchema =
         serde_json::from_value(value).context("failed to materialize schema model")?;
     let ir = normalize_schema_with_parsers(raw, parser_registry)?;
     validate_config_ir(&ir)?;
@@ -627,6 +601,12 @@ pub(crate) fn project_text_with_schema_files(
 ) -> Result<String> {
     validate_schema_sources(sources)?;
     match document_format(project)? {
+        StudioDocumentFormat::Scon => {
+            let mut value = load_document::<Value>(project)
+                .with_context(|| format!("failed to load project `{}`", project.display()))?;
+            set_json_project_fields(&mut value, project_id, sources)?;
+            render_document(project, &value).context("failed to render project SCON")
+        }
         StudioDocumentFormat::Toml => {
             project_toml_text_with_schema_files(project, project_id, sources)
         }
@@ -770,18 +750,6 @@ fn set_yaml_project_fields(
     Ok(())
 }
 
-fn schema_include_paths(project: &Path) -> Result<Vec<SchemaInclude>> {
-    document_format(project)?;
-    let project_doc = load_document::<ProjectDocument>(project)
-        .with_context(|| format!("failed to load project `{}`", project.display()))?;
-    let includes = project_doc.includes;
-    if includes.is_empty() {
-        anyhow::bail!("Studio project must declare at least one schema include");
-    }
-
-    schema_includes_from_sources(project, &includes)
-}
-
 fn toml_array_strings(value: &toml::Value) -> Option<Vec<String>> {
     Some(
         value
@@ -790,16 +758,6 @@ fn toml_array_strings(value: &toml::Value) -> Option<Vec<String>> {
             .filter_map(|item| item.as_str().map(ToOwned::to_owned))
             .collect(),
     )
-}
-
-#[derive(Debug, Deserialize)]
-struct ProjectDocument {
-    #[serde(default)]
-    includes: Vec<String>,
-    #[allow(dead_code)]
-    project: Option<sora_schema::model::ProjectSchema>,
-    #[allow(dead_code)]
-    codegen: Option<CodegenSchema>,
 }
 
 #[derive(Debug, Clone)]

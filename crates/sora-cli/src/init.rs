@@ -5,7 +5,7 @@ use std::{
 
 use anyhow::{Context, Result, bail};
 use sora_excel::generator::ExcelTemplateGenerator;
-use sora_input_schema::input::SchemaFileInput;
+use sora_input_schema::input::ProjectSchemaInput;
 
 use crate::args::{InitArgs, SchemaFormatArg};
 
@@ -115,7 +115,7 @@ fn write_sample_data(layout: &InitLayout, force: bool) -> Result<()> {
         );
     }
 
-    let input = SchemaFileInput::new(&layout.project_file);
+    let input = ProjectSchemaInput::new(&layout.project_file);
     let ir = sora_core::pipeline::load_schema_ir(&input).with_context(|| {
         format!(
             "failed to load generated project `{}`",
@@ -154,6 +154,7 @@ fn write_sample_data(layout: &InitLayout, force: bool) -> Result<()> {
 impl SchemaFormatArg {
     fn extension(self) -> &'static str {
         match self {
+            Self::Scon => "scon",
             Self::Toml => "toml",
             Self::Yaml => "yaml",
             Self::Json => "json",
@@ -164,6 +165,32 @@ impl SchemaFormatArg {
 
 fn project_template(format: SchemaFormatArg) -> &'static str {
     match format {
+        SchemaFormatArg::Scon => {
+            r#"project { id = "game_config" }
+groups { common { default = true } }
+views {
+  default {
+    contract = "game_config/default"
+    groups = ["common"]
+  }
+}
+includes = ["schema/items.scon"]
+
+build {
+  default_source_format = "xlsx"
+  data_root = "data"
+  view = "default"
+  schema_lock = "generated/schema.lock"
+  excel_templates = "generated/excel"
+  codegen = [
+    { target = "rust", out = "generated/rust", format = "auto" },
+  ]
+  exports = [
+    { format = "binary", out = "generated/config.sora" },
+  ]
+}
+"#
+        }
         SchemaFormatArg::Toml => {
             r#"project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -262,38 +289,70 @@ build:
 
 fn schema_template(format: SchemaFormatArg) -> &'static str {
     match format {
-        SchemaFormatArg::Toml => {
-            r#"[[enums]]
-name = "ItemType"
-values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
+        SchemaFormatArg::Scon => {
+            r#"enums {
+  ItemType = ["Weapon", "Armor", "Material", "Consumable"]
+}
 
-[[tables]]
+tables {
+  Item {
+    id = "item"
+    mode = "map"
+    key = "id"
+    source {
+      file = "Item.xlsx"
+      sheet = "Item"
+    }
+    fields {
+      id {
+        type = "i32"
+        comment = "Item id"
+      }
+      name {
+        type = "string"
+        comment = "Display name"
+      }
+      item_type {
+        type = "enum<ItemType>"
+        comment = "Item category"
+      }
+      max_stack {
+        type = "i32"
+        default = "1"
+        range = [1, 9999]
+        comment = "Stack limit"
+      }
+    }
+  }
+}
+"#
+        }
+        SchemaFormatArg::Toml => {
+            r#"[enums]
+ItemType = ["Weapon", "Armor", "Material", "Consumable"]
+
+[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
 
-[tables.source]
+[tables.Item.source]
 file = "Item.xlsx"
 sheet = "Item"
 
-[[tables.fields]]
-name = "id"
+[tables.Item.fields.id]
 type = "i32"
 comment = "Item id"
 
-[[tables.fields]]
-name = "name"
+[tables.Item.fields.name]
 type = "string"
 comment = "Display name"
 
-[[tables.fields]]
-name = "item_type"
+[tables.Item.fields.item_type]
 type = "enum<ItemType>"
 comment = "Item category"
 
-[[tables.fields]]
-name = "max_stack"
+[tables.Item.fields.max_stack]
 type = "i32"
 default = "1"
 range = [1, 9999]
@@ -302,28 +361,27 @@ comment = "Stack limit"
         }
         SchemaFormatArg::Yaml => {
             r#"enums:
-  - name: ItemType
-    values: [{ id: 0, name: Weapon }, { id: 1, name: Armor }, { id: 2, name: Material }, { id: 3, name: Consumable }]
+  ItemType: [Weapon, Armor, Material, Consumable]
 
 tables:
-  - id: item
-    name: Item
+  Item:
+    id: item
     mode: map
     key: id
     source:
       file: Item.xlsx
       sheet: Item
     fields:
-      - name: id
+      id:
         type: i32
         comment: Item id
-      - name: name
+      name:
         type: string
         comment: Display name
-      - name: item_type
+      item_type:
         type: enum<ItemType>
         comment: Item category
-      - name: max_stack
+      max_stack:
         type: i32
         default: "1"
         range: [1, 9999]
@@ -332,48 +390,42 @@ tables:
         }
         SchemaFormatArg::Json => {
             r#"{
-  "enums": [
-    {
-      "name": "ItemType",
-      "values": [{ "id": 0, "name": "Weapon" }, { "id": 1, "name": "Armor" }, { "id": 2, "name": "Material" }, { "id": 3, "name": "Consumable" }]
-    }
-  ],
-  "tables": [
-    {
+  "enums": {
+    "ItemType": ["Weapon", "Armor", "Material", "Consumable"]
+  },
+  "tables": {
+    "Item": {
       "id": "item",
-      "name": "Item",
       "mode": "map",
       "key": "id",
       "source": {
         "file": "Item.xlsx",
         "sheet": "Item"
       },
-      "fields": [
-        { "name": "id", "type": "i32", "comment": "Item id" },
-        { "name": "name", "type": "string", "comment": "Display name" },
-        { "name": "item_type", "type": "enum<ItemType>", "comment": "Item category" },
-        {
-          "name": "max_stack",
+      "fields": {
+        "id": { "type": "i32", "comment": "Item id" },
+        "name": { "type": "string", "comment": "Display name" },
+        "item_type": { "type": "enum<ItemType>", "comment": "Item category" },
+        "max_stack": {
           "type": "i32",
           "default": "1",
           "range": [1, 9999],
           "comment": "Stack limit"
         }
-      ]
+      }
     }
-  ]
+  }
 }
 "#
         }
         SchemaFormatArg::Lua => {
             r#"return {
   enums = {
-    { name = "ItemType", values = { { id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" } } },
+    ItemType = { "Weapon", "Armor", "Material", "Consumable" },
   },
   tables = {
-    {
+    Item = {
       id = "item",
-      name = "Item",
       mode = "map",
       key = "id",
       source = {
@@ -381,16 +433,15 @@ tables:
         sheet = "Item",
       },
       fields = {
-        { name = "id", type = "i32", comment = "Item id" },
-        { name = "name", type = "string", comment = "Display name" },
-        { name = "item_type", type = "enum<ItemType>", comment = "Item category" },
-        {
-          name = "max_stack",
+        { id = { type = "i32", comment = "Item id" } },
+        { name = { type = "string", comment = "Display name" } },
+        { item_type = { type = "enum<ItemType>", comment = "Item category" } },
+        { max_stack = {
           type = "i32",
           default = "1",
           range = { 1, 9999 },
           comment = "Stack limit",
-        },
+        } },
       },
     },
   },
@@ -446,6 +497,7 @@ mod tests {
     #[test]
     fn init_supports_all_schema_formats() {
         for format in [
+            SchemaFormatArg::Scon,
             SchemaFormatArg::Toml,
             SchemaFormatArg::Yaml,
             SchemaFormatArg::Json,
@@ -459,7 +511,7 @@ mod tests {
             })
             .unwrap();
             let project = base.join(format!("project.{}", format.extension()));
-            let input = SchemaFileInput::new(project);
+            let input = ProjectSchemaInput::new(project);
             sora_core::pipeline::check_schema(&input).unwrap();
             assert!(base.join("data/Item.xlsx").exists());
 

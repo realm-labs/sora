@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 public final class SoraConfig {
-    public static final String SCHEMA_FINGERPRINT = "9552056f96151363";
+    public static final String SCHEMA_FINGERPRINT = "5ae7c095b011eddf";
 
     public enum TableShape {
         LIST,
@@ -74,40 +74,40 @@ public final class SoraConfig {
             );
         }
         var tables = new HashMap<String, Table<?>>(34);
-        tables.put(ItemTable.NAME, ItemTable.decode(source));
-        tables.put(ShopTable.NAME, ShopTable.decode(source));
-        tables.put(ShopItemTable.NAME, ShopItemTable.decode(source));
-        tables.put(RecipeTable.NAME, RecipeTable.decode(source));
-        tables.put(GachaPoolTable.NAME, GachaPoolTable.decode(source));
-        tables.put(GachaItemTable.NAME, GachaItemTable.decode(source));
-        tables.put(EquipmentSetTable.NAME, EquipmentSetTable.decode(source));
-        tables.put(SkillTable.NAME, SkillTable.decode(source));
+        tables.put(AchievementTable.NAME, AchievementTable.decode(source));
+        tables.put(BuffTable.NAME, BuffTable.decode(source));
         tables.put(CharacterTable.NAME, CharacterTable.decode(source));
         tables.put(CharacterSkillTable.NAME, CharacterSkillTable.decode(source));
-        tables.put(BuffTable.NAME, BuffTable.decode(source));
-        tables.put(DropGroupTable.NAME, DropGroupTable.decode(source));
-        tables.put(DropEntryTable.NAME, DropEntryTable.decode(source));
-        tables.put(MonsterTable.NAME, MonsterTable.decode(source));
-        tables.put(StageTable.NAME, StageTable.decode(source));
-        tables.put(StageRewardTable.NAME, StageRewardTable.decode(source));
-        tables.put(DungeonTable.NAME, DungeonTable.decode(source));
-        tables.put(QuestTable.NAME, QuestTable.decode(source));
-        tables.put(QuestRewardTable.NAME, QuestRewardTable.decode(source));
-        tables.put(LevelExpTable.NAME, LevelExpTable.decode(source));
-        tables.put(AchievementTable.NAME, AchievementTable.decode(source));
-        tables.put(VipLevelTable.NAME, VipLevelTable.decode(source));
-        tables.put(GameSettingsTable.NAME, GameSettingsTable.decode(source));
-        tables.put(MaintenanceWindowTable.NAME, MaintenanceWindowTable.decode(source));
-        tables.put(MailTemplateTable.NAME, MailTemplateTable.decode(source));
-        tables.put(MailRewardTable.NAME, MailRewardTable.decode(source));
-        tables.put(DialogueTable.NAME, DialogueTable.decode(source));
-        tables.put(EventRuleTable.NAME, EventRuleTable.decode(source));
-        tables.put(ComplexRuleTable.NAME, ComplexRuleTable.decode(source));
+        tables.put(ComplexActionEntryTable.NAME, ComplexActionEntryTable.decode(source));
+        tables.put(ComplexActionGroupTable.NAME, ComplexActionGroupTable.decode(source));
         tables.put(ComplexConditionGroupTable.NAME, ComplexConditionGroupTable.decode(source));
         tables.put(ComplexConditionGroupEntryTable.NAME, ComplexConditionGroupEntryTable.decode(source));
+        tables.put(ComplexRuleTable.NAME, ComplexRuleTable.decode(source));
         tables.put(ComplexRuleConditionTable.NAME, ComplexRuleConditionTable.decode(source));
-        tables.put(ComplexActionGroupTable.NAME, ComplexActionGroupTable.decode(source));
-        tables.put(ComplexActionEntryTable.NAME, ComplexActionEntryTable.decode(source));
+        tables.put(DialogueTable.NAME, DialogueTable.decode(source));
+        tables.put(DropEntryTable.NAME, DropEntryTable.decode(source));
+        tables.put(DropGroupTable.NAME, DropGroupTable.decode(source));
+        tables.put(DungeonTable.NAME, DungeonTable.decode(source));
+        tables.put(EquipmentSetTable.NAME, EquipmentSetTable.decode(source));
+        tables.put(EventRuleTable.NAME, EventRuleTable.decode(source));
+        tables.put(GachaItemTable.NAME, GachaItemTable.decode(source));
+        tables.put(GachaPoolTable.NAME, GachaPoolTable.decode(source));
+        tables.put(GameSettingsTable.NAME, GameSettingsTable.decode(source));
+        tables.put(ItemTable.NAME, ItemTable.decode(source));
+        tables.put(LevelExpTable.NAME, LevelExpTable.decode(source));
+        tables.put(MailRewardTable.NAME, MailRewardTable.decode(source));
+        tables.put(MailTemplateTable.NAME, MailTemplateTable.decode(source));
+        tables.put(MaintenanceWindowTable.NAME, MaintenanceWindowTable.decode(source));
+        tables.put(MonsterTable.NAME, MonsterTable.decode(source));
+        tables.put(QuestTable.NAME, QuestTable.decode(source));
+        tables.put(QuestRewardTable.NAME, QuestRewardTable.decode(source));
+        tables.put(RecipeTable.NAME, RecipeTable.decode(source));
+        tables.put(ShopTable.NAME, ShopTable.decode(source));
+        tables.put(ShopItemTable.NAME, ShopItemTable.decode(source));
+        tables.put(SkillTable.NAME, SkillTable.decode(source));
+        tables.put(StageTable.NAME, StageTable.decode(source));
+        tables.put(StageRewardTable.NAME, StageRewardTable.decode(source));
+        tables.put(VipLevelTable.NAME, VipLevelTable.decode(source));
         return new SoraConfig(tables);
     }
 
@@ -128,28 +128,10 @@ public final class SoraConfig {
 
     private List<TextKey> textKeys() {
         var keys = new ArrayList<TextKey>();
-        for (var row : item().rows().values()) {
+        for (var row : achievement().rows().values()) {
             row.collectTextKeys(keys);
         }
-        for (var row : shop().rows().values()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : shopItem().rows()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : recipe().rows().values()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : gachaPool().rows().values()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : gachaItem().rows()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : equipmentSet().rows().values()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : skill().rows().values()) {
+        for (var row : buff().rows().values()) {
             row.collectTextKeys(keys);
         }
         for (var row : character().rows().values()) {
@@ -158,59 +140,10 @@ public final class SoraConfig {
         for (var row : characterSkill().rows()) {
             row.collectTextKeys(keys);
         }
-        for (var row : buff().rows().values()) {
+        for (var row : complexActionEntry().rows().values()) {
             row.collectTextKeys(keys);
         }
-        for (var row : dropGroup().rows().values()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : dropEntry().rows()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : monster().rows().values()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : stage().rows().values()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : stageReward().rows()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : dungeon().rows().values()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : quest().rows().values()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : questReward().rows()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : levelExp().rows().values()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : achievement().rows().values()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : vipLevel().rows().values()) {
-            row.collectTextKeys(keys);
-        }
-        gameSettings().row().collectTextKeys(keys);
-        for (var row : maintenanceWindow().rows()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : mailTemplate().rows().values()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : mailReward().rows()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : dialogue().rows().values()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : eventRule().rows().values()) {
-            row.collectTextKeys(keys);
-        }
-        for (var row : complexRule().rows().values()) {
+        for (var row : complexActionGroup().rows().values()) {
             row.collectTextKeys(keys);
         }
         for (var row : complexConditionGroup().rows().values()) {
@@ -219,13 +152,80 @@ public final class SoraConfig {
         for (var row : complexConditionGroupEntry().rows().values()) {
             row.collectTextKeys(keys);
         }
+        for (var row : complexRule().rows().values()) {
+            row.collectTextKeys(keys);
+        }
         for (var row : complexRuleCondition().rows().values()) {
             row.collectTextKeys(keys);
         }
-        for (var row : complexActionGroup().rows().values()) {
+        for (var row : dialogue().rows().values()) {
             row.collectTextKeys(keys);
         }
-        for (var row : complexActionEntry().rows().values()) {
+        for (var row : dropEntry().rows()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : dropGroup().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : dungeon().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : equipmentSet().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : eventRule().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : gachaItem().rows()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : gachaPool().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        gameSettings().row().collectTextKeys(keys);
+        for (var row : item().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : levelExp().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : mailReward().rows()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : mailTemplate().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : maintenanceWindow().rows()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : monster().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : quest().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : questReward().rows()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : recipe().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : shop().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : shopItem().rows()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : skill().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : stage().rows().values()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : stageReward().rows()) {
+            row.collectTextKeys(keys);
+        }
+        for (var row : vipLevel().rows().values()) {
             row.collectTextKeys(keys);
         }
         return keys;
@@ -238,29 +238,11 @@ public final class SoraConfig {
         }
         throw new SoraReadException("generated SoraConfig is missing table `" + name + "` or has an unexpected table type");
     }
-    public ItemTable item() {
-        return table(ItemTable.NAME, ItemTable.class);
+    public AchievementTable achievement() {
+        return table(AchievementTable.NAME, AchievementTable.class);
     }
-    public ShopTable shop() {
-        return table(ShopTable.NAME, ShopTable.class);
-    }
-    public ShopItemTable shopItem() {
-        return table(ShopItemTable.NAME, ShopItemTable.class);
-    }
-    public RecipeTable recipe() {
-        return table(RecipeTable.NAME, RecipeTable.class);
-    }
-    public GachaPoolTable gachaPool() {
-        return table(GachaPoolTable.NAME, GachaPoolTable.class);
-    }
-    public GachaItemTable gachaItem() {
-        return table(GachaItemTable.NAME, GachaItemTable.class);
-    }
-    public EquipmentSetTable equipmentSet() {
-        return table(EquipmentSetTable.NAME, EquipmentSetTable.class);
-    }
-    public SkillTable skill() {
-        return table(SkillTable.NAME, SkillTable.class);
+    public BuffTable buff() {
+        return table(BuffTable.NAME, BuffTable.class);
     }
     public CharacterTable character() {
         return table(CharacterTable.NAME, CharacterTable.class);
@@ -268,62 +250,11 @@ public final class SoraConfig {
     public CharacterSkillTable characterSkill() {
         return table(CharacterSkillTable.NAME, CharacterSkillTable.class);
     }
-    public BuffTable buff() {
-        return table(BuffTable.NAME, BuffTable.class);
+    public ComplexActionEntryTable complexActionEntry() {
+        return table(ComplexActionEntryTable.NAME, ComplexActionEntryTable.class);
     }
-    public DropGroupTable dropGroup() {
-        return table(DropGroupTable.NAME, DropGroupTable.class);
-    }
-    public DropEntryTable dropEntry() {
-        return table(DropEntryTable.NAME, DropEntryTable.class);
-    }
-    public MonsterTable monster() {
-        return table(MonsterTable.NAME, MonsterTable.class);
-    }
-    public StageTable stage() {
-        return table(StageTable.NAME, StageTable.class);
-    }
-    public StageRewardTable stageReward() {
-        return table(StageRewardTable.NAME, StageRewardTable.class);
-    }
-    public DungeonTable dungeon() {
-        return table(DungeonTable.NAME, DungeonTable.class);
-    }
-    public QuestTable quest() {
-        return table(QuestTable.NAME, QuestTable.class);
-    }
-    public QuestRewardTable questReward() {
-        return table(QuestRewardTable.NAME, QuestRewardTable.class);
-    }
-    public LevelExpTable levelExp() {
-        return table(LevelExpTable.NAME, LevelExpTable.class);
-    }
-    public AchievementTable achievement() {
-        return table(AchievementTable.NAME, AchievementTable.class);
-    }
-    public VipLevelTable vipLevel() {
-        return table(VipLevelTable.NAME, VipLevelTable.class);
-    }
-    public GameSettingsTable gameSettings() {
-        return table(GameSettingsTable.NAME, GameSettingsTable.class);
-    }
-    public MaintenanceWindowTable maintenanceWindow() {
-        return table(MaintenanceWindowTable.NAME, MaintenanceWindowTable.class);
-    }
-    public MailTemplateTable mailTemplate() {
-        return table(MailTemplateTable.NAME, MailTemplateTable.class);
-    }
-    public MailRewardTable mailReward() {
-        return table(MailRewardTable.NAME, MailRewardTable.class);
-    }
-    public DialogueTable dialogue() {
-        return table(DialogueTable.NAME, DialogueTable.class);
-    }
-    public EventRuleTable eventRule() {
-        return table(EventRuleTable.NAME, EventRuleTable.class);
-    }
-    public ComplexRuleTable complexRule() {
-        return table(ComplexRuleTable.NAME, ComplexRuleTable.class);
+    public ComplexActionGroupTable complexActionGroup() {
+        return table(ComplexActionGroupTable.NAME, ComplexActionGroupTable.class);
     }
     public ComplexConditionGroupTable complexConditionGroup() {
         return table(ComplexConditionGroupTable.NAME, ComplexConditionGroupTable.class);
@@ -331,14 +262,83 @@ public final class SoraConfig {
     public ComplexConditionGroupEntryTable complexConditionGroupEntry() {
         return table(ComplexConditionGroupEntryTable.NAME, ComplexConditionGroupEntryTable.class);
     }
+    public ComplexRuleTable complexRule() {
+        return table(ComplexRuleTable.NAME, ComplexRuleTable.class);
+    }
     public ComplexRuleConditionTable complexRuleCondition() {
         return table(ComplexRuleConditionTable.NAME, ComplexRuleConditionTable.class);
     }
-    public ComplexActionGroupTable complexActionGroup() {
-        return table(ComplexActionGroupTable.NAME, ComplexActionGroupTable.class);
+    public DialogueTable dialogue() {
+        return table(DialogueTable.NAME, DialogueTable.class);
     }
-    public ComplexActionEntryTable complexActionEntry() {
-        return table(ComplexActionEntryTable.NAME, ComplexActionEntryTable.class);
+    public DropEntryTable dropEntry() {
+        return table(DropEntryTable.NAME, DropEntryTable.class);
+    }
+    public DropGroupTable dropGroup() {
+        return table(DropGroupTable.NAME, DropGroupTable.class);
+    }
+    public DungeonTable dungeon() {
+        return table(DungeonTable.NAME, DungeonTable.class);
+    }
+    public EquipmentSetTable equipmentSet() {
+        return table(EquipmentSetTable.NAME, EquipmentSetTable.class);
+    }
+    public EventRuleTable eventRule() {
+        return table(EventRuleTable.NAME, EventRuleTable.class);
+    }
+    public GachaItemTable gachaItem() {
+        return table(GachaItemTable.NAME, GachaItemTable.class);
+    }
+    public GachaPoolTable gachaPool() {
+        return table(GachaPoolTable.NAME, GachaPoolTable.class);
+    }
+    public GameSettingsTable gameSettings() {
+        return table(GameSettingsTable.NAME, GameSettingsTable.class);
+    }
+    public ItemTable item() {
+        return table(ItemTable.NAME, ItemTable.class);
+    }
+    public LevelExpTable levelExp() {
+        return table(LevelExpTable.NAME, LevelExpTable.class);
+    }
+    public MailRewardTable mailReward() {
+        return table(MailRewardTable.NAME, MailRewardTable.class);
+    }
+    public MailTemplateTable mailTemplate() {
+        return table(MailTemplateTable.NAME, MailTemplateTable.class);
+    }
+    public MaintenanceWindowTable maintenanceWindow() {
+        return table(MaintenanceWindowTable.NAME, MaintenanceWindowTable.class);
+    }
+    public MonsterTable monster() {
+        return table(MonsterTable.NAME, MonsterTable.class);
+    }
+    public QuestTable quest() {
+        return table(QuestTable.NAME, QuestTable.class);
+    }
+    public QuestRewardTable questReward() {
+        return table(QuestRewardTable.NAME, QuestRewardTable.class);
+    }
+    public RecipeTable recipe() {
+        return table(RecipeTable.NAME, RecipeTable.class);
+    }
+    public ShopTable shop() {
+        return table(ShopTable.NAME, ShopTable.class);
+    }
+    public ShopItemTable shopItem() {
+        return table(ShopItemTable.NAME, ShopItemTable.class);
+    }
+    public SkillTable skill() {
+        return table(SkillTable.NAME, SkillTable.class);
+    }
+    public StageTable stage() {
+        return table(StageTable.NAME, StageTable.class);
+    }
+    public StageRewardTable stageReward() {
+        return table(StageRewardTable.NAME, StageRewardTable.class);
+    }
+    public VipLevelTable vipLevel() {
+        return table(VipLevelTable.NAME, VipLevelTable.class);
     }
     static <K, V> Map<K, V> decodeMapTable(List<V> rows, Function<V, K> key) {
         var map = new HashMap<K, V>(rows.size());

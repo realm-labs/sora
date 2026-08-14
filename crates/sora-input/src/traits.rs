@@ -2,10 +2,10 @@ use sora_data::model::{ConfigData, LocalizationData};
 use sora_diagnostics::Result;
 use sora_execution::ExecutionContext;
 use sora_ir::model::ConfigIr;
-use sora_schema::model::SchemaFile;
+use sora_schema::model::ProjectSchema;
 
 pub trait SchemaInput {
-    fn load_schema(&self) -> Result<SchemaFile>;
+    fn load_schema(&self) -> Result<ProjectSchema>;
 }
 
 pub trait DataInput {

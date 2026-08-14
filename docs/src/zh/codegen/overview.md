@@ -21,7 +21,7 @@ schema files -> schema model -> normalized IR -> generator registry -> target ge
 直接生成一个目标：
 
 ```bash
-sora gen --target typescript --project project.toml --out generated/typescript
+sora gen --target typescript --project project.scon --out generated/typescript
 ```
 
 也可以在构建清单中声明：

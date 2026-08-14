@@ -10,7 +10,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use sora_data::model::{ConfigData, Value};
-use sora_input_schema::input::SchemaFileInput;
+use sora_input_schema::input::ProjectSchemaInput;
 
 use crate::{
     Diagnostic, ProjectRevision, ProjectSession, SourceFormat, diagnostics_from_anyhow,
@@ -274,7 +274,7 @@ impl ProjectSession {
             .default_source_format
             .map(SourceFormat::as_str);
         let input = MixedProjectInput::with_source_registry(
-            SchemaFileInput::new(self.manifest_path()),
+            ProjectSchemaInput::new(self.manifest_path()),
             data_root,
             default_format,
             Arc::clone(self.runtime().source_registry()),
@@ -487,7 +487,7 @@ mod tests {
     #[test]
     fn query_paginates_with_revision_bound_cursor() {
         let project =
-            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/showcase/project.toml");
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/showcase/project.scon");
         let session = ProjectSession::open(
             ProjectId::new("showcase").unwrap(),
             project,
@@ -521,7 +521,7 @@ mod tests {
     #[test]
     fn query_rejects_unknown_projection_fields() {
         let project =
-            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/showcase/project.toml");
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/showcase/project.scon");
         let session = ProjectSession::open(
             ProjectId::new("showcase").unwrap(),
             project,
@@ -541,7 +541,7 @@ mod tests {
     #[test]
     fn query_rejects_limits_outside_the_resource_contract() {
         let project =
-            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/showcase/project.toml");
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/showcase/project.scon");
         let session = ProjectSession::open(
             ProjectId::new("showcase").unwrap(),
             project,

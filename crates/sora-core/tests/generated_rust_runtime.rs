@@ -7,7 +7,7 @@ use std::{
 
 use sora_export::exporter::ExportOutput;
 use sora_input::project::SplitProjectInput;
-use sora_input_schema::input::SchemaFileInput;
+use sora_input_schema::input::ProjectSchemaInput;
 use sora_input_toml::input::TomlDataInput;
 
 #[test]
@@ -39,11 +39,11 @@ fn generated_rust_runtime_compiles_and_loads_config_bundles() {
         let generated_dir = base.join("generated-crate");
         let generated_src = generated_dir.join("src/generated");
 
-        let schema_input = SchemaFileInput::new(&project_path);
+        let schema_input = ProjectSchemaInput::new(&project_path);
         sora_core::pipeline::generate_code(&schema_input, "rust", &generated_src).unwrap();
 
         let project_input = SplitProjectInput::new(
-            SchemaFileInput::new(&project_path),
+            ProjectSchemaInput::new(&project_path),
             TomlDataInput::new(base.join("data")),
         );
         sora_core::pipeline::export_data(
@@ -91,96 +91,50 @@ runtime_format = "__RUNTIME_FORMAT__"
     fs::write(
         schema_dir.join("items.toml"),
         r#"
-[[enums]]
-name = "ItemType"
+[enums.ItemType]
 values = [{ id = 10, name = "Weapon" }, { id = 20, name = "Armor" }, { id = 30, name = "Material" }, { id = 40, name = "Consumable" }]
 
-[[structs]]
-name = "Reward"
+[structs.Reward.fields]
+reward_item_id = "i32"
+count = "i32"
 
-[[structs.fields]]
-name = "reward_item_id"
-type = "i32"
-
-[[structs.fields]]
-name = "count"
-type = "i32"
-
-[[tables]]
+[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
 
-[tables.source]
+[tables.Item.source]
 format = "toml"
 file = "items.toml"
 
-[[tables.fields]]
-name = "id"
-type = "i32"
+[tables.Item.fields]
+id = "i32"
+name = "string"
+item_type = "enum<ItemType>"
+max_stack = "i32"
+signed_byte = "i8"
+unsigned_byte = "u8"
+signed_short = "i16"
+unsigned_short = "u16"
+unsigned_int = "u32"
 
-[[tables.fields]]
-name = "name"
-type = "string"
-
-[[tables.fields]]
-name = "item_type"
-type = "enum<ItemType>"
-
-[[tables.fields]]
-name = "max_stack"
-type = "i32"
-
-[[tables.fields]]
-name = "signed_byte"
-type = "i8"
-
-[[tables.fields]]
-name = "unsigned_byte"
-type = "u8"
-
-[[tables.fields]]
-name = "signed_short"
-type = "i16"
-
-[[tables.fields]]
-name = "unsigned_short"
-type = "u16"
-
-[[tables.fields]]
-name = "unsigned_int"
-type = "u32"
-
-[[tables.fields]]
-name = "rewards"
+[tables.Item.fields.rewards]
 type = "list<Reward>"
 from = { table = "ItemReward", parent_key = "id", child_key = "item_id", order_by = "seq" }
 
-[[tables]]
+[tables.ItemReward]
 id = "item_reward"
-name = "ItemReward"
 mode = "list"
 
-[tables.source]
+[tables.ItemReward.source]
 format = "toml"
 file = "item_rewards.toml"
 
-[[tables.fields]]
-name = "item_id"
-type = "i32"
-
-[[tables.fields]]
-name = "seq"
-type = "i32"
-
-[[tables.fields]]
-name = "reward_item_id"
-type = "i32"
-
-[[tables.fields]]
-name = "count"
-type = "i32"
+[tables.ItemReward.fields]
+item_id = "i32"
+seq = "i32"
+reward_item_id = "i32"
+count = "i32"
 "#,
     )
     .unwrap();

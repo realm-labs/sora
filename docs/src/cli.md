@@ -10,8 +10,8 @@ Global options can be placed before or after the subcommand.
 | --- | --- |
 | `-j, --jobs <N>` | Maximum worker threads. Must be greater than zero. |
 | `--serial` | Disable parallel execution. |
-| `--parser-script <PATH>` | Load a custom Lua cell parser script. Can be repeated. Project-level parser scripts can also be configured in `[parsers].scripts` in `project.toml`. |
-| `--type-mapping-script <PATH>` | Load a custom Lua type mapping script. Can be repeated. Project-level scripts can also be configured in `[type_mappings].scripts` in `project.toml`. |
+| `--parser-script <PATH>` | Load a custom Lua cell parser script. Can be repeated. Project-level parser scripts can also be configured in `[parsers].scripts` in `project.scon`. |
+| `--type-mapping-script <PATH>` | Load a custom Lua type mapping script. Can be repeated. Project-level scripts can also be configured in `[type_mappings].scripts` in `project.scon`. |
 | `-h, --help` | Print help. |
 | `-V, --version` | Print the CLI version. |
 
@@ -54,14 +54,14 @@ Lua source loaders are intentionally project-level only. Declare them in `[sourc
 Create a new project scaffold.
 
 ```bash
-sora init --out my-config --schema-format toml
+sora init --out my-config
 sora i -o my-config --schema-format yaml
 ```
 
 | Option | Description |
 | --- | --- |
 | `-o, --out <DIR>` | Output directory for the scaffold. |
-| `--schema-format <toml|yaml|json|lua>` | Schema file format. Defaults to `toml`. |
+| `--schema-format <scon|toml|yaml|json|lua>` | Schema file format. Defaults to recommended `scon`. |
 | `--force` | Allow writing into an existing scaffold path. |
 
 ### `check`
@@ -69,8 +69,8 @@ sora i -o my-config --schema-format yaml
 Validate a project schema, optionally against a schema lock.
 
 ```bash
-sora check --project project.toml
-sora c -p project.toml -l generated/schema.lock
+sora check --project project.scon
+sora c -p project.scon -l generated/schema.lock
 ```
 
 | Option | Description |
@@ -80,11 +80,11 @@ sora c -p project.toml -l generated/schema.lock
 
 ### `build`
 
-Run outputs declared in `[build]` in `project.toml`, such as schema locks, Excel templates, codegen, and exports.
+Run outputs declared in `[build]` in `project.scon`, such as schema locks, Excel templates, codegen, and exports.
 
 ```bash
-sora build --project project.toml
-sora b -p project.toml -t rust -c
+sora build --project project.scon
+sora b -p project.scon -t rust -c
 ```
 
 | Option | Description |
@@ -101,8 +101,8 @@ sora b -p project.toml -t rust -c
 Generate code for one target directly, without using `[build.codegen]`.
 
 ```bash
-sora gen --target rust --project project.toml --out generated/rust
-sora g -t typescript -p project.toml -o generated/typescript
+sora gen --target rust --project project.scon --out generated/rust
+sora g -t typescript -p project.scon -o generated/typescript
 ```
 
 | Option | Description |
@@ -118,8 +118,8 @@ sora g -t typescript -p project.toml -o generated/typescript
 Load table data and export runtime data.
 
 ```bash
-sora export --project project.toml --data-root data --format json --out generated/config.json
-sora e -p project.toml -d data -f binary -o generated/config.sora
+sora export --project project.scon --data-root data --format json --out generated/config.json
+sora e -p project.scon -d data -f binary -o generated/config.sora
 ```
 
 | Option | Description |
@@ -138,8 +138,8 @@ sora e -p project.toml -d data -f binary -o generated/config.sora
 Compare two data roots using the same project schema.
 
 ```bash
-sora diff --project project.toml --left-root old-data --right-root data --out generated/diff.json
-sora d -p project.toml -l old-data -r data -o generated/diff.json
+sora diff --project project.scon --left-root old-data --right-root data --out generated/diff.json
+sora d -p project.scon -l old-data -r data -o generated/diff.json
 ```
 
 | Option | Description |
@@ -156,8 +156,8 @@ sora d -p project.toml -l old-data -r data -o generated/diff.json
 Generate empty Excel workbooks from the schema. Use this for new workbooks, not for existing data files.
 
 ```bash
-sora excel-template --project project.toml --out generated/excel
-sora et -p project.toml -o generated/excel
+sora excel-template --project project.scon --out generated/excel
+sora et -p project.scon -o generated/excel
 ```
 
 | Option | Description |
@@ -171,8 +171,8 @@ sora et -p project.toml -o generated/excel
 Preview or apply schema header updates to existing Excel data workbooks while preserving data rows. Removed schema fields stay as ignored legacy columns.
 
 ```bash
-sora excel-sync --project project.toml --data-root data
-sora es -p project.toml -d data -w
+sora excel-sync --project project.scon --data-root data
+sora es -p project.scon -d data -w
 ```
 
 | Option | Description |
@@ -187,8 +187,8 @@ sora es -p project.toml -d data -w
 Write a schema lock for the current normalized schema.
 
 ```bash
-sora schema-lock --project project.toml --out generated/schema.lock
-sora sl -p project.toml -o generated/schema.lock
+sora schema-lock --project project.scon --out generated/schema.lock
+sora sl -p project.scon -o generated/schema.lock
 ```
 
 | Option | Description |
@@ -202,8 +202,8 @@ sora sl -p project.toml -o generated/schema.lock
 Start the embedded Sora Studio schema editor.
 
 ```bash
-sora studio --project project.toml
-sora st -p project.toml --port 5180
+sora studio --project project.scon
+sora st -p project.scon --port 5180
 ```
 
 | Option | Description |

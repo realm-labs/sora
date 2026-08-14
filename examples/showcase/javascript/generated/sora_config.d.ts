@@ -2,73 +2,73 @@
 
 import type { LocalePack, SoraConfigTable, SoraTableSource, SoraTextResolver, TextKey } from "./sora_runtime.js";
 
-import type { ItemTable } from "./item.js";
+import type { AchievementTable } from "./achievement.js";
 
-import type { ShopTable } from "./shop.js";
-
-import type { ShopItemTable } from "./shop_item.js";
-
-import type { RecipeTable } from "./recipe.js";
-
-import type { GachaPoolTable } from "./gacha_pool.js";
-
-import type { GachaItemTable } from "./gacha_item.js";
-
-import type { EquipmentSetTable } from "./equipment_set.js";
-
-import type { SkillTable } from "./skill.js";
+import type { BuffTable } from "./buff.js";
 
 import type { CharacterTable } from "./character.js";
 
 import type { CharacterSkillTable } from "./character_skill.js";
 
-import type { BuffTable } from "./buff.js";
+import type { ComplexActionEntryTable } from "./complex_action_entry.js";
 
-import type { DropGroupTable } from "./drop_group.js";
-
-import type { DropEntryTable } from "./drop_entry.js";
-
-import type { MonsterTable } from "./monster.js";
-
-import type { StageTable } from "./stage.js";
-
-import type { StageRewardTable } from "./stage_reward.js";
-
-import type { DungeonTable } from "./dungeon.js";
-
-import type { QuestTable } from "./quest.js";
-
-import type { QuestRewardTable } from "./quest_reward.js";
-
-import type { LevelExpTable } from "./level_exp.js";
-
-import type { AchievementTable } from "./achievement.js";
-
-import type { VipLevelTable } from "./vip_level.js";
-
-import type { GameSettingsTable } from "./game_settings.js";
-
-import type { MaintenanceWindowTable } from "./maintenance_window.js";
-
-import type { MailTemplateTable } from "./mail_template.js";
-
-import type { MailRewardTable } from "./mail_reward.js";
-
-import type { DialogueTable } from "./dialogue.js";
-
-import type { EventRuleTable } from "./event_rule.js";
-
-import type { ComplexRuleTable } from "./complex_rule.js";
+import type { ComplexActionGroupTable } from "./complex_action_group.js";
 
 import type { ComplexConditionGroupTable } from "./complex_condition_group.js";
 
 import type { ComplexConditionGroupEntryTable } from "./complex_condition_group_entry.js";
 
+import type { ComplexRuleTable } from "./complex_rule.js";
+
 import type { ComplexRuleConditionTable } from "./complex_rule_condition.js";
 
-import type { ComplexActionGroupTable } from "./complex_action_group.js";
+import type { DialogueTable } from "./dialogue.js";
 
-import type { ComplexActionEntryTable } from "./complex_action_entry.js";
+import type { DropEntryTable } from "./drop_entry.js";
+
+import type { DropGroupTable } from "./drop_group.js";
+
+import type { DungeonTable } from "./dungeon.js";
+
+import type { EquipmentSetTable } from "./equipment_set.js";
+
+import type { EventRuleTable } from "./event_rule.js";
+
+import type { GachaItemTable } from "./gacha_item.js";
+
+import type { GachaPoolTable } from "./gacha_pool.js";
+
+import type { GameSettingsTable } from "./game_settings.js";
+
+import type { ItemTable } from "./item.js";
+
+import type { LevelExpTable } from "./level_exp.js";
+
+import type { MailRewardTable } from "./mail_reward.js";
+
+import type { MailTemplateTable } from "./mail_template.js";
+
+import type { MaintenanceWindowTable } from "./maintenance_window.js";
+
+import type { MonsterTable } from "./monster.js";
+
+import type { QuestTable } from "./quest.js";
+
+import type { QuestRewardTable } from "./quest_reward.js";
+
+import type { RecipeTable } from "./recipe.js";
+
+import type { ShopTable } from "./shop.js";
+
+import type { ShopItemTable } from "./shop_item.js";
+
+import type { SkillTable } from "./skill.js";
+
+import type { StageTable } from "./stage.js";
+
+import type { StageRewardTable } from "./stage_reward.js";
+
+import type { VipLevelTable } from "./vip_level.js";
 
 export declare const SORA_SCHEMA_FINGERPRINT: string;
 
@@ -76,40 +76,40 @@ export declare class SoraConfig {
     static fromSource(source: SoraTableSource): SoraConfig;
     tables(): readonly SoraConfigTable[];
     validateLocalePack(pack: LocalePack): void;
-    item(): ItemTable;
-    shop(): ShopTable;
-    shopItem(): ShopItemTable;
-    recipe(): RecipeTable;
-    gachaPool(): GachaPoolTable;
-    gachaItem(): GachaItemTable;
-    equipmentSet(): EquipmentSetTable;
-    skill(): SkillTable;
+    achievement(): AchievementTable;
+    buff(): BuffTable;
     character(): CharacterTable;
     characterSkill(): CharacterSkillTable;
-    buff(): BuffTable;
-    dropGroup(): DropGroupTable;
-    dropEntry(): DropEntryTable;
-    monster(): MonsterTable;
-    stage(): StageTable;
-    stageReward(): StageRewardTable;
-    dungeon(): DungeonTable;
-    quest(): QuestTable;
-    questReward(): QuestRewardTable;
-    levelExp(): LevelExpTable;
-    achievement(): AchievementTable;
-    vipLevel(): VipLevelTable;
-    gameSettings(): GameSettingsTable;
-    maintenanceWindow(): MaintenanceWindowTable;
-    mailTemplate(): MailTemplateTable;
-    mailReward(): MailRewardTable;
-    dialogue(): DialogueTable;
-    eventRule(): EventRuleTable;
-    complexRule(): ComplexRuleTable;
+    complexActionEntry(): ComplexActionEntryTable;
+    complexActionGroup(): ComplexActionGroupTable;
     complexConditionGroup(): ComplexConditionGroupTable;
     complexConditionGroupEntry(): ComplexConditionGroupEntryTable;
+    complexRule(): ComplexRuleTable;
     complexRuleCondition(): ComplexRuleConditionTable;
-    complexActionGroup(): ComplexActionGroupTable;
-    complexActionEntry(): ComplexActionEntryTable;
+    dialogue(): DialogueTable;
+    dropEntry(): DropEntryTable;
+    dropGroup(): DropGroupTable;
+    dungeon(): DungeonTable;
+    equipmentSet(): EquipmentSetTable;
+    eventRule(): EventRuleTable;
+    gachaItem(): GachaItemTable;
+    gachaPool(): GachaPoolTable;
+    gameSettings(): GameSettingsTable;
+    item(): ItemTable;
+    levelExp(): LevelExpTable;
+    mailReward(): MailRewardTable;
+    mailTemplate(): MailTemplateTable;
+    maintenanceWindow(): MaintenanceWindowTable;
+    monster(): MonsterTable;
+    quest(): QuestTable;
+    questReward(): QuestRewardTable;
+    recipe(): RecipeTable;
+    shop(): ShopTable;
+    shopItem(): ShopItemTable;
+    skill(): SkillTable;
+    stage(): StageTable;
+    stageReward(): StageRewardTable;
+    vipLevel(): VipLevelTable;
 }
 export declare class SoraI18n implements SoraTextResolver {
     mount(config: SoraConfig, pack: LocalePack): void;

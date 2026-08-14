@@ -9,20 +9,19 @@ There are two ways to generate Excel templates.
 The direct command only writes templates:
 
 ```bash
-sora excel-template --project project.toml --out generated/excel
+sora excel-template --project project.scon --out generated/excel
 ```
 
-This reads the schema from `project.toml` and writes generated workbooks under `generated/excel`. The directory is safe to delete and regenerate because it should contain template artifacts, not hand-edited source data.
+This reads the schema from `project.scon` and writes generated workbooks under `generated/excel`. The directory is safe to delete and regenerate because it should contain template artifacts, not hand-edited source data.
 
 The build workflow can do the same thing when `excel_templates` is configured:
 
-```toml
-[build]
-excel_templates = "generated/excel"
+```scon
+build { excel_templates = "generated/excel" }
 ```
 
 ```bash
-sora build --project project.toml
+sora build --project project.scon
 ```
 
 Both paths generate the same kind of template files. The direct command only writes Excel templates. `sora build` runs the template output together with the other configured build outputs such as schema locks, code generation, and exports.
@@ -45,13 +44,13 @@ Do not point `excel-template --out` or `[build].excel_templates` at a directory 
 For real projects with existing data, use `excel-sync` instead of copying rows into a fresh template. It updates workbook headers from the current schema while preserving data rows:
 
 ```bash
-sora excel-sync --project project.toml --data-root data
+sora excel-sync --project project.scon --data-root data
 ```
 
 Without `--write`, the command only previews what would change. To write the updated workbook files:
 
 ```bash
-sora excel-sync --project project.toml --data-root data --write
+sora excel-sync --project project.scon --data-root data --write
 ```
 
 When writing an existing workbook, Sora first copies the old file under `data/.sora-backup/<timestamp>/`.
@@ -66,35 +65,19 @@ Sync matches columns by the `#field` row, not by column position:
 
 The workbook and sheet for each table come from that table's source:
 
-```toml
-[[tables]]
-id = "item"
-name = "Item"
-
-[tables.source]
-format = "xlsx"
-file = "Core.xlsx"
-sheet = "Item"
-
-[[tables]]
-id = "quest"
-name = "Quest"
-
-[tables.source]
-format = "xlsx"
-file = "Core.xlsx"
-sheet = "Quest"
+```scon
+tables {
+  Item { mode = "map" source { format = "xlsx" file = "Core.xlsx" sheet = "Item" } }
+  Quest { mode = "map" source { format = "xlsx" file = "Core.xlsx" sheet = "Quest" } }
+}
 ```
 
 This writes two sheets, `Item` and `Quest`, into `generated/excel/Core.xlsx`.
 
 A table with a different source file goes into a different workbook:
 
-```toml
-[tables.source]
-format = "xlsx"
-file = "Battle.xlsx"
-sheet = "Skill"
+```scon
+source { format = "xlsx" file = "Battle.xlsx" sheet = "Skill" }
 ```
 
 This writes the `Skill` sheet into `generated/excel/Battle.xlsx`.
@@ -109,7 +92,7 @@ Generated sheets include several header rows:
 | `#name` | Display name row for the spreadsheet. |
 | `#field` | Stable schema field names read by Sora. |
 | `#type` | Type hints such as `i32`, `enum<ItemType>`, or `struct<Cost>(kind: enum<ResourceKind>, id: i32, count: i32)`. |
-| `#groups` | Declared group membership for each field. |
+| `#groups` | Group membership for each field. |
 | `#input` | Input hints such as key, parser, range, length, or derived-field source. |
 | `#desc` | Field comments for designers and reviewers. |
 
@@ -121,7 +104,7 @@ Users should edit data rows. They should not hand-maintain field names, types, k
 
 If a column's `#input` cell starts with `from=`, that field is derived from another table. Leave the generated placeholder in that column and edit the child table rows instead.
 
-When the schema changes, run `sora excel-sync --project project.toml --data-root data` to preview header changes, then rerun with `--write` after reviewing them. This keeps spreadsheet editing convenient without making Excel a second schema language.
+When the schema changes, run `sora excel-sync --project project.scon --data-root data` to preview header changes, then rerun with `--write` after reviewing them. This keeps spreadsheet editing convenient without making Excel a second schema language.
 
 ## Common Field Shapes
 

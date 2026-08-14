@@ -280,7 +280,7 @@ mod tests {
     use super::*;
     use crate::model::{ConfigData, LocalizationRowData, RowData, TableData};
     use sora_ir::{normalize::normalize_schema, validate::validate_config_ir};
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
 
     #[test]
     fn builds_catalog_from_multiple_sources() {
@@ -370,7 +370,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

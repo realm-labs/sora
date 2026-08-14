@@ -17,7 +17,7 @@ split, and map parsers.
 singleton tables, `f64`, fixed-size arrays, and an optional struct derived from
 a child table.
 
-- schema: `project.toml` and `schema/game.toml`
+- schema: `project.scon` and `schema/*.scon`
 - Excel data: `data/Core.xlsx`, `data/Battle.xlsx`, `data/Economy.xlsx`, `data/Quest.xlsx`, `data/Complex.xlsx`
 - Rust Cargo project: `rust`
 - Kotlin Gradle project: `kotlin`
@@ -60,7 +60,7 @@ Inspect the same project through Sora MCP:
 
 ```powershell
 cargo build -p sora-cli
-npx @modelcontextprotocol/inspector target/debug/sora mcp --project examples/showcase/project.toml
+npx @modelcontextprotocol/inspector target/debug/sora mcp --project examples/showcase/project.scon
 ```
 
 The MCP end-to-end tests cover read-only inspection and queries plus a

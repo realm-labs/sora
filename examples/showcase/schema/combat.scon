@@ -1,0 +1,233 @@
+tables = {
+  Skill = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Battle.xlsx"
+      sheet = "Skill"
+    }
+    fields = {
+      id = "i32"
+      name = {
+        type = "string"
+        length = [
+          2,
+          32,
+        ]
+      }
+      element = "enum<ElementType>"
+      cost = {
+        type = "struct<ResourceCost>"
+        comment = "Tuple cost, e.g. Gold,0,150"
+        parser = "tuple"
+      }
+      effect = {
+        type = "struct<SkillEffect>"
+        comment = "JSON object with element/power/radius"
+      }
+      required_level = {
+        type = "i32"
+        default = "1"
+        range = [
+          1,
+          100,
+        ]
+      }
+      required_item = {
+        type = "optional<ref<Item.id>>"
+        comment = "Optional item requirement"
+      }
+      cast_origin = {
+        type = "struct<Vec3>"
+        parser = "tuple"
+      }
+    }
+  }
+  Character = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Battle.xlsx"
+      sheet = "Character"
+    }
+    fields = {
+      id = "i32"
+      name = {
+        type = "string"
+        length = [
+          2,
+          32,
+        ]
+      }
+      rarity = "enum<Rarity>"
+      base_level = "ref<LevelExp.level>"
+      base_skill = "ref<Skill.id>"
+      starter_items = {
+        type = "list<ref<Item.id>>"
+        length = [
+          1,
+          4,
+        ]
+        parser = "json"
+      }
+      spawn_pos = {
+        type = "struct<Vec3>"
+        parser = "tuple"
+      }
+    }
+  }
+  CharacterSkill = {
+    mode = "list"
+    source = {
+      file = "Battle.xlsx"
+      sheet = "CharacterSkill"
+    }
+    fields = {
+      character_id = "ref<Character.id>"
+      skill_id = "ref<Skill.id>"
+      unlock_level = "ref<LevelExp.level>"
+    }
+  }
+  Buff = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Battle.xlsx"
+      sheet = "Buff"
+    }
+    fields = {
+      id = "i32"
+      name = "string"
+      duration = "duration"
+      modifiers = {
+        type = "list<StatModifier>"
+        length = [
+          1,
+          3,
+        ]
+        parser = "json"
+      }
+    }
+  }
+  DropGroup = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Battle.xlsx"
+      sheet = "DropGroup"
+    }
+    fields = {
+      id = "i32"
+      name = "string"
+    }
+  }
+  DropEntry = {
+    mode = "list"
+    source = {
+      file = "Battle.xlsx"
+      sheet = "DropEntry"
+    }
+    fields = {
+      group_id = "ref<DropGroup.id>"
+      seq = "i32"
+      item_id = "ref<Item.id>"
+      count = {
+        type = "i32"
+        range = [
+          1,
+          9999,
+        ]
+      }
+      weight = {
+        type = "f32"
+        groups = "server"
+      }
+    }
+  }
+  Monster = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Battle.xlsx"
+      sheet = "Monster"
+    }
+    fields = {
+      id = "i32"
+      name = "string"
+      level = "ref<LevelExp.level>"
+      element = "enum<ElementType>"
+      drop_group = "ref<DropGroup.id>"
+      spawn_pos = {
+        type = "struct<Vec3>"
+        parser = "tuple"
+      }
+    }
+  }
+  Stage = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Battle.xlsx"
+      sheet = "Stage"
+    }
+    fields = {
+      id = "i32"
+      name = "string"
+      monster_ids = {
+        type = "list<ref<Monster.id>>"
+        length = [
+          1,
+          5,
+        ]
+        parser = "json"
+      }
+      recommended_power = "i32"
+      first_clear_rewards = {
+        type = "list<Reward>"
+        from = {
+          table = "StageReward"
+          parent_key = "id"
+          child_key = "stage_id"
+          order_by = "seq"
+        }
+      }
+    }
+  }
+  StageReward = {
+    mode = "list"
+    source = {
+      file = "Battle.xlsx"
+      sheet = "StageReward"
+    }
+    fields = {
+      stage_id = "ref<Stage.id>"
+      seq = "i32"
+      item_id = "ref<Item.id>"
+      count = "i32"
+    }
+  }
+  Dungeon = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Battle.xlsx"
+      sheet = "Dungeon"
+    }
+    fields = {
+      id = "i32"
+      name = "string"
+      stage_ids = {
+        type = "list<ref<Stage.id>>"
+        length = [
+          2,
+          6,
+        ]
+        parser = "json"
+      }
+      entry_cost = {
+        type = "struct<ResourceCost>"
+        parser = "tuple"
+      }
+    }
+  }
+}

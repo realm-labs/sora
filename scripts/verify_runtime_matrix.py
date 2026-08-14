@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA = ROOT / "examples" / "simple" / "schema" / "items.toml"
+SCHEMA = ROOT / "examples" / "simple" / "schema" / "items.scon"
 
 
 @dataclass(frozen=True)
@@ -147,7 +147,7 @@ def run_matrix(sora_bin: Path, base: Path, strict_tools: bool) -> int:
 def write_project(base: Path, case: RuntimeCase) -> Path:
     project_dir = base / "_projects" / case.target / runtime_slug(case.runtime_format)
     project_dir.mkdir(parents=True, exist_ok=True)
-    project = project_dir / "project.toml"
+    project = project_dir / "project.scon"
     options = [f'runtime_format = "{case.runtime_format}"']
     if case.target == "scala":
         options.append('scala_version = "3"')
@@ -176,9 +176,9 @@ def write_project(base: Path, case: RuntimeCase) -> Path:
     binding = binding_options.get(case.target)
     binding_lines = (
         [
-            "",
-            f"[views.default.bindings.{case.target}]",
-            f'{binding[0]} = "{binding[1]}"',
+            "    bindings {",
+            f"      {case.target} {{ {binding[0]} = \"{binding[1]}\" }}",
+            "    }",
         ]
         if binding
         else []
@@ -189,16 +189,22 @@ def write_project(base: Path, case: RuntimeCase) -> Path:
             [
                 f'includes = ["{SCHEMA.as_posix()}"]',
                 "",
-                'project = { id = "game_config" }',
-                'groups = { common = { default = true } }',
+                'project { id = "game_config" }',
+                'groups { common { default = true } }',
                 "",
-                "[views.default]",
-                'contract = "game_config/default"',
-                'groups = ["common"]',
-                "",
-                f"[codegen.{case.target}]",
-                *options,
+                "views {",
+                "  default {",
+                '    contract = "game_config/default"',
+                '    groups = ["common"]',
                 *binding_lines,
+                "  }",
+                "}",
+                "",
+                "codegen {",
+                f"  {case.target} {{",
+                *(f"    {option}" for option in options),
+                "  }",
+                "}",
                 "",
             ]
         ),

@@ -4,49 +4,42 @@
 
 ## Enums
 
-```toml
-[[enums]]
-name = "Rarity"
-values = [{ id = 0, name = "Common" }, { id = 1, name = "Uncommon" }, { id = 2, name = "Rare" }, { id = 3, name = "Epic" }, { id = 4, name = "Legendary" }]
+```scon
+enums {
+  Rarity = ["Common", "Uncommon", "Rare", "Epic", "Legendary"]
+}
 ```
 
 枚举让源数据保持可读，同时让生成代码获得受约束的类型。
-每个枚举值都必须声明一个显式、稳定的整数 `id`。同一个枚举内的 ID
-不能重复，取值范围是 `0` 到 `2147483647`。调整枚举值顺序不会改变编码；
-重命名枚举值时应保留原 ID。二进制格式、整数枚举表示、支持显式数值的
-原生枚举以及生成的 Protobuf schema 都会使用这个 ID。
 
 alias 可以保留导入数据或旧数据里的名称：
 
-```toml
-[[enums.aliases]]
-name = "Epic"
-alias = "Purple"
+```scon
+enums {
+  Rarity {
+    values = ["Common", "Uncommon", "Rare", "Epic", "Legendary"]
+    aliases { Purple = "Epic" }
+  }
+}
 ```
 
 ## Structs
 
-```toml
-[[structs]]
-name = "ResourceCost"
-
-[[structs.fields]]
-name = "kind"
-type = "enum<ResourceKind>"
-
-[[structs.fields]]
-name = "id"
-type = "i32"
-
-[[structs.fields]]
-name = "count"
-type = "i32"
-range = [1, 999999]
+```scon
+structs {
+  ResourceCost {
+    fields {
+      kind = "enum<ResourceKind>"
+      id = "i32"
+      count { type = "i32" range = [1, 999999] }
+    }
+  }
+}
 ```
 
 结构体适合多处复用的嵌套值。字段可以通过 `type = "struct<ResourceCost>"` 引用结构体。
 
-Struct field 使用和 table field 相同的字段属性，包括 `name`、`type`、`default`、`comment`、`range`、`length`、`parser` 和 `groups`。`key`、`from` 这类表专用属性对普通 struct field 没有意义。完整字段参考见[类型](types.md#field-rules)。
+Struct field 使用和 table field 相同的字段属性，包括 `type`、`default`、`comment`、`range`、`length`、`parser` 和 `groups`；字段名来自 key。`key`、`from` 这类表专用属性对普通 struct field 没有意义。完整字段参考见[类型](types.md#field-rules)。
 
 在 Excel、CSV 这类单元格输入中，struct 字段默认可以写成 JSON object 文本：
 
@@ -74,28 +67,16 @@ Gold,0,100
 
 `type` 的值决定当前是哪一个 variant。剩余字段取决于这个 variant。
 
-```toml
-[[unions]]
-name = "RewardAction"
-tag = "type"
-
-[[unions.variants]]
-name = "AddItem"
-
-[[unions.variants.fields]]
-name = "item_id"
-type = "ref<Item.id>"
-
-[[unions.variants.fields]]
-name = "count"
-type = "i32"
-
-[[unions.variants]]
-name = "UnlockStage"
-
-[[unions.variants.fields]]
-name = "stage_id"
-type = "ref<Stage.id>"
+```scon
+unions {
+  RewardAction {
+    tag = "type"
+    variants {
+      AddItem { fields { item_id = "ref<Item.id>" count = "i32" } }
+      UnlockStage { fields { stage_id = "ref<Stage.id>" } }
+    }
+  }
+}
 ```
 
 当一个字段可能是多个 tagged shape 之一时，使用 union。常见例子包括条件、奖励、触发器和脚本动作。
@@ -110,11 +91,10 @@ type = "ref<Stage.id>"
 
 union 列表建议声明 `parser = { kind = "json" }`，然后在单元格中写 JSON array：
 
-```toml
-[[tables.fields]]
-name = "actions"
-type = "list<union<RewardAction>>"
-parser = { kind = "json" }
+```scon
+fields {
+  actions { type = "list<union<RewardAction>>" parser = "json" }
+}
 ```
 
 ```json
@@ -126,11 +106,10 @@ parser = { kind = "json" }
 
 如果不想在 Excel/CSV 单元格里写 JSON，可以把一个 `union<T>` 字段展开成多列。下面的 `action` 字段是单个 union 值：
 
-```toml
-[[tables.fields]]
-name = "action"
-type = "union<RewardAction>"
-parser = { kind = "tagged_columns" }
+```scon
+fields {
+  action { type = "union<RewardAction>" parser = "tagged_columns" }
+}
 ```
 
 Excel 中会出现这些列：
@@ -145,29 +124,28 @@ Excel 中会出现这些列：
 
 `tagged_columns` 只能用于类型正好是 `union<T>` 的字段，不能直接用于 `list<union<T>>`。如果一个父表字段需要多个 union 值，通常把每个 union 值拆成子表的一行，再由父表聚合回来：
 
-```toml
-[[tables.fields]]
-name = "actions"
-type = "list<union<RewardAction>>"
-from = { table = "EventActionEntry", parent_key = "id", child_key = "event_id", field = "value", order_by = "seq" }
-
-[[tables]]
-id = "eventactionentry"
-name = "EventActionEntry"
-mode = "list"
-
-[[tables.fields]]
-name = "event_id"
-type = "ref<EventRule.id>"
-
-[[tables.fields]]
-name = "seq"
-type = "i32"
-
-[[tables.fields]]
-name = "value"
-type = "union<RewardAction>"
-parser = { kind = "tagged_columns", prefix = "" }
+```scon
+tables {
+  EventRule {
+    fields {
+      actions {
+        type = "list<union<RewardAction>>"
+        from = { table = "EventActionEntry", parent_key = "id", child_key = "event_id", field = "value", order_by = "seq" }
+      }
+    }
+  }
+  EventActionEntry {
+    mode = "list"
+    fields {
+      event_id = "ref<EventRule.id>"
+      seq = "i32"
+      value {
+        type = "union<RewardAction>"
+        parser = { kind = "tagged_columns", prefix = "" }
+      }
+    }
+  }
+}
 ```
 
 父表 `EventRule` 只保留普通字段：

@@ -21,84 +21,78 @@ cargo install --path crates/sora-cli
 最快的方式是直接生成同一个最小项目：
 
 ```bash
-sora init --out my-config --schema-format toml
+sora init --out my-config
 cd my-config
 ```
 
-`--schema-format` 支持 `toml`、`yaml`、`json` 和 `lua`。脚手架会生成这个目录结构：
+SCON 是默认格式。也可以用 `--schema-format` 显式选择 `scon`、`toml`、`yaml`、`json` 或 `lua`。脚手架会生成这个目录结构：
 
 | 路径 | 谁编辑 | 作用 |
 | --- | --- | --- |
-| `project.toml` | 你 | 项目入口、构建输出、默认数据目录。 |
-| `schema/items.toml` | 你 | `Item` 表的 schema。 |
+| `project.scon` | 你 | 项目入口、构建输出、默认数据目录。 |
+| `schema/items.scon` | 你 | `Item` 表的 schema。 |
 | `data/Item.xlsx` | 策划或工具 | 可编辑行数据。 |
 | `generated/` | Sora | schema lock、Excel 模板、生成代码、导出数据。 |
 
-本节后面的内容展示生成出来的文件，方便理解项目结构。`project.toml` 内容如下：
+本节后面的内容展示生成出来的文件，方便理解项目结构。`project.scon` 内容如下：
 
-```toml
-project = { id = "game_config" }
-groups = { common = { default = true } }
-views = { default = { contract = "game_config/default", groups = ["common"] } }
-includes = ["schema/items.toml"]
+```scon
+project { id = "game_config" }
+groups { common { default = true } }
+views {
+  default {
+    contract = "game_config/default"
+    groups = ["common"]
+  }
+}
+includes = ["schema/items.scon"]
 
-[build]
-default_source_format = "xlsx"
-data_root = "data"
-schema_lock = "generated/schema.lock"
-excel_templates = "generated/excel"
-
-[[build.codegen]]
-target = "rust"
-out = "generated/rust"
-format = "auto"
-
-[[build.exports]]
-format = "binary"
-out = "generated/config.sora"
+build {
+  default_source_format = "xlsx"
+  data_root = "data"
+  view = "default"
+  schema_lock = "generated/schema.lock"
+  excel_templates = "generated/excel"
+  codegen = [
+    { target = "rust", out = "generated/rust", format = "auto" },
+  ]
+  exports = [
+    { format = "binary", out = "generated/config.sora" },
+  ]
+}
 ```
 
 这里 `default_source_format = "xlsx"` 表示表数据默认来自 Excel。`data_root = "data"` 表示导出和 build 时会从 `data/Item.xlsx` 读取 `Item.xlsx`。`excel_templates = "generated/excel"` 只是生成模板的输出目录。Sora 会在这里写入带 schema 表头的新 workbook；它不是源数据目录。把它和 `data` 分开，重新生成模板时才不会覆盖已经填写过的行数据。`binary` export 会写出 Rust 代码要加载的运行时数据包，因为 Rust 默认使用 `runtime_format = "sora"`。
 
-创建 `schema/items.toml`：
+创建 `schema/items.scon`：
 
-```toml
-[[enums]]
-name = "ItemType"
-values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
+```scon
+enums {
+  ItemType = ["Weapon", "Armor", "Material", "Consumable"]
+}
 
-[[tables]]
-id = "item"
-name = "Item"
-mode = "map"
-key = "id"
-
-[tables.source]
-format = "xlsx"
-file = "Item.xlsx"
-sheet = "Item"
-
-[[tables.fields]]
-name = "id"
-type = "i32"
-comment = "Item id"
-
-[[tables.fields]]
-name = "name"
-type = "string"
-comment = "Display name"
-
-[[tables.fields]]
-name = "item_type"
-type = "enum<ItemType>"
-comment = "Item category"
-
-[[tables.fields]]
-name = "max_stack"
-type = "i32"
-default = "1"
-range = [1, 9999]
-comment = "Stack limit"
+tables {
+  Item {
+    mode = "map"
+    key = "id"
+    source {
+      format = "xlsx"
+      file = "Item.xlsx"
+      sheet = "Item"
+    }
+    fields {
+      id { type = "i32" comment = "Item id" }
+      name { type = "string" comment = "Display name" }
+      item_type { type = "enum<ItemType>" comment = "Item category" }
+      max_stack {
+        type = "i32"
+        default = "1"
+        range = [1, 9999]
+        comment = "Stack limit"
+      }
+    }
+  }
+}
 ```
 
 ## 2. 生成 Excel 模板
@@ -106,7 +100,7 @@ comment = "Stack limit"
 工作簿表头由 schema 生成：
 
 ```bash
-sora excel-template --project project.toml --out generated/excel
+sora excel-template --project project.scon --out generated/excel
 ```
 
 这会生成 `generated/excel/Item.xlsx`。把这个文件当作 schema 变更后可以重新生成的模板产物。新建表时，可以把它复制到 `data/Item.xlsx`，然后在生成表头下面填写行数据：
@@ -121,8 +115,8 @@ sora excel-template --project project.toml --out generated/excel
 对于已经有数据的 workbook，更推荐原地同步表头：
 
 ```bash
-sora excel-sync --project project.toml --data-root data
-sora excel-sync --project project.toml --data-root data --write
+sora excel-sync --project project.scon --data-root data
+sora excel-sync --project project.scon --data-root data --write
 ```
 
 第一条命令会预览新增字段和 legacy 列。带 `--write` 的命令会刷新生成表头并保留数据行；从 schema 中删除的字段会继续留在 Excel 中，作为 Sora 忽略的 legacy 列。
@@ -132,19 +126,19 @@ sora excel-sync --project project.toml --data-root data --write
 只校验 schema：
 
 ```bash
-sora check --project project.toml
+sora check --project project.scon
 ```
 
 运行 `[build]` 中声明的全部输出。这个过程会在写出导出文件前加载并校验源数据：
 
 ```bash
-sora build --project project.toml
+sora build --project project.scon
 ```
 
 也可以用 CLI 内置的 Sora Studio 打开这个项目：
 
 ```bash
-sora studio --project project.toml
+sora studio --project project.scon
 ```
 
 命令会打印一个本地地址。用浏览器打开后，可以可视化 schema 关系、编辑 schema module、预览将要写入的变更，并保存回项目文件。
@@ -152,16 +146,16 @@ sora studio --project project.toml
 也可以分开执行：
 
 ```bash
-sora gen --target rust --project project.toml --out generated/rust
+sora gen --target rust --project project.scon --out generated/rust
 
 sora export \
   --format binary \
   --default-source-format xlsx \
-  --project project.toml \
+  --project project.scon \
   --data-root data \
   --out generated/config.sora
 ```
 
 ## 4. 下一步
 
-如果想用可视化方式编辑 schema，继续读 [Sora Studio](studio.md)。也可以阅读[第一份配置](tutorial/first-config.md)了解完整闭环，或者查看 `examples/showcase/project.toml` 作为多语言项目参考。
+如果想用可视化方式编辑 schema，继续读 [Sora Studio](studio.md)。也可以阅读[第一份配置](tutorial/first-config.md)了解完整闭环，或者查看 `examples/showcase/project.scon` 作为多语言项目参考。

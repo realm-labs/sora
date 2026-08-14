@@ -21,7 +21,7 @@ Parser option 都是字符串。未知 parser、当前 parser 不支持的 optio
 
 ## 自定义 Lua Parser
 
-项目可以在 `project.toml` 里加载项目内的 Lua parser 脚本：
+项目可以在 `project.scon` 里加载项目内的 Lua parser 脚本：
 
 ```toml
 [parsers]
@@ -31,15 +31,15 @@ scripts = ["tools/parsers.lua"]
 脚本路径按 project 文件所在目录解析。之后所有读取该 project 的命令都能使用这些自定义 parser，不需要反复写命令行参数：
 
 ```bash
-sora build --project project.toml
-sora export --project project.toml --data-root data --format json --out generated/config.json
+sora build --project project.scon
+sora export --project project.scon --data-root data --format json --out generated/config.json
 ```
 
 CLI 命令也可以通过全局 `--parser-script` 临时追加 parser 脚本：
 
 ```bash
-sora --parser-script tools/parsers.lua build --project project.toml
-sora --parser-script tools/parsers.lua export --project project.toml --data-root data --format json --out generated/config.json
+sora --parser-script tools/parsers.lua build --project project.scon
+sora --parser-script tools/parsers.lua export --project project.scon --data-root data --format json --out generated/config.json
 ```
 
 这个参数可以重复传，并追加在 project 配置的脚本之后。自定义 parser 属于项目可信代码。Sora 会用受限 Lua 标准库加载脚本，不暴露 `io`、`os`、`package` 或 `debug`。
@@ -156,26 +156,15 @@ starter|melee|weapon
 
 `tuple` 适合把一个很小的 struct 写在一个 cell 里。值的顺序等于该 struct 的字段声明顺序。
 
-```toml
-[[structs]]
-name = "ResourceCost"
-
-[[structs.fields]]
-name = "kind"
-type = "enum<ResourceKind>"
-
-[[structs.fields]]
-name = "id"
-type = "i32"
-
-[[structs.fields]]
-name = "count"
-type = "i32"
-
-[[tables.fields]]
-name = "price"
-type = "struct<ResourceCost>"
-parser = { kind = "tuple" }
+```scon
+structs {
+  ResourceCost {
+    fields { kind = "enum<ResourceKind>" id = "i32" count = "i32" }
+  }
+}
+fields {
+  price { type = "struct<ResourceCost>" parser = "tuple" }
+}
 ```
 
 Cell：
@@ -206,26 +195,15 @@ Gold|0|100
 
 `columns` 适合把一个 struct 展开成普通 Excel/CSV 列来编辑，而不是写 JSON 或一个紧凑 tuple cell。它只能用于 table field 上的 `struct<T>` 或 `optional<struct<T>>`。
 
-```toml
-[[structs]]
-name = "ResourceCost"
-
-[[structs.fields]]
-name = "kind"
-type = "enum<ResourceKind>"
-
-[[structs.fields]]
-name = "id"
-type = "i32"
-
-[[structs.fields]]
-name = "count"
-type = "i32"
-
-[[tables.fields]]
-name = "price"
-type = "struct<ResourceCost>"
-parser = { kind = "columns", prefix = "price_" }
+```scon
+structs {
+  ResourceCost {
+    fields { kind = "enum<ResourceKind>" id = "i32" count = "i32" }
+  }
+}
+fields {
+  price { type = "struct<ResourceCost>" parser = { kind = "columns", prefix = "price_" } }
+}
 ```
 
 CSV header 和行：
@@ -318,33 +296,18 @@ Sora 导出 map 时使用 pair array，这样非 string key 也不会有歧义�
 
 `tagged_columns` 用来把一个 `union<T>` 值展开到多列 Excel/CSV 中编辑。它只能用于类型正好是 `union<T>` 的 table field。它不能用于 `optional<union<T>>`、`list<union<T>>`、`set<union<T>>` 或其它容器。
 
-```toml
-[[unions]]
-name = "EventCondition"
-tag = "type"
-
-[[unions.variants]]
-name = "QuestCompleted"
-
-[[unions.variants.fields]]
-name = "quest_id"
-type = "ref<Quest.id>"
-
-[[unions.variants]]
-name = "HasItem"
-
-[[unions.variants.fields]]
-name = "item_id"
-type = "ref<Item.id>"
-
-[[unions.variants.fields]]
-name = "count"
-type = "i32"
-
-[[tables.fields]]
-name = "value"
-type = "union<EventCondition>"
-parser = { kind = "tagged_columns", prefix = "" }
+```scon
+unions {
+  EventCondition {
+    variants {
+      QuestCompleted { fields { quest_id = "ref<Quest.id>" } }
+      HasItem { fields { item_id = "ref<Item.id>" count = "i32" } }
+    }
+  }
+}
+fields {
+  value { type = "union<EventCondition>" parser = { kind = "tagged_columns", prefix = "" } }
+}
 ```
 
 CSV header 和行：
@@ -367,11 +330,10 @@ Sora 会拒绝投影列名冲突。例如表里已经有普通字段 `type`，�
 
 `json` 适合嵌套值、容器里的 union、嵌套集合，以及任何需要明确转义的复杂形状。
 
-```toml
-[[tables.fields]]
-name = "actions"
-type = "list<union<RewardAction>>"
-parser = { kind = "json" }
+```scon
+fields {
+  actions { type = "list<union<RewardAction>>" parser = "json" }
+}
 ```
 
 Cell：

@@ -9,14 +9,14 @@ Sora 用来让游戏配置表保持易懂，同时让运行时代码获得强类
 一个小项目里的文件流通常是：
 
 ```text
-project.toml
-  -> schema/items.toml
+project.scon
+  -> schema/items.scon
   -> data/Item.xlsx
   -> generated/config.sora
   -> generated/rust
 ```
 
-通常手写 `project.toml` 和 schema 文件。策划或工具编辑 `data/` 下的数据文件。`generated/` 下的文件由 Sora 生成。
+通常手写 `project.scon` 和 schema 文件。策划或工具编辑 `data/` 下的数据文件。`generated/` 下的文件由 Sora 生成。
 
 ## Sora 做什么
 
@@ -42,7 +42,7 @@ Sora 里 `format` 会出现在几个不同位置：
 
 | 术语 | 含义 | 例子 |
 | --- | --- | --- |
-| Schema format | schema/project 文件本身的格式。 | TOML、YAML、JSON、Lua |
+| Schema format | schema/project 文件本身的格式。 | SCON（推荐）、TOML、YAML、JSON、Lua |
 | Source format | 可编辑表格数据的格式。 | Excel `.xlsx`、CSV、TOML、JSON、YAML |
 | Export format | 校验后写出的数据包格式。 | `binary`、`json`、`cbor` |
 | Runtime format | 生成代码期望加载的数据包格式。 | `sora`、`json`、`cbor` |

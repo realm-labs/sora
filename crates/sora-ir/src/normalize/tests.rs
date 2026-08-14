@@ -3,7 +3,7 @@ use crate::model::{TableModeIr, TypeIr};
 
 #[test]
 fn normalizes_schema() {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -57,7 +57,7 @@ length = [1, 3]
 
 #[test]
 fn normalizes_localization_sources_and_text_type() {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -101,7 +101,7 @@ type = "text"
 
 #[test]
 fn rejects_invalid_localization_source_name() {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -122,7 +122,7 @@ file = "Core.xlsx"
 
 #[test]
 fn normalizes_tuple_struct_parser() {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -168,7 +168,7 @@ parser = { kind = "tuple" }
 
 #[test]
 fn normalizes_tuple_list_parser() {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -211,7 +211,7 @@ parser = { kind = "tuple_list", item_separator = ";", separator = "," }
 
 #[test]
 fn normalizes_map_parser() {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -239,7 +239,7 @@ parser = { kind = "map", item_separator = ";", separator = ":" }
 
 #[test]
 fn normalizes_tagged_columns_parser() {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -277,7 +277,7 @@ parser = { kind = "tagged_columns", prefix = "" }
 
 #[test]
 fn default_collections_do_not_need_parser_metadata() {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -301,7 +301,7 @@ type = "list<string>"
 
 #[test]
 fn rejects_invalid_parser_metadata() {
-    let scalar_split: SchemaFile = toml::from_str(
+    let scalar_split: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -324,7 +324,7 @@ parser = { kind = "split", separator = "|" }
         SoraError::InvalidSchema(message) if message.contains("is not list or array")
     ));
 
-    let scalar_tuple_list: SchemaFile = toml::from_str(
+    let scalar_tuple_list: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -347,7 +347,7 @@ parser = { kind = "tuple_list" }
         SoraError::InvalidSchema(message) if message.contains("not list or array of struct")
     ));
 
-    let scalar_map: SchemaFile = toml::from_str(
+    let scalar_map: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -370,7 +370,7 @@ parser = { kind = "map" }
         SoraError::InvalidSchema(message) if message.contains("is not map")
     ));
 
-    let split_map: SchemaFile = toml::from_str(
+    let split_map: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -393,7 +393,7 @@ parser = { kind = "split" }
         SoraError::InvalidSchema(message) if message.contains("is not list or array")
     ));
 
-    let unknown_parser: SchemaFile = toml::from_str(
+    let unknown_parser: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -416,7 +416,7 @@ parser = { kind = "lua" }
         SoraError::InvalidSchema(message) if message.contains("unsupported parser")
     ));
 
-    let list_union_tagged_columns: SchemaFile = toml::from_str(
+    let list_union_tagged_columns: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -446,7 +446,7 @@ parser = { kind = "tagged_columns" }
         SoraError::InvalidSchema(message) if message.contains("is not union")
     ));
 
-    let tagged_columns_bad_option: SchemaFile = toml::from_str(
+    let tagged_columns_bad_option: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -479,7 +479,7 @@ parser = { kind = "tagged_columns", separator = "," }
 
 #[test]
 fn validates_length_constraints() {
-    let invalid_type: SchemaFile = toml::from_str(
+    let invalid_type: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -502,7 +502,7 @@ length = [1, 4]
         SoraError::InvalidSchema(message) if message.contains("declares `length`")
     ));
 
-    let invalid_range: SchemaFile = toml::from_str(
+    let invalid_range: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -528,7 +528,7 @@ length = [4, 1]
 
 #[test]
 fn rejects_invalid_tuple_parser_metadata() {
-    let scalar_parser: SchemaFile = toml::from_str(
+    let scalar_parser: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -554,7 +554,7 @@ parser = { kind = "tuple" }
 
 #[test]
 fn derived_list_fields_do_not_need_separator_metadata() {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -597,7 +597,7 @@ mode = "list"
 
 #[test]
 fn normalizes_derived_from_field() {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -633,7 +633,7 @@ mode = "list"
 
 #[test]
 fn rejects_incomplete_from_metadata() {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -661,7 +661,7 @@ from = { table = "ItemProfile", field = "name" }
 
 #[test]
 fn rejects_default_on_derived_fields() {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -703,7 +703,7 @@ mode = "list"
 
 #[test]
 fn rejects_default_on_tagged_columns_fields() {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

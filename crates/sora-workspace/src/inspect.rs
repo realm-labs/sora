@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use schemars::JsonSchema;
 use serde::Serialize;
 use sora_input::traits::SchemaInput;
-use sora_input_schema::input::SchemaFileInput;
+use sora_input_schema::input::ProjectSchemaInput;
 use sora_ir::model::ConfigIr;
 
 use crate::{Diagnostic, ProjectRevision, ProjectSession, diagnostics_from_anyhow};
@@ -56,7 +56,7 @@ pub struct ValidationReport {
 
 impl ProjectSession {
     pub fn normalized_schema(&self) -> Result<ConfigIr> {
-        let input = SchemaFileInput::new(self.manifest_path());
+        let input = ProjectSchemaInput::new(self.manifest_path());
         let schema = input.load_schema()?;
         let ir = sora_ir::normalize::normalize_schema_with_parsers(
             schema,

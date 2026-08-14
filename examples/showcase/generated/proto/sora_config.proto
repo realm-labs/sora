@@ -5,40 +5,47 @@ syntax = "proto3";
 package com.sora.showcase;
 
 message SoraConfigData {
-  repeated Item item = 1;
-  repeated Shop shop = 2;
-  repeated ShopItem shop_item = 3;
-  repeated Recipe recipe = 4;
-  repeated GachaPool gacha_pool = 5;
-  repeated GachaItem gacha_item = 6;
-  repeated EquipmentSet equipment_set = 7;
-  repeated Skill skill = 8;
-  repeated Character character = 9;
-  repeated CharacterSkill character_skill = 10;
-  repeated Buff buff = 11;
-  repeated DropGroup drop_group = 12;
-  repeated DropEntry drop_entry = 13;
-  repeated Monster monster = 14;
-  repeated Stage stage = 15;
-  repeated StageReward stage_reward = 16;
-  repeated Dungeon dungeon = 17;
-  repeated Quest quest = 18;
-  repeated QuestReward quest_reward = 19;
-  repeated LevelExp level_exp = 20;
-  repeated Achievement achievement = 21;
-  repeated VipLevel vip_level = 22;
-  GameSettings game_settings = 23;
+  repeated Achievement achievement = 1;
+  repeated Buff buff = 2;
+  repeated Character character = 3;
+  repeated CharacterSkill character_skill = 4;
+  repeated ComplexActionEntry complex_action_entry = 5;
+  repeated ComplexActionGroup complex_action_group = 6;
+  repeated ComplexConditionGroup complex_condition_group = 7;
+  repeated ComplexConditionGroupEntry complex_condition_group_entry = 8;
+  repeated ComplexRule complex_rule = 9;
+  repeated ComplexRuleCondition complex_rule_condition = 10;
+  repeated Dialogue dialogue = 11;
+  repeated DropEntry drop_entry = 12;
+  repeated DropGroup drop_group = 13;
+  repeated Dungeon dungeon = 14;
+  repeated EquipmentSet equipment_set = 15;
+  repeated EventRule event_rule = 16;
+  repeated GachaItem gacha_item = 17;
+  repeated GachaPool gacha_pool = 18;
+  GameSettings game_settings = 19;
+  repeated Item item = 20;
+  repeated LevelExp level_exp = 21;
+  repeated MailReward mail_reward = 22;
+  repeated MailTemplate mail_template = 23;
   repeated MaintenanceWindow maintenance_window = 24;
-  repeated MailTemplate mail_template = 25;
-  repeated MailReward mail_reward = 26;
-  repeated Dialogue dialogue = 27;
-  repeated EventRule event_rule = 28;
-  repeated ComplexRule complex_rule = 29;
-  repeated ComplexConditionGroup complex_condition_group = 30;
-  repeated ComplexConditionGroupEntry complex_condition_group_entry = 31;
-  repeated ComplexRuleCondition complex_rule_condition = 32;
-  repeated ComplexActionGroup complex_action_group = 33;
-  repeated ComplexActionEntry complex_action_entry = 34;
+  repeated Monster monster = 25;
+  repeated Quest quest = 26;
+  repeated QuestReward quest_reward = 27;
+  repeated Recipe recipe = 28;
+  repeated Shop shop = 29;
+  repeated ShopItem shop_item = 30;
+  repeated Skill skill = 31;
+  repeated Stage stage = 32;
+  repeated StageReward stage_reward = 33;
+  repeated VipLevel vip_level = 34;
+}
+
+enum ElementType {
+  ELEMENT_TYPE_FIRE = 0;
+  ELEMENT_TYPE_ICE = 1;
+  ELEMENT_TYPE_LIGHTNING = 2;
+  ELEMENT_TYPE_PHYSICAL = 3;
 }
 
 enum ItemType {
@@ -49,17 +56,10 @@ enum ItemType {
   ITEM_TYPE_CONSUMABLE = 4;
 }
 
-enum ResourceKind {
-  RESOURCE_KIND_ITEM = 0;
-  RESOURCE_KIND_GOLD = 1;
-  RESOURCE_KIND_DIAMOND = 2;
-}
-
-enum ElementType {
-  ELEMENT_TYPE_FIRE = 0;
-  ELEMENT_TYPE_ICE = 1;
-  ELEMENT_TYPE_LIGHTNING = 2;
-  ELEMENT_TYPE_PHYSICAL = 3;
+enum MailType {
+  MAIL_TYPE_SYSTEM = 0;
+  MAIL_TYPE_EVENT = 1;
+  MAIL_TYPE_COMPENSATION = 2;
 }
 
 enum QuestType {
@@ -76,53 +76,18 @@ enum Rarity {
   RARITY_LEGENDARY = 4;
 }
 
+enum ResourceKind {
+  RESOURCE_KIND_ITEM = 0;
+  RESOURCE_KIND_GOLD = 1;
+  RESOURCE_KIND_DIAMOND = 2;
+}
+
 enum StatType {
   STAT_TYPE_HP = 0;
   STAT_TYPE_ATTACK = 1;
   STAT_TYPE_DEFENSE = 2;
   STAT_TYPE_SPEED = 3;
   STAT_TYPE_CRIT_RATE = 4;
-}
-
-enum MailType {
-  MAIL_TYPE_SYSTEM = 0;
-  MAIL_TYPE_EVENT = 1;
-  MAIL_TYPE_COMPENSATION = 2;
-}
-
-message ResourceCost {
-  ResourceKind kind = 1;
-  int32 id = 2;
-  int32 count = 3;
-}
-
-message Vec3 {
-  float x = 1;
-  float y = 2;
-  float z = 3;
-}
-
-message SkillEffect {
-  ElementType element = 1;
-  int32 power = 2;
-  float radius = 3;
-}
-
-message Reward {
-  int32 item_id = 1;
-  int32 count = 2;
-}
-
-message StatModifier {
-  StatType stat = 1;
-  float value = 2;
-  bool is_percent = 3;
-}
-
-message RewardBundle {
-  ResourceCost cost = 1;
-  int32 weight = 2;
-  repeated string labels = 3;
 }
 
 message ComplexBudget {
@@ -135,6 +100,41 @@ message MaintenanceInfo {
   string starts_at = 1;
   int32 duration_minutes = 2;
   optional string reason = 3;
+}
+
+message ResourceCost {
+  ResourceKind kind = 1;
+  int32 id = 2;
+  int32 count = 3;
+}
+
+message Reward {
+  int32 item_id = 1;
+  int32 count = 2;
+}
+
+message RewardBundle {
+  ResourceCost cost = 1;
+  int32 weight = 2;
+  repeated string labels = 3;
+}
+
+message SkillEffect {
+  ElementType element = 1;
+  int32 power = 2;
+  float radius = 3;
+}
+
+message StatModifier {
+  StatType stat = 1;
+  float value = 2;
+  bool is_percent = 3;
+}
+
+message Vec3 {
+  float x = 1;
+  float y = 2;
+  float z = 3;
 }
 
 message EventCondition {
@@ -200,65 +200,18 @@ message RewardActionRunActionGroup {
   int32 action_group_id = 1;
 }
 
-message Item {
+message Achievement {
+  int32 id = 1;
+  string title_key = 2;
+  int64 target_count = 3;
+  ResourceCost reward = 4;
+}
+
+message Buff {
   int32 id = 1;
   string name = 2;
-  ItemType item_type = 3;
-  int32 max_stack = 4;
-  ResourceCost price = 5;
-  repeated string tags = 6;
-  map<string, int32> attributes = 7;
-}
-
-message Shop {
-  int32 id = 1;
-  string name = 2;
-  ResourceKind currency = 3;
-}
-
-message ShopItem {
-  int32 shop_id = 1;
-  int32 seq = 2;
-  int32 item_id = 3;
-  ResourceCost price = 4;
-  optional int32 daily_limit = 5;
-}
-
-message Recipe {
-  int32 id = 1;
-  int32 result_item = 2;
-  repeated ResourceCost materials = 3;
-}
-
-message GachaPool {
-  int32 id = 1;
-  string name = 2;
-  ResourceCost cost = 3;
-}
-
-message GachaItem {
-  int32 pool_id = 1;
-  int32 item_id = 2;
-  Rarity rarity = 3;
-  float weight = 4;
-}
-
-message EquipmentSet {
-  int32 id = 1;
-  string name = 2;
-  repeated int32 item_ids = 3;
-  SkillEffect bonus_effect = 4;
-}
-
-message Skill {
-  int32 id = 1;
-  string name = 2;
-  ElementType element = 3;
-  ResourceCost cost = 4;
-  SkillEffect effect = 5;
-  int32 required_level = 6;
-  optional int32 required_item = 7;
-  Vec3 cast_origin = 8;
+  int64 duration = 3;
+  repeated StatModifier modifiers = 4;
 }
 
 message Character {
@@ -277,16 +230,51 @@ message CharacterSkill {
   int32 unlock_level = 3;
 }
 
-message Buff {
+message ComplexActionEntry {
   int32 id = 1;
-  string name = 2;
-  int64 duration = 3;
-  repeated StatModifier modifiers = 4;
+  int32 group_id = 2;
+  int32 seq = 3;
+  RewardAction value = 4;
 }
 
-message DropGroup {
+message ComplexActionGroup {
   int32 id = 1;
   string name = 2;
+  repeated RewardAction actions = 3;
+}
+
+message ComplexConditionGroup {
+  int32 id = 1;
+  string name = 2;
+  repeated EventCondition conditions = 3;
+}
+
+message ComplexConditionGroupEntry {
+  int32 id = 1;
+  int32 group_id = 2;
+  int32 seq = 3;
+  EventCondition value = 4;
+}
+
+message ComplexRule {
+  int32 id = 1;
+  string name = 2;
+  EventCondition root_condition = 3;
+  int32 root_action_group = 4;
+  repeated RewardAction actions = 5;
+  ComplexBudget budget = 6;
+}
+
+message ComplexRuleCondition {
+  int32 id = 1;
+  int32 rule_id = 2;
+  EventCondition value = 3;
+}
+
+message Dialogue {
+  int32 id = 1;
+  string speaker_key = 2;
+  repeated string lines = 3;
 }
 
 message DropEntry {
@@ -297,28 +285,9 @@ message DropEntry {
   float weight = 5;
 }
 
-message Monster {
+message DropGroup {
   int32 id = 1;
   string name = 2;
-  int32 level = 3;
-  ElementType element = 4;
-  int32 drop_group = 5;
-  Vec3 spawn_pos = 6;
-}
-
-message Stage {
-  int32 id = 1;
-  string name = 2;
-  repeated int32 monster_ids = 3;
-  int32 recommended_power = 4;
-  repeated Reward first_clear_rewards = 5;
-}
-
-message StageReward {
-  int32 stage_id = 1;
-  int32 seq = 2;
-  int32 item_id = 3;
-  int32 count = 4;
 }
 
 message Dungeon {
@@ -326,6 +295,92 @@ message Dungeon {
   string name = 2;
   repeated int32 stage_ids = 3;
   ResourceCost entry_cost = 4;
+}
+
+message EquipmentSet {
+  int32 id = 1;
+  string name = 2;
+  repeated int32 item_ids = 3;
+  SkillEffect bonus_effect = 4;
+}
+
+message EventRule {
+  int32 id = 1;
+  string name = 2;
+  EventCondition condition = 3;
+  repeated RewardAction actions = 4;
+}
+
+message GachaItem {
+  int32 pool_id = 1;
+  int32 item_id = 2;
+  Rarity rarity = 3;
+  float weight = 4;
+}
+
+message GachaPool {
+  int32 id = 1;
+  string name = 2;
+  ResourceCost cost = 3;
+}
+
+message GameSettings {
+  string version = 1;
+  int32 daily_reset_hour = 2;
+  int32 starting_gold = 3;
+  Vec3 spawn_pos = 4;
+  repeated int32 starter_items = 5;
+  double gravity = 6;
+  repeated int32 daily_bonus_items = 7;
+  repeated Vec3 spawn_points = 8;
+  MaintenanceInfo maintenance = 9;
+}
+
+message Item {
+  int32 id = 1;
+  string name = 2;
+  ItemType item_type = 3;
+  int32 max_stack = 4;
+  ResourceCost price = 5;
+  repeated string tags = 6;
+  map<string, int32> attributes = 7;
+}
+
+message LevelExp {
+  int32 level = 1;
+  int64 exp = 2;
+  optional string unlock_feature = 3;
+}
+
+message MailReward {
+  int32 mail_id = 1;
+  int32 seq = 2;
+  int32 item_id = 3;
+  int32 count = 4;
+}
+
+message MailTemplate {
+  int32 id = 1;
+  MailType mail_type = 2;
+  string title_key = 3;
+  string body_key = 4;
+  repeated Reward rewards = 5;
+}
+
+message MaintenanceWindow {
+  string version = 1;
+  string starts_at = 2;
+  int32 duration_minutes = 3;
+  optional string reason = 4;
+}
+
+message Monster {
+  int32 id = 1;
+  string name = 2;
+  int32 level = 3;
+  ElementType element = 4;
+  int32 drop_group = 5;
+  Vec3 spawn_pos = 6;
 }
 
 message Quest {
@@ -345,110 +400,55 @@ message QuestReward {
   int32 count = 4;
 }
 
-message LevelExp {
-  int32 level = 1;
-  int64 exp = 2;
-  optional string unlock_feature = 3;
+message Recipe {
+  int32 id = 1;
+  int32 result_item = 2;
+  repeated ResourceCost materials = 3;
 }
 
-message Achievement {
+message Shop {
   int32 id = 1;
-  string title_key = 2;
-  int64 target_count = 3;
-  ResourceCost reward = 4;
+  string name = 2;
+  ResourceKind currency = 3;
+}
+
+message ShopItem {
+  int32 shop_id = 1;
+  int32 seq = 2;
+  int32 item_id = 3;
+  ResourceCost price = 4;
+  optional int32 daily_limit = 5;
+}
+
+message Skill {
+  int32 id = 1;
+  string name = 2;
+  ElementType element = 3;
+  ResourceCost cost = 4;
+  SkillEffect effect = 5;
+  int32 required_level = 6;
+  optional int32 required_item = 7;
+  Vec3 cast_origin = 8;
+}
+
+message Stage {
+  int32 id = 1;
+  string name = 2;
+  repeated int32 monster_ids = 3;
+  int32 recommended_power = 4;
+  repeated Reward first_clear_rewards = 5;
+}
+
+message StageReward {
+  int32 stage_id = 1;
+  int32 seq = 2;
+  int32 item_id = 3;
+  int32 count = 4;
 }
 
 message VipLevel {
   int32 level = 1;
   ResourceCost cost = 2;
   repeated string perks = 3;
-}
-
-message GameSettings {
-  string version = 1;
-  int32 daily_reset_hour = 2;
-  int32 starting_gold = 3;
-  Vec3 spawn_pos = 4;
-  repeated int32 starter_items = 5;
-  double gravity = 6;
-  repeated int32 daily_bonus_items = 7;
-  repeated Vec3 spawn_points = 8;
-  MaintenanceInfo maintenance = 9;
-}
-
-message MaintenanceWindow {
-  string version = 1;
-  string starts_at = 2;
-  int32 duration_minutes = 3;
-  optional string reason = 4;
-}
-
-message MailTemplate {
-  int32 id = 1;
-  MailType mail_type = 2;
-  string title_key = 3;
-  string body_key = 4;
-  repeated Reward rewards = 5;
-}
-
-message MailReward {
-  int32 mail_id = 1;
-  int32 seq = 2;
-  int32 item_id = 3;
-  int32 count = 4;
-}
-
-message Dialogue {
-  int32 id = 1;
-  string speaker_key = 2;
-  repeated string lines = 3;
-}
-
-message EventRule {
-  int32 id = 1;
-  string name = 2;
-  EventCondition condition = 3;
-  repeated RewardAction actions = 4;
-}
-
-message ComplexRule {
-  int32 id = 1;
-  string name = 2;
-  EventCondition root_condition = 3;
-  int32 root_action_group = 4;
-  repeated RewardAction actions = 5;
-  ComplexBudget budget = 6;
-}
-
-message ComplexConditionGroup {
-  int32 id = 1;
-  string name = 2;
-  repeated EventCondition conditions = 3;
-}
-
-message ComplexConditionGroupEntry {
-  int32 id = 1;
-  int32 group_id = 2;
-  int32 seq = 3;
-  EventCondition value = 4;
-}
-
-message ComplexRuleCondition {
-  int32 id = 1;
-  int32 rule_id = 2;
-  EventCondition value = 3;
-}
-
-message ComplexActionGroup {
-  int32 id = 1;
-  string name = 2;
-  repeated RewardAction actions = 3;
-}
-
-message ComplexActionEntry {
-  int32 id = 1;
-  int32 group_id = 2;
-  int32 seq = 3;
-  RewardAction value = 4;
 }
 

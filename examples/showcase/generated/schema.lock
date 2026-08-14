@@ -3,7 +3,7 @@
   "project_id": "com.sora.showcase",
   "contract_id": "com.sora.showcase/full",
   "view": "full",
-  "fingerprint": "9552056f96151363",
+  "fingerprint": "5ae7c095b011eddf",
   "schema": {
     "project_id": "com.sora.showcase",
     "contract_id": "com.sora.showcase/full",
@@ -25,6 +25,32 @@
       ]
     },
     "enums": [
+      {
+        "name": "ElementType",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "values": [
+          {
+            "id": 0,
+            "name": "Fire"
+          },
+          {
+            "id": 1,
+            "name": "Ice"
+          },
+          {
+            "id": 2,
+            "name": "Lightning"
+          },
+          {
+            "id": 3,
+            "name": "Physical"
+          }
+        ]
+      },
       {
         "name": "ItemType",
         "groups": {
@@ -56,7 +82,7 @@
         ]
       },
       {
-        "name": "ResourceKind",
+        "name": "MailType",
         "groups": {
           "values": [
             "common"
@@ -65,41 +91,15 @@
         "values": [
           {
             "id": 0,
-            "name": "Item"
+            "name": "System"
           },
           {
             "id": 1,
-            "name": "Gold"
+            "name": "Event"
           },
           {
             "id": 2,
-            "name": "Diamond"
-          }
-        ]
-      },
-      {
-        "name": "ElementType",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "values": [
-          {
-            "id": 0,
-            "name": "Fire"
-          },
-          {
-            "id": 1,
-            "name": "Ice"
-          },
-          {
-            "id": 2,
-            "name": "Lightning"
-          },
-          {
-            "id": 3,
-            "name": "Physical"
+            "name": "Compensation"
           }
         ]
       },
@@ -156,6 +156,28 @@
         ]
       },
       {
+        "name": "ResourceKind",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "values": [
+          {
+            "id": 0,
+            "name": "Item"
+          },
+          {
+            "id": 1,
+            "name": "Gold"
+          },
+          {
+            "id": 2,
+            "name": "Diamond"
+          }
+        ]
+      },
+      {
         "name": "StatType",
         "groups": {
           "values": [
@@ -184,400 +206,9 @@
             "name": "CritRate"
           }
         ]
-      },
-      {
-        "name": "MailType",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "values": [
-          {
-            "id": 0,
-            "name": "System"
-          },
-          {
-            "id": 1,
-            "name": "Event"
-          },
-          {
-            "id": 2,
-            "name": "Compensation"
-          }
-        ]
       }
     ],
     "structs": [
-      {
-        "name": "ResourceCost",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "fields": [
-          {
-            "name": "kind",
-            "ty": {
-              "Enum": "ResourceKind"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "count",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": [
-              1,
-              999999
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ]
-      },
-      {
-        "name": "Vec3",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "fields": [
-          {
-            "name": "x",
-            "ty": "F32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "y",
-            "ty": "F32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "z",
-            "ty": "F32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ]
-      },
-      {
-        "name": "SkillEffect",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "fields": [
-          {
-            "name": "element",
-            "ty": {
-              "Enum": "ElementType"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "power",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": [
-              1,
-              9999
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "radius",
-            "ty": "F32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": "1.0",
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ]
-      },
-      {
-        "name": "Reward",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "fields": [
-          {
-            "name": "item_id",
-            "ty": {
-              "Ref": {
-                "table": "Item",
-                "field": "id"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "count",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": [
-              1,
-              9999
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ]
-      },
-      {
-        "name": "StatModifier",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "fields": [
-          {
-            "name": "stat",
-            "ty": {
-              "Enum": "StatType"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "value",
-            "ty": "F32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "is_percent",
-            "ty": "Bool",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": "false",
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ]
-      },
-      {
-        "name": "RewardBundle",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "fields": [
-          {
-            "name": "cost",
-            "ty": {
-              "Struct": "ResourceCost"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "tuple",
-              "options": {
-                "separator": ":"
-              }
-            },
-            "derived_from": null
-          },
-          {
-            "name": "weight",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": [
-              1,
-              10000
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "labels",
-            "ty": {
-              "List": "String"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "split",
-              "options": {
-                "separator": "+"
-              }
-            },
-            "derived_from": null
-          }
-        ]
-      },
       {
         "name": "ComplexBudget",
         "groups": {
@@ -712,6 +343,375 @@
             "ty": {
               "Optional": "String"
             },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ]
+      },
+      {
+        "name": "ResourceCost",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "fields": [
+          {
+            "name": "kind",
+            "ty": {
+              "Enum": "ResourceKind"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "count",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": [
+              1,
+              999999
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ]
+      },
+      {
+        "name": "Reward",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "fields": [
+          {
+            "name": "item_id",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "count",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": [
+              1,
+              9999
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ]
+      },
+      {
+        "name": "RewardBundle",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "fields": [
+          {
+            "name": "cost",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {
+                "separator": ":"
+              }
+            },
+            "derived_from": null
+          },
+          {
+            "name": "weight",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": [
+              1,
+              10000
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "labels",
+            "ty": {
+              "List": "String"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "split",
+              "options": {
+                "separator": "+"
+              }
+            },
+            "derived_from": null
+          }
+        ]
+      },
+      {
+        "name": "SkillEffect",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "fields": [
+          {
+            "name": "element",
+            "ty": {
+              "Enum": "ElementType"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "power",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": [
+              1,
+              9999
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "radius",
+            "ty": "F32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": "1.0",
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ]
+      },
+      {
+        "name": "StatModifier",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "fields": [
+          {
+            "name": "stat",
+            "ty": {
+              "Enum": "StatType"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "value",
+            "ty": "F32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "is_percent",
+            "ty": "Bool",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": "false",
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ]
+      },
+      {
+        "name": "Vec3",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "fields": [
+          {
+            "name": "x",
+            "ty": "F32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "y",
+            "ty": "F32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "z",
+            "ty": "F32",
             "groups": {
               "values": [
                 "common"
@@ -1118,186 +1118,9 @@
     ],
     "tables": [
       {
-        "id": "item",
-        "name": "Item",
-        "canonical_name": "Item",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Core.xlsx",
-          "sheet": "Item"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": "Item id",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "name",
-            "ty": "String",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "Display name",
-            "default": null,
-            "range": null,
-            "length": [
-              2,
-              32
-            ],
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "item_type",
-            "ty": {
-              "Enum": "ItemType"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "Item category",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "max_stack",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "Stack limit; blank cells use the default",
-            "default": "1",
-            "range": [
-              1,
-              9999
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "price",
-            "ty": {
-              "Struct": "ResourceCost"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "Struct columns: price_kind, price_id, price_count",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "columns",
-              "options": {
-                "prefix": "price_"
-              }
-            },
-            "derived_from": null
-          },
-          {
-            "name": "tags",
-            "ty": {
-              "Set": "String"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "JSON string set",
-            "default": "[\"misc\"]",
-            "range": null,
-            "length": [
-              1,
-              5
-            ],
-            "parser": {
-              "kind": "json",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "attributes",
-            "ty": {
-              "Map": {
-                "key": "String",
-                "value": "I32"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "Map pairs: key,value|key,value",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "map",
-              "options": {}
-            },
-            "derived_from": null
-          }
-        ],
-        "indexes": [
-          {
-            "name": "by_name",
-            "fields": [
-              "name"
-            ],
-            "unique": true
-          },
-          {
-            "name": "by_item_type",
-            "fields": [
-              "item_type"
-            ],
-            "unique": false
-          }
-        ]
-      },
-      {
-        "id": "shop",
-        "name": "Shop",
-        "canonical_name": "Shop",
+        "id": "achievement",
+        "name": "Achievement",
+        "canonical_name": "Achievement",
         "groups": {
           "values": [
             "common"
@@ -1307,7 +1130,7 @@
         "key": "id",
         "source": {
           "file": "Economy.xlsx",
-          "sheet": "Shop"
+          "sheet": "Achievement"
         },
         "fields": [
           {
@@ -1327,8 +1150,8 @@
             "derived_from": null
           },
           {
-            "name": "name",
-            "ty": "String",
+            "name": "title_key",
+            "ty": "Text",
             "groups": {
               "values": [
                 "common"
@@ -1343,50 +1166,8 @@
             "derived_from": null
           },
           {
-            "name": "currency",
-            "ty": {
-              "Enum": "ResourceKind"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "shop_item",
-        "name": "ShopItem",
-        "canonical_name": "ShopItem",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "List",
-        "key": null,
-        "source": {
-          "file": "Economy.xlsx",
-          "sheet": "ShopItem"
-        },
-        "fields": [
-          {
-            "name": "shop_id",
-            "ty": {
-              "Ref": {
-                "table": "Shop",
-                "field": "id"
-              }
-            },
+            "name": "target_count",
+            "ty": "I64",
             "groups": {
               "values": [
                 "common"
@@ -1401,216 +1182,7 @@
             "derived_from": null
           },
           {
-            "name": "seq",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "item_id",
-            "ty": {
-              "Ref": {
-                "table": "Item",
-                "field": "id"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "price",
-            "ty": {
-              "Struct": "ResourceCost"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "tuple",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "daily_limit",
-            "ty": {
-              "Optional": "I32"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "recipe",
-        "name": "Recipe",
-        "canonical_name": "Recipe",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Economy.xlsx",
-          "sheet": "Recipe"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "result_item",
-            "ty": {
-              "Ref": {
-                "table": "Item",
-                "field": "id"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "materials",
-            "ty": {
-              "List": {
-                "Struct": "ResourceCost"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": [
-              1,
-              4
-            ],
-            "parser": {
-              "kind": "tuple_list",
-              "options": {}
-            },
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "gacha_pool",
-        "name": "GachaPool",
-        "canonical_name": "GachaPool",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Economy.xlsx",
-          "sheet": "GachaPool"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "name",
-            "ty": "String",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "cost",
+            "name": "reward",
             "ty": {
               "Struct": "ResourceCost"
             },
@@ -1634,202 +1206,9 @@
         "indexes": []
       },
       {
-        "id": "gacha_item",
-        "name": "GachaItem",
-        "canonical_name": "GachaItem",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "List",
-        "key": null,
-        "source": {
-          "file": "Economy.xlsx",
-          "sheet": "GachaItem"
-        },
-        "fields": [
-          {
-            "name": "pool_id",
-            "ty": {
-              "Ref": {
-                "table": "GachaPool",
-                "field": "id"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "item_id",
-            "ty": {
-              "Ref": {
-                "table": "Item",
-                "field": "id"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "rarity",
-            "ty": {
-              "Enum": "Rarity"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "weight",
-            "ty": "F32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "equipment_set",
-        "name": "EquipmentSet",
-        "canonical_name": "EquipmentSet",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Economy.xlsx",
-          "sheet": "EquipmentSet"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "name",
-            "ty": "String",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "item_ids",
-            "ty": {
-              "List": {
-                "Ref": {
-                  "table": "Item",
-                  "field": "id"
-                }
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": [
-              2,
-              4
-            ],
-            "parser": {
-              "kind": "json",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "bonus_effect",
-            "ty": {
-              "Struct": "SkillEffect"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "skill",
-        "name": "Skill",
-        "canonical_name": "Skill",
+        "id": "buff",
+        "name": "Buff",
+        "canonical_name": "Buff",
         "groups": {
           "values": [
             "common"
@@ -1839,7 +1218,7 @@
         "key": "id",
         "source": {
           "file": "Battle.xlsx",
-          "sheet": "Skill"
+          "sheet": "Buff"
         },
         "fields": [
           {
@@ -1870,18 +1249,13 @@
             "comment": null,
             "default": null,
             "range": null,
-            "length": [
-              2,
-              32
-            ],
+            "length": null,
             "parser": null,
             "derived_from": null
           },
           {
-            "name": "element",
-            "ty": {
-              "Enum": "ElementType"
-            },
+            "name": "duration",
+            "ty": "Duration",
             "groups": {
               "values": [
                 "common"
@@ -1896,71 +1270,10 @@
             "derived_from": null
           },
           {
-            "name": "cost",
+            "name": "modifiers",
             "ty": {
-              "Struct": "ResourceCost"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "Tuple cost, e.g. Gold,0,150",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "tuple",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "effect",
-            "ty": {
-              "Struct": "SkillEffect"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "JSON object with element/power/radius",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "required_level",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": "1",
-            "range": [
-              1,
-              100
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "required_item",
-            "ty": {
-              "Optional": {
-                "Ref": {
-                  "table": "Item",
-                  "field": "id"
-                }
+              "List": {
+                "Struct": "StatModifier"
               }
             },
             "groups": {
@@ -1969,30 +1282,15 @@
               ]
             },
             "key": false,
-            "comment": "Optional item requirement",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "cast_origin",
-            "ty": {
-              "Struct": "Vec3"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
             "comment": null,
             "default": null,
             "range": null,
-            "length": null,
+            "length": [
+              1,
+              3
+            ],
             "parser": {
-              "kind": "tuple",
+              "kind": "json",
               "options": {}
             },
             "derived_from": null
@@ -2247,9 +1545,9 @@
         "indexes": []
       },
       {
-        "id": "buff",
-        "name": "Buff",
-        "canonical_name": "Buff",
+        "id": "complex_action_entry",
+        "name": "ComplexActionEntry",
+        "canonical_name": "ComplexActionEntry",
         "groups": {
           "values": [
             "common"
@@ -2258,8 +1556,103 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Battle.xlsx",
-          "sheet": "Buff"
+          "file": "Complex.xlsx",
+          "sheet": "ComplexActionEntry"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "group_id",
+            "ty": {
+              "Ref": {
+                "table": "ComplexActionGroup",
+                "field": "id"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "seq",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "value",
+            "ty": {
+              "Union": "RewardAction"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tagged_columns",
+              "options": {
+                "prefix": ""
+              }
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "complex_action_group",
+        "name": "ComplexActionGroup",
+        "canonical_name": "ComplexActionGroup",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Complex.xlsx",
+          "sheet": "ComplexActionGroup"
         },
         "fields": [
           {
@@ -2295,8 +1688,63 @@
             "derived_from": null
           },
           {
-            "name": "duration",
-            "ty": "Duration",
+            "name": "actions",
+            "ty": {
+              "List": {
+                "Union": "RewardAction"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "complex_condition_group",
+        "name": "ComplexConditionGroup",
+        "canonical_name": "ComplexConditionGroup",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Complex.xlsx",
+          "sheet": "ComplexConditionGroup"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
             "groups": {
               "values": [
                 "common"
@@ -2311,11 +1759,387 @@
             "derived_from": null
           },
           {
-            "name": "modifiers",
+            "name": "conditions",
             "ty": {
               "List": {
-                "Struct": "StatModifier"
+                "Union": "EventCondition"
               }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "A derived list of union values; each child row is edited without JSON",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "complex_condition_group_entry",
+        "name": "ComplexConditionGroupEntry",
+        "canonical_name": "ComplexConditionGroupEntry",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Complex.xlsx",
+          "sheet": "ComplexConditionGroupEntry"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "group_id",
+            "ty": {
+              "Ref": {
+                "table": "ComplexConditionGroup",
+                "field": "id"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "seq",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "value",
+            "ty": {
+              "Union": "EventCondition"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tagged_columns",
+              "options": {
+                "prefix": ""
+              }
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "complex_rule",
+        "name": "ComplexRule",
+        "canonical_name": "ComplexRule",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Complex.xlsx",
+          "sheet": "ComplexRule"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "root_condition",
+            "ty": {
+              "Union": "EventCondition"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "Single union value derived from a tagged_columns child row",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "root_action_group",
+            "ty": {
+              "Ref": {
+                "table": "ComplexActionGroup",
+                "field": "id"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "actions",
+            "ty": {
+              "List": {
+                "Union": "RewardAction"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "Non-JSON list<union<RewardAction>> assembled from child rows",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "budget",
+            "ty": {
+              "Struct": "ComplexBudget"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "Nested tuple, tuple_list, split, and map parsers in one cell",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {
+                "separator": ","
+              }
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "complex_rule_condition",
+        "name": "ComplexRuleCondition",
+        "canonical_name": "ComplexRuleCondition",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Complex.xlsx",
+          "sheet": "ComplexRuleCondition"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "rule_id",
+            "ty": {
+              "Ref": {
+                "table": "ComplexRule",
+                "field": "id"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "value",
+            "ty": {
+              "Union": "EventCondition"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tagged_columns",
+              "options": {
+                "prefix": ""
+              }
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "dialogue",
+        "name": "Dialogue",
+        "canonical_name": "Dialogue",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Quest.xlsx",
+          "sheet": "Dialogue"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "speaker_key",
+            "ty": "Text",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "lines",
+            "ty": {
+              "List": "String"
             },
             "groups": {
               "values": [
@@ -2328,63 +2152,12 @@
             "range": null,
             "length": [
               1,
-              3
+              5
             ],
             "parser": {
               "kind": "json",
               "options": {}
             },
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "drop_group",
-        "name": "DropGroup",
-        "canonical_name": "DropGroup",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Battle.xlsx",
-          "sheet": "DropGroup"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "name",
-            "ty": "String",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
             "derived_from": null
           }
         ],
@@ -2489,6 +2262,1270 @@
             "groups": {
               "values": [
                 "server"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "drop_group",
+        "name": "DropGroup",
+        "canonical_name": "DropGroup",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Battle.xlsx",
+          "sheet": "DropGroup"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "dungeon",
+        "name": "Dungeon",
+        "canonical_name": "Dungeon",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Battle.xlsx",
+          "sheet": "Dungeon"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "stage_ids",
+            "ty": {
+              "List": {
+                "Ref": {
+                  "table": "Stage",
+                  "field": "id"
+                }
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": [
+              2,
+              6
+            ],
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "entry_cost",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "equipment_set",
+        "name": "EquipmentSet",
+        "canonical_name": "EquipmentSet",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Economy.xlsx",
+          "sheet": "EquipmentSet"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "item_ids",
+            "ty": {
+              "List": {
+                "Ref": {
+                  "table": "Item",
+                  "field": "id"
+                }
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": [
+              2,
+              4
+            ],
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "bonus_effect",
+            "ty": {
+              "Struct": "SkillEffect"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "event_rule",
+        "name": "EventRule",
+        "canonical_name": "EventRule",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Quest.xlsx",
+          "sheet": "EventRule"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "condition",
+            "ty": {
+              "Union": "EventCondition"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "actions",
+            "ty": {
+              "List": {
+                "Union": "RewardAction"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              4
+            ],
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "gacha_item",
+        "name": "GachaItem",
+        "canonical_name": "GachaItem",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "List",
+        "key": null,
+        "source": {
+          "file": "Economy.xlsx",
+          "sheet": "GachaItem"
+        },
+        "fields": [
+          {
+            "name": "pool_id",
+            "ty": {
+              "Ref": {
+                "table": "GachaPool",
+                "field": "id"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "item_id",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "rarity",
+            "ty": {
+              "Enum": "Rarity"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "weight",
+            "ty": "F32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "gacha_pool",
+        "name": "GachaPool",
+        "canonical_name": "GachaPool",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Economy.xlsx",
+          "sheet": "GachaPool"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "cost",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "game_settings",
+        "name": "GameSettings",
+        "canonical_name": "GameSettings",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Singleton",
+        "key": null,
+        "source": {
+          "file": "Core.xlsx",
+          "sheet": "GameSettings"
+        },
+        "fields": [
+          {
+            "name": "version",
+            "ty": "String",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "daily_reset_hour",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": [
+              0,
+              23
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "starting_gold",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": "100",
+            "range": [
+              0,
+              999999
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "spawn_pos",
+            "ty": {
+              "Struct": "Vec3"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "starter_items",
+            "ty": {
+              "List": {
+                "Ref": {
+                  "table": "Item",
+                  "field": "id"
+                }
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              4
+            ],
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "gravity",
+            "ty": "F64",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "Double precision tuning value",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "daily_bonus_items",
+            "ty": {
+              "Array": {
+                "element": {
+                  "Ref": {
+                    "table": "Item",
+                    "field": "id"
+                  }
+                },
+                "len": 3
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "Fixed-length array parsed from one cell",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "split",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "spawn_points",
+            "ty": {
+              "Array": {
+                "element": {
+                  "Struct": "Vec3"
+                },
+                "len": 2
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "Fixed-length array of structs",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple_list",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "maintenance",
+            "ty": {
+              "Optional": {
+                "Struct": "MaintenanceInfo"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "Optional derived struct copied from a child row",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "item",
+        "name": "Item",
+        "canonical_name": "Item",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Core.xlsx",
+          "sheet": "Item"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": "Item id",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "Display name",
+            "default": null,
+            "range": null,
+            "length": [
+              2,
+              32
+            ],
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "item_type",
+            "ty": {
+              "Enum": "ItemType"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "Item category",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "max_stack",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "Stack limit; blank cells use the default",
+            "default": "1",
+            "range": [
+              1,
+              9999
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "price",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "Struct columns: price_kind, price_id, price_count",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "columns",
+              "options": {
+                "prefix": "price_"
+              }
+            },
+            "derived_from": null
+          },
+          {
+            "name": "tags",
+            "ty": {
+              "Set": "String"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "JSON string set",
+            "default": "[\"misc\"]",
+            "range": null,
+            "length": [
+              1,
+              5
+            ],
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "attributes",
+            "ty": {
+              "Map": {
+                "key": "String",
+                "value": "I32"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "Map pairs: key,value|key,value",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "map",
+              "options": {}
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": [
+          {
+            "name": "by_item_type",
+            "fields": [
+              "item_type"
+            ],
+            "unique": false
+          },
+          {
+            "name": "by_name",
+            "fields": [
+              "name"
+            ],
+            "unique": true
+          }
+        ]
+      },
+      {
+        "id": "level_exp",
+        "name": "LevelExp",
+        "canonical_name": "LevelExp",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "level",
+        "source": {
+          "file": "Core.xlsx",
+          "sheet": "LevelExp"
+        },
+        "fields": [
+          {
+            "name": "level",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": [
+              1,
+              100
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "exp",
+            "ty": "I64",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": [
+              0,
+              999999999
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "unlock_feature",
+            "ty": {
+              "Optional": "String"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "mail_reward",
+        "name": "MailReward",
+        "canonical_name": "MailReward",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "List",
+        "key": null,
+        "source": {
+          "file": "Quest.xlsx",
+          "sheet": "MailReward"
+        },
+        "fields": [
+          {
+            "name": "mail_id",
+            "ty": {
+              "Ref": {
+                "table": "MailTemplate",
+                "field": "id"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "seq",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "item_id",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "count",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "mail_template",
+        "name": "MailTemplate",
+        "canonical_name": "MailTemplate",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Quest.xlsx",
+          "sheet": "MailTemplate"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "mail_type",
+            "ty": {
+              "Enum": "MailType"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "title_key",
+            "ty": "Text",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "body_key",
+            "ty": "Text",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "rewards",
+            "ty": {
+              "List": {
+                "Struct": "Reward"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "maintenance_window",
+        "name": "MaintenanceWindow",
+        "canonical_name": "MaintenanceWindow",
+        "groups": {
+          "values": [
+            "server"
+          ]
+        },
+        "mode": "List",
+        "key": null,
+        "source": {
+          "file": "Core.xlsx",
+          "sheet": "MaintenanceWindow"
+        },
+        "fields": [
+          {
+            "name": "version",
+            "ty": "String",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "starts_at",
+            "ty": "String",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "duration_minutes",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": [
+              1,
+              1440
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "reason",
+            "ty": {
+              "Optional": "String"
+            },
+            "groups": {
+              "values": [
+                "common"
               ]
             },
             "key": false,
@@ -2614,316 +3651,6 @@
             "name": "spawn_pos",
             "ty": {
               "Struct": "Vec3"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "tuple",
-              "options": {}
-            },
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "stage",
-        "name": "Stage",
-        "canonical_name": "Stage",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Battle.xlsx",
-          "sheet": "Stage"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "name",
-            "ty": "String",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "monster_ids",
-            "ty": {
-              "List": {
-                "Ref": {
-                  "table": "Monster",
-                  "field": "id"
-                }
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": [
-              1,
-              5
-            ],
-            "parser": {
-              "kind": "json",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "recommended_power",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "first_clear_rewards",
-            "ty": {
-              "List": {
-                "Struct": "Reward"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "stage_reward",
-        "name": "StageReward",
-        "canonical_name": "StageReward",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "List",
-        "key": null,
-        "source": {
-          "file": "Battle.xlsx",
-          "sheet": "StageReward"
-        },
-        "fields": [
-          {
-            "name": "stage_id",
-            "ty": {
-              "Ref": {
-                "table": "Stage",
-                "field": "id"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "seq",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "item_id",
-            "ty": {
-              "Ref": {
-                "table": "Item",
-                "field": "id"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "count",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "dungeon",
-        "name": "Dungeon",
-        "canonical_name": "Dungeon",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Battle.xlsx",
-          "sheet": "Dungeon"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "name",
-            "ty": "String",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "stage_ids",
-            "ty": {
-              "List": {
-                "Ref": {
-                  "table": "Stage",
-                  "field": "id"
-                }
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": [
-              2,
-              6
-            ],
-            "parser": {
-              "kind": "json",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "entry_cost",
-            "ty": {
-              "Struct": "ResourceCost"
             },
             "groups": {
               "values": [
@@ -3204,84 +3931,9 @@
         "indexes": []
       },
       {
-        "id": "level_exp",
-        "name": "LevelExp",
-        "canonical_name": "LevelExp",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "level",
-        "source": {
-          "file": "Core.xlsx",
-          "sheet": "LevelExp"
-        },
-        "fields": [
-          {
-            "name": "level",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": [
-              1,
-              100
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "exp",
-            "ty": "I64",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": [
-              0,
-              999999999
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "unlock_feature",
-            "ty": {
-              "Optional": "String"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "achievement",
-        "name": "Achievement",
-        "canonical_name": "Achievement",
+        "id": "recipe",
+        "name": "Recipe",
+        "canonical_name": "Recipe",
         "groups": {
           "values": [
             "common"
@@ -3291,7 +3943,7 @@
         "key": "id",
         "source": {
           "file": "Economy.xlsx",
-          "sheet": "Achievement"
+          "sheet": "Recipe"
         },
         "fields": [
           {
@@ -3311,8 +3963,13 @@
             "derived_from": null
           },
           {
-            "name": "title_key",
-            "ty": "Text",
+            "name": "result_item",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
             "groups": {
               "values": [
                 "common"
@@ -3327,8 +3984,69 @@
             "derived_from": null
           },
           {
-            "name": "target_count",
-            "ty": "I64",
+            "name": "materials",
+            "ty": {
+              "List": {
+                "Struct": "ResourceCost"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              4
+            ],
+            "parser": {
+              "kind": "tuple_list",
+              "options": {}
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "shop",
+        "name": "Shop",
+        "canonical_name": "Shop",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Economy.xlsx",
+          "sheet": "Shop"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
             "groups": {
               "values": [
                 "common"
@@ -3343,7 +4061,102 @@
             "derived_from": null
           },
           {
-            "name": "reward",
+            "name": "currency",
+            "ty": {
+              "Enum": "ResourceKind"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "shop_item",
+        "name": "ShopItem",
+        "canonical_name": "ShopItem",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "List",
+        "key": null,
+        "source": {
+          "file": "Economy.xlsx",
+          "sheet": "ShopItem"
+        },
+        "fields": [
+          {
+            "name": "shop_id",
+            "ty": {
+              "Ref": {
+                "table": "Shop",
+                "field": "id"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "seq",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "item_id",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "price",
             "ty": {
               "Struct": "ResourceCost"
             },
@@ -3361,6 +4174,407 @@
               "kind": "tuple",
               "options": {}
             },
+            "derived_from": null
+          },
+          {
+            "name": "daily_limit",
+            "ty": {
+              "Optional": "I32"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "skill",
+        "name": "Skill",
+        "canonical_name": "Skill",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Battle.xlsx",
+          "sheet": "Skill"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": [
+              2,
+              32
+            ],
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "element",
+            "ty": {
+              "Enum": "ElementType"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "cost",
+            "ty": {
+              "Struct": "ResourceCost"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "Tuple cost, e.g. Gold,0,150",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "effect",
+            "ty": {
+              "Struct": "SkillEffect"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "JSON object with element/power/radius",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "required_level",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": "1",
+            "range": [
+              1,
+              100
+            ],
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "required_item",
+            "ty": {
+              "Optional": {
+                "Ref": {
+                  "table": "Item",
+                  "field": "id"
+                }
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": "Optional item requirement",
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "cast_origin",
+            "ty": {
+              "Struct": "Vec3"
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": {
+              "kind": "tuple",
+              "options": {}
+            },
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "stage",
+        "name": "Stage",
+        "canonical_name": "Stage",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "Map",
+        "key": "id",
+        "source": {
+          "file": "Battle.xlsx",
+          "sheet": "Stage"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": true,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "name",
+            "ty": "String",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "monster_ids",
+            "ty": {
+              "List": {
+                "Ref": {
+                  "table": "Monster",
+                  "field": "id"
+                }
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": [
+              1,
+              5
+            ],
+            "parser": {
+              "kind": "json",
+              "options": {}
+            },
+            "derived_from": null
+          },
+          {
+            "name": "recommended_power",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "first_clear_rewards",
+            "ty": {
+              "List": {
+                "Struct": "Reward"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          }
+        ],
+        "indexes": []
+      },
+      {
+        "id": "stage_reward",
+        "name": "StageReward",
+        "canonical_name": "StageReward",
+        "groups": {
+          "values": [
+            "common"
+          ]
+        },
+        "mode": "List",
+        "key": null,
+        "source": {
+          "file": "Battle.xlsx",
+          "sheet": "StageReward"
+        },
+        "fields": [
+          {
+            "name": "stage_id",
+            "ty": {
+              "Ref": {
+                "table": "Stage",
+                "field": "id"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "seq",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "item_id",
+            "ty": {
+              "Ref": {
+                "table": "Item",
+                "field": "id"
+              }
+            },
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
+            "derived_from": null
+          },
+          {
+            "name": "count",
+            "ty": "I32",
+            "groups": {
+              "values": [
+                "common"
+              ]
+            },
+            "key": false,
+            "comment": null,
+            "default": null,
+            "range": null,
+            "length": null,
+            "parser": null,
             "derived_from": null
           }
         ],
@@ -3440,1220 +4654,6 @@
             "parser": {
               "kind": "json",
               "options": {}
-            },
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "game_settings",
-        "name": "GameSettings",
-        "canonical_name": "GameSettings",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Singleton",
-        "key": null,
-        "source": {
-          "file": "Core.xlsx",
-          "sheet": "GameSettings"
-        },
-        "fields": [
-          {
-            "name": "version",
-            "ty": "String",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "daily_reset_hour",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": [
-              0,
-              23
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "starting_gold",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": "100",
-            "range": [
-              0,
-              999999
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "spawn_pos",
-            "ty": {
-              "Struct": "Vec3"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "tuple",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "starter_items",
-            "ty": {
-              "List": {
-                "Ref": {
-                  "table": "Item",
-                  "field": "id"
-                }
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": [
-              1,
-              4
-            ],
-            "parser": {
-              "kind": "json",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "gravity",
-            "ty": "F64",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "Double precision tuning value",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "daily_bonus_items",
-            "ty": {
-              "Array": {
-                "element": {
-                  "Ref": {
-                    "table": "Item",
-                    "field": "id"
-                  }
-                },
-                "len": 3
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "Fixed-length array parsed from one cell",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "split",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "spawn_points",
-            "ty": {
-              "Array": {
-                "element": {
-                  "Struct": "Vec3"
-                },
-                "len": 2
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "Fixed-length array of structs",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "tuple_list",
-              "options": {}
-            },
-            "derived_from": null
-          },
-          {
-            "name": "maintenance",
-            "ty": {
-              "Optional": {
-                "Struct": "MaintenanceInfo"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "Optional derived struct copied from a child row",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "maintenance_window",
-        "name": "MaintenanceWindow",
-        "canonical_name": "MaintenanceWindow",
-        "groups": {
-          "values": [
-            "server"
-          ]
-        },
-        "mode": "List",
-        "key": null,
-        "source": {
-          "file": "Core.xlsx",
-          "sheet": "MaintenanceWindow"
-        },
-        "fields": [
-          {
-            "name": "version",
-            "ty": "String",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "starts_at",
-            "ty": "String",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "duration_minutes",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": [
-              1,
-              1440
-            ],
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "reason",
-            "ty": {
-              "Optional": "String"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "mail_template",
-        "name": "MailTemplate",
-        "canonical_name": "MailTemplate",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Quest.xlsx",
-          "sheet": "MailTemplate"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "mail_type",
-            "ty": {
-              "Enum": "MailType"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "title_key",
-            "ty": "Text",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "body_key",
-            "ty": "Text",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "rewards",
-            "ty": {
-              "List": {
-                "Struct": "Reward"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "mail_reward",
-        "name": "MailReward",
-        "canonical_name": "MailReward",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "List",
-        "key": null,
-        "source": {
-          "file": "Quest.xlsx",
-          "sheet": "MailReward"
-        },
-        "fields": [
-          {
-            "name": "mail_id",
-            "ty": {
-              "Ref": {
-                "table": "MailTemplate",
-                "field": "id"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "seq",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "item_id",
-            "ty": {
-              "Ref": {
-                "table": "Item",
-                "field": "id"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "count",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "dialogue",
-        "name": "Dialogue",
-        "canonical_name": "Dialogue",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Quest.xlsx",
-          "sheet": "Dialogue"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "speaker_key",
-            "ty": "Text",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "lines",
-            "ty": {
-              "List": "String"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": [
-              1,
-              5
-            ],
-            "parser": {
-              "kind": "json",
-              "options": {}
-            },
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "event_rule",
-        "name": "EventRule",
-        "canonical_name": "EventRule",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Quest.xlsx",
-          "sheet": "EventRule"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "name",
-            "ty": "String",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "condition",
-            "ty": {
-              "Union": "EventCondition"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "actions",
-            "ty": {
-              "List": {
-                "Union": "RewardAction"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": [
-              1,
-              4
-            ],
-            "parser": {
-              "kind": "json",
-              "options": {}
-            },
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "complex_rule",
-        "name": "ComplexRule",
-        "canonical_name": "ComplexRule",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Complex.xlsx",
-          "sheet": "ComplexRule"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "name",
-            "ty": "String",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "root_condition",
-            "ty": {
-              "Union": "EventCondition"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "Single union value derived from a tagged_columns child row",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "root_action_group",
-            "ty": {
-              "Ref": {
-                "table": "ComplexActionGroup",
-                "field": "id"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "actions",
-            "ty": {
-              "List": {
-                "Union": "RewardAction"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "Non-JSON list<union<RewardAction>> assembled from child rows",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "budget",
-            "ty": {
-              "Struct": "ComplexBudget"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "Nested tuple, tuple_list, split, and map parsers in one cell",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "tuple",
-              "options": {
-                "separator": ","
-              }
-            },
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "complex_condition_group",
-        "name": "ComplexConditionGroup",
-        "canonical_name": "ComplexConditionGroup",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Complex.xlsx",
-          "sheet": "ComplexConditionGroup"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "name",
-            "ty": "String",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "conditions",
-            "ty": {
-              "List": {
-                "Union": "EventCondition"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": "A derived list of union values; each child row is edited without JSON",
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "complex_condition_group_entry",
-        "name": "ComplexConditionGroupEntry",
-        "canonical_name": "ComplexConditionGroupEntry",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Complex.xlsx",
-          "sheet": "ComplexConditionGroupEntry"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "group_id",
-            "ty": {
-              "Ref": {
-                "table": "ComplexConditionGroup",
-                "field": "id"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "seq",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "value",
-            "ty": {
-              "Union": "EventCondition"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "tagged_columns",
-              "options": {
-                "prefix": ""
-              }
-            },
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "complex_rule_condition",
-        "name": "ComplexRuleCondition",
-        "canonical_name": "ComplexRuleCondition",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Complex.xlsx",
-          "sheet": "ComplexRuleCondition"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "rule_id",
-            "ty": {
-              "Ref": {
-                "table": "ComplexRule",
-                "field": "id"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "value",
-            "ty": {
-              "Union": "EventCondition"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "tagged_columns",
-              "options": {
-                "prefix": ""
-              }
-            },
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "complex_action_group",
-        "name": "ComplexActionGroup",
-        "canonical_name": "ComplexActionGroup",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Complex.xlsx",
-          "sheet": "ComplexActionGroup"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "name",
-            "ty": "String",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "actions",
-            "ty": {
-              "List": {
-                "Union": "RewardAction"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          }
-        ],
-        "indexes": []
-      },
-      {
-        "id": "complex_action_entry",
-        "name": "ComplexActionEntry",
-        "canonical_name": "ComplexActionEntry",
-        "groups": {
-          "values": [
-            "common"
-          ]
-        },
-        "mode": "Map",
-        "key": "id",
-        "source": {
-          "file": "Complex.xlsx",
-          "sheet": "ComplexActionEntry"
-        },
-        "fields": [
-          {
-            "name": "id",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": true,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "group_id",
-            "ty": {
-              "Ref": {
-                "table": "ComplexActionGroup",
-                "field": "id"
-              }
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "seq",
-            "ty": "I32",
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": null,
-            "derived_from": null
-          },
-          {
-            "name": "value",
-            "ty": {
-              "Union": "RewardAction"
-            },
-            "groups": {
-              "values": [
-                "common"
-              ]
-            },
-            "key": false,
-            "comment": null,
-            "default": null,
-            "range": null,
-            "length": null,
-            "parser": {
-              "kind": "tagged_columns",
-              "options": {
-                "prefix": ""
-              }
             },
             "derived_from": null
           }

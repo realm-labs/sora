@@ -18,7 +18,7 @@ use sora_codegen::{
 };
 use sora_export::exporter::ExportOptions;
 use sora_input::traits::SchemaInput;
-use sora_input_schema::input::SchemaFileInput;
+use sora_input_schema::input::ProjectSchemaInput;
 use sora_schema::model::CodegenSchema;
 use uuid::Uuid;
 
@@ -218,7 +218,7 @@ pub fn build_project_with_control(
     };
     let build = manifest.build.clone();
     let project_dir = args.project.parent().unwrap_or_else(|| Path::new("."));
-    let schema_input = SchemaFileInput::new(&args.project);
+    let schema_input = ProjectSchemaInput::new(&args.project);
     let mut artifacts = Vec::new();
 
     let registry = CodegenRegistry::with_builtin_generators();
@@ -281,7 +281,7 @@ fn build_project_staged(
     build: &BuildConfig,
     selected: &SelectedBuild<'_>,
     project_dir: &Path,
-    schema_input: &SchemaFileInput,
+    schema_input: &ProjectSchemaInput,
     stage_root: &Path,
     artifacts: &mut Vec<BuildArtifact>,
 ) -> Result<BuildReport> {
@@ -323,7 +323,7 @@ fn build_project_staged(
             .clone()
             .with_cancellation_probe(move || source_control.is_cancelled());
         let project_input = MixedProjectInput::with_source_registry(
-            SchemaFileInput::new(&args.project),
+            ProjectSchemaInput::new(&args.project),
             &data_root,
             default_source_format.map(SourceFormat::as_str),
             Arc::clone(context.source_registry()),
@@ -1122,14 +1122,12 @@ schema_lock = "generated/schema.lock"
         fs::write(
             root.join("schema/items.toml"),
             r#"
-[[tables]]
+[tables.Settings]
 id = "settings"
-name = "Settings"
 mode = "singleton"
 
-[[tables.fields]]
-name = "name"
-type = "string"
+[tables.Settings.fields]
+name = "string"
 "#,
         )
         .unwrap();

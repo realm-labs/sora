@@ -601,7 +601,7 @@ fn ref_target_type<'a>(ir: &'a ConfigIr, table: &str, field: &str) -> Option<&'a
 mod tests {
     use super::*;
     use sora_ir::normalize::normalize_schema;
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
     use std::{
         path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
@@ -669,7 +669,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game.config" }
 groups = { common = { default = true } }

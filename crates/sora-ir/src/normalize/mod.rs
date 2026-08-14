@@ -1,7 +1,7 @@
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
     EnumAliasSchema, FieldSchema, GroupSetSchema, IndexSchema, LocalizationSchema, ParserSchema,
-    SchemaFile, TableFieldSchema, TableModeSchema, TableSchema, TableSourceSchema, UnionSchema,
+    ProjectSchema, TableFieldSchema, TableModeSchema, TableSchema, TableSourceSchema, UnionSchema,
     UnionVariantSchema,
 };
 
@@ -16,12 +16,12 @@ use crate::{
     parser::ParserRegistry,
 };
 
-pub fn normalize_schema(schema: SchemaFile) -> Result<ConfigIr> {
+pub fn normalize_schema(schema: ProjectSchema) -> Result<ConfigIr> {
     normalize_schema_with_parsers(schema, &ParserRegistry::builtin())
 }
 
 pub fn normalize_schema_with_parsers(
-    schema: SchemaFile,
+    schema: ProjectSchema,
     parser_registry: &ParserRegistry,
 ) -> Result<ConfigIr> {
     validate_project_id(&schema.project.id)?;
@@ -333,10 +333,10 @@ fn convert_localization(
     }))
 }
 
-impl TryFrom<SchemaFile> for ConfigIr {
+impl TryFrom<ProjectSchema> for ConfigIr {
     type Error = SoraError;
 
-    fn try_from(schema: SchemaFile) -> Result<Self> {
+    fn try_from(schema: ProjectSchema) -> Result<Self> {
         normalize_schema(schema)
     }
 }

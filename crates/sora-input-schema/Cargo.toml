@@ -11,8 +11,13 @@ readme.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+indexmap.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 sora-config-format.workspace = true
 sora-diagnostics.workspace = true
 sora-input.workspace = true
 sora-schema.workspace = true
+
+[dev-dependencies]
+sora-ir.workspace = true

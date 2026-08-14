@@ -3,113 +3,114 @@
 package showcase
 
 type GachaPool struct {
-	ID   int32
-	Name string
-	Cost ResourceCost
+    ID int32
+    Name string
+    Cost ResourceCost
 }
 
 func decodeGachaPool(reader *SoraReader) (GachaPool, error) {
-	var value GachaPool
-	var err error
-	value.ID, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = reader.ReadString()
-	if err != nil {
-		return value, err
-	}
-	value.Cost, err = decodeResourceCost(reader)
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value GachaPool
+    var err error
+    value.ID, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = reader.ReadString()
+    if err != nil {
+        return value, err
+    }
+    value.Cost, err = decodeResourceCost(reader)
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func decodeGachaPoolValue(input SoraValue) (GachaPool, error) {
-	var value GachaPool
-	obj, err := input.AsObject()
-	if err != nil {
-		return value, err
-	}
-	value.ID, err = obj.Get("id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = obj.Get("name").AsString()
-	if err != nil {
-		return value, err
-	}
-	value.Cost, err = decodeResourceCostValue(obj.Get("cost"))
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value GachaPool
+    obj, err := input.AsObject()
+    if err != nil {
+        return value, err
+    }
+    value.ID, err = obj.Get("id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = obj.Get("name").AsString()
+    if err != nil {
+        return value, err
+    }
+    value.Cost, err = decodeResourceCostValue(obj.Get("cost"))
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func (value GachaPool) collectTextKeys(out *[]TextKey) {
-	value.Cost.collectTextKeys(out)
+    value.Cost.collectTextKeys(out)
 }
 
 const gachaPoolTableName = "GachaPool"
 
 var gachaPoolTableInfo = SoraTableInfo{
-	Name:       gachaPoolTableName,
-	RowType:    "GachaPool",
-	Shape:      SoraTableShapeKeyed,
-	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-	Indexes:    []SoraIndexInfo{},
+    Name: gachaPoolTableName,
+    RowType: "GachaPool",
+    Shape: SoraTableShapeKeyed,
+    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+    Indexes: []SoraIndexInfo{
+    },
 }
 
 type GachaPoolTable struct {
-	keys []int32
-	rows map[int32]GachaPool
+    keys []int32
+    rows map[int32]GachaPool
 }
 
 func buildGachaPoolTable(rows []GachaPool) (*GachaPoolTable, error) {
-	keys := make([]int32, 0, len(rows))
-	for _, row := range rows {
-		keys = append(keys, row.ID)
-	}
-	return &GachaPoolTable{keys: keys, rows: DecodeMapTable(rows, func(row GachaPool) int32 { return row.ID })}, nil
+    keys := make([]int32, 0, len(rows))
+    for _, row := range rows {
+        keys = append(keys, row.ID)
+    }
+    return &GachaPoolTable{keys: keys, rows: DecodeMapTable(rows, func(row GachaPool) int32 { return row.ID })}, nil
 }
 
 func decodeGachaPoolTable(source SoraTableSource) (*GachaPoolTable, error) {
-	rows, err := DecodeSourceTable(source, gachaPoolTableName, decodeGachaPool, decodeGachaPoolValue)
-	if err != nil {
-		return nil, err
-	}
-	return buildGachaPoolTable(rows)
+    rows, err := DecodeSourceTable(source, gachaPoolTableName, decodeGachaPool, decodeGachaPoolValue)
+    if err != nil {
+        return nil, err
+    }
+    return buildGachaPoolTable(rows)
 }
 func (table *GachaPoolTable) Rows() map[int32]GachaPool {
-	rows := make(map[int32]GachaPool, len(table.rows))
-	for key, row := range table.rows {
-		rows[key] = row
-	}
-	return rows
+    rows := make(map[int32]GachaPool, len(table.rows))
+    for key, row := range table.rows {
+        rows[key] = row
+    }
+    return rows
 }
 func (table *GachaPoolTable) Get(key int32) (GachaPool, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 
 func (table *GachaPoolTable) Keys() []int32 {
-	return append([]int32(nil), table.keys...)
+    return append([]int32(nil), table.keys...)
 }
 
 func (table *GachaPoolTable) OrderedRows() []GachaPool {
-	rows := make([]GachaPool, 0, len(table.keys))
-	for _, key := range table.keys {
-		if row, ok := table.rows[key]; ok {
-			rows = append(rows, row)
-		}
-	}
-	return rows
+    rows := make([]GachaPool, 0, len(table.keys))
+    for _, key := range table.keys {
+        if row, ok := table.rows[key]; ok {
+            rows = append(rows, row)
+        }
+    }
+    return rows
 }
 func (table *GachaPoolTable) Info() SoraTableInfo {
-	return gachaPoolTableInfo
+    return gachaPoolTableInfo
 }
 
 func (table *GachaPoolTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }

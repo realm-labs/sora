@@ -8,7 +8,7 @@ use std::{
 use sha2::Digest;
 use sora_data::model::{ConfigData, RowData, TableData, Value};
 use sora_excel::generator::ExcelTemplateGenerator;
-use sora_input_schema::input::SchemaFileInput;
+use sora_input_schema::input::ProjectSchemaInput;
 use sora_workspace::{
     DataOperation, ProjectId, RowSelector, RuntimeOptions, WorkspaceService,
     execute_data_operations,
@@ -18,7 +18,7 @@ static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 #[test]
 fn map_singleton_and_list_selectors_enforce_identity() {
-    let schema: sora_schema::model::SchemaFile = toml::from_str(
+    let schema: sora_schema::model::ProjectSchema = toml::from_str(
         r#"
 project = { id = "selectors" }
 groups = { common = { default = true } }
@@ -244,8 +244,7 @@ views = { default = { contract = "localization/default", groups = ["common"] } }
 locales = ["en", "zh"]
 default_locale = "en"
 
-[[localization.sources]]
-name = "Text"
+[localization.sources.Text]
 format = "csv"
 file = "localization.csv"
 key = "key"
@@ -313,18 +312,15 @@ fn structured_directory_sources_update_and_delete_transactionally() {
     .unwrap();
     fs::write(
         root.join("schema.toml"),
-        r#"[[tables]]
+        r#"[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
 source = { file = "items", format = "json" }
-[[tables.fields]]
-name = "id"
-type = "i32"
-[[tables.fields]]
-name = "name"
-type = "string"
+
+[tables.Item.fields]
+id = "i32"
+name = "string"
 "#,
     )
     .unwrap();
@@ -409,20 +405,15 @@ fn project(format: &str) -> PathBuf {
     fs::write(
         root.join("schema.toml"),
         format!(
-            r#"[[tables]]
+            r#"[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
 source = {{ file = "{file}", format = "{format}", sheet = "Item" }}
 
-[[tables.fields]]
-name = "id"
-type = "i32"
-
-[[tables.fields]]
-name = "name"
-type = "string"
+[tables.Item.fields]
+id = "i32"
+name = "string"
 "#
         ),
     )
@@ -441,7 +432,7 @@ type = "string"
         .unwrap(),
         "csv" => fs::write(root.join("data/items.csv"), "id,name\n1,old\n").unwrap(),
         "xlsx" => {
-            let ir = sora_core::pipeline::load_schema_ir(&SchemaFileInput::new(
+            let ir = sora_core::pipeline::load_schema_ir(&ProjectSchemaInput::new(
                 root.join("project.toml"),
             ))
             .unwrap();

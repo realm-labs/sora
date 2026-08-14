@@ -129,14 +129,12 @@ includes = ["schema/settings.toml"]
     fs::write(
         root.join("schema/settings.toml"),
         r#"
-[[tables]]
+[tables.Settings]
 id = "settings"
-name = "Settings"
 mode = "singleton"
 
-[[tables.fields]]
-name = "name"
-type = "string"
+[tables.Settings.fields]
+name = "string"
 "#,
     )
     .unwrap();

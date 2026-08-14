@@ -580,7 +580,7 @@ function validateSchemaSources(schema: StudioSchema): StudioValidationIssue[] {
     if (!schemaSourceExtension(source)) {
       issues.push({
         id: `schema:sources:${index}:extension`,
-        message: `Schema file "${source}" must end with .toml, .yaml, .yml, .json, or .lua.`
+        message: `Schema file "${source}" must end with .scon, .toml, .yaml, .yml, .json, or .lua.`
       });
     }
     if (seen.has(source)) {
@@ -595,7 +595,7 @@ function validateSchemaSources(schema: StudioSchema): StudioValidationIssue[] {
 }
 
 function schemaSourceExtension(source: string): boolean {
-  return /\.(toml|ya?ml|json|lua)$/.test(source);
+  return /\.(scon|toml|ya?ml|json|lua)$/.test(source);
 }
 
 function buildEdges(nodes: StudioNode[]): StudioEdge[] {

@@ -447,11 +447,11 @@ mod tests {
     use prost::Message;
     use sora_data::model::TableData;
     use sora_ir::normalize::normalize_schema;
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
 
     #[test]
     fn typed_protobuf_exporter_writes_business_payload() {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -509,7 +509,7 @@ type = "enum<ItemType>"
 
     #[test]
     fn map_payload_matches_protobuf_map_wire_format() {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

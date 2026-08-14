@@ -3,48 +3,48 @@
 package showcase
 
 type Shop struct {
-	ID       int32
-	Name     string
-	Currency ResourceKind
+    ID int32
+    Name string
+    Currency ResourceKind
 }
 
 func decodeShop(reader *SoraReader) (Shop, error) {
-	var value Shop
-	var err error
-	value.ID, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = reader.ReadString()
-	if err != nil {
-		return value, err
-	}
-	value.Currency, err = decodeResourceKind(reader)
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value Shop
+    var err error
+    value.ID, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = reader.ReadString()
+    if err != nil {
+        return value, err
+    }
+    value.Currency, err = decodeResourceKind(reader)
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func decodeShopValue(input SoraValue) (Shop, error) {
-	var value Shop
-	obj, err := input.AsObject()
-	if err != nil {
-		return value, err
-	}
-	value.ID, err = obj.Get("id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = obj.Get("name").AsString()
-	if err != nil {
-		return value, err
-	}
-	value.Currency, err = decodeResourceKindValue(obj.Get("currency"))
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value Shop
+    obj, err := input.AsObject()
+    if err != nil {
+        return value, err
+    }
+    value.ID, err = obj.Get("id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = obj.Get("name").AsString()
+    if err != nil {
+        return value, err
+    }
+    value.Currency, err = decodeResourceKindValue(obj.Get("currency"))
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func (value Shop) collectTextKeys(out *[]TextKey) {
@@ -53,62 +53,63 @@ func (value Shop) collectTextKeys(out *[]TextKey) {
 const shopTableName = "Shop"
 
 var shopTableInfo = SoraTableInfo{
-	Name:       shopTableName,
-	RowType:    "Shop",
-	Shape:      SoraTableShapeKeyed,
-	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-	Indexes:    []SoraIndexInfo{},
+    Name: shopTableName,
+    RowType: "Shop",
+    Shape: SoraTableShapeKeyed,
+    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+    Indexes: []SoraIndexInfo{
+    },
 }
 
 type ShopTable struct {
-	keys []int32
-	rows map[int32]Shop
+    keys []int32
+    rows map[int32]Shop
 }
 
 func buildShopTable(rows []Shop) (*ShopTable, error) {
-	keys := make([]int32, 0, len(rows))
-	for _, row := range rows {
-		keys = append(keys, row.ID)
-	}
-	return &ShopTable{keys: keys, rows: DecodeMapTable(rows, func(row Shop) int32 { return row.ID })}, nil
+    keys := make([]int32, 0, len(rows))
+    for _, row := range rows {
+        keys = append(keys, row.ID)
+    }
+    return &ShopTable{keys: keys, rows: DecodeMapTable(rows, func(row Shop) int32 { return row.ID })}, nil
 }
 
 func decodeShopTable(source SoraTableSource) (*ShopTable, error) {
-	rows, err := DecodeSourceTable(source, shopTableName, decodeShop, decodeShopValue)
-	if err != nil {
-		return nil, err
-	}
-	return buildShopTable(rows)
+    rows, err := DecodeSourceTable(source, shopTableName, decodeShop, decodeShopValue)
+    if err != nil {
+        return nil, err
+    }
+    return buildShopTable(rows)
 }
 func (table *ShopTable) Rows() map[int32]Shop {
-	rows := make(map[int32]Shop, len(table.rows))
-	for key, row := range table.rows {
-		rows[key] = row
-	}
-	return rows
+    rows := make(map[int32]Shop, len(table.rows))
+    for key, row := range table.rows {
+        rows[key] = row
+    }
+    return rows
 }
 func (table *ShopTable) Get(key int32) (Shop, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 
 func (table *ShopTable) Keys() []int32 {
-	return append([]int32(nil), table.keys...)
+    return append([]int32(nil), table.keys...)
 }
 
 func (table *ShopTable) OrderedRows() []Shop {
-	rows := make([]Shop, 0, len(table.keys))
-	for _, key := range table.keys {
-		if row, ok := table.rows[key]; ok {
-			rows = append(rows, row)
-		}
-	}
-	return rows
+    rows := make([]Shop, 0, len(table.keys))
+    for _, key := range table.keys {
+        if row, ok := table.rows[key]; ok {
+            rows = append(rows, row)
+        }
+    }
+    return rows
 }
 func (table *ShopTable) Info() SoraTableInfo {
-	return shopTableInfo
+    return shopTableInfo
 }
 
 func (table *ShopTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }

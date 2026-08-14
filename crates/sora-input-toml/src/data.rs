@@ -95,7 +95,7 @@ mod tests {
     use crate::input::TomlDataInput;
     use sora_input::traits::DataInput;
     use sora_ir::normalize::normalize_schema;
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
     use std::{
         fs,
         path::PathBuf,
@@ -133,7 +133,7 @@ name = "Iron Sword"
         let base = temp_dir();
         let data_dir = base.join("data");
         fs::create_dir_all(&data_dir).unwrap();
-        let schema = toml::from_str::<SchemaFile>(
+        let schema = toml::from_str::<ProjectSchema>(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

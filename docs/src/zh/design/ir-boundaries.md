@@ -4,7 +4,7 @@
 
 ## 属于 IR 的内容
 
-- package 和 include 的 schema module；
+- project ID 和 include 的 schema module；
 - enum、struct、union、table、field 和 index；
 - table mode 和 key；
 - source metadata；

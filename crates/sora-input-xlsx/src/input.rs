@@ -5,7 +5,7 @@ use sora_diagnostics::Result;
 use sora_execution::ExecutionContext;
 use sora_input::traits::{DataInput, SchemaInput};
 use sora_ir::model::ConfigIr;
-use sora_schema::model::SchemaFile;
+use sora_schema::model::ProjectSchema;
 
 use crate::reader::{
     load_xlsx_config_data, load_xlsx_config_data_with_context, load_xlsx_localization_source_data,
@@ -31,7 +31,7 @@ impl<S> XlsxProjectInput<S> {
 }
 
 impl<S: SchemaInput> SchemaInput for XlsxProjectInput<S> {
-    fn load_schema(&self) -> Result<SchemaFile> {
+    fn load_schema(&self) -> Result<ProjectSchema> {
         self.schema_input.load_schema()
     }
 }

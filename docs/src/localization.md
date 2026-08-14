@@ -13,14 +13,11 @@ localization sources -> LocaleCatalog -> i18n locale packs
 
 Use `text` for fields that point to localized copy:
 
-```toml
-[[tables.fields]]
-name = "title_key"
-type = "text"
-
-[[tables.fields]]
-name = "body_keys"
-type = "list<text>"
+```scon
+fields {
+  title_key = "text"
+  body_keys = "list<text>"
+}
 ```
 
 `text` is a key, not the translated text itself. Source data should contain values such as `quest.1001.title` or `ui.confirm`. Generated code exposes this as a `TextKey` where the target language has a distinct generated runtime type.
@@ -31,21 +28,16 @@ The catalog validator checks every `text` value in business data. A missing key 
 
 Declare localization at the project schema root:
 
-```toml
-[localization]
-locales = ["zh_cn", "en_us"]
-default_locale = "zh_cn"
-fallback_locale = "en_us"
-
-[[localization.sources]]
-name = "ui"
-file = "Core.xlsx"
-sheet = "UILocalization"
-
-[[localization.sources]]
-name = "quest"
-file = "Quest.xlsx"
-sheet = "QuestLocalization"
+```scon
+localization {
+  locales = ["zh_cn", "en_us"]
+  default_locale = "zh_cn"
+  fallback_locale = "en_us"
+  sources {
+    ui { file = "Core.xlsx" sheet = "UILocalization" }
+    quest { file = "Quest.xlsx" sheet = "QuestLocalization" }
+  }
+}
 ```
 
 Each source is a wide table. The default key column is `key`:
@@ -70,12 +62,14 @@ Rules:
 
 Use `key = "id"` on a source if the key column is not named `key`:
 
-```toml
-[[localization.sources]]
-name = "ui"
-file = "Core.xlsx"
-sheet = "UILocalization"
-key = "id"
+```scon
+sources {
+  ui {
+    file = "Core.xlsx"
+    sheet = "UILocalization"
+    key = "id"
+  }
+}
 ```
 
 ## Export Locale Packs
@@ -84,20 +78,14 @@ Normal exports (`binary`, `json`, `cbor`, `sora-protobuf`, `proto`) contain busi
 
 Add i18n exports in the build manifest:
 
-```toml
-[[build.exports]]
-format = "binary"
-out = "generated/config.sora"
-
-[[build.exports]]
-format = "i18n-binary"
-out = "generated/i18n/zh_cn.sora-i18n"
-locale = "zh_cn"
-
-[[build.exports]]
-format = "i18n-json"
-out = "generated/i18n/en_us.json"
-locale = "en_us"
+```scon
+build {
+  exports = [
+    { format = "binary", out = "generated/config.sora" },
+    { format = "i18n-binary", out = "generated/i18n/zh_cn.sora-i18n", locale = "zh_cn" },
+    { format = "i18n-json", out = "generated/i18n/en_us.json", locale = "en_us" },
+  ]
+}
 ```
 
 Use `i18n-binary` for production locale packs. Use `i18n-json` for inspection, external translation handoff, or tests.

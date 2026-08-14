@@ -10,32 +10,26 @@ Tables are source-backed row collections. A table schema declares the table mode
 | `list` | Ordered rows without keyed lookup. | Drop entries, weighted pools, ordered steps. |
 | `singleton` | One row. | Global settings, tuning constants. |
 
-```toml
-[[tables]]
-id = "item"
-name = "Item"
-mode = "map"
-key = "id"
-
-[[tables.fields]]
-name = "id"
-type = "i32"
+```scon
+tables {
+  Item {
+    mode = "map"
+    key = "id"
+    fields { id = "i32" }
+  }
+}
 ```
 
 For map tables, `key` names the table's primary key field. Sora uses it for row uniqueness, generated lookup APIs, Excel template hints, and `ref<Table.key>` validation.
 
-The table `id` is the stable schema identity used by view selection and table
-aliases. It must remain unchanged when `name` changes. `name` is the canonical
-source name used by data files and schema references; a view may expose a
-different consumer-facing name without changing either the ID or source data.
-
 ## Source
 
-```toml
-[tables.source]
-format = "xlsx"
-file = "Core.xlsx"
-sheet = "Item"
+```scon
+source {
+  format = "xlsx"
+  file = "Core.xlsx"
+  sheet = "Item"
+}
 ```
 
 `format` can be omitted when the project or command provides a default source format. `file` is resolved under the command's `--data-root` during export and validation.
@@ -58,37 +52,33 @@ Indexes are extra lookup paths on a table. They are different from the `key` of 
 | Concept | Purpose |
 | --- | --- |
 | table `key` | The primary key. A map table uses it to keep rows unique and to generate the main `get(id)` lookup. |
-| `[[tables.indexes]]` | Additional lookup paths, such as lookup by name, grouping by type, or finding drops by stage. |
+| table `indexes` | Additional keyed lookup paths, such as lookup by name, grouping by type, or finding drops by stage. |
 
 For example, an `Item` table can use `id` as its primary key:
 
-```toml
-[[tables]]
-id = "item"
-name = "Item"
-mode = "map"
-key = "id"
-
-[[tables.fields]]
-name = "id"
-type = "i32"
-
-[[tables.fields]]
-name = "name"
-type = "string"
-
-[[tables.fields]]
-name = "item_type"
-type = "enum<ItemType>"
+```scon
+tables {
+  Item {
+    mode = "map"
+    key = "id"
+    fields {
+      id = "i32"
+      name = "string"
+      item_type = "enum<ItemType>"
+    }
+  }
+}
 ```
 
 Add a unique index when another field should also identify at most one row:
 
-```toml
-[[tables.indexes]]
-name = "by_name"
-fields = ["name"]
-unique = true
+```scon
+indexes {
+  by_name {
+    fields = ["name"]
+    unique = true
+  }
+}
 ```
 
 Example data:
@@ -102,11 +92,10 @@ Example data:
 
 Use a non-unique index when a key can match many rows:
 
-```toml
-[[tables.indexes]]
-name = "by_item_type"
-fields = ["item_type"]
-unique = false
+```scon
+indexes {
+  by_item_type = ["item_type"]
+}
 ```
 
 Example data:
@@ -121,11 +110,13 @@ Example data:
 
 `fields` is a list, so a unique index can also express combined uniqueness:
 
-```toml
-[[tables.indexes]]
-name = "by_world_stage"
-fields = ["world", "stage"]
-unique = true
+```scon
+indexes {
+  by_world_stage {
+    fields = ["world", "stage"]
+    unique = true
+  }
+}
 ```
 
 This requires each `(world, stage)` pair to be unique. For example, `(1, 1)` can appear once, while `(1, 2)` is a different key. Current generated lookup helpers mainly support single-field indexes on non-singleton tables; combined indexes are most useful for validation today.

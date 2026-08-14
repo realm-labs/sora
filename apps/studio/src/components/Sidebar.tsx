@@ -263,7 +263,7 @@ function nextSchemaSource(sources: string[]) {
   const existing = new Set(sources);
   let index = sources.length + 1;
   for (;;) {
-    const source = `schema/schema${index}.toml`;
+    const source = `schema/schema${index}.scon`;
     if (!existing.has(source)) return source;
     index += 1;
   }

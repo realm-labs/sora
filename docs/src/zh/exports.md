@@ -33,7 +33,7 @@ codegen 中的 `runtime_format = "sora"` 对应 `binary` 导出。
 sora export \
   --format binary \
   --default-source-format xlsx \
-  --project project.toml \
+  --project project.scon \
   --data-root data \
   --out generated/config.sora
 ```

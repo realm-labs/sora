@@ -9,19 +9,19 @@ use sora_ir::{
     parser::ParserRegistry as SchemaParserRegistry, projection::project_config_ir,
     validate::validate_config_ir,
 };
-use sora_schema::model::SchemaFile;
+use sora_schema::model::ProjectSchema;
 
 pub(super) struct ValidatedProjectData {
     pub config: sora_data::model::ConfigData,
     pub locale_catalog: Option<sora_data::localization::LocaleCatalog>,
 }
 
-pub(super) fn validate_schema_ir(schema: SchemaFile) -> Result<ConfigIr> {
+pub(super) fn validate_schema_ir(schema: ProjectSchema) -> Result<ConfigIr> {
     validate_schema_ir_with_parsers(schema, &SchemaParserRegistry::builtin())
 }
 
 pub(super) fn validate_schema_ir_with_parsers(
-    schema: SchemaFile,
+    schema: ProjectSchema,
     parser_registry: &SchemaParserRegistry,
 ) -> Result<ConfigIr> {
     let ir = normalize_schema_with_parsers(schema, parser_registry)?;

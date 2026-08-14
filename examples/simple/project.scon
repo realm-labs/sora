@@ -1,0 +1,16 @@
+includes = [
+  "schema/items.scon",
+]
+project { id = "game_config" }
+groups { common { default = true } }
+
+views {
+  default {
+    contract = "game_config/default"
+    groups = ["common"]
+    bindings {
+      kotlin { package = "game_config" }
+      proto-schema { package = "game_config" }
+    }
+  }
+}

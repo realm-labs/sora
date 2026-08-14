@@ -1,7 +1,7 @@
 use super::*;
 use crate::model::{ConfigData, RowData, TableData, Value};
 use sora_ir::normalize::normalize_schema;
-use sora_schema::model::SchemaFile;
+use sora_schema::model::ProjectSchema;
 use std::collections::BTreeMap;
 
 #[test]
@@ -513,7 +513,7 @@ fn singleton_table(id: i64) -> TableData {
 }
 
 fn example_ir() -> ConfigIr {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -559,7 +559,7 @@ type = "i32"
 }
 
 fn complex_ir() -> ConfigIr {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -622,7 +622,7 @@ type = "i32"
 }
 
 fn index_ir() -> ConfigIr {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -662,7 +662,7 @@ unique = true
 }
 
 fn length_ir() -> ConfigIr {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -695,7 +695,7 @@ length = [1, 2]
 }
 
 fn integer_width_ir() -> ConfigIr {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

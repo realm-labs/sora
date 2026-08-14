@@ -1,0 +1,4 @@
+*.cbor binary
+*.pb binary
+*.sora binary
+*.xlsx binary

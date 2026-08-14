@@ -79,7 +79,7 @@ mod tests {
     use crate::projection::{DATA_START_ROW, NAME_ROW};
     use calamine::Reader;
     use sora_ir::normalize::normalize_schema;
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
     use std::sync::atomic::{AtomicU64, Ordering};
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -135,7 +135,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

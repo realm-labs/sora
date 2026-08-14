@@ -29,9 +29,9 @@ Projects that need stable generated output should pin the `sora` CLI version. Ru
 
 Current support includes:
 
-- schema files in TOML, YAML, JSON, or Lua;
+- schema files in SCON, TOML, YAML, JSON, or Lua, with SCON recommended for new projects;
 - table data from Excel `.xlsx`, CSV, TOML, JSON, or YAML;
-- custom Lua cell parsers configured in `project.toml` or loaded by the CLI;
+- custom Lua cell parsers configured in the project manifest or loaded by the CLI;
 - project-level, read-only Lua source loaders for custom multi-file table formats;
 - Sora Studio, an embedded browser UI for visual schema editing;
 - generated Excel `.xlsx` templates;
@@ -78,85 +78,85 @@ cargo install --path crates/sora-cli
 
 ## Example Commands
 
-The preferred workflow is to declare build outputs in `project.toml` and run one command:
+The preferred workflow is to declare build outputs in `project.scon` and run one command:
 
 ```bash
-sora build --project examples/showcase/project.toml
+sora build --project examples/showcase/project.scon
 ```
 
 To inspect and edit the same schema in Sora Studio:
 
 ```bash
-sora studio --project examples/showcase/project.toml
+sora studio --project examples/showcase/project.scon
 ```
 
 To update headers in existing Excel data workbooks after schema changes:
 
 ```bash
-sora excel-sync --project project.toml --data-root data
-sora excel-sync --project project.toml --data-root data --write
+sora excel-sync --project project.scon --data-root data
+sora excel-sync --project project.scon --data-root data --write
 ```
 
 For one-off or CI workflows, each stage is still available as a separate command:
 
 ```bash
 sora check \
-  --project examples/simple/project.toml
+  --project examples/simple/project.scon
 
 sora gen --target rust \
-  --project examples/simple/project.toml \
+  --project examples/simple/project.scon \
   --out generated/rust
 
 sora gen --target kotlin \
-  --project examples/simple/project.toml \
+  --project examples/simple/project.scon \
   --out generated/kotlin
 
 sora gen --target scala \
-  --project examples/simple/project.toml \
+  --project examples/simple/project.scon \
   --out generated/scala
 
 sora gen --target c \
-  --project examples/simple/project.toml \
+  --project examples/simple/project.scon \
   --out generated/c
 
 sora gen --target cpp \
-  --project examples/simple/project.toml \
+  --project examples/simple/project.scon \
   --out generated/cpp
 
 sora gen --target typescript \
-  --project examples/simple/project.toml \
+  --project examples/simple/project.scon \
   --out generated/typescript
 
 sora gen --target javascript \
-  --project examples/simple/project.toml \
+  --project examples/simple/project.scon \
   --out generated/javascript
 
 sora gen --target erlang \
-  --project examples/simple/project.toml \
+  --project examples/simple/project.scon \
   --out generated/erlang
 
 sora excel-template \
-  --project examples/simple/project.toml \
+  --project examples/simple/project.scon \
   --out generated/excel
 
 sora export \
   --format binary \
   --default-source-format xlsx \
-  --project examples/simple/project.toml \
+  --project examples/simple/project.scon \
   --data-root generated/excel \
   --out generated/config.sora
 
 sora export \
   --format json-debug \
   --default-source-format xlsx \
-  --project examples/simple/project.toml \
+  --project examples/simple/project.scon \
   --data-root generated/excel \
   --out generated/debug-json
 
 sora export \
   --format json-debug \
   --default-source-format csv \
-  --project examples/simple/project.toml \
+  --project examples/simple/project.scon \
   --data-root generated/csv \
   --out generated/debug-json
 ```

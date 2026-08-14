@@ -1,93 +1,76 @@
 # Schema
 
-A schema module is a TOML, YAML, JSON, or Lua file included by a project manifest.
+A project root and each included schema module may use SCON, TOML, YAML, JSON, or Lua. SCON is recommended for new files.
 
-```toml
-project = { id = "game_config" }
-groups = { common = { default = true } }
-views = { default = { contract = "game_config/default", groups = ["common"] } }
-includes = ["schema/items.toml", "schema/skills.toml"]
+```scon
+project { id = "game_config" }
+includes = ["schema/items.scon", "schema/skills.scon"]
 ```
 
-Schema modules are the source of truth for Sora. They describe the stable data contract; source files such as Excel workbooks contain row values that are checked against that contract.
+Every file is first parsed into a format-specific keyed representation and then lowered to a format-independent schema module. The root must declare `project`; included modules must not declare root-only `project`, `groups`, `views`, `codegen`, or `localization`. Includes may cross formats and are loaded recursively in declaration order, with cycle, duplicate-module, and duplicate-declaration checks.
 
-See [Schema Formats](schema/formats.md) for the supported file formats and equivalent TOML/YAML/JSON/Lua shapes.
+Declaration names are keys and are not repeated inside bodies. Unknown properties are rejected.
 
 ## Enums
 
-```toml
-[[enums]]
-name = "ItemType"
-values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }]
+```scon
+enums {
+  ItemType = ["Weapon", "Armor", "Material"]
+}
 ```
 
-Enums are stored by symbolic value in editable data and generated as native enum-like constructs when the target language supports them.
+Enums keep their value order and are stored symbolically in editable data.
 
 ## Structs
 
-```toml
-[[structs]]
-name = "Cost"
-
-[[structs.fields]]
-name = "gold"
-type = "i32"
+```scon
+structs {
+  Cost {
+    fields {
+      gold = "i32"
+    }
+  }
+}
 ```
 
-Structs model repeated object shapes. They are useful for costs, rewards, coordinates, stat modifiers, and other nested values.
+Struct fields preserve author order and model reusable nested values.
 
 ## Unions
 
-```toml
-[[unions]]
-name = "RewardAction"
-tag = "type"
-
-[[unions.variants]]
-name = "AddItem"
-
-[[unions.variants.fields]]
-name = "item_id"
-type = "ref<Item.id>"
+```scon
+unions {
+  RewardAction {
+    tag = "type"
+    variants {
+      AddItem {
+        fields {
+          item_id = "ref<Item.id>"
+        }
+      }
+    }
+  }
+}
 ```
 
-Unions model tagged variants. The `tag` field is the discriminator name used in source data and runtime values.
+Union variants preserve author order. `tag` is the discriminator used in source and runtime values.
 
 ## Tables
 
-```toml
-[[tables]]
-id = "item"
-name = "Item"
-mode = "map"
-key = "id"
-
-[tables.source]
-format = "xlsx"
-file = "Item.xlsx"
-sheet = "Item"
+```scon
+tables {
+  Item {
+    mode = "map"
+    key = "id"
+    source {
+      format = "xlsx"
+      file = "Item.xlsx"
+      sheet = "Item"
+    }
+    fields {
+      id = "i32"
+    }
+  }
+}
 ```
 
-Tables define source-backed row collections. See [Tables](schema/tables.md) for modes, keys, sources, indexes, and derived fields.
-
-## Field Types
-
-Common field types include primitives, enums, structs, unions, references, lists, sets, fixed arrays, maps, and optionals:
-
-```text
-i32
-string
-enum<ItemType>
-struct<Cost>
-union<Reward>
-ref<Item.id>
-list<i32>
-set<string>
-array<i32,3>
-map<string,i32>
-optional<string>
-```
-
-See [Types](schema/types.md) for the full list and examples.
-
-See [Cell Parsers](schema/parsers.md) for compact Excel/CSV cell formats and column projections such as `split`, `tuple`, `columns`, `tuple_list`, `map`, and `json`.
+See [Schema Formats](schema/formats.md) for equivalent natural forms in all five frontends, [Tables](schema/tables.md) for sources and indexes, [Types](schema/types.md) for field types, and [Cell Parsers](schema/parsers.md) for compact cell encodings.

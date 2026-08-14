@@ -56,7 +56,7 @@ public interface ISoraSingleTable<out TRow> : ISoraTable<TRow>
 
 public sealed class SoraConfig
 {
-    public const string SchemaFingerprint = "9552056f96151363";
+    public const string SchemaFingerprint = "5ae7c095b011eddf";
 
     private readonly Dictionary<string, ISoraTable> tables;
 
@@ -74,40 +74,40 @@ public sealed class SoraConfig
             );
         }
         var tables = new Dictionary<string, ISoraTable>(34);
-        tables[ItemTable.TableName] = ItemTable.Decode(source);
-        tables[ShopTable.TableName] = ShopTable.Decode(source);
-        tables[ShopItemTable.TableName] = ShopItemTable.Decode(source);
-        tables[RecipeTable.TableName] = RecipeTable.Decode(source);
-        tables[GachaPoolTable.TableName] = GachaPoolTable.Decode(source);
-        tables[GachaItemTable.TableName] = GachaItemTable.Decode(source);
-        tables[EquipmentSetTable.TableName] = EquipmentSetTable.Decode(source);
-        tables[SkillTable.TableName] = SkillTable.Decode(source);
+        tables[AchievementTable.TableName] = AchievementTable.Decode(source);
+        tables[BuffTable.TableName] = BuffTable.Decode(source);
         tables[CharacterTable.TableName] = CharacterTable.Decode(source);
         tables[CharacterSkillTable.TableName] = CharacterSkillTable.Decode(source);
-        tables[BuffTable.TableName] = BuffTable.Decode(source);
-        tables[DropGroupTable.TableName] = DropGroupTable.Decode(source);
-        tables[DropEntryTable.TableName] = DropEntryTable.Decode(source);
-        tables[MonsterTable.TableName] = MonsterTable.Decode(source);
-        tables[StageTable.TableName] = StageTable.Decode(source);
-        tables[StageRewardTable.TableName] = StageRewardTable.Decode(source);
-        tables[DungeonTable.TableName] = DungeonTable.Decode(source);
-        tables[QuestTable.TableName] = QuestTable.Decode(source);
-        tables[QuestRewardTable.TableName] = QuestRewardTable.Decode(source);
-        tables[LevelExpTable.TableName] = LevelExpTable.Decode(source);
-        tables[AchievementTable.TableName] = AchievementTable.Decode(source);
-        tables[VipLevelTable.TableName] = VipLevelTable.Decode(source);
-        tables[GameSettingsTable.TableName] = GameSettingsTable.Decode(source);
-        tables[MaintenanceWindowTable.TableName] = MaintenanceWindowTable.Decode(source);
-        tables[MailTemplateTable.TableName] = MailTemplateTable.Decode(source);
-        tables[MailRewardTable.TableName] = MailRewardTable.Decode(source);
-        tables[DialogueTable.TableName] = DialogueTable.Decode(source);
-        tables[EventRuleTable.TableName] = EventRuleTable.Decode(source);
-        tables[ComplexRuleTable.TableName] = ComplexRuleTable.Decode(source);
+        tables[ComplexActionEntryTable.TableName] = ComplexActionEntryTable.Decode(source);
+        tables[ComplexActionGroupTable.TableName] = ComplexActionGroupTable.Decode(source);
         tables[ComplexConditionGroupTable.TableName] = ComplexConditionGroupTable.Decode(source);
         tables[ComplexConditionGroupEntryTable.TableName] = ComplexConditionGroupEntryTable.Decode(source);
+        tables[ComplexRuleTable.TableName] = ComplexRuleTable.Decode(source);
         tables[ComplexRuleConditionTable.TableName] = ComplexRuleConditionTable.Decode(source);
-        tables[ComplexActionGroupTable.TableName] = ComplexActionGroupTable.Decode(source);
-        tables[ComplexActionEntryTable.TableName] = ComplexActionEntryTable.Decode(source);
+        tables[DialogueTable.TableName] = DialogueTable.Decode(source);
+        tables[DropEntryTable.TableName] = DropEntryTable.Decode(source);
+        tables[DropGroupTable.TableName] = DropGroupTable.Decode(source);
+        tables[DungeonTable.TableName] = DungeonTable.Decode(source);
+        tables[EquipmentSetTable.TableName] = EquipmentSetTable.Decode(source);
+        tables[EventRuleTable.TableName] = EventRuleTable.Decode(source);
+        tables[GachaItemTable.TableName] = GachaItemTable.Decode(source);
+        tables[GachaPoolTable.TableName] = GachaPoolTable.Decode(source);
+        tables[GameSettingsTable.TableName] = GameSettingsTable.Decode(source);
+        tables[ItemTable.TableName] = ItemTable.Decode(source);
+        tables[LevelExpTable.TableName] = LevelExpTable.Decode(source);
+        tables[MailRewardTable.TableName] = MailRewardTable.Decode(source);
+        tables[MailTemplateTable.TableName] = MailTemplateTable.Decode(source);
+        tables[MaintenanceWindowTable.TableName] = MaintenanceWindowTable.Decode(source);
+        tables[MonsterTable.TableName] = MonsterTable.Decode(source);
+        tables[QuestTable.TableName] = QuestTable.Decode(source);
+        tables[QuestRewardTable.TableName] = QuestRewardTable.Decode(source);
+        tables[RecipeTable.TableName] = RecipeTable.Decode(source);
+        tables[ShopTable.TableName] = ShopTable.Decode(source);
+        tables[ShopItemTable.TableName] = ShopItemTable.Decode(source);
+        tables[SkillTable.TableName] = SkillTable.Decode(source);
+        tables[StageTable.TableName] = StageTable.Decode(source);
+        tables[StageRewardTable.TableName] = StageRewardTable.Decode(source);
+        tables[VipLevelTable.TableName] = VipLevelTable.Decode(source);
         return new SoraConfig(tables);
     }
 
@@ -131,35 +131,11 @@ public sealed class SoraConfig
     private List<TextKey> TextKeys()
     {
         var keys = new List<TextKey>();
-        foreach (var row in Item.Rows.Values)
+        foreach (var row in Achievement.Rows.Values)
         {
             row.CollectTextKeys(keys);
         }
-        foreach (var row in Shop.Rows.Values)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in ShopItem.Rows)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in Recipe.Rows.Values)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in GachaPool.Rows.Values)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in GachaItem.Rows)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in EquipmentSet.Rows.Values)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in Skill.Rows.Values)
+        foreach (var row in Buff.Rows.Values)
         {
             row.CollectTextKeys(keys);
         }
@@ -171,76 +147,11 @@ public sealed class SoraConfig
         {
             row.CollectTextKeys(keys);
         }
-        foreach (var row in Buff.Rows.Values)
+        foreach (var row in ComplexActionEntry.Rows.Values)
         {
             row.CollectTextKeys(keys);
         }
-        foreach (var row in DropGroup.Rows.Values)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in DropEntry.Rows)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in Monster.Rows.Values)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in Stage.Rows.Values)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in StageReward.Rows)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in Dungeon.Rows.Values)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in Quest.Rows.Values)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in QuestReward.Rows)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in LevelExp.Rows.Values)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in Achievement.Rows.Values)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in VipLevel.Rows.Values)
-        {
-            row.CollectTextKeys(keys);
-        }
-        GameSettings.Row.CollectTextKeys(keys);
-        foreach (var row in MaintenanceWindow.Rows)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in MailTemplate.Rows.Values)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in MailReward.Rows)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in Dialogue.Rows.Values)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in EventRule.Rows.Values)
-        {
-            row.CollectTextKeys(keys);
-        }
-        foreach (var row in ComplexRule.Rows.Values)
+        foreach (var row in ComplexActionGroup.Rows.Values)
         {
             row.CollectTextKeys(keys);
         }
@@ -252,15 +163,104 @@ public sealed class SoraConfig
         {
             row.CollectTextKeys(keys);
         }
+        foreach (var row in ComplexRule.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
         foreach (var row in ComplexRuleCondition.Rows.Values)
         {
             row.CollectTextKeys(keys);
         }
-        foreach (var row in ComplexActionGroup.Rows.Values)
+        foreach (var row in Dialogue.Rows.Values)
         {
             row.CollectTextKeys(keys);
         }
-        foreach (var row in ComplexActionEntry.Rows.Values)
+        foreach (var row in DropEntry.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in DropGroup.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Dungeon.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in EquipmentSet.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in EventRule.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in GachaItem.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in GachaPool.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        GameSettings.Row.CollectTextKeys(keys);
+        foreach (var row in Item.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in LevelExp.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in MailReward.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in MailTemplate.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in MaintenanceWindow.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Monster.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Quest.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in QuestReward.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Recipe.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Shop.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in ShopItem.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Skill.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in Stage.Rows.Values)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in StageReward.Rows)
+        {
+            row.CollectTextKeys(keys);
+        }
+        foreach (var row in VipLevel.Rows.Values)
         {
             row.CollectTextKeys(keys);
         }
@@ -275,40 +275,40 @@ public sealed class SoraConfig
         }
         throw new SoraReadException($"generated SoraConfig is missing table `{name}` or has an unexpected table type");
     }
-    public ItemTable Item => Table<ItemTable>(ItemTable.TableName);
-    public ShopTable Shop => Table<ShopTable>(ShopTable.TableName);
-    public ShopItemTable ShopItem => Table<ShopItemTable>(ShopItemTable.TableName);
-    public RecipeTable Recipe => Table<RecipeTable>(RecipeTable.TableName);
-    public GachaPoolTable GachaPool => Table<GachaPoolTable>(GachaPoolTable.TableName);
-    public GachaItemTable GachaItem => Table<GachaItemTable>(GachaItemTable.TableName);
-    public EquipmentSetTable EquipmentSet => Table<EquipmentSetTable>(EquipmentSetTable.TableName);
-    public SkillTable Skill => Table<SkillTable>(SkillTable.TableName);
+    public AchievementTable Achievement => Table<AchievementTable>(AchievementTable.TableName);
+    public BuffTable Buff => Table<BuffTable>(BuffTable.TableName);
     public CharacterTable Character => Table<CharacterTable>(CharacterTable.TableName);
     public CharacterSkillTable CharacterSkill => Table<CharacterSkillTable>(CharacterSkillTable.TableName);
-    public BuffTable Buff => Table<BuffTable>(BuffTable.TableName);
-    public DropGroupTable DropGroup => Table<DropGroupTable>(DropGroupTable.TableName);
-    public DropEntryTable DropEntry => Table<DropEntryTable>(DropEntryTable.TableName);
-    public MonsterTable Monster => Table<MonsterTable>(MonsterTable.TableName);
-    public StageTable Stage => Table<StageTable>(StageTable.TableName);
-    public StageRewardTable StageReward => Table<StageRewardTable>(StageRewardTable.TableName);
-    public DungeonTable Dungeon => Table<DungeonTable>(DungeonTable.TableName);
-    public QuestTable Quest => Table<QuestTable>(QuestTable.TableName);
-    public QuestRewardTable QuestReward => Table<QuestRewardTable>(QuestRewardTable.TableName);
-    public LevelExpTable LevelExp => Table<LevelExpTable>(LevelExpTable.TableName);
-    public AchievementTable Achievement => Table<AchievementTable>(AchievementTable.TableName);
-    public VipLevelTable VipLevel => Table<VipLevelTable>(VipLevelTable.TableName);
-    public GameSettingsTable GameSettings => Table<GameSettingsTable>(GameSettingsTable.TableName);
-    public MaintenanceWindowTable MaintenanceWindow => Table<MaintenanceWindowTable>(MaintenanceWindowTable.TableName);
-    public MailTemplateTable MailTemplate => Table<MailTemplateTable>(MailTemplateTable.TableName);
-    public MailRewardTable MailReward => Table<MailRewardTable>(MailRewardTable.TableName);
-    public DialogueTable Dialogue => Table<DialogueTable>(DialogueTable.TableName);
-    public EventRuleTable EventRule => Table<EventRuleTable>(EventRuleTable.TableName);
-    public ComplexRuleTable ComplexRule => Table<ComplexRuleTable>(ComplexRuleTable.TableName);
+    public ComplexActionEntryTable ComplexActionEntry => Table<ComplexActionEntryTable>(ComplexActionEntryTable.TableName);
+    public ComplexActionGroupTable ComplexActionGroup => Table<ComplexActionGroupTable>(ComplexActionGroupTable.TableName);
     public ComplexConditionGroupTable ComplexConditionGroup => Table<ComplexConditionGroupTable>(ComplexConditionGroupTable.TableName);
     public ComplexConditionGroupEntryTable ComplexConditionGroupEntry => Table<ComplexConditionGroupEntryTable>(ComplexConditionGroupEntryTable.TableName);
+    public ComplexRuleTable ComplexRule => Table<ComplexRuleTable>(ComplexRuleTable.TableName);
     public ComplexRuleConditionTable ComplexRuleCondition => Table<ComplexRuleConditionTable>(ComplexRuleConditionTable.TableName);
-    public ComplexActionGroupTable ComplexActionGroup => Table<ComplexActionGroupTable>(ComplexActionGroupTable.TableName);
-    public ComplexActionEntryTable ComplexActionEntry => Table<ComplexActionEntryTable>(ComplexActionEntryTable.TableName);
+    public DialogueTable Dialogue => Table<DialogueTable>(DialogueTable.TableName);
+    public DropEntryTable DropEntry => Table<DropEntryTable>(DropEntryTable.TableName);
+    public DropGroupTable DropGroup => Table<DropGroupTable>(DropGroupTable.TableName);
+    public DungeonTable Dungeon => Table<DungeonTable>(DungeonTable.TableName);
+    public EquipmentSetTable EquipmentSet => Table<EquipmentSetTable>(EquipmentSetTable.TableName);
+    public EventRuleTable EventRule => Table<EventRuleTable>(EventRuleTable.TableName);
+    public GachaItemTable GachaItem => Table<GachaItemTable>(GachaItemTable.TableName);
+    public GachaPoolTable GachaPool => Table<GachaPoolTable>(GachaPoolTable.TableName);
+    public GameSettingsTable GameSettings => Table<GameSettingsTable>(GameSettingsTable.TableName);
+    public ItemTable Item => Table<ItemTable>(ItemTable.TableName);
+    public LevelExpTable LevelExp => Table<LevelExpTable>(LevelExpTable.TableName);
+    public MailRewardTable MailReward => Table<MailRewardTable>(MailRewardTable.TableName);
+    public MailTemplateTable MailTemplate => Table<MailTemplateTable>(MailTemplateTable.TableName);
+    public MaintenanceWindowTable MaintenanceWindow => Table<MaintenanceWindowTable>(MaintenanceWindowTable.TableName);
+    public MonsterTable Monster => Table<MonsterTable>(MonsterTable.TableName);
+    public QuestTable Quest => Table<QuestTable>(QuestTable.TableName);
+    public QuestRewardTable QuestReward => Table<QuestRewardTable>(QuestRewardTable.TableName);
+    public RecipeTable Recipe => Table<RecipeTable>(RecipeTable.TableName);
+    public ShopTable Shop => Table<ShopTable>(ShopTable.TableName);
+    public ShopItemTable ShopItem => Table<ShopItemTable>(ShopItemTable.TableName);
+    public SkillTable Skill => Table<SkillTable>(SkillTable.TableName);
+    public StageTable Stage => Table<StageTable>(StageTable.TableName);
+    public StageRewardTable StageReward => Table<StageRewardTable>(StageRewardTable.TableName);
+    public VipLevelTable VipLevel => Table<VipLevelTable>(VipLevelTable.TableName);
     internal static Dictionary<TKey, TValue> DecodeMapTable<TKey, TValue>(List<TValue> rows, Func<TValue, TKey> key)
         where TKey : notnull
     {

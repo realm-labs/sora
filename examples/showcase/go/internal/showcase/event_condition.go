@@ -3,149 +3,145 @@
 package showcase
 
 import (
-	"fmt"
+    "fmt"
 )
 
 type EventCondition interface {
-	isEventCondition()
+    isEventCondition()
 }
 type EventConditionLevelAtLeast struct {
-	Level int32
+    Level int32
 }
 
 func (EventConditionLevelAtLeast) isEventCondition() {}
-
 type EventConditionQuestCompleted struct {
-	QuestID int32
+    QuestID int32
 }
 
 func (EventConditionQuestCompleted) isEventCondition() {}
-
 type EventConditionHasItem struct {
-	ItemID int32
-	Count  int32
+    ItemID int32
+    Count int32
 }
 
 func (EventConditionHasItem) isEventCondition() {}
-
 type EventConditionAllConditions struct {
-	ConditionGroupID int32
+    ConditionGroupID int32
 }
 
 func (EventConditionAllConditions) isEventCondition() {}
-
 type EventConditionAnyCondition struct {
-	ConditionGroupID int32
+    ConditionGroupID int32
 }
 
 func (EventConditionAnyCondition) isEventCondition() {}
 func decodeEventCondition(reader *SoraReader) (EventCondition, error) {
-	ordinal, err := reader.ReadUInt32()
-	if err != nil {
-		return nil, err
-	}
-	switch ordinal {
-	case 0:
-		var value EventConditionLevelAtLeast
-		value.Level, err = reader.ReadInt32()
-		if err != nil {
-			return nil, err
-		}
-		return value, nil
-	case 1:
-		var value EventConditionQuestCompleted
-		value.QuestID, err = reader.ReadInt32()
-		if err != nil {
-			return nil, err
-		}
-		return value, nil
-	case 2:
-		var value EventConditionHasItem
-		value.ItemID, err = reader.ReadInt32()
-		if err != nil {
-			return nil, err
-		}
-		value.Count, err = reader.ReadInt32()
-		if err != nil {
-			return nil, err
-		}
-		return value, nil
-	case 3:
-		var value EventConditionAllConditions
-		value.ConditionGroupID, err = reader.ReadInt32()
-		if err != nil {
-			return nil, err
-		}
-		return value, nil
-	case 4:
-		var value EventConditionAnyCondition
-		value.ConditionGroupID, err = reader.ReadInt32()
-		if err != nil {
-			return nil, err
-		}
-		return value, nil
-	default:
-		return nil, fmt.Errorf("invalid union ordinal %d for EventCondition", ordinal)
-	}
+    ordinal, err := reader.ReadUInt32()
+    if err != nil {
+        return nil, err
+    }
+    switch ordinal {
+    case 0:
+        var value EventConditionLevelAtLeast
+        value.Level, err = reader.ReadInt32()
+        if err != nil {
+            return nil, err
+        }
+        return value, nil
+    case 1:
+        var value EventConditionQuestCompleted
+        value.QuestID, err = reader.ReadInt32()
+        if err != nil {
+            return nil, err
+        }
+        return value, nil
+    case 2:
+        var value EventConditionHasItem
+        value.ItemID, err = reader.ReadInt32()
+        if err != nil {
+            return nil, err
+        }
+        value.Count, err = reader.ReadInt32()
+        if err != nil {
+            return nil, err
+        }
+        return value, nil
+    case 3:
+        var value EventConditionAllConditions
+        value.ConditionGroupID, err = reader.ReadInt32()
+        if err != nil {
+            return nil, err
+        }
+        return value, nil
+    case 4:
+        var value EventConditionAnyCondition
+        value.ConditionGroupID, err = reader.ReadInt32()
+        if err != nil {
+            return nil, err
+        }
+        return value, nil
+    default:
+        return nil, fmt.Errorf("invalid union ordinal %d for EventCondition", ordinal)
+    }
 }
 
 func decodeEventConditionValue(input SoraValue) (EventCondition, error) {
-	obj, err := input.AsObject()
-	if err != nil {
-		return nil, err
-	}
-	tag, err := obj.Get("type").AsString()
-	if err != nil {
-		return nil, err
-	}
-	switch tag {
-	case "LevelAtLeast":
-		var value EventConditionLevelAtLeast
-		value.Level, err = obj.Get("level").AsInt32()
-		if err != nil {
-			return nil, err
-		}
-		return value, nil
-	case "QuestCompleted":
-		var value EventConditionQuestCompleted
-		value.QuestID, err = obj.Get("quest_id").AsInt32()
-		if err != nil {
-			return nil, err
-		}
-		return value, nil
-	case "HasItem":
-		var value EventConditionHasItem
-		value.ItemID, err = obj.Get("item_id").AsInt32()
-		if err != nil {
-			return nil, err
-		}
-		value.Count, err = obj.Get("count").AsInt32()
-		if err != nil {
-			return nil, err
-		}
-		return value, nil
-	case "AllConditions":
-		var value EventConditionAllConditions
-		value.ConditionGroupID, err = obj.Get("condition_group_id").AsInt32()
-		if err != nil {
-			return nil, err
-		}
-		return value, nil
-	case "AnyCondition":
-		var value EventConditionAnyCondition
-		value.ConditionGroupID, err = obj.Get("condition_group_id").AsInt32()
-		if err != nil {
-			return nil, err
-		}
-		return value, nil
-	default:
-		return nil, fmt.Errorf("invalid union tag %s for EventCondition", tag)
-	}
+    obj, err := input.AsObject()
+    if err != nil {
+        return nil, err
+    }
+    tag, err := obj.Get("type").AsString()
+    if err != nil {
+        return nil, err
+    }
+    switch tag {
+    case "LevelAtLeast":
+        var value EventConditionLevelAtLeast
+        value.Level, err = obj.Get("level").AsInt32()
+        if err != nil {
+            return nil, err
+        }
+        return value, nil
+    case "QuestCompleted":
+        var value EventConditionQuestCompleted
+        value.QuestID, err = obj.Get("quest_id").AsInt32()
+        if err != nil {
+            return nil, err
+        }
+        return value, nil
+    case "HasItem":
+        var value EventConditionHasItem
+        value.ItemID, err = obj.Get("item_id").AsInt32()
+        if err != nil {
+            return nil, err
+        }
+        value.Count, err = obj.Get("count").AsInt32()
+        if err != nil {
+            return nil, err
+        }
+        return value, nil
+    case "AllConditions":
+        var value EventConditionAllConditions
+        value.ConditionGroupID, err = obj.Get("condition_group_id").AsInt32()
+        if err != nil {
+            return nil, err
+        }
+        return value, nil
+    case "AnyCondition":
+        var value EventConditionAnyCondition
+        value.ConditionGroupID, err = obj.Get("condition_group_id").AsInt32()
+        if err != nil {
+            return nil, err
+        }
+        return value, nil
+    default:
+        return nil, fmt.Errorf("invalid union tag %s for EventCondition", tag)
+    }
 }
 
 func collectEventConditionTextKeys(value EventCondition, out *[]TextKey) {
-	switch typed := value.(type) {
-	default:
-		_ = typed
-	}
+    switch typed := value.(type) {
+    default:
+        _ = typed
+    }
 }

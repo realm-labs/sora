@@ -511,7 +511,7 @@ fn collect_type_names(
 mod tests {
     use super::*;
     use crate::{model::TypeIr, normalize::normalize_schema};
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
 
     #[test]
     fn projects_tables_by_stable_id_and_applies_external_names() {
@@ -551,7 +551,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game" }
 groups = { common = { default = true }, server = { default = false } }

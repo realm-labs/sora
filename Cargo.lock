@@ -1365,6 +1365,8 @@ checksum = "d466e9454f08e4a911e14806c24e16fba1b4c121d1ea474396f396069cf949d9"
 dependencies = [
  "equivalent",
  "hashbrown",
+ "serde",
+ "serde_core",
 ]
 
 [[package]]
@@ -2457,6 +2459,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "scon-core"
+version = "0.1.0"
+source = "git+https://github.com/realm-labs/scon.git?rev=ed4e03fc4e9ef54233a788eef406056f4466afd4#ed4e03fc4e9ef54233a788eef406056f4466afd4"
+dependencies = [
+ "indexmap",
+ "rustc-hash",
+ "serde",
+ "smallvec",
+ "thiserror 2.0.20",
+]
+
+[[package]]
 name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2766,6 +2780,7 @@ name = "sora-config-format"
 version = "0.1.0"
 dependencies = [
  "mlua",
+ "scon-core",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -2882,10 +2897,13 @@ dependencies = [
 name = "sora-input-schema"
 version = "0.1.0"
 dependencies = [
+ "indexmap",
  "serde",
+ "serde_json",
  "sora-config-format",
  "sora-diagnostics",
  "sora-input",
+ "sora-ir",
  "sora-schema",
 ]
 

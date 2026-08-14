@@ -3,55 +3,55 @@
 #pragma once
 
 #include "sora_runtime.hpp"
-#include "item_type.hpp"
-#include "resource_kind.hpp"
 #include "element_type.hpp"
+#include "item_type.hpp"
+#include "mail_type.hpp"
 #include "quest_type.hpp"
 #include "rarity.hpp"
+#include "resource_kind.hpp"
 #include "stat_type.hpp"
-#include "mail_type.hpp"
-#include "resource_cost.hpp"
-#include "vec3.hpp"
-#include "skill_effect.hpp"
-#include "reward.hpp"
-#include "stat_modifier.hpp"
-#include "reward_bundle.hpp"
 #include "complex_budget.hpp"
 #include "maintenance_info.hpp"
-#include "item.hpp"
-#include "shop.hpp"
-#include "shop_item.hpp"
-#include "recipe.hpp"
-#include "gacha_pool.hpp"
-#include "gacha_item.hpp"
-#include "equipment_set.hpp"
-#include "skill.hpp"
+#include "resource_cost.hpp"
+#include "reward.hpp"
+#include "reward_bundle.hpp"
+#include "skill_effect.hpp"
+#include "stat_modifier.hpp"
+#include "vec3.hpp"
+#include "achievement.hpp"
+#include "buff.hpp"
 #include "character.hpp"
 #include "character_skill.hpp"
-#include "buff.hpp"
-#include "drop_group.hpp"
-#include "drop_entry.hpp"
-#include "monster.hpp"
-#include "stage.hpp"
-#include "stage_reward.hpp"
-#include "dungeon.hpp"
-#include "quest.hpp"
-#include "quest_reward.hpp"
-#include "level_exp.hpp"
-#include "achievement.hpp"
-#include "vip_level.hpp"
-#include "game_settings.hpp"
-#include "maintenance_window.hpp"
-#include "mail_template.hpp"
-#include "mail_reward.hpp"
-#include "dialogue.hpp"
-#include "event_rule.hpp"
-#include "complex_rule.hpp"
+#include "complex_action_entry.hpp"
+#include "complex_action_group.hpp"
 #include "complex_condition_group.hpp"
 #include "complex_condition_group_entry.hpp"
+#include "complex_rule.hpp"
 #include "complex_rule_condition.hpp"
-#include "complex_action_group.hpp"
-#include "complex_action_entry.hpp"
+#include "dialogue.hpp"
+#include "drop_entry.hpp"
+#include "drop_group.hpp"
+#include "dungeon.hpp"
+#include "equipment_set.hpp"
+#include "event_rule.hpp"
+#include "gacha_item.hpp"
+#include "gacha_pool.hpp"
+#include "game_settings.hpp"
+#include "item.hpp"
+#include "level_exp.hpp"
+#include "mail_reward.hpp"
+#include "mail_template.hpp"
+#include "maintenance_window.hpp"
+#include "monster.hpp"
+#include "quest.hpp"
+#include "quest_reward.hpp"
+#include "recipe.hpp"
+#include "shop.hpp"
+#include "shop_item.hpp"
+#include "skill.hpp"
+#include "stage.hpp"
+#include "stage_reward.hpp"
+#include "vip_level.hpp"
 #include "event_condition.hpp"
 #include "reward_action.hpp"
 
@@ -65,7 +65,7 @@ namespace sora::showcase {
 
 class SoraConfig {
 public:
-    static const char* schema_fingerprint() { return "9552056f96151363"; }
+    static const char* schema_fingerprint() { return "5ae7c095b011eddf"; }
 
     static SoraConfig from_bytes(const std::vector<std::uint8_t>& bytes) {
         return from_bytes(bytes, SoraBundleOptions());
@@ -78,36 +78,12 @@ public:
         }
         SoraConfig config;
         config.tables_.emplace(
-            ItemTable::NAME,
-            std::make_unique<ItemTable>(ItemTable::decode(bundle))
+            AchievementTable::NAME,
+            std::make_unique<AchievementTable>(AchievementTable::decode(bundle))
         );
         config.tables_.emplace(
-            ShopTable::NAME,
-            std::make_unique<ShopTable>(ShopTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            ShopItemTable::NAME,
-            std::make_unique<ShopItemTable>(ShopItemTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            RecipeTable::NAME,
-            std::make_unique<RecipeTable>(RecipeTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            GachaPoolTable::NAME,
-            std::make_unique<GachaPoolTable>(GachaPoolTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            GachaItemTable::NAME,
-            std::make_unique<GachaItemTable>(GachaItemTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            EquipmentSetTable::NAME,
-            std::make_unique<EquipmentSetTable>(EquipmentSetTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            SkillTable::NAME,
-            std::make_unique<SkillTable>(SkillTable::decode(bundle))
+            BuffTable::NAME,
+            std::make_unique<BuffTable>(BuffTable::decode(bundle))
         );
         config.tables_.emplace(
             CharacterTable::NAME,
@@ -118,80 +94,12 @@ public:
             std::make_unique<CharacterSkillTable>(CharacterSkillTable::decode(bundle))
         );
         config.tables_.emplace(
-            BuffTable::NAME,
-            std::make_unique<BuffTable>(BuffTable::decode(bundle))
+            ComplexActionEntryTable::NAME,
+            std::make_unique<ComplexActionEntryTable>(ComplexActionEntryTable::decode(bundle))
         );
         config.tables_.emplace(
-            DropGroupTable::NAME,
-            std::make_unique<DropGroupTable>(DropGroupTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            DropEntryTable::NAME,
-            std::make_unique<DropEntryTable>(DropEntryTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            MonsterTable::NAME,
-            std::make_unique<MonsterTable>(MonsterTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            StageTable::NAME,
-            std::make_unique<StageTable>(StageTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            StageRewardTable::NAME,
-            std::make_unique<StageRewardTable>(StageRewardTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            DungeonTable::NAME,
-            std::make_unique<DungeonTable>(DungeonTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            QuestTable::NAME,
-            std::make_unique<QuestTable>(QuestTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            QuestRewardTable::NAME,
-            std::make_unique<QuestRewardTable>(QuestRewardTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            LevelExpTable::NAME,
-            std::make_unique<LevelExpTable>(LevelExpTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            AchievementTable::NAME,
-            std::make_unique<AchievementTable>(AchievementTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            VipLevelTable::NAME,
-            std::make_unique<VipLevelTable>(VipLevelTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            GameSettingsTable::NAME,
-            std::make_unique<GameSettingsTable>(GameSettingsTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            MaintenanceWindowTable::NAME,
-            std::make_unique<MaintenanceWindowTable>(MaintenanceWindowTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            MailTemplateTable::NAME,
-            std::make_unique<MailTemplateTable>(MailTemplateTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            MailRewardTable::NAME,
-            std::make_unique<MailRewardTable>(MailRewardTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            DialogueTable::NAME,
-            std::make_unique<DialogueTable>(DialogueTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            EventRuleTable::NAME,
-            std::make_unique<EventRuleTable>(EventRuleTable::decode(bundle))
-        );
-        config.tables_.emplace(
-            ComplexRuleTable::NAME,
-            std::make_unique<ComplexRuleTable>(ComplexRuleTable::decode(bundle))
+            ComplexActionGroupTable::NAME,
+            std::make_unique<ComplexActionGroupTable>(ComplexActionGroupTable::decode(bundle))
         );
         config.tables_.emplace(
             ComplexConditionGroupTable::NAME,
@@ -202,42 +110,116 @@ public:
             std::make_unique<ComplexConditionGroupEntryTable>(ComplexConditionGroupEntryTable::decode(bundle))
         );
         config.tables_.emplace(
+            ComplexRuleTable::NAME,
+            std::make_unique<ComplexRuleTable>(ComplexRuleTable::decode(bundle))
+        );
+        config.tables_.emplace(
             ComplexRuleConditionTable::NAME,
             std::make_unique<ComplexRuleConditionTable>(ComplexRuleConditionTable::decode(bundle))
         );
         config.tables_.emplace(
-            ComplexActionGroupTable::NAME,
-            std::make_unique<ComplexActionGroupTable>(ComplexActionGroupTable::decode(bundle))
+            DialogueTable::NAME,
+            std::make_unique<DialogueTable>(DialogueTable::decode(bundle))
         );
         config.tables_.emplace(
-            ComplexActionEntryTable::NAME,
-            std::make_unique<ComplexActionEntryTable>(ComplexActionEntryTable::decode(bundle))
+            DropEntryTable::NAME,
+            std::make_unique<DropEntryTable>(DropEntryTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            DropGroupTable::NAME,
+            std::make_unique<DropGroupTable>(DropGroupTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            DungeonTable::NAME,
+            std::make_unique<DungeonTable>(DungeonTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            EquipmentSetTable::NAME,
+            std::make_unique<EquipmentSetTable>(EquipmentSetTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            EventRuleTable::NAME,
+            std::make_unique<EventRuleTable>(EventRuleTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            GachaItemTable::NAME,
+            std::make_unique<GachaItemTable>(GachaItemTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            GachaPoolTable::NAME,
+            std::make_unique<GachaPoolTable>(GachaPoolTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            GameSettingsTable::NAME,
+            std::make_unique<GameSettingsTable>(GameSettingsTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            ItemTable::NAME,
+            std::make_unique<ItemTable>(ItemTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            LevelExpTable::NAME,
+            std::make_unique<LevelExpTable>(LevelExpTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            MailRewardTable::NAME,
+            std::make_unique<MailRewardTable>(MailRewardTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            MailTemplateTable::NAME,
+            std::make_unique<MailTemplateTable>(MailTemplateTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            MaintenanceWindowTable::NAME,
+            std::make_unique<MaintenanceWindowTable>(MaintenanceWindowTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            MonsterTable::NAME,
+            std::make_unique<MonsterTable>(MonsterTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            QuestTable::NAME,
+            std::make_unique<QuestTable>(QuestTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            QuestRewardTable::NAME,
+            std::make_unique<QuestRewardTable>(QuestRewardTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            RecipeTable::NAME,
+            std::make_unique<RecipeTable>(RecipeTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            ShopTable::NAME,
+            std::make_unique<ShopTable>(ShopTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            ShopItemTable::NAME,
+            std::make_unique<ShopItemTable>(ShopItemTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            SkillTable::NAME,
+            std::make_unique<SkillTable>(SkillTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            StageTable::NAME,
+            std::make_unique<StageTable>(StageTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            StageRewardTable::NAME,
+            std::make_unique<StageRewardTable>(StageRewardTable::decode(bundle))
+        );
+        config.tables_.emplace(
+            VipLevelTable::NAME,
+            std::make_unique<VipLevelTable>(VipLevelTable::decode(bundle))
         );
         return config;
     }
-    const ItemTable& item() const {
-        return table_as<ItemTable>(ItemTable::NAME);
+    const AchievementTable& achievement() const {
+        return table_as<AchievementTable>(AchievementTable::NAME);
     }
-    const ShopTable& shop() const {
-        return table_as<ShopTable>(ShopTable::NAME);
-    }
-    const ShopItemTable& shop_item() const {
-        return table_as<ShopItemTable>(ShopItemTable::NAME);
-    }
-    const RecipeTable& recipe() const {
-        return table_as<RecipeTable>(RecipeTable::NAME);
-    }
-    const GachaPoolTable& gacha_pool() const {
-        return table_as<GachaPoolTable>(GachaPoolTable::NAME);
-    }
-    const GachaItemTable& gacha_item() const {
-        return table_as<GachaItemTable>(GachaItemTable::NAME);
-    }
-    const EquipmentSetTable& equipment_set() const {
-        return table_as<EquipmentSetTable>(EquipmentSetTable::NAME);
-    }
-    const SkillTable& skill() const {
-        return table_as<SkillTable>(SkillTable::NAME);
+    const BuffTable& buff() const {
+        return table_as<BuffTable>(BuffTable::NAME);
     }
     const CharacterTable& character() const {
         return table_as<CharacterTable>(CharacterTable::NAME);
@@ -245,62 +227,11 @@ public:
     const CharacterSkillTable& character_skill() const {
         return table_as<CharacterSkillTable>(CharacterSkillTable::NAME);
     }
-    const BuffTable& buff() const {
-        return table_as<BuffTable>(BuffTable::NAME);
+    const ComplexActionEntryTable& complex_action_entry() const {
+        return table_as<ComplexActionEntryTable>(ComplexActionEntryTable::NAME);
     }
-    const DropGroupTable& drop_group() const {
-        return table_as<DropGroupTable>(DropGroupTable::NAME);
-    }
-    const DropEntryTable& drop_entry() const {
-        return table_as<DropEntryTable>(DropEntryTable::NAME);
-    }
-    const MonsterTable& monster() const {
-        return table_as<MonsterTable>(MonsterTable::NAME);
-    }
-    const StageTable& stage() const {
-        return table_as<StageTable>(StageTable::NAME);
-    }
-    const StageRewardTable& stage_reward() const {
-        return table_as<StageRewardTable>(StageRewardTable::NAME);
-    }
-    const DungeonTable& dungeon() const {
-        return table_as<DungeonTable>(DungeonTable::NAME);
-    }
-    const QuestTable& quest() const {
-        return table_as<QuestTable>(QuestTable::NAME);
-    }
-    const QuestRewardTable& quest_reward() const {
-        return table_as<QuestRewardTable>(QuestRewardTable::NAME);
-    }
-    const LevelExpTable& level_exp() const {
-        return table_as<LevelExpTable>(LevelExpTable::NAME);
-    }
-    const AchievementTable& achievement() const {
-        return table_as<AchievementTable>(AchievementTable::NAME);
-    }
-    const VipLevelTable& vip_level() const {
-        return table_as<VipLevelTable>(VipLevelTable::NAME);
-    }
-    const GameSettingsTable& game_settings() const {
-        return table_as<GameSettingsTable>(GameSettingsTable::NAME);
-    }
-    const MaintenanceWindowTable& maintenance_window() const {
-        return table_as<MaintenanceWindowTable>(MaintenanceWindowTable::NAME);
-    }
-    const MailTemplateTable& mail_template() const {
-        return table_as<MailTemplateTable>(MailTemplateTable::NAME);
-    }
-    const MailRewardTable& mail_reward() const {
-        return table_as<MailRewardTable>(MailRewardTable::NAME);
-    }
-    const DialogueTable& dialogue() const {
-        return table_as<DialogueTable>(DialogueTable::NAME);
-    }
-    const EventRuleTable& event_rule() const {
-        return table_as<EventRuleTable>(EventRuleTable::NAME);
-    }
-    const ComplexRuleTable& complex_rule() const {
-        return table_as<ComplexRuleTable>(ComplexRuleTable::NAME);
+    const ComplexActionGroupTable& complex_action_group() const {
+        return table_as<ComplexActionGroupTable>(ComplexActionGroupTable::NAME);
     }
     const ComplexConditionGroupTable& complex_condition_group() const {
         return table_as<ComplexConditionGroupTable>(ComplexConditionGroupTable::NAME);
@@ -308,14 +239,83 @@ public:
     const ComplexConditionGroupEntryTable& complex_condition_group_entry() const {
         return table_as<ComplexConditionGroupEntryTable>(ComplexConditionGroupEntryTable::NAME);
     }
+    const ComplexRuleTable& complex_rule() const {
+        return table_as<ComplexRuleTable>(ComplexRuleTable::NAME);
+    }
     const ComplexRuleConditionTable& complex_rule_condition() const {
         return table_as<ComplexRuleConditionTable>(ComplexRuleConditionTable::NAME);
     }
-    const ComplexActionGroupTable& complex_action_group() const {
-        return table_as<ComplexActionGroupTable>(ComplexActionGroupTable::NAME);
+    const DialogueTable& dialogue() const {
+        return table_as<DialogueTable>(DialogueTable::NAME);
     }
-    const ComplexActionEntryTable& complex_action_entry() const {
-        return table_as<ComplexActionEntryTable>(ComplexActionEntryTable::NAME);
+    const DropEntryTable& drop_entry() const {
+        return table_as<DropEntryTable>(DropEntryTable::NAME);
+    }
+    const DropGroupTable& drop_group() const {
+        return table_as<DropGroupTable>(DropGroupTable::NAME);
+    }
+    const DungeonTable& dungeon() const {
+        return table_as<DungeonTable>(DungeonTable::NAME);
+    }
+    const EquipmentSetTable& equipment_set() const {
+        return table_as<EquipmentSetTable>(EquipmentSetTable::NAME);
+    }
+    const EventRuleTable& event_rule() const {
+        return table_as<EventRuleTable>(EventRuleTable::NAME);
+    }
+    const GachaItemTable& gacha_item() const {
+        return table_as<GachaItemTable>(GachaItemTable::NAME);
+    }
+    const GachaPoolTable& gacha_pool() const {
+        return table_as<GachaPoolTable>(GachaPoolTable::NAME);
+    }
+    const GameSettingsTable& game_settings() const {
+        return table_as<GameSettingsTable>(GameSettingsTable::NAME);
+    }
+    const ItemTable& item() const {
+        return table_as<ItemTable>(ItemTable::NAME);
+    }
+    const LevelExpTable& level_exp() const {
+        return table_as<LevelExpTable>(LevelExpTable::NAME);
+    }
+    const MailRewardTable& mail_reward() const {
+        return table_as<MailRewardTable>(MailRewardTable::NAME);
+    }
+    const MailTemplateTable& mail_template() const {
+        return table_as<MailTemplateTable>(MailTemplateTable::NAME);
+    }
+    const MaintenanceWindowTable& maintenance_window() const {
+        return table_as<MaintenanceWindowTable>(MaintenanceWindowTable::NAME);
+    }
+    const MonsterTable& monster() const {
+        return table_as<MonsterTable>(MonsterTable::NAME);
+    }
+    const QuestTable& quest() const {
+        return table_as<QuestTable>(QuestTable::NAME);
+    }
+    const QuestRewardTable& quest_reward() const {
+        return table_as<QuestRewardTable>(QuestRewardTable::NAME);
+    }
+    const RecipeTable& recipe() const {
+        return table_as<RecipeTable>(RecipeTable::NAME);
+    }
+    const ShopTable& shop() const {
+        return table_as<ShopTable>(ShopTable::NAME);
+    }
+    const ShopItemTable& shop_item() const {
+        return table_as<ShopItemTable>(ShopItemTable::NAME);
+    }
+    const SkillTable& skill() const {
+        return table_as<SkillTable>(SkillTable::NAME);
+    }
+    const StageTable& stage() const {
+        return table_as<StageTable>(StageTable::NAME);
+    }
+    const StageRewardTable& stage_reward() const {
+        return table_as<StageRewardTable>(StageRewardTable::NAME);
+    }
+    const VipLevelTable& vip_level() const {
+        return table_as<VipLevelTable>(VipLevelTable::NAME);
     }
 private:
     template <typename T>

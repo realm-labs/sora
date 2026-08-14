@@ -590,7 +590,7 @@ mod tests {
     use calamine::Reader;
     use rust_xlsxwriter::{Format, Workbook};
     use sora_ir::normalize::normalize_schema;
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
 
     use super::*;
 
@@ -814,7 +814,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -849,7 +849,7 @@ type = "string"
     }
 
     fn struct_columns_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -896,7 +896,7 @@ parser = { kind = "columns", prefix = "cost_" }
     }
 
     fn tagged_columns_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

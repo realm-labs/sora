@@ -342,7 +342,7 @@ fn field_comment(field: &FieldIr) -> String {
 mod tests {
     use super::*;
     use sora_ir::{model::ConfigIr, normalize::normalize_schema};
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
 
     #[test]
     fn builds_schema_projection_rows() {
@@ -497,7 +497,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -543,7 +543,7 @@ comment = "Max stack count"
     }
 
     fn tuple_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -584,7 +584,7 @@ parser = { kind = "tuple" }
     }
 
     fn tuple_list_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -625,7 +625,7 @@ parser = { kind = "tuple_list" }
     }
 
     fn tagged_union_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -674,7 +674,7 @@ parser = { kind = "tagged_columns", prefix = "" }
     }
 
     fn struct_columns_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

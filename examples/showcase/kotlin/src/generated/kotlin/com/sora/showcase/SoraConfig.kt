@@ -2,7 +2,7 @@
 
 package com.sora.showcase
 
-const val SORA_SCHEMA_FINGERPRINT = "9552056f96151363"
+const val SORA_SCHEMA_FINGERPRINT = "5ae7c095b011eddf"
 
 enum class SoraTableShape {
     List,
@@ -67,28 +67,10 @@ class SoraConfig private constructor(
 
     private fun textKeys(): List<TextKey> {
         val keys = ArrayList<TextKey>()
-        for (row in item.rows.values) {
+        for (row in achievement.rows.values) {
             row.collectTextKeys(keys)
         }
-        for (row in shop.rows.values) {
-            row.collectTextKeys(keys)
-        }
-        for (row in shopItem.rows) {
-            row.collectTextKeys(keys)
-        }
-        for (row in recipe.rows.values) {
-            row.collectTextKeys(keys)
-        }
-        for (row in gachaPool.rows.values) {
-            row.collectTextKeys(keys)
-        }
-        for (row in gachaItem.rows) {
-            row.collectTextKeys(keys)
-        }
-        for (row in equipmentSet.rows.values) {
-            row.collectTextKeys(keys)
-        }
-        for (row in skill.rows.values) {
+        for (row in buff.rows.values) {
             row.collectTextKeys(keys)
         }
         for (row in character.rows.values) {
@@ -97,59 +79,10 @@ class SoraConfig private constructor(
         for (row in characterSkill.rows) {
             row.collectTextKeys(keys)
         }
-        for (row in buff.rows.values) {
+        for (row in complexActionEntry.rows.values) {
             row.collectTextKeys(keys)
         }
-        for (row in dropGroup.rows.values) {
-            row.collectTextKeys(keys)
-        }
-        for (row in dropEntry.rows) {
-            row.collectTextKeys(keys)
-        }
-        for (row in monster.rows.values) {
-            row.collectTextKeys(keys)
-        }
-        for (row in stage.rows.values) {
-            row.collectTextKeys(keys)
-        }
-        for (row in stageReward.rows) {
-            row.collectTextKeys(keys)
-        }
-        for (row in dungeon.rows.values) {
-            row.collectTextKeys(keys)
-        }
-        for (row in quest.rows.values) {
-            row.collectTextKeys(keys)
-        }
-        for (row in questReward.rows) {
-            row.collectTextKeys(keys)
-        }
-        for (row in levelExp.rows.values) {
-            row.collectTextKeys(keys)
-        }
-        for (row in achievement.rows.values) {
-            row.collectTextKeys(keys)
-        }
-        for (row in vipLevel.rows.values) {
-            row.collectTextKeys(keys)
-        }
-        gameSettings.row.collectTextKeys(keys)
-        for (row in maintenanceWindow.rows) {
-            row.collectTextKeys(keys)
-        }
-        for (row in mailTemplate.rows.values) {
-            row.collectTextKeys(keys)
-        }
-        for (row in mailReward.rows) {
-            row.collectTextKeys(keys)
-        }
-        for (row in dialogue.rows.values) {
-            row.collectTextKeys(keys)
-        }
-        for (row in eventRule.rows.values) {
-            row.collectTextKeys(keys)
-        }
-        for (row in complexRule.rows.values) {
+        for (row in complexActionGroup.rows.values) {
             row.collectTextKeys(keys)
         }
         for (row in complexConditionGroup.rows.values) {
@@ -158,13 +91,80 @@ class SoraConfig private constructor(
         for (row in complexConditionGroupEntry.rows.values) {
             row.collectTextKeys(keys)
         }
+        for (row in complexRule.rows.values) {
+            row.collectTextKeys(keys)
+        }
         for (row in complexRuleCondition.rows.values) {
             row.collectTextKeys(keys)
         }
-        for (row in complexActionGroup.rows.values) {
+        for (row in dialogue.rows.values) {
             row.collectTextKeys(keys)
         }
-        for (row in complexActionEntry.rows.values) {
+        for (row in dropEntry.rows) {
+            row.collectTextKeys(keys)
+        }
+        for (row in dropGroup.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in dungeon.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in equipmentSet.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in eventRule.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in gachaItem.rows) {
+            row.collectTextKeys(keys)
+        }
+        for (row in gachaPool.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        gameSettings.row.collectTextKeys(keys)
+        for (row in item.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in levelExp.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in mailReward.rows) {
+            row.collectTextKeys(keys)
+        }
+        for (row in mailTemplate.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in maintenanceWindow.rows) {
+            row.collectTextKeys(keys)
+        }
+        for (row in monster.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in quest.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in questReward.rows) {
+            row.collectTextKeys(keys)
+        }
+        for (row in recipe.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in shop.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in shopItem.rows) {
+            row.collectTextKeys(keys)
+        }
+        for (row in skill.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in stage.rows.values) {
+            row.collectTextKeys(keys)
+        }
+        for (row in stageReward.rows) {
+            row.collectTextKeys(keys)
+        }
+        for (row in vipLevel.rows.values) {
             row.collectTextKeys(keys)
         }
         return keys
@@ -172,74 +172,74 @@ class SoraConfig private constructor(
     private inline fun <reified T : SoraTable<*>> table(name: String): T =
         tableMap[name] as? T
             ?: throw SoraReadException("generated SoraConfig is missing table `$name` or has an unexpected table type")
-    val item: ItemTable
-        get() = table(ItemTable.NAME)
-    val shop: ShopTable
-        get() = table(ShopTable.NAME)
-    val shopItem: ShopItemTable
-        get() = table(ShopItemTable.NAME)
-    val recipe: RecipeTable
-        get() = table(RecipeTable.NAME)
-    val gachaPool: GachaPoolTable
-        get() = table(GachaPoolTable.NAME)
-    val gachaItem: GachaItemTable
-        get() = table(GachaItemTable.NAME)
-    val equipmentSet: EquipmentSetTable
-        get() = table(EquipmentSetTable.NAME)
-    val skill: SkillTable
-        get() = table(SkillTable.NAME)
+    val achievement: AchievementTable
+        get() = table(AchievementTable.NAME)
+    val buff: BuffTable
+        get() = table(BuffTable.NAME)
     val character: CharacterTable
         get() = table(CharacterTable.NAME)
     val characterSkill: CharacterSkillTable
         get() = table(CharacterSkillTable.NAME)
-    val buff: BuffTable
-        get() = table(BuffTable.NAME)
-    val dropGroup: DropGroupTable
-        get() = table(DropGroupTable.NAME)
-    val dropEntry: DropEntryTable
-        get() = table(DropEntryTable.NAME)
-    val monster: MonsterTable
-        get() = table(MonsterTable.NAME)
-    val stage: StageTable
-        get() = table(StageTable.NAME)
-    val stageReward: StageRewardTable
-        get() = table(StageRewardTable.NAME)
-    val dungeon: DungeonTable
-        get() = table(DungeonTable.NAME)
-    val quest: QuestTable
-        get() = table(QuestTable.NAME)
-    val questReward: QuestRewardTable
-        get() = table(QuestRewardTable.NAME)
-    val levelExp: LevelExpTable
-        get() = table(LevelExpTable.NAME)
-    val achievement: AchievementTable
-        get() = table(AchievementTable.NAME)
-    val vipLevel: VipLevelTable
-        get() = table(VipLevelTable.NAME)
-    val gameSettings: GameSettingsTable
-        get() = table(GameSettingsTable.NAME)
-    val maintenanceWindow: MaintenanceWindowTable
-        get() = table(MaintenanceWindowTable.NAME)
-    val mailTemplate: MailTemplateTable
-        get() = table(MailTemplateTable.NAME)
-    val mailReward: MailRewardTable
-        get() = table(MailRewardTable.NAME)
-    val dialogue: DialogueTable
-        get() = table(DialogueTable.NAME)
-    val eventRule: EventRuleTable
-        get() = table(EventRuleTable.NAME)
-    val complexRule: ComplexRuleTable
-        get() = table(ComplexRuleTable.NAME)
+    val complexActionEntry: ComplexActionEntryTable
+        get() = table(ComplexActionEntryTable.NAME)
+    val complexActionGroup: ComplexActionGroupTable
+        get() = table(ComplexActionGroupTable.NAME)
     val complexConditionGroup: ComplexConditionGroupTable
         get() = table(ComplexConditionGroupTable.NAME)
     val complexConditionGroupEntry: ComplexConditionGroupEntryTable
         get() = table(ComplexConditionGroupEntryTable.NAME)
+    val complexRule: ComplexRuleTable
+        get() = table(ComplexRuleTable.NAME)
     val complexRuleCondition: ComplexRuleConditionTable
         get() = table(ComplexRuleConditionTable.NAME)
-    val complexActionGroup: ComplexActionGroupTable
-        get() = table(ComplexActionGroupTable.NAME)
-    val complexActionEntry: ComplexActionEntryTable
-        get() = table(ComplexActionEntryTable.NAME)
+    val dialogue: DialogueTable
+        get() = table(DialogueTable.NAME)
+    val dropEntry: DropEntryTable
+        get() = table(DropEntryTable.NAME)
+    val dropGroup: DropGroupTable
+        get() = table(DropGroupTable.NAME)
+    val dungeon: DungeonTable
+        get() = table(DungeonTable.NAME)
+    val equipmentSet: EquipmentSetTable
+        get() = table(EquipmentSetTable.NAME)
+    val eventRule: EventRuleTable
+        get() = table(EventRuleTable.NAME)
+    val gachaItem: GachaItemTable
+        get() = table(GachaItemTable.NAME)
+    val gachaPool: GachaPoolTable
+        get() = table(GachaPoolTable.NAME)
+    val gameSettings: GameSettingsTable
+        get() = table(GameSettingsTable.NAME)
+    val item: ItemTable
+        get() = table(ItemTable.NAME)
+    val levelExp: LevelExpTable
+        get() = table(LevelExpTable.NAME)
+    val mailReward: MailRewardTable
+        get() = table(MailRewardTable.NAME)
+    val mailTemplate: MailTemplateTable
+        get() = table(MailTemplateTable.NAME)
+    val maintenanceWindow: MaintenanceWindowTable
+        get() = table(MaintenanceWindowTable.NAME)
+    val monster: MonsterTable
+        get() = table(MonsterTable.NAME)
+    val quest: QuestTable
+        get() = table(QuestTable.NAME)
+    val questReward: QuestRewardTable
+        get() = table(QuestRewardTable.NAME)
+    val recipe: RecipeTable
+        get() = table(RecipeTable.NAME)
+    val shop: ShopTable
+        get() = table(ShopTable.NAME)
+    val shopItem: ShopItemTable
+        get() = table(ShopItemTable.NAME)
+    val skill: SkillTable
+        get() = table(SkillTable.NAME)
+    val stage: StageTable
+        get() = table(StageTable.NAME)
+    val stageReward: StageRewardTable
+        get() = table(StageRewardTable.NAME)
+    val vipLevel: VipLevelTable
+        get() = table(VipLevelTable.NAME)
     companion object {
         fun fromSource(source: SoraTableSource): SoraConfig {
             if (source.schemaFingerprint != SORA_SCHEMA_FINGERPRINT) {
@@ -248,40 +248,40 @@ class SoraConfig private constructor(
                 )
             }
             val tables = LinkedHashMap<String, SoraTable<*>>(34)
-            tables[ItemTable.NAME] = ItemTable.decode(source)
-            tables[ShopTable.NAME] = ShopTable.decode(source)
-            tables[ShopItemTable.NAME] = ShopItemTable.decode(source)
-            tables[RecipeTable.NAME] = RecipeTable.decode(source)
-            tables[GachaPoolTable.NAME] = GachaPoolTable.decode(source)
-            tables[GachaItemTable.NAME] = GachaItemTable.decode(source)
-            tables[EquipmentSetTable.NAME] = EquipmentSetTable.decode(source)
-            tables[SkillTable.NAME] = SkillTable.decode(source)
+            tables[AchievementTable.NAME] = AchievementTable.decode(source)
+            tables[BuffTable.NAME] = BuffTable.decode(source)
             tables[CharacterTable.NAME] = CharacterTable.decode(source)
             tables[CharacterSkillTable.NAME] = CharacterSkillTable.decode(source)
-            tables[BuffTable.NAME] = BuffTable.decode(source)
-            tables[DropGroupTable.NAME] = DropGroupTable.decode(source)
-            tables[DropEntryTable.NAME] = DropEntryTable.decode(source)
-            tables[MonsterTable.NAME] = MonsterTable.decode(source)
-            tables[StageTable.NAME] = StageTable.decode(source)
-            tables[StageRewardTable.NAME] = StageRewardTable.decode(source)
-            tables[DungeonTable.NAME] = DungeonTable.decode(source)
-            tables[QuestTable.NAME] = QuestTable.decode(source)
-            tables[QuestRewardTable.NAME] = QuestRewardTable.decode(source)
-            tables[LevelExpTable.NAME] = LevelExpTable.decode(source)
-            tables[AchievementTable.NAME] = AchievementTable.decode(source)
-            tables[VipLevelTable.NAME] = VipLevelTable.decode(source)
-            tables[GameSettingsTable.NAME] = GameSettingsTable.decode(source)
-            tables[MaintenanceWindowTable.NAME] = MaintenanceWindowTable.decode(source)
-            tables[MailTemplateTable.NAME] = MailTemplateTable.decode(source)
-            tables[MailRewardTable.NAME] = MailRewardTable.decode(source)
-            tables[DialogueTable.NAME] = DialogueTable.decode(source)
-            tables[EventRuleTable.NAME] = EventRuleTable.decode(source)
-            tables[ComplexRuleTable.NAME] = ComplexRuleTable.decode(source)
+            tables[ComplexActionEntryTable.NAME] = ComplexActionEntryTable.decode(source)
+            tables[ComplexActionGroupTable.NAME] = ComplexActionGroupTable.decode(source)
             tables[ComplexConditionGroupTable.NAME] = ComplexConditionGroupTable.decode(source)
             tables[ComplexConditionGroupEntryTable.NAME] = ComplexConditionGroupEntryTable.decode(source)
+            tables[ComplexRuleTable.NAME] = ComplexRuleTable.decode(source)
             tables[ComplexRuleConditionTable.NAME] = ComplexRuleConditionTable.decode(source)
-            tables[ComplexActionGroupTable.NAME] = ComplexActionGroupTable.decode(source)
-            tables[ComplexActionEntryTable.NAME] = ComplexActionEntryTable.decode(source)
+            tables[DialogueTable.NAME] = DialogueTable.decode(source)
+            tables[DropEntryTable.NAME] = DropEntryTable.decode(source)
+            tables[DropGroupTable.NAME] = DropGroupTable.decode(source)
+            tables[DungeonTable.NAME] = DungeonTable.decode(source)
+            tables[EquipmentSetTable.NAME] = EquipmentSetTable.decode(source)
+            tables[EventRuleTable.NAME] = EventRuleTable.decode(source)
+            tables[GachaItemTable.NAME] = GachaItemTable.decode(source)
+            tables[GachaPoolTable.NAME] = GachaPoolTable.decode(source)
+            tables[GameSettingsTable.NAME] = GameSettingsTable.decode(source)
+            tables[ItemTable.NAME] = ItemTable.decode(source)
+            tables[LevelExpTable.NAME] = LevelExpTable.decode(source)
+            tables[MailRewardTable.NAME] = MailRewardTable.decode(source)
+            tables[MailTemplateTable.NAME] = MailTemplateTable.decode(source)
+            tables[MaintenanceWindowTable.NAME] = MaintenanceWindowTable.decode(source)
+            tables[MonsterTable.NAME] = MonsterTable.decode(source)
+            tables[QuestTable.NAME] = QuestTable.decode(source)
+            tables[QuestRewardTable.NAME] = QuestRewardTable.decode(source)
+            tables[RecipeTable.NAME] = RecipeTable.decode(source)
+            tables[ShopTable.NAME] = ShopTable.decode(source)
+            tables[ShopItemTable.NAME] = ShopItemTable.decode(source)
+            tables[SkillTable.NAME] = SkillTable.decode(source)
+            tables[StageTable.NAME] = StageTable.decode(source)
+            tables[StageRewardTable.NAME] = StageRewardTable.decode(source)
+            tables[VipLevelTable.NAME] = VipLevelTable.decode(source)
             return SoraConfig(tables)
         }
     }

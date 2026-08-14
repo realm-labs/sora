@@ -124,7 +124,7 @@ async fn preview_and_apply_preserve_the_plan_transaction_contract() -> anyhow::R
         )
         .await?;
     assert_eq!(apply.is_error, Some(false));
-    assert!(fs::read_to_string(&schema_path)?.contains("name = \"name\""));
+    assert!(fs::read_to_string(&schema_path)?.contains("[tables.Item.fields.name]"));
     tokio::time::timeout(std::time::Duration::from_secs(1), updated.notified()).await?;
 
     let rejected = client
@@ -174,15 +174,13 @@ fn temp_project() -> PathBuf {
     .unwrap();
     fs::write(
         root.join("schema.toml"),
-        r#"[[tables]]
+        r#"[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
 
-[[tables.fields]]
-name = "id"
-type = "i32"
+[tables.Item.fields]
+id = "i32"
 "#,
     )
     .unwrap();

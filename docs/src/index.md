@@ -9,14 +9,14 @@ The schema is the contract. Excel, CSV, TOML, generated code, and exported runti
 For a small project, the file flow looks like this:
 
 ```text
-project.toml
-  -> schema/items.toml
+project.scon
+  -> schema/items.scon
   -> data/Item.xlsx
   -> generated/config.sora
   -> generated/rust
 ```
 
-You normally hand-write `project.toml` and schema files. Designers or tools edit files under `data/`. Files under `generated/` are Sora outputs.
+You normally hand-write `project.scon` and schema files. Designers or tools edit files under `data/`. Files under `generated/` are Sora outputs.
 
 ## What Sora Does
 
@@ -42,7 +42,7 @@ Sora uses the word `format` in a few different places:
 
 | Term | Meaning | Example |
 | --- | --- | --- |
-| Schema format | The file format used to write schema/project files. | TOML, YAML, JSON, Lua |
+| Schema format | The file format used to write schema/project files. | SCON (recommended), TOML, YAML, JSON, Lua |
 | Source format | The editable table data format. | Excel `.xlsx`, CSV, TOML, JSON, YAML |
 | Export format | The data bundle written after validation. | `binary`, `json`, `cbor` |
 | Runtime format | The bundle format generated code expects to load. | `sora`, `json`, `cbor` |

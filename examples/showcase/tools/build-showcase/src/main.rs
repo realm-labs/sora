@@ -5,7 +5,7 @@ use std::{
 
 use anyhow::{Context, Result};
 use sora_export::exporter::ExportOutput;
-use sora_input_schema::{input::SchemaFileInput, schema::load_project_schema_file};
+use sora_input_schema::{input::ProjectSchemaInput, schema::load_project_schema};
 use sora_input_xlsx::input::XlsxProjectInput;
 use sora_ir::{model::ConfigIr, normalize::normalize_schema, validate::validate_config_ir};
 
@@ -18,7 +18,7 @@ use workbook::write_workbooks;
 
 fn main() -> Result<()> {
     let root = showcase_root();
-    let project = root.join("project.toml");
+    let project = root.join("project.scon");
     let data_root = root.join("data");
     let generated_root = root.join("generated");
     let rust_generated = root.join("rust/src/generated");
@@ -47,8 +47,8 @@ fn main() -> Result<()> {
     clean_xlsx_files(&data_root)?;
     write_workbooks(&ir, &data_root)?;
 
-    let schema_input = SchemaFileInput::new(&project);
-    let project_input = XlsxProjectInput::new(SchemaFileInput::new(&project), &data_root);
+    let schema_input = ProjectSchemaInput::new(&project);
+    let project_input = XlsxProjectInput::new(ProjectSchemaInput::new(&project), &data_root);
 
     clean_dir(&rust_generated)?;
     clean_dir(&kotlin_generated)?;
@@ -168,7 +168,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn generate_code(input: &SchemaFileInput, target: &str, out: &Path, view: &str) -> Result<()> {
+fn generate_code(input: &ProjectSchemaInput, target: &str, out: &Path, view: &str) -> Result<()> {
     let format = if matches!(target, "rust" | "go") {
         sora_codegen::format::FormatMode::Auto
     } else {
@@ -185,7 +185,7 @@ fn generate_code(input: &SchemaFileInput, target: &str, out: &Path, view: &str) 
 }
 
 fn load_ir(project: &Path) -> Result<ConfigIr> {
-    let schema = load_project_schema_file(project)
+    let schema = load_project_schema(project)
         .with_context(|| format!("failed to load `{}`", project.display()))?;
     let ir = normalize_schema(schema)?;
     validate_config_ir(&ir)?;

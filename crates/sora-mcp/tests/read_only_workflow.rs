@@ -25,7 +25,7 @@ async fn inspect_and_query_use_structured_results_without_changing_revision() ->
 {
     let workspace = Arc::new(WorkspaceService::new());
     let project =
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/showcase/project.toml");
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/showcase/project.scon");
     let session = workspace.open_project(
         ProjectId::new("showcase")?,
         project,
@@ -106,18 +106,15 @@ views = { default = { contract = "mcp_custom/default", groups = ["common"] } }
 scripts = ["tools/source_loaders.lua"]
 [build]
 data_root = "data"
-[[tables]]
+[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
 source = { file = "items", format = "custom_format" }
-[[tables.fields]]
-name = "id"
-type = "i32"
-[[tables.fields]]
-name = "name"
-type = "string"
+
+[tables.Item.fields]
+id = "i32"
+name = "string"
 "#,
     )?;
     fs::write(

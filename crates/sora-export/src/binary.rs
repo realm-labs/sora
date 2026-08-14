@@ -45,7 +45,7 @@ mod tests {
     use crate::exporter::ExportOutput;
     use sora_data::model::{ConfigData, RowData, TableData, Value};
     use sora_ir::{model::ConfigIr, normalize::normalize_schema};
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
     use std::{
         collections::BTreeMap,
         fs,
@@ -164,7 +164,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

@@ -123,23 +123,19 @@ data_root = "data"
 fn schema(include_name: bool) -> String {
     format!(
         r#"
-[[tables]]
+[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
 source = {{ file = "items.xlsx", format = "xlsx", sheet = "Item" }}
 
-[[tables.fields]]
-name = "id"
-type = "i32"
+[tables.Item.fields]
+id = "i32"
 {}
 "#,
         if include_name {
             r#"
-[[tables.fields]]
-name = "name"
-type = "optional<string>"
+name = "optional<string>"
 "#
         } else {
             ""

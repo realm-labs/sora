@@ -3,115 +3,114 @@
 package showcase
 
 type ComplexActionGroup struct {
-	ID      int32
-	Name    string
-	Actions []RewardAction
+    ID int32
+    Name string
+    Actions []RewardAction
 }
 
 func decodeComplexActionGroup(reader *SoraReader) (ComplexActionGroup, error) {
-	var value ComplexActionGroup
-	var err error
-	value.ID, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = reader.ReadString()
-	if err != nil {
-		return value, err
-	}
-	value.Actions, err = ReadList(reader, func(reader *SoraReader) (RewardAction, error) { return decodeRewardAction(reader) })
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value ComplexActionGroup
+    var err error
+    value.ID, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = reader.ReadString()
+    if err != nil {
+        return value, err
+    }
+    value.Actions, err = ReadList(reader, func(reader *SoraReader) (RewardAction, error) { return decodeRewardAction(reader) })
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func decodeComplexActionGroupValue(input SoraValue) (ComplexActionGroup, error) {
-	var value ComplexActionGroup
-	obj, err := input.AsObject()
-	if err != nil {
-		return value, err
-	}
-	value.ID, err = obj.Get("id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = obj.Get("name").AsString()
-	if err != nil {
-		return value, err
-	}
-	value.Actions, err = DecodeSoraValueList(obj.Get("actions"), func(item SoraValue) (RewardAction, error) { return decodeRewardActionValue(item) })
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value ComplexActionGroup
+    obj, err := input.AsObject()
+    if err != nil {
+        return value, err
+    }
+    value.ID, err = obj.Get("id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = obj.Get("name").AsString()
+    if err != nil {
+        return value, err
+    }
+    value.Actions, err = DecodeSoraValueList(obj.Get("actions"), func(item SoraValue) (RewardAction, error) { return decodeRewardActionValue(item) })
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func (value ComplexActionGroup) collectTextKeys(out *[]TextKey) {
-	for _, item := range value.Actions {
-		collectRewardActionTextKeys(item, out)
-	}
+    for _, item := range value.Actions { collectRewardActionTextKeys(item, out) }
 }
 
 const complexActionGroupTableName = "ComplexActionGroup"
 
 var complexActionGroupTableInfo = SoraTableInfo{
-	Name:       complexActionGroupTableName,
-	RowType:    "ComplexActionGroup",
-	Shape:      SoraTableShapeKeyed,
-	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-	Indexes:    []SoraIndexInfo{},
+    Name: complexActionGroupTableName,
+    RowType: "ComplexActionGroup",
+    Shape: SoraTableShapeKeyed,
+    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+    Indexes: []SoraIndexInfo{
+    },
 }
 
 type ComplexActionGroupTable struct {
-	keys []int32
-	rows map[int32]ComplexActionGroup
+    keys []int32
+    rows map[int32]ComplexActionGroup
 }
 
 func buildComplexActionGroupTable(rows []ComplexActionGroup) (*ComplexActionGroupTable, error) {
-	keys := make([]int32, 0, len(rows))
-	for _, row := range rows {
-		keys = append(keys, row.ID)
-	}
-	return &ComplexActionGroupTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexActionGroup) int32 { return row.ID })}, nil
+    keys := make([]int32, 0, len(rows))
+    for _, row := range rows {
+        keys = append(keys, row.ID)
+    }
+    return &ComplexActionGroupTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexActionGroup) int32 { return row.ID })}, nil
 }
 
 func decodeComplexActionGroupTable(source SoraTableSource) (*ComplexActionGroupTable, error) {
-	rows, err := DecodeSourceTable(source, complexActionGroupTableName, decodeComplexActionGroup, decodeComplexActionGroupValue)
-	if err != nil {
-		return nil, err
-	}
-	return buildComplexActionGroupTable(rows)
+    rows, err := DecodeSourceTable(source, complexActionGroupTableName, decodeComplexActionGroup, decodeComplexActionGroupValue)
+    if err != nil {
+        return nil, err
+    }
+    return buildComplexActionGroupTable(rows)
 }
 func (table *ComplexActionGroupTable) Rows() map[int32]ComplexActionGroup {
-	rows := make(map[int32]ComplexActionGroup, len(table.rows))
-	for key, row := range table.rows {
-		rows[key] = row
-	}
-	return rows
+    rows := make(map[int32]ComplexActionGroup, len(table.rows))
+    for key, row := range table.rows {
+        rows[key] = row
+    }
+    return rows
 }
 func (table *ComplexActionGroupTable) Get(key int32) (ComplexActionGroup, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 
 func (table *ComplexActionGroupTable) Keys() []int32 {
-	return append([]int32(nil), table.keys...)
+    return append([]int32(nil), table.keys...)
 }
 
 func (table *ComplexActionGroupTable) OrderedRows() []ComplexActionGroup {
-	rows := make([]ComplexActionGroup, 0, len(table.keys))
-	for _, key := range table.keys {
-		if row, ok := table.rows[key]; ok {
-			rows = append(rows, row)
-		}
-	}
-	return rows
+    rows := make([]ComplexActionGroup, 0, len(table.keys))
+    for _, key := range table.keys {
+        if row, ok := table.rows[key]; ok {
+            rows = append(rows, row)
+        }
+    }
+    return rows
 }
 func (table *ComplexActionGroupTable) Info() SoraTableInfo {
-	return complexActionGroupTableInfo
+    return complexActionGroupTableInfo
 }
 
 func (table *ComplexActionGroupTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }

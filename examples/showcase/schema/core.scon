@@ -1,0 +1,169 @@
+enums = {
+  ItemType = [
+    "Weapon",
+    "Armor",
+    "Currency",
+    "Material",
+    "Consumable",
+  ]
+  ResourceKind = [
+    "Item",
+    "Gold",
+    "Diamond",
+  ]
+  ElementType = [
+    "Fire",
+    "Ice",
+    "Lightning",
+    "Physical",
+  ]
+  QuestType = [
+    "Main",
+    "Side",
+    "Daily",
+  ]
+  Rarity = [
+    "Common",
+    "Uncommon",
+    "Rare",
+    "Epic",
+    "Legendary",
+  ]
+  StatType = [
+    "Hp",
+    "Attack",
+    "Defense",
+    "Speed",
+    "CritRate",
+  ]
+  MailType = [
+    "System",
+    "Event",
+    "Compensation",
+  ]
+}
+structs = {
+  ResourceCost = {
+    fields = {
+      kind = "enum<ResourceKind>"
+      id = "i32"
+      count = {
+        type = "i32"
+        range = [
+          1,
+          999999,
+        ]
+      }
+    }
+  }
+  Vec3 = {
+    fields = {
+      x = "f32"
+      y = "f32"
+      z = "f32"
+    }
+  }
+  SkillEffect = {
+    fields = {
+      element = "enum<ElementType>"
+      power = {
+        type = "i32"
+        range = [
+          1,
+          9999,
+        ]
+      }
+      radius = {
+        type = "f32"
+        default = "1.0"
+      }
+    }
+  }
+  Reward = {
+    fields = {
+      item_id = "ref<Item.id>"
+      count = {
+        type = "i32"
+        range = [
+          1,
+          9999,
+        ]
+      }
+    }
+  }
+  StatModifier = {
+    fields = {
+      stat = "enum<StatType>"
+      value = "f32"
+      is_percent = {
+        type = "bool"
+        default = "false"
+      }
+    }
+  }
+  RewardBundle = {
+    fields = {
+      cost = {
+        type = "struct<ResourceCost>"
+        parser = {
+          kind = "tuple"
+          separator = ":"
+        }
+      }
+      weight = {
+        type = "i32"
+        range = [
+          1,
+          10000,
+        ]
+      }
+      labels = {
+        type = "list<string>"
+        parser = {
+          kind = "split"
+          separator = "+"
+        }
+      }
+    }
+  }
+  ComplexBudget = {
+    fields = {
+      fixed = {
+        type = "struct<ResourceCost>"
+        parser = {
+          kind = "tuple"
+          separator = ":"
+        }
+      }
+      random = {
+        type = "list<RewardBundle>"
+        parser = {
+          kind = "tuple_list"
+          item_separator = "|"
+          separator = ";"
+        }
+      }
+      limits = {
+        type = "map<string,i32>"
+        parser = {
+          kind = "map"
+          item_separator = "|"
+          separator = ":"
+        }
+      }
+    }
+  }
+  MaintenanceInfo = {
+    fields = {
+      starts_at = "string"
+      duration_minutes = {
+        type = "i32"
+        range = [
+          1,
+          1440,
+        ]
+      }
+      reason = "optional<string>"
+    }
+  }
+}

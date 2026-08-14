@@ -10,8 +10,8 @@
 | --- | --- |
 | `-j, --jobs <N>` | 最大工作线程数。必须大于 0。 |
 | `--serial` | 禁用并行执行。 |
-| `--parser-script <PATH>` | 加载自定义 Lua 单元格 parser 脚本。可以重复传。项目级 parser 脚本也可以配置在 `project.toml` 的 `[parsers].scripts` 中。 |
-| `--type-mapping-script <PATH>` | 加载自定义 Lua 类型映射脚本。可以重复传。项目级脚本也可以配置在 `project.toml` 的 `[type_mappings].scripts` 中。 |
+| `--parser-script <PATH>` | 加载自定义 Lua 单元格 parser 脚本。可以重复传。项目级 parser 脚本也可以配置在 `project.scon` 的 `[parsers].scripts` 中。 |
+| `--type-mapping-script <PATH>` | 加载自定义 Lua 类型映射脚本。可以重复传。项目级脚本也可以配置在 `project.scon` 的 `[type_mappings].scripts` 中。 |
 | `-h, --help` | 打印帮助。 |
 | `-V, --version` | 打印 CLI 版本。 |
 
@@ -54,14 +54,14 @@ Lua Source Loader 刻意只允许项目级配置。请在 `[source_loaders].scri
 创建新的项目脚手架。
 
 ```bash
-sora init --out my-config --schema-format toml
+sora init --out my-config
 sora i -o my-config --schema-format yaml
 ```
 
 | 参数 | 说明 |
 | --- | --- |
 | `-o, --out <DIR>` | 脚手架输出目录。 |
-| `--schema-format <toml|yaml|json|lua>` | Schema 文件格式。默认 `toml`。 |
+| `--schema-format <scon|toml|yaml|json|lua>` | Schema 文件格式。默认使用推荐的 `scon`。 |
 | `--force` | 允许写入已有脚手架路径。 |
 
 ### `check`
@@ -69,8 +69,8 @@ sora i -o my-config --schema-format yaml
 校验项目 schema，也可以和已有 schema lock 对比。
 
 ```bash
-sora check --project project.toml
-sora c -p project.toml -l generated/schema.lock
+sora check --project project.scon
+sora c -p project.scon -l generated/schema.lock
 ```
 
 | 参数 | 说明 |
@@ -80,11 +80,11 @@ sora c -p project.toml -l generated/schema.lock
 
 ### `build`
 
-运行 `project.toml` 中 `[build]` 声明的输出，例如 schema lock、Excel 模板、codegen 和 export。
+运行 `project.scon` 中 `[build]` 声明的输出，例如 schema lock、Excel 模板、codegen 和 export。
 
 ```bash
-sora build --project project.toml
-sora b -p project.toml -t rust -c
+sora build --project project.scon
+sora b -p project.scon -t rust -c
 ```
 
 | 参数 | 说明 |
@@ -101,8 +101,8 @@ sora b -p project.toml -t rust -c
 直接为某个 target 生成代码，不依赖 `[build.codegen]`。
 
 ```bash
-sora gen --target rust --project project.toml --out generated/rust
-sora g -t typescript -p project.toml -o generated/typescript
+sora gen --target rust --project project.scon --out generated/rust
+sora g -t typescript -p project.scon -o generated/typescript
 ```
 
 | 参数 | 说明 |
@@ -118,8 +118,8 @@ sora g -t typescript -p project.toml -o generated/typescript
 读取表数据并导出运行时数据。
 
 ```bash
-sora export --project project.toml --data-root data --format json --out generated/config.json
-sora e -p project.toml -d data -f binary -o generated/config.sora
+sora export --project project.scon --data-root data --format json --out generated/config.json
+sora e -p project.scon -d data -f binary -o generated/config.sora
 ```
 
 | 参数 | 说明 |
@@ -138,8 +138,8 @@ sora e -p project.toml -d data -f binary -o generated/config.sora
 使用同一份项目 schema 比较两个数据根目录。
 
 ```bash
-sora diff --project project.toml --left-root old-data --right-root data --out generated/diff.json
-sora d -p project.toml -l old-data -r data -o generated/diff.json
+sora diff --project project.scon --left-root old-data --right-root data --out generated/diff.json
+sora d -p project.scon -l old-data -r data -o generated/diff.json
 ```
 
 | 参数 | 说明 |
@@ -156,8 +156,8 @@ sora d -p project.toml -l old-data -r data -o generated/diff.json
 根据 schema 生成空 Excel workbook。它适合新建 workbook，不适合覆盖已有数据文件。
 
 ```bash
-sora excel-template --project project.toml --out generated/excel
-sora et -p project.toml -o generated/excel
+sora excel-template --project project.scon --out generated/excel
+sora et -p project.scon -o generated/excel
 ```
 
 | 参数 | 说明 |
@@ -171,8 +171,8 @@ sora et -p project.toml -o generated/excel
 预览或应用已有 Excel 数据 workbook 的 schema 表头更新，同时保留数据行。从 schema 中删除的字段会保留为被忽略的 legacy 列。
 
 ```bash
-sora excel-sync --project project.toml --data-root data
-sora es -p project.toml -d data -w
+sora excel-sync --project project.scon --data-root data
+sora es -p project.scon -d data -w
 ```
 
 | 参数 | 说明 |
@@ -187,8 +187,8 @@ sora es -p project.toml -d data -w
 为当前归一化 schema 写出 schema lock。
 
 ```bash
-sora schema-lock --project project.toml --out generated/schema.lock
-sora sl -p project.toml -o generated/schema.lock
+sora schema-lock --project project.scon --out generated/schema.lock
+sora sl -p project.scon -o generated/schema.lock
 ```
 
 | 参数 | 说明 |
@@ -202,8 +202,8 @@ sora sl -p project.toml -o generated/schema.lock
 启动内置的 Sora Studio schema 编辑器。
 
 ```bash
-sora studio --project project.toml
-sora st -p project.toml --port 5180
+sora studio --project project.scon
+sora st -p project.scon --port 5180
 ```
 
 | 参数 | 说明 |

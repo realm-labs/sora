@@ -3,112 +3,112 @@
 import type { LocalePack, SoraConfigTable, SoraTableSource, SoraTextResolver, TextKey } from "./sora_runtime.js";
 import { formatText } from "./sora_runtime.js";
 
-import { ItemTable, collectItemTextKeys, decodeItem, decodeItemValue } from "./item.js";
+import { AchievementTable, collectAchievementTextKeys, decodeAchievement, decodeAchievementValue } from "./achievement.js";
 
-import { ShopTable, collectShopTextKeys, decodeShop, decodeShopValue } from "./shop.js";
-
-import { ShopItemTable, collectShopItemTextKeys, decodeShopItem, decodeShopItemValue } from "./shop_item.js";
-
-import { RecipeTable, collectRecipeTextKeys, decodeRecipe, decodeRecipeValue } from "./recipe.js";
-
-import { GachaPoolTable, collectGachaPoolTextKeys, decodeGachaPool, decodeGachaPoolValue } from "./gacha_pool.js";
-
-import { GachaItemTable, collectGachaItemTextKeys, decodeGachaItem, decodeGachaItemValue } from "./gacha_item.js";
-
-import { EquipmentSetTable, collectEquipmentSetTextKeys, decodeEquipmentSet, decodeEquipmentSetValue } from "./equipment_set.js";
-
-import { SkillTable, collectSkillTextKeys, decodeSkill, decodeSkillValue } from "./skill.js";
+import { BuffTable, collectBuffTextKeys, decodeBuff, decodeBuffValue } from "./buff.js";
 
 import { CharacterTable, collectCharacterTextKeys, decodeCharacter, decodeCharacterValue } from "./character.js";
 
 import { CharacterSkillTable, collectCharacterSkillTextKeys, decodeCharacterSkill, decodeCharacterSkillValue } from "./character_skill.js";
 
-import { BuffTable, collectBuffTextKeys, decodeBuff, decodeBuffValue } from "./buff.js";
+import { ComplexActionEntryTable, collectComplexActionEntryTextKeys, decodeComplexActionEntry, decodeComplexActionEntryValue } from "./complex_action_entry.js";
 
-import { DropGroupTable, collectDropGroupTextKeys, decodeDropGroup, decodeDropGroupValue } from "./drop_group.js";
-
-import { DropEntryTable, collectDropEntryTextKeys, decodeDropEntry, decodeDropEntryValue } from "./drop_entry.js";
-
-import { MonsterTable, collectMonsterTextKeys, decodeMonster, decodeMonsterValue } from "./monster.js";
-
-import { StageTable, collectStageTextKeys, decodeStage, decodeStageValue } from "./stage.js";
-
-import { StageRewardTable, collectStageRewardTextKeys, decodeStageReward, decodeStageRewardValue } from "./stage_reward.js";
-
-import { DungeonTable, collectDungeonTextKeys, decodeDungeon, decodeDungeonValue } from "./dungeon.js";
-
-import { QuestTable, collectQuestTextKeys, decodeQuest, decodeQuestValue } from "./quest.js";
-
-import { QuestRewardTable, collectQuestRewardTextKeys, decodeQuestReward, decodeQuestRewardValue } from "./quest_reward.js";
-
-import { LevelExpTable, collectLevelExpTextKeys, decodeLevelExp, decodeLevelExpValue } from "./level_exp.js";
-
-import { AchievementTable, collectAchievementTextKeys, decodeAchievement, decodeAchievementValue } from "./achievement.js";
-
-import { VipLevelTable, collectVipLevelTextKeys, decodeVipLevel, decodeVipLevelValue } from "./vip_level.js";
-
-import { GameSettingsTable, collectGameSettingsTextKeys, decodeGameSettings, decodeGameSettingsValue } from "./game_settings.js";
-
-import { MaintenanceWindowTable, collectMaintenanceWindowTextKeys, decodeMaintenanceWindow, decodeMaintenanceWindowValue } from "./maintenance_window.js";
-
-import { MailTemplateTable, collectMailTemplateTextKeys, decodeMailTemplate, decodeMailTemplateValue } from "./mail_template.js";
-
-import { MailRewardTable, collectMailRewardTextKeys, decodeMailReward, decodeMailRewardValue } from "./mail_reward.js";
-
-import { DialogueTable, collectDialogueTextKeys, decodeDialogue, decodeDialogueValue } from "./dialogue.js";
-
-import { EventRuleTable, collectEventRuleTextKeys, decodeEventRule, decodeEventRuleValue } from "./event_rule.js";
-
-import { ComplexRuleTable, collectComplexRuleTextKeys, decodeComplexRule, decodeComplexRuleValue } from "./complex_rule.js";
+import { ComplexActionGroupTable, collectComplexActionGroupTextKeys, decodeComplexActionGroup, decodeComplexActionGroupValue } from "./complex_action_group.js";
 
 import { ComplexConditionGroupTable, collectComplexConditionGroupTextKeys, decodeComplexConditionGroup, decodeComplexConditionGroupValue } from "./complex_condition_group.js";
 
 import { ComplexConditionGroupEntryTable, collectComplexConditionGroupEntryTextKeys, decodeComplexConditionGroupEntry, decodeComplexConditionGroupEntryValue } from "./complex_condition_group_entry.js";
 
+import { ComplexRuleTable, collectComplexRuleTextKeys, decodeComplexRule, decodeComplexRuleValue } from "./complex_rule.js";
+
 import { ComplexRuleConditionTable, collectComplexRuleConditionTextKeys, decodeComplexRuleCondition, decodeComplexRuleConditionValue } from "./complex_rule_condition.js";
 
-import { ComplexActionGroupTable, collectComplexActionGroupTextKeys, decodeComplexActionGroup, decodeComplexActionGroupValue } from "./complex_action_group.js";
+import { DialogueTable, collectDialogueTextKeys, decodeDialogue, decodeDialogueValue } from "./dialogue.js";
 
-import { ComplexActionEntryTable, collectComplexActionEntryTextKeys, decodeComplexActionEntry, decodeComplexActionEntryValue } from "./complex_action_entry.js";
+import { DropEntryTable, collectDropEntryTextKeys, decodeDropEntry, decodeDropEntryValue } from "./drop_entry.js";
 
-export const SORA_SCHEMA_FINGERPRINT = "9552056f96151363";
+import { DropGroupTable, collectDropGroupTextKeys, decodeDropGroup, decodeDropGroupValue } from "./drop_group.js";
+
+import { DungeonTable, collectDungeonTextKeys, decodeDungeon, decodeDungeonValue } from "./dungeon.js";
+
+import { EquipmentSetTable, collectEquipmentSetTextKeys, decodeEquipmentSet, decodeEquipmentSetValue } from "./equipment_set.js";
+
+import { EventRuleTable, collectEventRuleTextKeys, decodeEventRule, decodeEventRuleValue } from "./event_rule.js";
+
+import { GachaItemTable, collectGachaItemTextKeys, decodeGachaItem, decodeGachaItemValue } from "./gacha_item.js";
+
+import { GachaPoolTable, collectGachaPoolTextKeys, decodeGachaPool, decodeGachaPoolValue } from "./gacha_pool.js";
+
+import { GameSettingsTable, collectGameSettingsTextKeys, decodeGameSettings, decodeGameSettingsValue } from "./game_settings.js";
+
+import { ItemTable, collectItemTextKeys, decodeItem, decodeItemValue } from "./item.js";
+
+import { LevelExpTable, collectLevelExpTextKeys, decodeLevelExp, decodeLevelExpValue } from "./level_exp.js";
+
+import { MailRewardTable, collectMailRewardTextKeys, decodeMailReward, decodeMailRewardValue } from "./mail_reward.js";
+
+import { MailTemplateTable, collectMailTemplateTextKeys, decodeMailTemplate, decodeMailTemplateValue } from "./mail_template.js";
+
+import { MaintenanceWindowTable, collectMaintenanceWindowTextKeys, decodeMaintenanceWindow, decodeMaintenanceWindowValue } from "./maintenance_window.js";
+
+import { MonsterTable, collectMonsterTextKeys, decodeMonster, decodeMonsterValue } from "./monster.js";
+
+import { QuestTable, collectQuestTextKeys, decodeQuest, decodeQuestValue } from "./quest.js";
+
+import { QuestRewardTable, collectQuestRewardTextKeys, decodeQuestReward, decodeQuestRewardValue } from "./quest_reward.js";
+
+import { RecipeTable, collectRecipeTextKeys, decodeRecipe, decodeRecipeValue } from "./recipe.js";
+
+import { ShopTable, collectShopTextKeys, decodeShop, decodeShopValue } from "./shop.js";
+
+import { ShopItemTable, collectShopItemTextKeys, decodeShopItem, decodeShopItemValue } from "./shop_item.js";
+
+import { SkillTable, collectSkillTextKeys, decodeSkill, decodeSkillValue } from "./skill.js";
+
+import { StageTable, collectStageTextKeys, decodeStage, decodeStageValue } from "./stage.js";
+
+import { StageRewardTable, collectStageRewardTextKeys, decodeStageReward, decodeStageRewardValue } from "./stage_reward.js";
+
+import { VipLevelTable, collectVipLevelTextKeys, decodeVipLevel, decodeVipLevelValue } from "./vip_level.js";
+
+export const SORA_SCHEMA_FINGERPRINT = "5ae7c095b011eddf";
 
 export class SoraConfig {
     private constructor(
-        private readonly _item: ItemTable,
-        private readonly _shop: ShopTable,
-        private readonly _shopItem: ShopItemTable,
-        private readonly _recipe: RecipeTable,
-        private readonly _gachaPool: GachaPoolTable,
-        private readonly _gachaItem: GachaItemTable,
-        private readonly _equipmentSet: EquipmentSetTable,
-        private readonly _skill: SkillTable,
+        private readonly _achievement: AchievementTable,
+        private readonly _buff: BuffTable,
         private readonly _character: CharacterTable,
         private readonly _characterSkill: CharacterSkillTable,
-        private readonly _buff: BuffTable,
-        private readonly _dropGroup: DropGroupTable,
-        private readonly _dropEntry: DropEntryTable,
-        private readonly _monster: MonsterTable,
-        private readonly _stage: StageTable,
-        private readonly _stageReward: StageRewardTable,
-        private readonly _dungeon: DungeonTable,
-        private readonly _quest: QuestTable,
-        private readonly _questReward: QuestRewardTable,
-        private readonly _levelExp: LevelExpTable,
-        private readonly _achievement: AchievementTable,
-        private readonly _vipLevel: VipLevelTable,
-        private readonly _gameSettings: GameSettingsTable,
-        private readonly _maintenanceWindow: MaintenanceWindowTable,
-        private readonly _mailTemplate: MailTemplateTable,
-        private readonly _mailReward: MailRewardTable,
-        private readonly _dialogue: DialogueTable,
-        private readonly _eventRule: EventRuleTable,
-        private readonly _complexRule: ComplexRuleTable,
+        private readonly _complexActionEntry: ComplexActionEntryTable,
+        private readonly _complexActionGroup: ComplexActionGroupTable,
         private readonly _complexConditionGroup: ComplexConditionGroupTable,
         private readonly _complexConditionGroupEntry: ComplexConditionGroupEntryTable,
+        private readonly _complexRule: ComplexRuleTable,
         private readonly _complexRuleCondition: ComplexRuleConditionTable,
-        private readonly _complexActionGroup: ComplexActionGroupTable,
-        private readonly _complexActionEntry: ComplexActionEntryTable,
+        private readonly _dialogue: DialogueTable,
+        private readonly _dropEntry: DropEntryTable,
+        private readonly _dropGroup: DropGroupTable,
+        private readonly _dungeon: DungeonTable,
+        private readonly _equipmentSet: EquipmentSetTable,
+        private readonly _eventRule: EventRuleTable,
+        private readonly _gachaItem: GachaItemTable,
+        private readonly _gachaPool: GachaPoolTable,
+        private readonly _gameSettings: GameSettingsTable,
+        private readonly _item: ItemTable,
+        private readonly _levelExp: LevelExpTable,
+        private readonly _mailReward: MailRewardTable,
+        private readonly _mailTemplate: MailTemplateTable,
+        private readonly _maintenanceWindow: MaintenanceWindowTable,
+        private readonly _monster: MonsterTable,
+        private readonly _quest: QuestTable,
+        private readonly _questReward: QuestRewardTable,
+        private readonly _recipe: RecipeTable,
+        private readonly _shop: ShopTable,
+        private readonly _shopItem: ShopItemTable,
+        private readonly _skill: SkillTable,
+        private readonly _stage: StageTable,
+        private readonly _stageReward: StageRewardTable,
+        private readonly _vipLevel: VipLevelTable,
     ) {}
 
     static fromSource(source: SoraTableSource): SoraConfig {
@@ -118,79 +118,79 @@ export class SoraConfig {
             );
         }
         return new SoraConfig(
-            ItemTable.decode(source.decodeTable(ItemTable.tableName, decodeItem, decodeItemValue)),
-            ShopTable.decode(source.decodeTable(ShopTable.tableName, decodeShop, decodeShopValue)),
-            ShopItemTable.decode(source.decodeTable(ShopItemTable.tableName, decodeShopItem, decodeShopItemValue)),
-            RecipeTable.decode(source.decodeTable(RecipeTable.tableName, decodeRecipe, decodeRecipeValue)),
-            GachaPoolTable.decode(source.decodeTable(GachaPoolTable.tableName, decodeGachaPool, decodeGachaPoolValue)),
-            GachaItemTable.decode(source.decodeTable(GachaItemTable.tableName, decodeGachaItem, decodeGachaItemValue)),
-            EquipmentSetTable.decode(source.decodeTable(EquipmentSetTable.tableName, decodeEquipmentSet, decodeEquipmentSetValue)),
-            SkillTable.decode(source.decodeTable(SkillTable.tableName, decodeSkill, decodeSkillValue)),
+            AchievementTable.decode(source.decodeTable(AchievementTable.tableName, decodeAchievement, decodeAchievementValue)),
+            BuffTable.decode(source.decodeTable(BuffTable.tableName, decodeBuff, decodeBuffValue)),
             CharacterTable.decode(source.decodeTable(CharacterTable.tableName, decodeCharacter, decodeCharacterValue)),
             CharacterSkillTable.decode(source.decodeTable(CharacterSkillTable.tableName, decodeCharacterSkill, decodeCharacterSkillValue)),
-            BuffTable.decode(source.decodeTable(BuffTable.tableName, decodeBuff, decodeBuffValue)),
-            DropGroupTable.decode(source.decodeTable(DropGroupTable.tableName, decodeDropGroup, decodeDropGroupValue)),
-            DropEntryTable.decode(source.decodeTable(DropEntryTable.tableName, decodeDropEntry, decodeDropEntryValue)),
-            MonsterTable.decode(source.decodeTable(MonsterTable.tableName, decodeMonster, decodeMonsterValue)),
-            StageTable.decode(source.decodeTable(StageTable.tableName, decodeStage, decodeStageValue)),
-            StageRewardTable.decode(source.decodeTable(StageRewardTable.tableName, decodeStageReward, decodeStageRewardValue)),
-            DungeonTable.decode(source.decodeTable(DungeonTable.tableName, decodeDungeon, decodeDungeonValue)),
-            QuestTable.decode(source.decodeTable(QuestTable.tableName, decodeQuest, decodeQuestValue)),
-            QuestRewardTable.decode(source.decodeTable(QuestRewardTable.tableName, decodeQuestReward, decodeQuestRewardValue)),
-            LevelExpTable.decode(source.decodeTable(LevelExpTable.tableName, decodeLevelExp, decodeLevelExpValue)),
-            AchievementTable.decode(source.decodeTable(AchievementTable.tableName, decodeAchievement, decodeAchievementValue)),
-            VipLevelTable.decode(source.decodeTable(VipLevelTable.tableName, decodeVipLevel, decodeVipLevelValue)),
-            GameSettingsTable.decode(source.decodeTable(GameSettingsTable.tableName, decodeGameSettings, decodeGameSettingsValue)),
-            MaintenanceWindowTable.decode(source.decodeTable(MaintenanceWindowTable.tableName, decodeMaintenanceWindow, decodeMaintenanceWindowValue)),
-            MailTemplateTable.decode(source.decodeTable(MailTemplateTable.tableName, decodeMailTemplate, decodeMailTemplateValue)),
-            MailRewardTable.decode(source.decodeTable(MailRewardTable.tableName, decodeMailReward, decodeMailRewardValue)),
-            DialogueTable.decode(source.decodeTable(DialogueTable.tableName, decodeDialogue, decodeDialogueValue)),
-            EventRuleTable.decode(source.decodeTable(EventRuleTable.tableName, decodeEventRule, decodeEventRuleValue)),
-            ComplexRuleTable.decode(source.decodeTable(ComplexRuleTable.tableName, decodeComplexRule, decodeComplexRuleValue)),
+            ComplexActionEntryTable.decode(source.decodeTable(ComplexActionEntryTable.tableName, decodeComplexActionEntry, decodeComplexActionEntryValue)),
+            ComplexActionGroupTable.decode(source.decodeTable(ComplexActionGroupTable.tableName, decodeComplexActionGroup, decodeComplexActionGroupValue)),
             ComplexConditionGroupTable.decode(source.decodeTable(ComplexConditionGroupTable.tableName, decodeComplexConditionGroup, decodeComplexConditionGroupValue)),
             ComplexConditionGroupEntryTable.decode(source.decodeTable(ComplexConditionGroupEntryTable.tableName, decodeComplexConditionGroupEntry, decodeComplexConditionGroupEntryValue)),
+            ComplexRuleTable.decode(source.decodeTable(ComplexRuleTable.tableName, decodeComplexRule, decodeComplexRuleValue)),
             ComplexRuleConditionTable.decode(source.decodeTable(ComplexRuleConditionTable.tableName, decodeComplexRuleCondition, decodeComplexRuleConditionValue)),
-            ComplexActionGroupTable.decode(source.decodeTable(ComplexActionGroupTable.tableName, decodeComplexActionGroup, decodeComplexActionGroupValue)),
-            ComplexActionEntryTable.decode(source.decodeTable(ComplexActionEntryTable.tableName, decodeComplexActionEntry, decodeComplexActionEntryValue)),
+            DialogueTable.decode(source.decodeTable(DialogueTable.tableName, decodeDialogue, decodeDialogueValue)),
+            DropEntryTable.decode(source.decodeTable(DropEntryTable.tableName, decodeDropEntry, decodeDropEntryValue)),
+            DropGroupTable.decode(source.decodeTable(DropGroupTable.tableName, decodeDropGroup, decodeDropGroupValue)),
+            DungeonTable.decode(source.decodeTable(DungeonTable.tableName, decodeDungeon, decodeDungeonValue)),
+            EquipmentSetTable.decode(source.decodeTable(EquipmentSetTable.tableName, decodeEquipmentSet, decodeEquipmentSetValue)),
+            EventRuleTable.decode(source.decodeTable(EventRuleTable.tableName, decodeEventRule, decodeEventRuleValue)),
+            GachaItemTable.decode(source.decodeTable(GachaItemTable.tableName, decodeGachaItem, decodeGachaItemValue)),
+            GachaPoolTable.decode(source.decodeTable(GachaPoolTable.tableName, decodeGachaPool, decodeGachaPoolValue)),
+            GameSettingsTable.decode(source.decodeTable(GameSettingsTable.tableName, decodeGameSettings, decodeGameSettingsValue)),
+            ItemTable.decode(source.decodeTable(ItemTable.tableName, decodeItem, decodeItemValue)),
+            LevelExpTable.decode(source.decodeTable(LevelExpTable.tableName, decodeLevelExp, decodeLevelExpValue)),
+            MailRewardTable.decode(source.decodeTable(MailRewardTable.tableName, decodeMailReward, decodeMailRewardValue)),
+            MailTemplateTable.decode(source.decodeTable(MailTemplateTable.tableName, decodeMailTemplate, decodeMailTemplateValue)),
+            MaintenanceWindowTable.decode(source.decodeTable(MaintenanceWindowTable.tableName, decodeMaintenanceWindow, decodeMaintenanceWindowValue)),
+            MonsterTable.decode(source.decodeTable(MonsterTable.tableName, decodeMonster, decodeMonsterValue)),
+            QuestTable.decode(source.decodeTable(QuestTable.tableName, decodeQuest, decodeQuestValue)),
+            QuestRewardTable.decode(source.decodeTable(QuestRewardTable.tableName, decodeQuestReward, decodeQuestRewardValue)),
+            RecipeTable.decode(source.decodeTable(RecipeTable.tableName, decodeRecipe, decodeRecipeValue)),
+            ShopTable.decode(source.decodeTable(ShopTable.tableName, decodeShop, decodeShopValue)),
+            ShopItemTable.decode(source.decodeTable(ShopItemTable.tableName, decodeShopItem, decodeShopItemValue)),
+            SkillTable.decode(source.decodeTable(SkillTable.tableName, decodeSkill, decodeSkillValue)),
+            StageTable.decode(source.decodeTable(StageTable.tableName, decodeStage, decodeStageValue)),
+            StageRewardTable.decode(source.decodeTable(StageRewardTable.tableName, decodeStageReward, decodeStageRewardValue)),
+            VipLevelTable.decode(source.decodeTable(VipLevelTable.tableName, decodeVipLevel, decodeVipLevelValue)),
         );
     }
 
     tables(): readonly SoraConfigTable[] {
         return [
-            this._item,
-            this._shop,
-            this._shopItem,
-            this._recipe,
-            this._gachaPool,
-            this._gachaItem,
-            this._equipmentSet,
-            this._skill,
+            this._achievement,
+            this._buff,
             this._character,
             this._characterSkill,
-            this._buff,
-            this._dropGroup,
-            this._dropEntry,
-            this._monster,
-            this._stage,
-            this._stageReward,
-            this._dungeon,
-            this._quest,
-            this._questReward,
-            this._levelExp,
-            this._achievement,
-            this._vipLevel,
-            this._gameSettings,
-            this._maintenanceWindow,
-            this._mailTemplate,
-            this._mailReward,
-            this._dialogue,
-            this._eventRule,
-            this._complexRule,
+            this._complexActionEntry,
+            this._complexActionGroup,
             this._complexConditionGroup,
             this._complexConditionGroupEntry,
+            this._complexRule,
             this._complexRuleCondition,
-            this._complexActionGroup,
-            this._complexActionEntry,
+            this._dialogue,
+            this._dropEntry,
+            this._dropGroup,
+            this._dungeon,
+            this._equipmentSet,
+            this._eventRule,
+            this._gachaItem,
+            this._gachaPool,
+            this._gameSettings,
+            this._item,
+            this._levelExp,
+            this._mailReward,
+            this._mailTemplate,
+            this._maintenanceWindow,
+            this._monster,
+            this._quest,
+            this._questReward,
+            this._recipe,
+            this._shop,
+            this._shopItem,
+            this._skill,
+            this._stage,
+            this._stageReward,
+            this._vipLevel,
         ];
     }
     validateLocalePack(pack: LocalePack): void {
@@ -207,29 +207,11 @@ export class SoraConfig {
 
     private textKeys(): TextKey[] {
         const keys: TextKey[] = [];
-        for (const row of this.item()) {
-            collectItemTextKeys(row, keys);
+        for (const row of this.achievement()) {
+            collectAchievementTextKeys(row, keys);
         }
-        for (const row of this.shop()) {
-            collectShopTextKeys(row, keys);
-        }
-        for (const row of this.shopItem()) {
-            collectShopItemTextKeys(row, keys);
-        }
-        for (const row of this.recipe()) {
-            collectRecipeTextKeys(row, keys);
-        }
-        for (const row of this.gachaPool()) {
-            collectGachaPoolTextKeys(row, keys);
-        }
-        for (const row of this.gachaItem()) {
-            collectGachaItemTextKeys(row, keys);
-        }
-        for (const row of this.equipmentSet()) {
-            collectEquipmentSetTextKeys(row, keys);
-        }
-        for (const row of this.skill()) {
-            collectSkillTextKeys(row, keys);
+        for (const row of this.buff()) {
+            collectBuffTextKeys(row, keys);
         }
         for (const row of this.character()) {
             collectCharacterTextKeys(row, keys);
@@ -237,60 +219,11 @@ export class SoraConfig {
         for (const row of this.characterSkill()) {
             collectCharacterSkillTextKeys(row, keys);
         }
-        for (const row of this.buff()) {
-            collectBuffTextKeys(row, keys);
+        for (const row of this.complexActionEntry()) {
+            collectComplexActionEntryTextKeys(row, keys);
         }
-        for (const row of this.dropGroup()) {
-            collectDropGroupTextKeys(row, keys);
-        }
-        for (const row of this.dropEntry()) {
-            collectDropEntryTextKeys(row, keys);
-        }
-        for (const row of this.monster()) {
-            collectMonsterTextKeys(row, keys);
-        }
-        for (const row of this.stage()) {
-            collectStageTextKeys(row, keys);
-        }
-        for (const row of this.stageReward()) {
-            collectStageRewardTextKeys(row, keys);
-        }
-        for (const row of this.dungeon()) {
-            collectDungeonTextKeys(row, keys);
-        }
-        for (const row of this.quest()) {
-            collectQuestTextKeys(row, keys);
-        }
-        for (const row of this.questReward()) {
-            collectQuestRewardTextKeys(row, keys);
-        }
-        for (const row of this.levelExp()) {
-            collectLevelExpTextKeys(row, keys);
-        }
-        for (const row of this.achievement()) {
-            collectAchievementTextKeys(row, keys);
-        }
-        for (const row of this.vipLevel()) {
-            collectVipLevelTextKeys(row, keys);
-        }
-        collectGameSettingsTextKeys(this.gameSettings().row, keys);
-        for (const row of this.maintenanceWindow()) {
-            collectMaintenanceWindowTextKeys(row, keys);
-        }
-        for (const row of this.mailTemplate()) {
-            collectMailTemplateTextKeys(row, keys);
-        }
-        for (const row of this.mailReward()) {
-            collectMailRewardTextKeys(row, keys);
-        }
-        for (const row of this.dialogue()) {
-            collectDialogueTextKeys(row, keys);
-        }
-        for (const row of this.eventRule()) {
-            collectEventRuleTextKeys(row, keys);
-        }
-        for (const row of this.complexRule()) {
-            collectComplexRuleTextKeys(row, keys);
+        for (const row of this.complexActionGroup()) {
+            collectComplexActionGroupTextKeys(row, keys);
         }
         for (const row of this.complexConditionGroup()) {
             collectComplexConditionGroupTextKeys(row, keys);
@@ -298,40 +231,89 @@ export class SoraConfig {
         for (const row of this.complexConditionGroupEntry()) {
             collectComplexConditionGroupEntryTextKeys(row, keys);
         }
+        for (const row of this.complexRule()) {
+            collectComplexRuleTextKeys(row, keys);
+        }
         for (const row of this.complexRuleCondition()) {
             collectComplexRuleConditionTextKeys(row, keys);
         }
-        for (const row of this.complexActionGroup()) {
-            collectComplexActionGroupTextKeys(row, keys);
+        for (const row of this.dialogue()) {
+            collectDialogueTextKeys(row, keys);
         }
-        for (const row of this.complexActionEntry()) {
-            collectComplexActionEntryTextKeys(row, keys);
+        for (const row of this.dropEntry()) {
+            collectDropEntryTextKeys(row, keys);
+        }
+        for (const row of this.dropGroup()) {
+            collectDropGroupTextKeys(row, keys);
+        }
+        for (const row of this.dungeon()) {
+            collectDungeonTextKeys(row, keys);
+        }
+        for (const row of this.equipmentSet()) {
+            collectEquipmentSetTextKeys(row, keys);
+        }
+        for (const row of this.eventRule()) {
+            collectEventRuleTextKeys(row, keys);
+        }
+        for (const row of this.gachaItem()) {
+            collectGachaItemTextKeys(row, keys);
+        }
+        for (const row of this.gachaPool()) {
+            collectGachaPoolTextKeys(row, keys);
+        }
+        collectGameSettingsTextKeys(this.gameSettings().row, keys);
+        for (const row of this.item()) {
+            collectItemTextKeys(row, keys);
+        }
+        for (const row of this.levelExp()) {
+            collectLevelExpTextKeys(row, keys);
+        }
+        for (const row of this.mailReward()) {
+            collectMailRewardTextKeys(row, keys);
+        }
+        for (const row of this.mailTemplate()) {
+            collectMailTemplateTextKeys(row, keys);
+        }
+        for (const row of this.maintenanceWindow()) {
+            collectMaintenanceWindowTextKeys(row, keys);
+        }
+        for (const row of this.monster()) {
+            collectMonsterTextKeys(row, keys);
+        }
+        for (const row of this.quest()) {
+            collectQuestTextKeys(row, keys);
+        }
+        for (const row of this.questReward()) {
+            collectQuestRewardTextKeys(row, keys);
+        }
+        for (const row of this.recipe()) {
+            collectRecipeTextKeys(row, keys);
+        }
+        for (const row of this.shop()) {
+            collectShopTextKeys(row, keys);
+        }
+        for (const row of this.shopItem()) {
+            collectShopItemTextKeys(row, keys);
+        }
+        for (const row of this.skill()) {
+            collectSkillTextKeys(row, keys);
+        }
+        for (const row of this.stage()) {
+            collectStageTextKeys(row, keys);
+        }
+        for (const row of this.stageReward()) {
+            collectStageRewardTextKeys(row, keys);
+        }
+        for (const row of this.vipLevel()) {
+            collectVipLevelTextKeys(row, keys);
         }
         return keys;
     }
-    item(): ItemTable {
-        return this._item;
+    achievement(): AchievementTable {
+        return this._achievement;
     }
-    shop(): ShopTable {
-        return this._shop;
-    }
-    shopItem(): ShopItemTable {
-        return this._shopItem;
-    }
-    recipe(): RecipeTable {
-        return this._recipe;
-    }
-    gachaPool(): GachaPoolTable {
-        return this._gachaPool;
-    }
-    gachaItem(): GachaItemTable {
-        return this._gachaItem;
-    }
-    equipmentSet(): EquipmentSetTable {
-        return this._equipmentSet;
-    }
-    skill(): SkillTable {
-        return this._skill;
+    buff(): BuffTable {
+        return this._buff;
     }
     character(): CharacterTable {
         return this._character;
@@ -339,62 +321,11 @@ export class SoraConfig {
     characterSkill(): CharacterSkillTable {
         return this._characterSkill;
     }
-    buff(): BuffTable {
-        return this._buff;
+    complexActionEntry(): ComplexActionEntryTable {
+        return this._complexActionEntry;
     }
-    dropGroup(): DropGroupTable {
-        return this._dropGroup;
-    }
-    dropEntry(): DropEntryTable {
-        return this._dropEntry;
-    }
-    monster(): MonsterTable {
-        return this._monster;
-    }
-    stage(): StageTable {
-        return this._stage;
-    }
-    stageReward(): StageRewardTable {
-        return this._stageReward;
-    }
-    dungeon(): DungeonTable {
-        return this._dungeon;
-    }
-    quest(): QuestTable {
-        return this._quest;
-    }
-    questReward(): QuestRewardTable {
-        return this._questReward;
-    }
-    levelExp(): LevelExpTable {
-        return this._levelExp;
-    }
-    achievement(): AchievementTable {
-        return this._achievement;
-    }
-    vipLevel(): VipLevelTable {
-        return this._vipLevel;
-    }
-    gameSettings(): GameSettingsTable {
-        return this._gameSettings;
-    }
-    maintenanceWindow(): MaintenanceWindowTable {
-        return this._maintenanceWindow;
-    }
-    mailTemplate(): MailTemplateTable {
-        return this._mailTemplate;
-    }
-    mailReward(): MailRewardTable {
-        return this._mailReward;
-    }
-    dialogue(): DialogueTable {
-        return this._dialogue;
-    }
-    eventRule(): EventRuleTable {
-        return this._eventRule;
-    }
-    complexRule(): ComplexRuleTable {
-        return this._complexRule;
+    complexActionGroup(): ComplexActionGroupTable {
+        return this._complexActionGroup;
     }
     complexConditionGroup(): ComplexConditionGroupTable {
         return this._complexConditionGroup;
@@ -402,14 +333,83 @@ export class SoraConfig {
     complexConditionGroupEntry(): ComplexConditionGroupEntryTable {
         return this._complexConditionGroupEntry;
     }
+    complexRule(): ComplexRuleTable {
+        return this._complexRule;
+    }
     complexRuleCondition(): ComplexRuleConditionTable {
         return this._complexRuleCondition;
     }
-    complexActionGroup(): ComplexActionGroupTable {
-        return this._complexActionGroup;
+    dialogue(): DialogueTable {
+        return this._dialogue;
     }
-    complexActionEntry(): ComplexActionEntryTable {
-        return this._complexActionEntry;
+    dropEntry(): DropEntryTable {
+        return this._dropEntry;
+    }
+    dropGroup(): DropGroupTable {
+        return this._dropGroup;
+    }
+    dungeon(): DungeonTable {
+        return this._dungeon;
+    }
+    equipmentSet(): EquipmentSetTable {
+        return this._equipmentSet;
+    }
+    eventRule(): EventRuleTable {
+        return this._eventRule;
+    }
+    gachaItem(): GachaItemTable {
+        return this._gachaItem;
+    }
+    gachaPool(): GachaPoolTable {
+        return this._gachaPool;
+    }
+    gameSettings(): GameSettingsTable {
+        return this._gameSettings;
+    }
+    item(): ItemTable {
+        return this._item;
+    }
+    levelExp(): LevelExpTable {
+        return this._levelExp;
+    }
+    mailReward(): MailRewardTable {
+        return this._mailReward;
+    }
+    mailTemplate(): MailTemplateTable {
+        return this._mailTemplate;
+    }
+    maintenanceWindow(): MaintenanceWindowTable {
+        return this._maintenanceWindow;
+    }
+    monster(): MonsterTable {
+        return this._monster;
+    }
+    quest(): QuestTable {
+        return this._quest;
+    }
+    questReward(): QuestRewardTable {
+        return this._questReward;
+    }
+    recipe(): RecipeTable {
+        return this._recipe;
+    }
+    shop(): ShopTable {
+        return this._shop;
+    }
+    shopItem(): ShopItemTable {
+        return this._shopItem;
+    }
+    skill(): SkillTable {
+        return this._skill;
+    }
+    stage(): StageTable {
+        return this._stage;
+    }
+    stageReward(): StageRewardTable {
+        return this._stageReward;
+    }
+    vipLevel(): VipLevelTable {
+        return this._vipLevel;
     }
 }
 export class SoraI18n implements SoraTextResolver {

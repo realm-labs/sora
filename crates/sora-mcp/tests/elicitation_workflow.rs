@@ -212,9 +212,8 @@ fn plain_project() -> PathBuf {
     fs::write(
         root.join("schema.toml"),
         r#"
-[[tables]]
+[tables.Settings]
 id = "settings"
-name = "Settings"
 mode = "singleton"
 "#,
     )

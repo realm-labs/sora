@@ -17,7 +17,7 @@ use sora_input::{
     },
     traits::DataInput,
 };
-use sora_input_schema::input::SchemaFileInput;
+use sora_input_schema::input::ProjectSchemaInput;
 use sora_ir::{
     input_projection::{TaggedColumnKind, struct_columns, tagged_columns, tagged_columns_union},
     model::{ConfigIr, FieldIr, TableIr, TableModeIr, TypeIr},
@@ -237,7 +237,7 @@ pub fn execute_data_operations(
 pub(crate) fn load_raw_project_data(
     session: &ProjectSession,
 ) -> anyhow::Result<(ConfigIr, ConfigData, LocalizationData)> {
-    let schema_input = SchemaFileInput::new(session.manifest_path());
+    let schema_input = ProjectSchemaInput::new(session.manifest_path());
     let ir = sora_core::pipeline::load_schema_ir_with_parsers(
         &schema_input,
         session.runtime().schema_parsers(),

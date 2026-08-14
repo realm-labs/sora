@@ -70,21 +70,18 @@ fn clean_removes_stale_files_and_empty_directories_without_rewriting_survivors()
     let schema_path = base.join("schema/items.toml");
     let second_table = r#"
 
-[[tables]]
+[tables.Skill]
 id = "skill"
-name = "Skill"
 mode = "map"
 key = "id"
 
-[tables.source]
+[tables.Skill.source]
 file = "skills.toml"
 
-[[tables.fields]]
-name = "id"
+[tables.Skill.fields.id]
 type = "i32"
 
-[[tables.fields]]
-name = "name"
+[tables.Skill.fields.name]
 type = "string"
 "#;
     let schema = fs::read_to_string(&schema_path).unwrap();
@@ -405,20 +402,17 @@ build:
         schema_dir.join("items.yaml"),
         r#"
 enums:
-  - name: ItemType
-    values: [{ id: 0, name: Weapon }, { id: 1, name: Armor }]
+  ItemType: [Weapon, Armor]
 tables:
-  - id: item
-    name: Item
+  Item:
+    id: item
     mode: map
     key: id
     source:
       file: Item.xlsx
     fields:
-      - name: id
-        type: i32
-      - name: item_type
-        type: enum<ItemType>
+      id: i32
+      item_type: enum<ItemType>
 "#,
     )
     .unwrap();
@@ -470,22 +464,21 @@ fn build_command_accepts_json_project_manifest() {
         schema_dir.join("items.json"),
         r#"
 {
-  "enums": [
-    { "name": "ItemType", "values": [{ "id": 0, "name": "Weapon" }, { "id": 1, "name": "Armor" }] }
-  ],
-  "tables": [
-    {
+  "enums": {
+    "ItemType": ["Weapon", "Armor"]
+  },
+  "tables": {
+    "Item": {
       "id": "item",
-      "name": "Item",
       "mode": "map",
       "key": "id",
       "source": { "file": "Item.xlsx" },
-      "fields": [
-        { "name": "id", "type": "i32" },
-        { "name": "item_type", "type": "enum<ItemType>" }
-      ]
+      "fields": {
+        "id": "i32",
+        "item_type": "enum<ItemType>"
+      }
     }
-  ]
+  }
 }
 "#,
     )
@@ -539,18 +532,17 @@ return {
         r#"
 return {
   enums = {
-    { name = "ItemType", values = { { id = 0, name = "Weapon" }, { id = 1, name = "Armor" } } },
+    ItemType = { "Weapon", "Armor" },
   },
   tables = {
-    {
+    Item = {
       id = "item",
-      name = "Item",
       mode = "map",
       key = "id",
       source = { file = "Item.xlsx" },
       fields = {
-        { name = "id", type = "i32" },
-        { name = "item_type", type = "enum<ItemType>" },
+        { id = "i32" },
+        { item_type = "enum<ItemType>" },
       },
     },
   },
@@ -777,30 +769,23 @@ runtime_format = "json"
     fs::write(
         schema_dir.join("items.toml"),
         r#"
-[[enums]]
-name = "ItemType"
-values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }]
+[enums]
+ItemType = ["Weapon", "Armor"]
 
-[[tables]]
+[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
 
-[tables.source]
+[tables.Item.source]
 file = "items.toml"
 
-[[tables.fields]]
-name = "id"
-type = "i32"
+[tables.Item.fields]
+id = "i32"
 
-[[tables.fields]]
-name = "name"
-type = "string"
+name = "string"
 
-[[tables.fields]]
-name = "item_type"
-type = "enum<ItemType>"
+item_type = "enum<ItemType>"
 "#,
     )
     .unwrap();

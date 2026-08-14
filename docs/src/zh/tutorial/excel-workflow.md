@@ -9,20 +9,19 @@ Excel 支持围绕生成模板设计。schema 拥有表结构，Excel 是这个 
 第一种是直接运行命令：
 
 ```bash
-sora excel-template --project project.toml --out generated/excel
+sora excel-template --project project.scon --out generated/excel
 ```
 
-这条命令的意思是：读取 `project.toml` 里的 schema，然后把 Excel 模板写到 `generated/excel` 目录。这个目录应该只放模板产物，可以删除后重新生成，不应该放手工编辑的源数据。
+这条命令的意思是：读取 `project.scon` 里的 schema，然后把 Excel 模板写到 `generated/excel` 目录。这个目录应该只放模板产物，可以删除后重新生成，不应该放手工编辑的源数据。
 
-第二种是把模板输出目录写进 `project.toml`，之后统一运行 `sora build`：
+第二种是把模板输出目录写进 `project.scon`，之后统一运行 `sora build`：
 
-```toml
-[build]
-excel_templates = "generated/excel"
+```scon
+build { excel_templates = "generated/excel" }
 ```
 
 ```bash
-sora build --project project.toml
+sora build --project project.scon
 ```
 
 这两种方式生成的是同一类文件。区别只是：第一种只生成 Excel 模板；第二种会和 schema lock、codegen、export 等 build 输出一起执行。
@@ -45,13 +44,13 @@ sora build --project project.toml
 真实项目里已有数据通常很多，这时不要把数据行复制到新模板，而应该使用 `excel-sync`。它会根据当前 schema 更新 workbook 表头，同时保留数据行：
 
 ```bash
-sora excel-sync --project project.toml --data-root data
+sora excel-sync --project project.scon --data-root data
 ```
 
 不带 `--write` 时，命令只预览将要发生的变化。确认后再写入文件：
 
 ```bash
-sora excel-sync --project project.toml --data-root data --write
+sora excel-sync --project project.scon --data-root data --write
 ```
 
 写入已有 workbook 前，Sora 会先把旧文件复制到 `data/.sora-backup/<timestamp>/` 下。
@@ -66,35 +65,19 @@ sora excel-sync --project project.toml --data-root data --write
 
 每个表最终生成到哪个 workbook 和 sheet，由表自己的 source 决定：
 
-```toml
-[[tables]]
-id = "item"
-name = "Item"
-
-[tables.source]
-format = "xlsx"
-file = "Core.xlsx"
-sheet = "Item"
-
-[[tables]]
-id = "quest"
-name = "Quest"
-
-[tables.source]
-format = "xlsx"
-file = "Core.xlsx"
-sheet = "Quest"
+```scon
+tables {
+  Item { mode = "map" source { format = "xlsx" file = "Core.xlsx" sheet = "Item" } }
+  Quest { mode = "map" source { format = "xlsx" file = "Core.xlsx" sheet = "Quest" } }
+}
 ```
 
 上面的配置会在 `generated/excel/Core.xlsx` 中生成两个 sheet：`Item` 和 `Quest`。
 
 如果另一个表写成：
 
-```toml
-[tables.source]
-format = "xlsx"
-file = "Battle.xlsx"
-sheet = "Skill"
+```scon
+source { format = "xlsx" file = "Battle.xlsx" sheet = "Skill" }
 ```
 
 它就会生成到另一个文件：`generated/excel/Battle.xlsx` 的 `Skill` sheet。
@@ -109,7 +92,7 @@ sheet = "Skill"
 | `#name` | 面向表格编辑的显示名行。 |
 | `#field` | Sora 读取的稳定 schema 字段名。 |
 | `#type` | 类型提示，例如 `i32`、`enum<ItemType>` 或 `struct<Cost>(kind: enum<ResourceKind>, id: i32, count: i32)`。 |
-| `#groups` | 每个字段所属的已声明 group。 |
+| `#groups` | 每个字段所属的 group。 |
 | `#input` | key、parser、range、length 或派生字段来源等输入提示。 |
 | `#desc` | 给编辑者和 reviewer 看的字段注释。 |
 
@@ -121,7 +104,7 @@ sheet = "Skill"
 
 如果某列的 `#input` 以 `from=` 开头，这个字段是从另一张表派生出来的。保留该列里的生成占位内容，去编辑对应的子表行。
 
-schema 变更后，先运行 `sora excel-sync --project project.toml --data-root data` 预览表头变化，确认后再加 `--write` 写回。这样既保留了电子表格编辑体验，也避免 Excel 变成第二套 schema 语言。
+schema 变更后，先运行 `sora excel-sync --project project.scon --data-root data` 预览表头变化，确认后再加 `--write` 写回。这样既保留了电子表格编辑体验，也避免 Excel 变成第二套 schema 语言。
 
 ## 常见字段形状
 

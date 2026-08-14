@@ -5,77 +5,56 @@ This tutorial creates a small item configuration table. The same pattern scales 
 ## Project Layout
 
 ```text
-project.toml
-schema/items.toml
+project.scon
+schema/items.scon
 data/Item.xlsx
 generated/
 ```
 
 ## Project Manifest
 
-```toml
-project = { id = "game_config" }
-groups = { common = { default = true } }
-views = { default = { contract = "game_config/default", groups = ["common"] } }
-includes = ["schema/items.toml"]
+```scon
+project { id = "game_config" }
+groups { common { default = true } }
+views {
+  default {
+    contract = "game_config/default"
+    groups = ["common"]
+  }
+}
+includes = ["schema/items.scon"]
 
-[build]
-default_source_format = "xlsx"
-data_root = "data"
-schema_lock = "generated/schema.lock"
-excel_templates = "generated/excel"
-
-[[build.codegen]]
-target = "rust"
-out = "generated/rust"
-format = "auto"
-
-[[build.exports]]
-format = "binary"
-out = "generated/config.sora"
+build {
+  default_source_format = "xlsx"
+  data_root = "data"
+  view = "default"
+  schema_lock = "generated/schema.lock"
+  excel_templates = "generated/excel"
+  codegen = [{ target = "rust", out = "generated/rust", format = "auto" }]
+  exports = [{ format = "binary", out = "generated/config.sora" }]
+}
 ```
 
 `schema_lock` captures the normalized schema, `excel_templates` writes workbooks with generated headers, `build.codegen` declares language output, and `build.exports` declares runtime data output.
 
 ## Schema
 
-```toml
-[[enums]]
-name = "ItemType"
-values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
+```scon
+enums { ItemType = ["Weapon", "Armor", "Material", "Consumable"] }
 
-[[tables]]
-id = "item"
-name = "Item"
-mode = "map"
-key = "id"
-
-[tables.source]
-format = "xlsx"
-file = "Item.xlsx"
-sheet = "Item"
-
-[[tables.fields]]
-name = "id"
-type = "i32"
-comment = "Item id"
-
-[[tables.fields]]
-name = "name"
-type = "string"
-comment = "Display name"
-
-[[tables.fields]]
-name = "item_type"
-type = "enum<ItemType>"
-comment = "Item category"
-
-[[tables.fields]]
-name = "max_stack"
-type = "i32"
-default = "1"
-range = [1, 9999]
-comment = "Stack limit"
+tables {
+  Item {
+    mode = "map"
+    key = "id"
+    source { format = "xlsx" file = "Item.xlsx" sheet = "Item" }
+    fields {
+      id { type = "i32" comment = "Item id" }
+      name { type = "string" comment = "Display name" }
+      item_type { type = "enum<ItemType>" comment = "Item category" }
+      max_stack { type = "i32" default = "1" range = [1, 9999] comment = "Stack limit" }
+    }
+  }
+}
 ```
 
 This table uses `mode = "map"`, so the generated runtime exposes keyed lookup by `id`.
@@ -85,7 +64,7 @@ This table uses `mode = "map"`, so the generated runtime exposes keyed lookup by
 Generate a workbook:
 
 ```bash
-sora excel-template --project project.toml --out generated/excel
+sora excel-template --project project.scon --out generated/excel
 ```
 
 The generated sheet has metadata rows above the editable data area:
@@ -110,7 +89,7 @@ Copy the workbook to `data/Item.xlsx` after generating it, or point your source 
 Run the configured outputs:
 
 ```bash
-sora build --project project.toml
+sora build --project project.scon
 ```
 
 Expected artifacts:
@@ -120,4 +99,4 @@ Expected artifacts:
 - `generated/rust`
 - `generated/config.sora`
 
-Use `sora check --project project.toml` when you only want schema validation.
+Use `sora check --project project.scon` when you only want schema validation.

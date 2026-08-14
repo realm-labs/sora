@@ -1,0 +1,37 @@
+enums = {
+  ItemType = [
+    "Weapon",
+    "Armor",
+    "Material",
+    "Consumable",
+  ]
+}
+tables = {
+  Item = {
+    mode = "map"
+    key = "id"
+    source = {
+      format = "xlsx"
+      file = "Item.xlsx"
+      sheet = "Item"
+    }
+    fields = {
+      id = {
+        type = "i32"
+        comment = "Item id"
+      }
+      name = {
+        type = "string"
+        comment = "Display name"
+      }
+      item_type = {
+        type = "enum<ItemType>"
+        comment = "Item type"
+      }
+      max_stack = {
+        type = "i32"
+        comment = "Max stack count"
+      }
+    }
+  }
+}

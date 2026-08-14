@@ -3,122 +3,123 @@
 package showcase
 
 type EquipmentSet struct {
-	ID          int32
-	Name        string
-	ItemIds     []int32
-	BonusEffect SkillEffect
+    ID int32
+    Name string
+    ItemIds []int32
+    BonusEffect SkillEffect
 }
 
 func decodeEquipmentSet(reader *SoraReader) (EquipmentSet, error) {
-	var value EquipmentSet
-	var err error
-	value.ID, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = reader.ReadString()
-	if err != nil {
-		return value, err
-	}
-	value.ItemIds, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
-	if err != nil {
-		return value, err
-	}
-	value.BonusEffect, err = decodeSkillEffect(reader)
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value EquipmentSet
+    var err error
+    value.ID, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = reader.ReadString()
+    if err != nil {
+        return value, err
+    }
+    value.ItemIds, err = ReadList(reader, func(reader *SoraReader) (int32, error) { return reader.ReadInt32() })
+    if err != nil {
+        return value, err
+    }
+    value.BonusEffect, err = decodeSkillEffect(reader)
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func decodeEquipmentSetValue(input SoraValue) (EquipmentSet, error) {
-	var value EquipmentSet
-	obj, err := input.AsObject()
-	if err != nil {
-		return value, err
-	}
-	value.ID, err = obj.Get("id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = obj.Get("name").AsString()
-	if err != nil {
-		return value, err
-	}
-	value.ItemIds, err = DecodeSoraValueList(obj.Get("item_ids"), func(item SoraValue) (int32, error) { return item.AsInt32() })
-	if err != nil {
-		return value, err
-	}
-	value.BonusEffect, err = decodeSkillEffectValue(obj.Get("bonus_effect"))
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value EquipmentSet
+    obj, err := input.AsObject()
+    if err != nil {
+        return value, err
+    }
+    value.ID, err = obj.Get("id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = obj.Get("name").AsString()
+    if err != nil {
+        return value, err
+    }
+    value.ItemIds, err = DecodeSoraValueList(obj.Get("item_ids"), func(item SoraValue) (int32, error) { return item.AsInt32() })
+    if err != nil {
+        return value, err
+    }
+    value.BonusEffect, err = decodeSkillEffectValue(obj.Get("bonus_effect"))
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func (value EquipmentSet) collectTextKeys(out *[]TextKey) {
-	value.BonusEffect.collectTextKeys(out)
+    value.BonusEffect.collectTextKeys(out)
 }
 
 const equipmentSetTableName = "EquipmentSet"
 
 var equipmentSetTableInfo = SoraTableInfo{
-	Name:       equipmentSetTableName,
-	RowType:    "EquipmentSet",
-	Shape:      SoraTableShapeKeyed,
-	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-	Indexes:    []SoraIndexInfo{},
+    Name: equipmentSetTableName,
+    RowType: "EquipmentSet",
+    Shape: SoraTableShapeKeyed,
+    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+    Indexes: []SoraIndexInfo{
+    },
 }
 
 type EquipmentSetTable struct {
-	keys []int32
-	rows map[int32]EquipmentSet
+    keys []int32
+    rows map[int32]EquipmentSet
 }
 
 func buildEquipmentSetTable(rows []EquipmentSet) (*EquipmentSetTable, error) {
-	keys := make([]int32, 0, len(rows))
-	for _, row := range rows {
-		keys = append(keys, row.ID)
-	}
-	return &EquipmentSetTable{keys: keys, rows: DecodeMapTable(rows, func(row EquipmentSet) int32 { return row.ID })}, nil
+    keys := make([]int32, 0, len(rows))
+    for _, row := range rows {
+        keys = append(keys, row.ID)
+    }
+    return &EquipmentSetTable{keys: keys, rows: DecodeMapTable(rows, func(row EquipmentSet) int32 { return row.ID })}, nil
 }
 
 func decodeEquipmentSetTable(source SoraTableSource) (*EquipmentSetTable, error) {
-	rows, err := DecodeSourceTable(source, equipmentSetTableName, decodeEquipmentSet, decodeEquipmentSetValue)
-	if err != nil {
-		return nil, err
-	}
-	return buildEquipmentSetTable(rows)
+    rows, err := DecodeSourceTable(source, equipmentSetTableName, decodeEquipmentSet, decodeEquipmentSetValue)
+    if err != nil {
+        return nil, err
+    }
+    return buildEquipmentSetTable(rows)
 }
 func (table *EquipmentSetTable) Rows() map[int32]EquipmentSet {
-	rows := make(map[int32]EquipmentSet, len(table.rows))
-	for key, row := range table.rows {
-		rows[key] = row
-	}
-	return rows
+    rows := make(map[int32]EquipmentSet, len(table.rows))
+    for key, row := range table.rows {
+        rows[key] = row
+    }
+    return rows
 }
 func (table *EquipmentSetTable) Get(key int32) (EquipmentSet, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 
 func (table *EquipmentSetTable) Keys() []int32 {
-	return append([]int32(nil), table.keys...)
+    return append([]int32(nil), table.keys...)
 }
 
 func (table *EquipmentSetTable) OrderedRows() []EquipmentSet {
-	rows := make([]EquipmentSet, 0, len(table.keys))
-	for _, key := range table.keys {
-		if row, ok := table.rows[key]; ok {
-			rows = append(rows, row)
-		}
-	}
-	return rows
+    rows := make([]EquipmentSet, 0, len(table.keys))
+    for _, key := range table.keys {
+        if row, ok := table.rows[key]; ok {
+            rows = append(rows, row)
+        }
+    }
+    return rows
 }
 func (table *EquipmentSetTable) Info() SoraTableInfo {
-	return equipmentSetTableInfo
+    return equipmentSetTableInfo
 }
 
 func (table *EquipmentSetTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }

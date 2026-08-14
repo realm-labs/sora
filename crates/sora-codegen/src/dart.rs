@@ -730,11 +730,11 @@ mod tests {
     use super::*;
     use crate::options::{LanguageCodegenOptions, RuntimeFormat};
     use sora_ir::normalize::normalize_schema;
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
 
     #[test]
     fn generates_dart_export_runtime_files() {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

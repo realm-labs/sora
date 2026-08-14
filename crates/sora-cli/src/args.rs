@@ -207,7 +207,7 @@ pub struct InitArgs {
     #[arg(short, long)]
     pub out: PathBuf,
 
-    #[arg(long, value_enum, default_value_t = SchemaFormatArg::Toml)]
+    #[arg(long, value_enum, default_value_t = SchemaFormatArg::Scon)]
     pub schema_format: SchemaFormatArg,
 
     #[arg(long)]
@@ -216,6 +216,7 @@ pub struct InitArgs {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
 pub enum SchemaFormatArg {
+    Scon,
     Toml,
     Yaml,
     Json,

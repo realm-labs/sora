@@ -21,7 +21,7 @@ Parser options are string values. Unknown parser kinds, unsupported options, and
 
 ## Custom Lua Parsers
 
-Projects can load project-local Lua parser scripts from `project.toml`:
+Projects can load project-local Lua parser scripts from `project.scon`:
 
 ```toml
 [parsers]
@@ -31,15 +31,15 @@ scripts = ["tools/parsers.lua"]
 Script paths are resolved relative to the project file. After that, every command that reads the project can use the custom parsers without repeating command-line flags:
 
 ```bash
-sora build --project project.toml
-sora export --project project.toml --data-root data --format json --out generated/config.json
+sora build --project project.scon
+sora export --project project.scon --data-root data --format json --out generated/config.json
 ```
 
 CLI commands can also load temporary parser scripts with the global `--parser-script` option:
 
 ```bash
-sora --parser-script tools/parsers.lua build --project project.toml
-sora --parser-script tools/parsers.lua export --project project.toml --data-root data --format json --out generated/config.json
+sora --parser-script tools/parsers.lua build --project project.scon
+sora --parser-script tools/parsers.lua export --project project.scon --data-root data --format json --out generated/config.json
 ```
 
 The option can be repeated and is appended after project-configured scripts. Custom parsers are trusted project code. Sora loads them with a limited Lua standard library and does not expose `io`, `os`, `package`, or `debug`.
@@ -156,26 +156,15 @@ starter|melee|weapon
 
 Use `tuple` when a single struct is small enough to fit naturally in one cell. Values follow the referenced struct's field declaration order.
 
-```toml
-[[structs]]
-name = "ResourceCost"
-
-[[structs.fields]]
-name = "kind"
-type = "enum<ResourceKind>"
-
-[[structs.fields]]
-name = "id"
-type = "i32"
-
-[[structs.fields]]
-name = "count"
-type = "i32"
-
-[[tables.fields]]
-name = "price"
-type = "struct<ResourceCost>"
-parser = { kind = "tuple" }
+```scon
+structs {
+  ResourceCost {
+    fields { kind = "enum<ResourceKind>" id = "i32" count = "i32" }
+  }
+}
+fields {
+  price { type = "struct<ResourceCost>" parser = "tuple" }
+}
 ```
 
 Cell:
@@ -206,26 +195,15 @@ Gold|0|100
 
 Use `columns` when one struct should be edited as normal Excel or CSV columns instead of as JSON or one compact tuple cell. It is valid on `struct<T>` and `optional<struct<T>>` table fields.
 
-```toml
-[[structs]]
-name = "ResourceCost"
-
-[[structs.fields]]
-name = "kind"
-type = "enum<ResourceKind>"
-
-[[structs.fields]]
-name = "id"
-type = "i32"
-
-[[structs.fields]]
-name = "count"
-type = "i32"
-
-[[tables.fields]]
-name = "price"
-type = "struct<ResourceCost>"
-parser = { kind = "columns", prefix = "price_" }
+```scon
+structs {
+  ResourceCost {
+    fields { kind = "enum<ResourceKind>" id = "i32" count = "i32" }
+  }
+}
+fields {
+  price { type = "struct<ResourceCost>" parser = { kind = "columns", prefix = "price_" } }
+}
 ```
 
 CSV headers and row:
@@ -318,33 +296,18 @@ Sora exports maps as pair arrays so non-string keys remain unambiguous. If you p
 
 Use `tagged_columns` when one `union<T>` value should be edited across multiple Excel or CSV columns. It is only valid on a table field whose type is exactly `union<T>`. It is intentionally not valid for `optional<union<T>>`, `list<union<T>>`, `set<union<T>>`, or other containers.
 
-```toml
-[[unions]]
-name = "EventCondition"
-tag = "type"
-
-[[unions.variants]]
-name = "QuestCompleted"
-
-[[unions.variants.fields]]
-name = "quest_id"
-type = "ref<Quest.id>"
-
-[[unions.variants]]
-name = "HasItem"
-
-[[unions.variants.fields]]
-name = "item_id"
-type = "ref<Item.id>"
-
-[[unions.variants.fields]]
-name = "count"
-type = "i32"
-
-[[tables.fields]]
-name = "value"
-type = "union<EventCondition>"
-parser = { kind = "tagged_columns", prefix = "" }
+```scon
+unions {
+  EventCondition {
+    variants {
+      QuestCompleted { fields { quest_id = "ref<Quest.id>" } }
+      HasItem { fields { item_id = "ref<Item.id>" count = "i32" } }
+    }
+  }
+}
+fields {
+  value { type = "union<EventCondition>" parser = { kind = "tagged_columns", prefix = "" } }
+}
 ```
 
 CSV headers and rows:
@@ -367,11 +330,10 @@ For generated XLSX templates, columns projected from the same `tagged_columns` f
 
 Use `json` for nested values, unions inside containers, nested collections, and any shape that needs explicit escaping.
 
-```toml
-[[tables.fields]]
-name = "actions"
-type = "list<union<RewardAction>>"
-parser = { kind = "json" }
+```scon
+fields {
+  actions { type = "list<union<RewardAction>>" parser = "json" }
+}
 ```
 
 Cell:

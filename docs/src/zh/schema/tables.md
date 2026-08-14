@@ -10,31 +10,26 @@
 | `list` | 没有 keyed lookup 的有序行集合。 | 掉落项、权重池、有序步骤。 |
 | `singleton` | 单行。 | 全局配置、调参常量。 |
 
-```toml
-[[tables]]
-id = "item"
-name = "Item"
-mode = "map"
-key = "id"
-
-[[tables.fields]]
-name = "id"
-type = "i32"
+```scon
+tables {
+  Item {
+    mode = "map"
+    key = "id"
+    fields { id = "i32" }
+  }
+}
 ```
 
 对于 map 表，`key` 指定表的主键字段。Sora 会用它做行唯一性校验、生成 lookup API、生成 Excel 模板提示，并校验 `ref<Table.key>`。
 
-表的 `id` 是 view 选择和表别名使用的稳定 schema 身份；修改 `name` 时不能跟着改变。
-`name` 是数据文件和 schema 引用使用的 canonical source name。View 可以暴露不同的
-消费方表名，而不改变稳定 ID 或源数据。
-
 ## Source
 
-```toml
-[tables.source]
-format = "xlsx"
-file = "Core.xlsx"
-sheet = "Item"
+```scon
+source {
+  format = "xlsx"
+  file = "Core.xlsx"
+  sheet = "Item"
+}
 ```
 
 当项目或命令提供默认 source format 时，`format` 可以省略。导出和校验时，`file` 会基于命令的 `--data-root` 解析。
@@ -57,37 +52,33 @@ sheet = "Item"
 | 概念 | 用途 |
 | --- | --- |
 | table `key` | 表的主键。map 表必须靠它保证每行唯一，并生成主要的 `get(id)` 查询。 |
-| `[[tables.indexes]]` | 额外查询方式。比如按名字查、按类型分组、按关卡查掉落。 |
+| table `indexes` | keyed 的额外查询方式。比如按名字查、按类型分组、按关卡查掉落。 |
 
 例如 `Item` 表的主键是 `id`，运行时代码通常会按 `id` 取一个道具：
 
-```toml
-[[tables]]
-id = "item"
-name = "Item"
-mode = "map"
-key = "id"
-
-[[tables.fields]]
-name = "id"
-type = "i32"
-
-[[tables.fields]]
-name = "name"
-type = "string"
-
-[[tables.fields]]
-name = "item_type"
-type = "enum<ItemType>"
+```scon
+tables {
+  Item {
+    mode = "map"
+    key = "id"
+    fields {
+      id = "i32"
+      name = "string"
+      item_type = "enum<ItemType>"
+    }
+  }
+}
 ```
 
 如果还希望按 `name` 查道具，可以加一个 unique index：
 
-```toml
-[[tables.indexes]]
-name = "by_name"
-fields = ["name"]
-unique = true
+```scon
+indexes {
+  by_name {
+    fields = ["name"]
+    unique = true
+  }
+}
 ```
 
 对应数据可以长这样：
@@ -101,11 +92,10 @@ unique = true
 
 如果希望按分类拿到多行，就用非 unique index：
 
-```toml
-[[tables.indexes]]
-name = "by_item_type"
-fields = ["item_type"]
-unique = false
+```scon
+indexes {
+  by_item_type = ["item_type"]
+}
 ```
 
 对应数据：
@@ -120,11 +110,13 @@ unique = false
 
 `fields` 是列表，因此 unique index 也可以表达组合唯一性：
 
-```toml
-[[tables.indexes]]
-name = "by_world_stage"
-fields = ["world", "stage"]
-unique = true
+```scon
+indexes {
+  by_world_stage {
+    fields = ["world", "stage"]
+    unique = true
+  }
+}
 ```
 
 这会要求 `(world, stage)` 组合不能重复。例如 `(1, 1)` 只能出现一次，`(1, 2)` 可以再出现一次。当前生成 lookup helper 主要支持非 singleton 表上的单字段 index；组合 index 更适合先用于数据校验。

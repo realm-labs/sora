@@ -1,13 +1,13 @@
 use std::{collections::BTreeMap, fmt};
 
 use serde::{
-    Deserialize, Deserializer,
+    Deserialize, Deserializer, Serialize,
     de::{SeqAccess, Visitor},
 };
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
-pub struct SchemaFile {
-    pub project: ProjectSchema,
+pub struct ProjectSchema {
+    pub project: ProjectMetadataSchema,
 
     #[serde(default)]
     pub groups: BTreeMap<String, GroupSchema>,
@@ -37,23 +37,37 @@ pub struct SchemaFile {
     pub tables: Vec<TableSchema>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-pub struct ProjectSchema {
+pub struct ProjectMetadataSchema {
     pub id: String,
 
     #[serde(default)]
     pub views: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
+pub struct SchemaModule {
+    pub project: Option<ProjectMetadataSchema>,
+    pub groups: BTreeMap<String, GroupSchema>,
+    pub views: BTreeMap<String, ViewSchema>,
+    pub codegen: Option<CodegenSchema>,
+    pub localization: Option<LocalizationSchema>,
+    pub includes: Vec<String>,
+    pub enums: Vec<EnumSchema>,
+    pub structs: Vec<StructSchema>,
+    pub unions: Vec<UnionSchema>,
+    pub tables: Vec<TableSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct GroupSchema {
     #[serde(default)]
     pub default: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ViewSchema {
     pub contract: String,
@@ -71,7 +85,7 @@ pub struct ViewSchema {
     pub bindings: BTreeMap<String, serde_json::Value>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ViewTableSelectionSchema {
     #[serde(default)]
@@ -81,7 +95,7 @@ pub struct ViewTableSelectionSchema {
     pub exclude: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ViewNamesSchema {
     #[serde(default)]
@@ -216,7 +230,7 @@ pub struct TableSourceSchema {
     pub sheet: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TableModeSchema {
     List,
@@ -341,7 +355,7 @@ mod tests {
 
     #[test]
     fn loads_toml_schema() {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -387,7 +401,7 @@ parser = { kind = "split", separator = "|" }
 
     #[test]
     fn defaults_optional_collections_and_field_flags() {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -414,7 +428,7 @@ type = "string"
 
     #[test]
     fn rejects_table_only_properties_on_struct_fields() {
-        let error = toml::from_str::<SchemaFile>(
+        let error = toml::from_str::<ProjectSchema>(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -436,7 +450,7 @@ from = { table = "RewardRow", parent_key = "id", child_key = "reward_id" }
 
     #[test]
     fn loads_codegen_options() {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

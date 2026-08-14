@@ -240,11 +240,11 @@ fn ref_type<'a>(ir: &'a ConfigIr, table_name: &str, field_name: &str) -> &'a Typ
 mod tests {
     use super::*;
     use sora_ir::normalize::normalize_schema;
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
 
     #[test]
     fn generates_business_proto_schema() {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "com.sora.game" }
 groups = { common = { default = true } }

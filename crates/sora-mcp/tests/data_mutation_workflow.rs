@@ -136,20 +136,15 @@ fn temp_project() -> PathBuf {
     .unwrap();
     fs::write(
         root.join("schema.toml"),
-        r#"[[tables]]
+        r#"[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
 source = { file = "items.json", format = "json" }
 
-[[tables.fields]]
-name = "id"
-type = "i32"
-
-[[tables.fields]]
-name = "name"
-type = "string"
+[tables.Item.fields]
+id = "i32"
+name = "string"
 "#,
     )
     .unwrap();

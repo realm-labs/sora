@@ -2,8 +2,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use sora_ir::model::{ConfigIr, FieldIr, TableModeIr, TypeIr};
 use sora_schema::model::{
-    FieldSchema, GroupSetSchema, ParserSchema, SchemaFile, TableFieldFromSchema, TableFieldSchema,
-    TableModeSchema,
+    FieldSchema, GroupSetSchema, ParserSchema, ProjectSchema, TableFieldFromSchema,
+    TableFieldSchema, TableModeSchema,
 };
 
 use super::{
@@ -235,7 +235,7 @@ pub(crate) fn build_schema(
 }
 
 pub(crate) fn build_schema_from_raw(
-    schema: &SchemaFile,
+    schema: &ProjectSchema,
     sources: &[String],
     source_by_node: &BTreeMap<String, String>,
 ) -> StudioSchema {

@@ -1,0 +1,138 @@
+tables = {
+  GameSettings = {
+    mode = "singleton"
+    source = {
+      file = "Core.xlsx"
+      sheet = "GameSettings"
+    }
+    fields = {
+      version = "string"
+      daily_reset_hour = {
+        type = "i32"
+        range = [
+          0,
+          23,
+        ]
+      }
+      starting_gold = {
+        type = "i32"
+        default = "100"
+        range = [
+          0,
+          999999,
+        ]
+      }
+      spawn_pos = {
+        type = "struct<Vec3>"
+        parser = "tuple"
+      }
+      starter_items = {
+        type = "list<ref<Item.id>>"
+        length = [
+          1,
+          4,
+        ]
+        parser = "json"
+      }
+      gravity = {
+        type = "f64"
+        comment = "Double precision tuning value"
+      }
+      daily_bonus_items = {
+        type = "array<ref<Item.id>,3>"
+        comment = "Fixed-length array parsed from one cell"
+        parser = "split"
+      }
+      spawn_points = {
+        type = "array<struct<Vec3>,2>"
+        comment = "Fixed-length array of structs"
+        parser = "tuple_list"
+      }
+      maintenance = {
+        type = "optional<MaintenanceInfo>"
+        comment = "Optional derived struct copied from a child row"
+        from = {
+          table = "MaintenanceWindow"
+          parent_key = "version"
+          child_key = "version"
+        }
+      }
+    }
+  }
+  MaintenanceWindow = {
+    groups = "server"
+    mode = "list"
+    source = {
+      file = "Core.xlsx"
+      sheet = "MaintenanceWindow"
+    }
+    fields = {
+      version = "string"
+      starts_at = "string"
+      duration_minutes = {
+        type = "i32"
+        range = [
+          1,
+          1440,
+        ]
+      }
+      reason = "optional<string>"
+    }
+  }
+  MailTemplate = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Quest.xlsx"
+      sheet = "MailTemplate"
+    }
+    fields = {
+      id = "i32"
+      mail_type = "enum<MailType>"
+      title_key = "text"
+      body_key = "text"
+      rewards = {
+        type = "list<Reward>"
+        from = {
+          table = "MailReward"
+          parent_key = "id"
+          child_key = "mail_id"
+          order_by = "seq"
+        }
+      }
+    }
+  }
+  MailReward = {
+    mode = "list"
+    source = {
+      file = "Quest.xlsx"
+      sheet = "MailReward"
+    }
+    fields = {
+      mail_id = "ref<MailTemplate.id>"
+      seq = "i32"
+      item_id = "ref<Item.id>"
+      count = "i32"
+    }
+  }
+  Dialogue = {
+    mode = "map"
+    key = "id"
+    source = {
+      file = "Quest.xlsx"
+      sheet = "Dialogue"
+    }
+    fields = {
+      id = "i32"
+      speaker_key = "text"
+      lines = {
+        type = "list<string>"
+        length = [
+          1,
+          5,
+        ]
+        parser = "json"
+      }
+    }
+  }
+}

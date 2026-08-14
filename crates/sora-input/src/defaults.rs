@@ -186,7 +186,7 @@ mod tests {
     use super::*;
     use sora_data::model::{RowData, TableData};
     use sora_ir::{normalize::normalize_schema, validate::validate_config_ir};
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
 
     #[test]
     fn materializes_table_and_nested_struct_defaults() {
@@ -224,7 +224,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

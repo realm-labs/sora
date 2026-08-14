@@ -285,7 +285,9 @@ pub enum WorkspaceError {
     },
     #[error("unknown workspace root `{0}`")]
     UnknownRoot(String),
-    #[error("project manifest must be a relative path ending in `project.toml`")]
+    #[error(
+        "project manifest must be a relative path named project.scon, project.toml, project.yaml, project.yml, project.json, or project.lua"
+    )]
     InvalidRelativeManifest,
     #[error("failed to resolve project manifest `{path}`")]
     ResolveManifest {
@@ -444,9 +446,10 @@ fn script_kind_rank(kind: ProjectScriptKind) -> u8 {
 
 fn discover_root_manifests(root: &Path) -> Result<Vec<PathBuf>, WorkspaceError> {
     let mut manifests = BTreeSet::new();
-    let direct = root.join("project.toml");
-    if direct.is_file() {
-        manifests.insert(PathBuf::from("project.toml"));
+    for name in PROJECT_MANIFEST_NAMES {
+        if root.join(name).is_file() {
+            manifests.insert(PathBuf::from(name));
+        }
     }
     let entries = fs::read_dir(root).map_err(|source| WorkspaceError::ReadRoot {
         path: root.to_path_buf(),
@@ -461,9 +464,10 @@ fn discover_root_manifests(root: &Path) -> Result<Vec<PathBuf>, WorkspaceError> 
         if name.to_string_lossy().starts_with('.') || !entry.path().is_dir() {
             continue;
         }
-        let manifest = entry.path().join("project.toml");
-        if manifest.is_file() {
-            manifests.insert(PathBuf::from(name).join("project.toml"));
+        for manifest_name in PROJECT_MANIFEST_NAMES {
+            if entry.path().join(manifest_name).is_file() {
+                manifests.insert(PathBuf::from(&name).join(manifest_name));
+            }
         }
     }
     Ok(manifests.into_iter().collect())
@@ -472,7 +476,10 @@ fn discover_root_manifests(root: &Path) -> Result<Vec<PathBuf>, WorkspaceError> 
 fn validate_relative_manifest(path: &str) -> Result<PathBuf, WorkspaceError> {
     let path = Path::new(path);
     if path.is_absolute()
-        || path.file_name().and_then(|name| name.to_str()) != Some("project.toml")
+        || !path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .is_some_and(|name| PROJECT_MANIFEST_NAMES.contains(&name))
         || path
             .components()
             .any(|component| !matches!(component, std::path::Component::Normal(_)))
@@ -481,6 +488,15 @@ fn validate_relative_manifest(path: &str) -> Result<PathBuf, WorkspaceError> {
     }
     Ok(path.to_path_buf())
 }
+
+const PROJECT_MANIFEST_NAMES: &[&str] = &[
+    "project.scon",
+    "project.toml",
+    "project.yaml",
+    "project.yml",
+    "project.json",
+    "project.lua",
+];
 
 fn normalized_relative_path(path: &Path) -> String {
     path.components()

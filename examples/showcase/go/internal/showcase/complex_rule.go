@@ -3,147 +3,146 @@
 package showcase
 
 type ComplexRule struct {
-	ID   int32
-	Name string
-	// RootCondition: Single union value derived from a tagged_columns child row
-	RootCondition   EventCondition
-	RootActionGroup int32
-	// Actions: Non-JSON list<union<RewardAction>> assembled from child rows
-	Actions []RewardAction
-	// Budget: Nested tuple, tuple_list, split, and map parsers in one cell
-	Budget ComplexBudget
+    ID int32
+    Name string
+    // RootCondition: Single union value derived from a tagged_columns child row
+    RootCondition EventCondition
+    RootActionGroup int32
+    // Actions: Non-JSON list<union<RewardAction>> assembled from child rows
+    Actions []RewardAction
+    // Budget: Nested tuple, tuple_list, split, and map parsers in one cell
+    Budget ComplexBudget
 }
 
 func decodeComplexRule(reader *SoraReader) (ComplexRule, error) {
-	var value ComplexRule
-	var err error
-	value.ID, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = reader.ReadString()
-	if err != nil {
-		return value, err
-	}
-	value.RootCondition, err = decodeEventCondition(reader)
-	if err != nil {
-		return value, err
-	}
-	value.RootActionGroup, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Actions, err = ReadList(reader, func(reader *SoraReader) (RewardAction, error) { return decodeRewardAction(reader) })
-	if err != nil {
-		return value, err
-	}
-	value.Budget, err = decodeComplexBudget(reader)
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value ComplexRule
+    var err error
+    value.ID, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = reader.ReadString()
+    if err != nil {
+        return value, err
+    }
+    value.RootCondition, err = decodeEventCondition(reader)
+    if err != nil {
+        return value, err
+    }
+    value.RootActionGroup, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Actions, err = ReadList(reader, func(reader *SoraReader) (RewardAction, error) { return decodeRewardAction(reader) })
+    if err != nil {
+        return value, err
+    }
+    value.Budget, err = decodeComplexBudget(reader)
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func decodeComplexRuleValue(input SoraValue) (ComplexRule, error) {
-	var value ComplexRule
-	obj, err := input.AsObject()
-	if err != nil {
-		return value, err
-	}
-	value.ID, err = obj.Get("id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Name, err = obj.Get("name").AsString()
-	if err != nil {
-		return value, err
-	}
-	value.RootCondition, err = decodeEventConditionValue(obj.Get("root_condition"))
-	if err != nil {
-		return value, err
-	}
-	value.RootActionGroup, err = obj.Get("root_action_group").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Actions, err = DecodeSoraValueList(obj.Get("actions"), func(item SoraValue) (RewardAction, error) { return decodeRewardActionValue(item) })
-	if err != nil {
-		return value, err
-	}
-	value.Budget, err = decodeComplexBudgetValue(obj.Get("budget"))
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value ComplexRule
+    obj, err := input.AsObject()
+    if err != nil {
+        return value, err
+    }
+    value.ID, err = obj.Get("id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Name, err = obj.Get("name").AsString()
+    if err != nil {
+        return value, err
+    }
+    value.RootCondition, err = decodeEventConditionValue(obj.Get("root_condition"))
+    if err != nil {
+        return value, err
+    }
+    value.RootActionGroup, err = obj.Get("root_action_group").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Actions, err = DecodeSoraValueList(obj.Get("actions"), func(item SoraValue) (RewardAction, error) { return decodeRewardActionValue(item) })
+    if err != nil {
+        return value, err
+    }
+    value.Budget, err = decodeComplexBudgetValue(obj.Get("budget"))
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func (value ComplexRule) collectTextKeys(out *[]TextKey) {
-	collectEventConditionTextKeys(value.RootCondition, out)
-	for _, item := range value.Actions {
-		collectRewardActionTextKeys(item, out)
-	}
-	value.Budget.collectTextKeys(out)
+    collectEventConditionTextKeys(value.RootCondition, out)
+    for _, item := range value.Actions { collectRewardActionTextKeys(item, out) }
+    value.Budget.collectTextKeys(out)
 }
 
 const complexRuleTableName = "ComplexRule"
 
 var complexRuleTableInfo = SoraTableInfo{
-	Name:       complexRuleTableName,
-	RowType:    "ComplexRule",
-	Shape:      SoraTableShapeKeyed,
-	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-	Indexes:    []SoraIndexInfo{},
+    Name: complexRuleTableName,
+    RowType: "ComplexRule",
+    Shape: SoraTableShapeKeyed,
+    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+    Indexes: []SoraIndexInfo{
+    },
 }
 
 type ComplexRuleTable struct {
-	keys []int32
-	rows map[int32]ComplexRule
+    keys []int32
+    rows map[int32]ComplexRule
 }
 
 func buildComplexRuleTable(rows []ComplexRule) (*ComplexRuleTable, error) {
-	keys := make([]int32, 0, len(rows))
-	for _, row := range rows {
-		keys = append(keys, row.ID)
-	}
-	return &ComplexRuleTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexRule) int32 { return row.ID })}, nil
+    keys := make([]int32, 0, len(rows))
+    for _, row := range rows {
+        keys = append(keys, row.ID)
+    }
+    return &ComplexRuleTable{keys: keys, rows: DecodeMapTable(rows, func(row ComplexRule) int32 { return row.ID })}, nil
 }
 
 func decodeComplexRuleTable(source SoraTableSource) (*ComplexRuleTable, error) {
-	rows, err := DecodeSourceTable(source, complexRuleTableName, decodeComplexRule, decodeComplexRuleValue)
-	if err != nil {
-		return nil, err
-	}
-	return buildComplexRuleTable(rows)
+    rows, err := DecodeSourceTable(source, complexRuleTableName, decodeComplexRule, decodeComplexRuleValue)
+    if err != nil {
+        return nil, err
+    }
+    return buildComplexRuleTable(rows)
 }
 func (table *ComplexRuleTable) Rows() map[int32]ComplexRule {
-	rows := make(map[int32]ComplexRule, len(table.rows))
-	for key, row := range table.rows {
-		rows[key] = row
-	}
-	return rows
+    rows := make(map[int32]ComplexRule, len(table.rows))
+    for key, row := range table.rows {
+        rows[key] = row
+    }
+    return rows
 }
 func (table *ComplexRuleTable) Get(key int32) (ComplexRule, bool) {
-	value, ok := table.rows[key]
-	return value, ok
+    value, ok := table.rows[key]
+    return value, ok
 }
 
 func (table *ComplexRuleTable) Keys() []int32 {
-	return append([]int32(nil), table.keys...)
+    return append([]int32(nil), table.keys...)
 }
 
 func (table *ComplexRuleTable) OrderedRows() []ComplexRule {
-	rows := make([]ComplexRule, 0, len(table.keys))
-	for _, key := range table.keys {
-		if row, ok := table.rows[key]; ok {
-			rows = append(rows, row)
-		}
-	}
-	return rows
+    rows := make([]ComplexRule, 0, len(table.keys))
+    for _, key := range table.keys {
+        if row, ok := table.rows[key]; ok {
+            rows = append(rows, row)
+        }
+    }
+    return rows
 }
 func (table *ComplexRuleTable) Info() SoraTableInfo {
-	return complexRuleTableInfo
+    return complexRuleTableInfo
 }
 
 func (table *ComplexRuleTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }

@@ -2,7 +2,7 @@ use sora_data::model::{ConfigData, LocalizationData};
 use sora_diagnostics::Result;
 use sora_execution::ExecutionContext;
 use sora_ir::model::ConfigIr;
-use sora_schema::model::SchemaFile;
+use sora_schema::model::ProjectSchema;
 
 use crate::traits::{DataInput, SchemaInput};
 
@@ -30,7 +30,7 @@ impl<S, D> SplitProjectInput<S, D> {
 }
 
 impl<S: SchemaInput, D> SchemaInput for SplitProjectInput<S, D> {
-    fn load_schema(&self) -> Result<SchemaFile> {
+    fn load_schema(&self) -> Result<ProjectSchema> {
         self.schema_input.load_schema()
     }
 }

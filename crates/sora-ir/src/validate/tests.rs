@@ -1,6 +1,6 @@
 use super::*;
 use crate::normalize::normalize_schema;
-use sora_schema::model::SchemaFile;
+use sora_schema::model::ProjectSchema;
 
 #[test]
 fn validates_valid_ir() {
@@ -144,7 +144,7 @@ views = { default = { contract = "game_config/default", groups = ["common"] } }
 name = "ItemType"
 values = [{ id = 7, name = "Weapon" }, { id = 7, name = "Armor" }]
 "#;
-    let schema: SchemaFile = toml::from_str(source).unwrap();
+    let schema: ProjectSchema = toml::from_str(source).unwrap();
     let ir = normalize_schema(schema).unwrap();
 
     assert!(matches!(
@@ -946,6 +946,6 @@ values = [{{ id = 0, name = "Weapon" }}, {{ id = 1, name = "Armor" }}]
 {extra}
 "#
     );
-    let schema: SchemaFile = toml::from_str(&source).unwrap();
+    let schema: ProjectSchema = toml::from_str(&source).unwrap();
     normalize_schema(schema).unwrap()
 }

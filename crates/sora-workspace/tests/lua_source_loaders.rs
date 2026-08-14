@@ -150,22 +150,12 @@ return { source_loaders = { custom_format = {
     );
     let schema_path = root.join("schema/items.toml");
     let schema = fs::read_to_string(&schema_path).unwrap().replace(
-        "[[tables.fields]]\nname = \"target\"\ntype = \"ref<Target.id>\"",
-        r#"[[tables.fields]]
-name = "target"
-type = "ref<Target.id>"
-[[tables.fields]]
-name = "null_field"
-type = "optional<string>"
-[[tables.fields]]
-name = "nullable_values"
-type = "list<optional<string>>"
-[[tables.fields]]
-name = "palette"
-type = "map<string,optional<string>>"
-[[tables.fields]]
-name = "explicit_null"
-type = "optional<string>""#,
+        "target = \"ref<Target.id>\"",
+        r#"target = "ref<Target.id>"
+null_field = "optional<string>"
+nullable_values = "list<optional<string>>"
+palette = "map<string,optional<string>>"
+explicit_null = "optional<string>""#,
     );
     fs::write(schema_path, schema).unwrap();
     write_json(
@@ -573,43 +563,30 @@ out = "generated/config.json"
     fs::write(
         root.join("schema/items.toml"),
         r#"
-[[tables]]
+[tables.Target]
 id = "target"
-name = "Target"
 mode = "map"
 key = "id"
 source = { file = "targets.json", format = "json" }
-[[tables.fields]]
-name = "id"
-type = "i32"
 
-[[structs]]
-name = "Props"
-[[structs.fields]]
-name = "rank"
-type = "i32"
+[tables.Target.fields]
+id = "i32"
 
-[[tables]]
+[structs.Props.fields]
+rank = "i32"
+
+[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
 source = { file = "items", format = "custom_format" }
-[[tables.fields]]
-name = "id"
-type = "i32"
-[[tables.fields]]
-name = "name"
-type = "string"
-[[tables.fields]]
-name = "tags"
-type = "list<string>"
-[[tables.fields]]
-name = "props"
-type = "struct<Props>"
-[[tables.fields]]
-name = "target"
-type = "ref<Target.id>"
+
+[tables.Item.fields]
+id = "i32"
+name = "string"
+tags = "list<string>"
+props = "struct<Props>"
+target = "ref<Target.id>"
 "#,
     )
     .unwrap();

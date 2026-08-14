@@ -7,19 +7,19 @@ use std::{
 use rust_xlsxwriter::Workbook;
 use sora_excel::projection::{DATA_START_ROW, FIELD_START_COLUMN, table_template_rows};
 use sora_export::exporter::ExportOutput;
-use sora_input_schema::{input::SchemaFileInput, schema::load_project_schema_file};
+use sora_input_schema::{input::ProjectSchemaInput, schema::load_project_schema};
 use sora_input_xlsx::input::XlsxProjectInput;
 use sora_ir::{normalize::normalize_schema, validate::validate_config_ir};
 
 #[test]
 fn simple_example_pipeline_generates_all_artifacts() {
     let root = workspace_root();
-    let project = root.join("examples/simple/project.toml");
-    let schema_input = SchemaFileInput::new(&project);
+    let project = root.join("examples/simple/project.scon");
+    let schema_input = ProjectSchemaInput::new(&project);
     let out_dir = temp_dir();
     let data_root = out_dir.join("excel-data");
     write_item_workbook(&project, &data_root);
-    let project_input = XlsxProjectInput::new(SchemaFileInput::new(&project), &data_root);
+    let project_input = XlsxProjectInput::new(ProjectSchemaInput::new(&project), &data_root);
 
     sora_core::pipeline::check_schema(&schema_input).unwrap();
 
@@ -111,7 +111,7 @@ fn simple_example_pipeline_generates_all_artifacts() {
 }
 
 fn write_item_workbook(project: &Path, out_dir: &Path) {
-    let schema = load_project_schema_file(project).unwrap();
+    let schema = load_project_schema(project).unwrap();
     let ir = normalize_schema(schema).unwrap();
     validate_config_ir(&ir).unwrap();
     let table = &ir.tables[0];

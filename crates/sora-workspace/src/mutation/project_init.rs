@@ -155,9 +155,9 @@ impl WorkspaceService {
                 content: file.content.clone(),
             })
             .collect::<Vec<_>>();
-        let project_path = target.join("project.toml");
+        let project_path = target.join("project.scon");
         let transaction = match commit_text_transaction(&target, &writes, || {
-            let input = sora_input_schema::input::SchemaFileInput::new(&project_path);
+            let input = sora_input_schema::input::ProjectSchemaInput::new(&project_path);
             sora_core::pipeline::load_schema_ir(&input)?;
             Ok(())
         }) {
@@ -173,7 +173,7 @@ impl WorkspaceService {
                 return Err(crate::MutationPlanError::Transaction(error.to_string()));
             }
         };
-        let relative_manifest = format!("{}/project.toml", stored.plan.relative_directory);
+        let relative_manifest = format!("{}/project.scon", stored.plan.relative_directory);
         let session = self
             .open_discovered_project(
                 &stored.plan.root_id,
@@ -289,31 +289,29 @@ impl ProjectInitCoordinator {
 fn scaffold_files(schema_id: &str) -> Vec<(PathBuf, String)> {
     vec![
         (
-            PathBuf::from("project.toml"),
+            PathBuf::from("project.scon"),
             format!(
-                r#"includes = ["schema/items.toml"]
+                r#"includes = ["schema/items.scon"]
 
-[project]
-id = "{schema_id}"
-views = ["views/default.toml"]
+project {{
+  id = "{schema_id}"
+  views = ["views/default.toml"]
+}}
 
-[groups.common]
-default = true
+groups {{ common {{ default = true }} }}
 
-[build]
-default_source_format = "json"
-data_root = "data"
-view = "default"
-schema_lock = "generated/schema.lock"
-
-[[build.codegen]]
-target = "rust"
-out = "generated/rust"
-format = "auto"
-
-[[build.exports]]
-format = "binary"
-out = "generated/config.sora"
+build {{
+  default_source_format = "json"
+  data_root = "data"
+  view = "default"
+  schema_lock = "generated/schema.lock"
+  codegen = [
+    {{ target = "rust", out = "generated/rust", format = "auto" }},
+  ]
+  exports = [
+    {{ format = "binary", out = "generated/config.sora" }},
+  ]
+}}
 "#
             ),
         ),
@@ -327,21 +325,22 @@ groups = ["common"]
             ),
         ),
         (
-            PathBuf::from("schema/items.toml"),
-            r#"[[tables]]
-id = "item"
-name = "Item"
-mode = "map"
-key = "id"
-source = { file = "Item.json", format = "json" }
-
-[[tables.fields]]
-name = "id"
-type = "i32"
-
-[[tables.fields]]
-name = "name"
-type = "string"
+            PathBuf::from("schema/items.scon"),
+            r#"tables {
+  Item {
+    id = "item"
+    mode = "map"
+    key = "id"
+    source {
+      file = "Item.json"
+      format = "json"
+    }
+    fields {
+      id = "i32"
+      name = "string"
+    }
+  }
+}
 "#
             .to_owned(),
         ),
@@ -476,8 +475,8 @@ mod tests {
             .apply_project_init("test", &plan.plan_id, "init-1")
             .unwrap();
         assert_eq!(report.project_id, replay.project_id);
-        assert!(root.join("new-game/project.toml").is_file());
-        assert!(root.join("new-game/schema/items.toml").is_file());
+        assert!(root.join("new-game/project.scon").is_file());
+        assert!(root.join("new-game/schema/items.scon").is_file());
         assert!(root.join("new-game/data/Item.json").is_file());
         assert!(workspace.project(&report.project_id).is_ok());
         let _ = fs::remove_dir_all(root);

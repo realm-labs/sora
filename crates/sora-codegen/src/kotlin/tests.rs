@@ -22,7 +22,7 @@ use crate::{
     typescript::TypeScriptCodeGenerator,
 };
 use sora_ir::{model::ConfigIr, normalize::normalize_schema};
-use sora_schema::model::SchemaFile;
+use sora_schema::model::ProjectSchema;
 use std::{
     path::PathBuf,
     sync::atomic::{AtomicU64, Ordering},
@@ -833,7 +833,7 @@ fn java_supports_export_runtime_formats() {
 
 #[test]
 fn java_emits_nullable_annotations() {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1098,7 +1098,7 @@ fn generates_csharp_java_and_go_files() {
 }
 
 fn example_ir() -> ConfigIr {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1175,7 +1175,7 @@ fields = ["item_type"]
 }
 
 fn table_mode_ir() -> ConfigIr {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1216,7 +1216,7 @@ type = "i32"
 }
 
 fn type_mapping_ir() -> ConfigIr {
-    let schema: SchemaFile = toml::from_str(
+    let schema: ProjectSchema = toml::from_str(
         r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

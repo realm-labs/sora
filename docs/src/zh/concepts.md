@@ -2,7 +2,7 @@
 
 ## Project
 
-项目清单声明 package 名称、schema 模块、构建输出、代码生成目标和导出目标。`sora check`、`sora build`、`sora gen` 和 `sora export` 都以它为入口。
+项目清单声明项目 ID、schema 模块、view、构建输出、代码生成目标和导出目标。`sora check`、`sora build`、`sora gen` 和 `sora export` 都以它为入口。
 
 ## Schema
 

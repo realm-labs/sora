@@ -92,7 +92,7 @@ fn fnv1a64_hex(bytes: &[u8]) -> String {
 mod tests {
     use super::*;
     use sora_ir::normalize::normalize_schema;
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
 
     #[test]
     fn schema_lock_detects_schema_changes() {
@@ -107,7 +107,7 @@ mod tests {
     }
 
     fn example_ir(id_type: &str) -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(&format!(
+        let schema: ProjectSchema = toml::from_str(&format!(
             r#"
 project = {{ id = "game_config" }}
 groups = {{ common = {{ default = true }} }}

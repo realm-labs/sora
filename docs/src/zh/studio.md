@@ -5,22 +5,22 @@ Sora Studio 是内置在 `sora` CLI 里的浏览器 schema 编辑器。它用于
 用项目文件启动：
 
 ```bash
-sora studio --project project.toml
+sora studio --project project.scon
 ```
 
 默认监听 `127.0.0.1:5174`，并在终端打印本地地址。如果需要换地址，可以使用 `--host` 或 `--port`：
 
 ```bash
-sora studio --project project.toml --port 5180
+sora studio --project project.scon --port 5180
 ```
 
 ## 可以编辑什么
 
-Studio 会加载项目文件，以及 `includes` 中列出的每个 schema module。项目文件和 schema module 可以使用 TOML、YAML、JSON 或 Lua，同一个项目里也可以混用这些格式。
+Studio 会加载项目文件，以及 `includes` 中列出的每个 schema module。项目文件和 module 可以使用 SCON、TOML、YAML、JSON 或 Lua，也可以跨格式混用；新增 module 默认使用推荐的 `.scon`。
 
 编辑器可以修改：
 
-- 项目 package 名称和 schema include 列表；
+- 项目 ID 和 schema include 列表；
 - schema module 文件，包括新增和删除 include 文件；
 - 表、结构体、枚举和联合；
 - 表字段、结构体字段、枚举值和联合分支；

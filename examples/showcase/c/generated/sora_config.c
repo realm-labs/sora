@@ -5,43 +5,43 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const char* SORA_SCHEMA_FINGERPRINT = "9552056f96151363";
+static const char* SORA_SCHEMA_FINGERPRINT = "5ae7c095b011eddf";
 
 struct sora_showcase_config {
-    sora_showcase_item_table* item;
-    sora_showcase_shop_table* shop;
-    sora_showcase_shop_item_table* shop_item;
-    sora_showcase_recipe_table* recipe;
-    sora_showcase_gacha_pool_table* gacha_pool;
-    sora_showcase_gacha_item_table* gacha_item;
-    sora_showcase_equipment_set_table* equipment_set;
-    sora_showcase_skill_table* skill;
+    sora_showcase_achievement_table* achievement;
+    sora_showcase_buff_table* buff;
     sora_showcase_character_table* character;
     sora_showcase_character_skill_table* character_skill;
-    sora_showcase_buff_table* buff;
-    sora_showcase_drop_group_table* drop_group;
-    sora_showcase_drop_entry_table* drop_entry;
-    sora_showcase_monster_table* monster;
-    sora_showcase_stage_table* stage;
-    sora_showcase_stage_reward_table* stage_reward;
-    sora_showcase_dungeon_table* dungeon;
-    sora_showcase_quest_table* quest;
-    sora_showcase_quest_reward_table* quest_reward;
-    sora_showcase_level_exp_table* level_exp;
-    sora_showcase_achievement_table* achievement;
-    sora_showcase_vip_level_table* vip_level;
-    sora_showcase_game_settings_table* game_settings;
-    sora_showcase_maintenance_window_table* maintenance_window;
-    sora_showcase_mail_template_table* mail_template;
-    sora_showcase_mail_reward_table* mail_reward;
-    sora_showcase_dialogue_table* dialogue;
-    sora_showcase_event_rule_table* event_rule;
-    sora_showcase_complex_rule_table* complex_rule;
+    sora_showcase_complex_action_entry_table* complex_action_entry;
+    sora_showcase_complex_action_group_table* complex_action_group;
     sora_showcase_complex_condition_group_table* complex_condition_group;
     sora_showcase_complex_condition_group_entry_table* complex_condition_group_entry;
+    sora_showcase_complex_rule_table* complex_rule;
     sora_showcase_complex_rule_condition_table* complex_rule_condition;
-    sora_showcase_complex_action_group_table* complex_action_group;
-    sora_showcase_complex_action_entry_table* complex_action_entry;
+    sora_showcase_dialogue_table* dialogue;
+    sora_showcase_drop_entry_table* drop_entry;
+    sora_showcase_drop_group_table* drop_group;
+    sora_showcase_dungeon_table* dungeon;
+    sora_showcase_equipment_set_table* equipment_set;
+    sora_showcase_event_rule_table* event_rule;
+    sora_showcase_gacha_item_table* gacha_item;
+    sora_showcase_gacha_pool_table* gacha_pool;
+    sora_showcase_game_settings_table* game_settings;
+    sora_showcase_item_table* item;
+    sora_showcase_level_exp_table* level_exp;
+    sora_showcase_mail_reward_table* mail_reward;
+    sora_showcase_mail_template_table* mail_template;
+    sora_showcase_maintenance_window_table* maintenance_window;
+    sora_showcase_monster_table* monster;
+    sora_showcase_quest_table* quest;
+    sora_showcase_quest_reward_table* quest_reward;
+    sora_showcase_recipe_table* recipe;
+    sora_showcase_shop_table* shop;
+    sora_showcase_shop_item_table* shop_item;
+    sora_showcase_skill_table* skill;
+    sora_showcase_stage_table* stage;
+    sora_showcase_stage_reward_table* stage_reward;
+    sora_showcase_vip_level_table* vip_level;
 };
 
 sora_result sora_showcase_config_load_from_bytes(
@@ -72,7 +72,7 @@ sora_result sora_showcase_config_load_from_bytes_with_options(
         return sora_error(SORA_ERROR_OUT_OF_MEMORY, "failed to allocate config");
     }
     {
-        sora_result result = sora_showcase_item_table_load(bundle, &config->item);
+        sora_result result = sora_showcase_achievement_table_load(bundle, &config->achievement);
         if (result.code != SORA_OK) {
             sora_bundle_free(bundle);
             sora_showcase_config_free(config);
@@ -80,55 +80,7 @@ sora_result sora_showcase_config_load_from_bytes_with_options(
         }
     }
     {
-        sora_result result = sora_showcase_shop_table_load(bundle, &config->shop);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_shop_item_table_load(bundle, &config->shop_item);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_recipe_table_load(bundle, &config->recipe);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_gacha_pool_table_load(bundle, &config->gacha_pool);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_gacha_item_table_load(bundle, &config->gacha_item);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_equipment_set_table_load(bundle, &config->equipment_set);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_skill_table_load(bundle, &config->skill);
+        sora_result result = sora_showcase_buff_table_load(bundle, &config->buff);
         if (result.code != SORA_OK) {
             sora_bundle_free(bundle);
             sora_showcase_config_free(config);
@@ -152,7 +104,7 @@ sora_result sora_showcase_config_load_from_bytes_with_options(
         }
     }
     {
-        sora_result result = sora_showcase_buff_table_load(bundle, &config->buff);
+        sora_result result = sora_showcase_complex_action_entry_table_load(bundle, &config->complex_action_entry);
         if (result.code != SORA_OK) {
             sora_bundle_free(bundle);
             sora_showcase_config_free(config);
@@ -160,143 +112,7 @@ sora_result sora_showcase_config_load_from_bytes_with_options(
         }
     }
     {
-        sora_result result = sora_showcase_drop_group_table_load(bundle, &config->drop_group);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_drop_entry_table_load(bundle, &config->drop_entry);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_monster_table_load(bundle, &config->monster);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_stage_table_load(bundle, &config->stage);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_stage_reward_table_load(bundle, &config->stage_reward);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_dungeon_table_load(bundle, &config->dungeon);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_quest_table_load(bundle, &config->quest);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_quest_reward_table_load(bundle, &config->quest_reward);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_level_exp_table_load(bundle, &config->level_exp);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_achievement_table_load(bundle, &config->achievement);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_vip_level_table_load(bundle, &config->vip_level);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_game_settings_table_load(bundle, &config->game_settings);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_maintenance_window_table_load(bundle, &config->maintenance_window);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_mail_template_table_load(bundle, &config->mail_template);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_mail_reward_table_load(bundle, &config->mail_reward);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_dialogue_table_load(bundle, &config->dialogue);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_event_rule_table_load(bundle, &config->event_rule);
-        if (result.code != SORA_OK) {
-            sora_bundle_free(bundle);
-            sora_showcase_config_free(config);
-            return result;
-        }
-    }
-    {
-        sora_result result = sora_showcase_complex_rule_table_load(bundle, &config->complex_rule);
+        sora_result result = sora_showcase_complex_action_group_table_load(bundle, &config->complex_action_group);
         if (result.code != SORA_OK) {
             sora_bundle_free(bundle);
             sora_showcase_config_free(config);
@@ -320,6 +136,14 @@ sora_result sora_showcase_config_load_from_bytes_with_options(
         }
     }
     {
+        sora_result result = sora_showcase_complex_rule_table_load(bundle, &config->complex_rule);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
         sora_result result = sora_showcase_complex_rule_condition_table_load(bundle, &config->complex_rule_condition);
         if (result.code != SORA_OK) {
             sora_bundle_free(bundle);
@@ -328,7 +152,7 @@ sora_result sora_showcase_config_load_from_bytes_with_options(
         }
     }
     {
-        sora_result result = sora_showcase_complex_action_group_table_load(bundle, &config->complex_action_group);
+        sora_result result = sora_showcase_dialogue_table_load(bundle, &config->dialogue);
         if (result.code != SORA_OK) {
             sora_bundle_free(bundle);
             sora_showcase_config_free(config);
@@ -336,7 +160,183 @@ sora_result sora_showcase_config_load_from_bytes_with_options(
         }
     }
     {
-        sora_result result = sora_showcase_complex_action_entry_table_load(bundle, &config->complex_action_entry);
+        sora_result result = sora_showcase_drop_entry_table_load(bundle, &config->drop_entry);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_drop_group_table_load(bundle, &config->drop_group);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_dungeon_table_load(bundle, &config->dungeon);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_equipment_set_table_load(bundle, &config->equipment_set);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_event_rule_table_load(bundle, &config->event_rule);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_gacha_item_table_load(bundle, &config->gacha_item);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_gacha_pool_table_load(bundle, &config->gacha_pool);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_game_settings_table_load(bundle, &config->game_settings);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_item_table_load(bundle, &config->item);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_level_exp_table_load(bundle, &config->level_exp);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_mail_reward_table_load(bundle, &config->mail_reward);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_mail_template_table_load(bundle, &config->mail_template);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_maintenance_window_table_load(bundle, &config->maintenance_window);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_monster_table_load(bundle, &config->monster);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_quest_table_load(bundle, &config->quest);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_quest_reward_table_load(bundle, &config->quest_reward);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_recipe_table_load(bundle, &config->recipe);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_shop_table_load(bundle, &config->shop);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_shop_item_table_load(bundle, &config->shop_item);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_skill_table_load(bundle, &config->skill);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_stage_table_load(bundle, &config->stage);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_stage_reward_table_load(bundle, &config->stage_reward);
+        if (result.code != SORA_OK) {
+            sora_bundle_free(bundle);
+            sora_showcase_config_free(config);
+            return result;
+        }
+    }
+    {
+        sora_result result = sora_showcase_vip_level_table_load(bundle, &config->vip_level);
         if (result.code != SORA_OK) {
             sora_bundle_free(bundle);
             sora_showcase_config_free(config);
@@ -352,89 +352,53 @@ void sora_showcase_config_free(sora_showcase_config* config) {
     if (config == NULL) {
         return;
     }
-    sora_showcase_item_table_free(config->item);
-    sora_showcase_shop_table_free(config->shop);
-    sora_showcase_shop_item_table_free(config->shop_item);
-    sora_showcase_recipe_table_free(config->recipe);
-    sora_showcase_gacha_pool_table_free(config->gacha_pool);
-    sora_showcase_gacha_item_table_free(config->gacha_item);
-    sora_showcase_equipment_set_table_free(config->equipment_set);
-    sora_showcase_skill_table_free(config->skill);
+    sora_showcase_achievement_table_free(config->achievement);
+    sora_showcase_buff_table_free(config->buff);
     sora_showcase_character_table_free(config->character);
     sora_showcase_character_skill_table_free(config->character_skill);
-    sora_showcase_buff_table_free(config->buff);
-    sora_showcase_drop_group_table_free(config->drop_group);
-    sora_showcase_drop_entry_table_free(config->drop_entry);
-    sora_showcase_monster_table_free(config->monster);
-    sora_showcase_stage_table_free(config->stage);
-    sora_showcase_stage_reward_table_free(config->stage_reward);
-    sora_showcase_dungeon_table_free(config->dungeon);
-    sora_showcase_quest_table_free(config->quest);
-    sora_showcase_quest_reward_table_free(config->quest_reward);
-    sora_showcase_level_exp_table_free(config->level_exp);
-    sora_showcase_achievement_table_free(config->achievement);
-    sora_showcase_vip_level_table_free(config->vip_level);
-    sora_showcase_game_settings_table_free(config->game_settings);
-    sora_showcase_maintenance_window_table_free(config->maintenance_window);
-    sora_showcase_mail_template_table_free(config->mail_template);
-    sora_showcase_mail_reward_table_free(config->mail_reward);
-    sora_showcase_dialogue_table_free(config->dialogue);
-    sora_showcase_event_rule_table_free(config->event_rule);
-    sora_showcase_complex_rule_table_free(config->complex_rule);
+    sora_showcase_complex_action_entry_table_free(config->complex_action_entry);
+    sora_showcase_complex_action_group_table_free(config->complex_action_group);
     sora_showcase_complex_condition_group_table_free(config->complex_condition_group);
     sora_showcase_complex_condition_group_entry_table_free(config->complex_condition_group_entry);
+    sora_showcase_complex_rule_table_free(config->complex_rule);
     sora_showcase_complex_rule_condition_table_free(config->complex_rule_condition);
-    sora_showcase_complex_action_group_table_free(config->complex_action_group);
-    sora_showcase_complex_action_entry_table_free(config->complex_action_entry);
+    sora_showcase_dialogue_table_free(config->dialogue);
+    sora_showcase_drop_entry_table_free(config->drop_entry);
+    sora_showcase_drop_group_table_free(config->drop_group);
+    sora_showcase_dungeon_table_free(config->dungeon);
+    sora_showcase_equipment_set_table_free(config->equipment_set);
+    sora_showcase_event_rule_table_free(config->event_rule);
+    sora_showcase_gacha_item_table_free(config->gacha_item);
+    sora_showcase_gacha_pool_table_free(config->gacha_pool);
+    sora_showcase_game_settings_table_free(config->game_settings);
+    sora_showcase_item_table_free(config->item);
+    sora_showcase_level_exp_table_free(config->level_exp);
+    sora_showcase_mail_reward_table_free(config->mail_reward);
+    sora_showcase_mail_template_table_free(config->mail_template);
+    sora_showcase_maintenance_window_table_free(config->maintenance_window);
+    sora_showcase_monster_table_free(config->monster);
+    sora_showcase_quest_table_free(config->quest);
+    sora_showcase_quest_reward_table_free(config->quest_reward);
+    sora_showcase_recipe_table_free(config->recipe);
+    sora_showcase_shop_table_free(config->shop);
+    sora_showcase_shop_item_table_free(config->shop_item);
+    sora_showcase_skill_table_free(config->skill);
+    sora_showcase_stage_table_free(config->stage);
+    sora_showcase_stage_reward_table_free(config->stage_reward);
+    sora_showcase_vip_level_table_free(config->vip_level);
     free(config);
 }
 
-const sora_showcase_item_table* sora_showcase_config_item(
+const sora_showcase_achievement_table* sora_showcase_config_achievement(
     const sora_showcase_config* config
 ) {
-    return config->item;
+    return config->achievement;
 }
 
-const sora_showcase_shop_table* sora_showcase_config_shop(
+const sora_showcase_buff_table* sora_showcase_config_buff(
     const sora_showcase_config* config
 ) {
-    return config->shop;
-}
-
-const sora_showcase_shop_item_table* sora_showcase_config_shop_item(
-    const sora_showcase_config* config
-) {
-    return config->shop_item;
-}
-
-const sora_showcase_recipe_table* sora_showcase_config_recipe(
-    const sora_showcase_config* config
-) {
-    return config->recipe;
-}
-
-const sora_showcase_gacha_pool_table* sora_showcase_config_gacha_pool(
-    const sora_showcase_config* config
-) {
-    return config->gacha_pool;
-}
-
-const sora_showcase_gacha_item_table* sora_showcase_config_gacha_item(
-    const sora_showcase_config* config
-) {
-    return config->gacha_item;
-}
-
-const sora_showcase_equipment_set_table* sora_showcase_config_equipment_set(
-    const sora_showcase_config* config
-) {
-    return config->equipment_set;
-}
-
-const sora_showcase_skill_table* sora_showcase_config_skill(
-    const sora_showcase_config* config
-) {
-    return config->skill;
+    return config->buff;
 }
 
 const sora_showcase_character_table* sora_showcase_config_character(
@@ -449,118 +413,16 @@ const sora_showcase_character_skill_table* sora_showcase_config_character_skill(
     return config->character_skill;
 }
 
-const sora_showcase_buff_table* sora_showcase_config_buff(
+const sora_showcase_complex_action_entry_table* sora_showcase_config_complex_action_entry(
     const sora_showcase_config* config
 ) {
-    return config->buff;
+    return config->complex_action_entry;
 }
 
-const sora_showcase_drop_group_table* sora_showcase_config_drop_group(
+const sora_showcase_complex_action_group_table* sora_showcase_config_complex_action_group(
     const sora_showcase_config* config
 ) {
-    return config->drop_group;
-}
-
-const sora_showcase_drop_entry_table* sora_showcase_config_drop_entry(
-    const sora_showcase_config* config
-) {
-    return config->drop_entry;
-}
-
-const sora_showcase_monster_table* sora_showcase_config_monster(
-    const sora_showcase_config* config
-) {
-    return config->monster;
-}
-
-const sora_showcase_stage_table* sora_showcase_config_stage(
-    const sora_showcase_config* config
-) {
-    return config->stage;
-}
-
-const sora_showcase_stage_reward_table* sora_showcase_config_stage_reward(
-    const sora_showcase_config* config
-) {
-    return config->stage_reward;
-}
-
-const sora_showcase_dungeon_table* sora_showcase_config_dungeon(
-    const sora_showcase_config* config
-) {
-    return config->dungeon;
-}
-
-const sora_showcase_quest_table* sora_showcase_config_quest(
-    const sora_showcase_config* config
-) {
-    return config->quest;
-}
-
-const sora_showcase_quest_reward_table* sora_showcase_config_quest_reward(
-    const sora_showcase_config* config
-) {
-    return config->quest_reward;
-}
-
-const sora_showcase_level_exp_table* sora_showcase_config_level_exp(
-    const sora_showcase_config* config
-) {
-    return config->level_exp;
-}
-
-const sora_showcase_achievement_table* sora_showcase_config_achievement(
-    const sora_showcase_config* config
-) {
-    return config->achievement;
-}
-
-const sora_showcase_vip_level_table* sora_showcase_config_vip_level(
-    const sora_showcase_config* config
-) {
-    return config->vip_level;
-}
-
-const sora_showcase_game_settings_table* sora_showcase_config_game_settings(
-    const sora_showcase_config* config
-) {
-    return config->game_settings;
-}
-
-const sora_showcase_maintenance_window_table* sora_showcase_config_maintenance_window(
-    const sora_showcase_config* config
-) {
-    return config->maintenance_window;
-}
-
-const sora_showcase_mail_template_table* sora_showcase_config_mail_template(
-    const sora_showcase_config* config
-) {
-    return config->mail_template;
-}
-
-const sora_showcase_mail_reward_table* sora_showcase_config_mail_reward(
-    const sora_showcase_config* config
-) {
-    return config->mail_reward;
-}
-
-const sora_showcase_dialogue_table* sora_showcase_config_dialogue(
-    const sora_showcase_config* config
-) {
-    return config->dialogue;
-}
-
-const sora_showcase_event_rule_table* sora_showcase_config_event_rule(
-    const sora_showcase_config* config
-) {
-    return config->event_rule;
-}
-
-const sora_showcase_complex_rule_table* sora_showcase_config_complex_rule(
-    const sora_showcase_config* config
-) {
-    return config->complex_rule;
+    return config->complex_action_group;
 }
 
 const sora_showcase_complex_condition_group_table* sora_showcase_config_complex_condition_group(
@@ -575,20 +437,158 @@ const sora_showcase_complex_condition_group_entry_table* sora_showcase_config_co
     return config->complex_condition_group_entry;
 }
 
+const sora_showcase_complex_rule_table* sora_showcase_config_complex_rule(
+    const sora_showcase_config* config
+) {
+    return config->complex_rule;
+}
+
 const sora_showcase_complex_rule_condition_table* sora_showcase_config_complex_rule_condition(
     const sora_showcase_config* config
 ) {
     return config->complex_rule_condition;
 }
 
-const sora_showcase_complex_action_group_table* sora_showcase_config_complex_action_group(
+const sora_showcase_dialogue_table* sora_showcase_config_dialogue(
     const sora_showcase_config* config
 ) {
-    return config->complex_action_group;
+    return config->dialogue;
 }
 
-const sora_showcase_complex_action_entry_table* sora_showcase_config_complex_action_entry(
+const sora_showcase_drop_entry_table* sora_showcase_config_drop_entry(
     const sora_showcase_config* config
 ) {
-    return config->complex_action_entry;
+    return config->drop_entry;
+}
+
+const sora_showcase_drop_group_table* sora_showcase_config_drop_group(
+    const sora_showcase_config* config
+) {
+    return config->drop_group;
+}
+
+const sora_showcase_dungeon_table* sora_showcase_config_dungeon(
+    const sora_showcase_config* config
+) {
+    return config->dungeon;
+}
+
+const sora_showcase_equipment_set_table* sora_showcase_config_equipment_set(
+    const sora_showcase_config* config
+) {
+    return config->equipment_set;
+}
+
+const sora_showcase_event_rule_table* sora_showcase_config_event_rule(
+    const sora_showcase_config* config
+) {
+    return config->event_rule;
+}
+
+const sora_showcase_gacha_item_table* sora_showcase_config_gacha_item(
+    const sora_showcase_config* config
+) {
+    return config->gacha_item;
+}
+
+const sora_showcase_gacha_pool_table* sora_showcase_config_gacha_pool(
+    const sora_showcase_config* config
+) {
+    return config->gacha_pool;
+}
+
+const sora_showcase_game_settings_table* sora_showcase_config_game_settings(
+    const sora_showcase_config* config
+) {
+    return config->game_settings;
+}
+
+const sora_showcase_item_table* sora_showcase_config_item(
+    const sora_showcase_config* config
+) {
+    return config->item;
+}
+
+const sora_showcase_level_exp_table* sora_showcase_config_level_exp(
+    const sora_showcase_config* config
+) {
+    return config->level_exp;
+}
+
+const sora_showcase_mail_reward_table* sora_showcase_config_mail_reward(
+    const sora_showcase_config* config
+) {
+    return config->mail_reward;
+}
+
+const sora_showcase_mail_template_table* sora_showcase_config_mail_template(
+    const sora_showcase_config* config
+) {
+    return config->mail_template;
+}
+
+const sora_showcase_maintenance_window_table* sora_showcase_config_maintenance_window(
+    const sora_showcase_config* config
+) {
+    return config->maintenance_window;
+}
+
+const sora_showcase_monster_table* sora_showcase_config_monster(
+    const sora_showcase_config* config
+) {
+    return config->monster;
+}
+
+const sora_showcase_quest_table* sora_showcase_config_quest(
+    const sora_showcase_config* config
+) {
+    return config->quest;
+}
+
+const sora_showcase_quest_reward_table* sora_showcase_config_quest_reward(
+    const sora_showcase_config* config
+) {
+    return config->quest_reward;
+}
+
+const sora_showcase_recipe_table* sora_showcase_config_recipe(
+    const sora_showcase_config* config
+) {
+    return config->recipe;
+}
+
+const sora_showcase_shop_table* sora_showcase_config_shop(
+    const sora_showcase_config* config
+) {
+    return config->shop;
+}
+
+const sora_showcase_shop_item_table* sora_showcase_config_shop_item(
+    const sora_showcase_config* config
+) {
+    return config->shop_item;
+}
+
+const sora_showcase_skill_table* sora_showcase_config_skill(
+    const sora_showcase_config* config
+) {
+    return config->skill;
+}
+
+const sora_showcase_stage_table* sora_showcase_config_stage(
+    const sora_showcase_config* config
+) {
+    return config->stage;
+}
+
+const sora_showcase_stage_reward_table* sora_showcase_config_stage_reward(
+    const sora_showcase_config* config
+) {
+    return config->stage_reward;
+}
+
+const sora_showcase_vip_level_table* sora_showcase_config_vip_level(
+    const sora_showcase_config* config
+) {
+    return config->vip_level;
 }

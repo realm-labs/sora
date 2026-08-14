@@ -13,14 +13,11 @@ localization sources -> LocaleCatalog -> i18n locale packs
 
 需要本地化的字段使用 `text`：
 
-```toml
-[[tables.fields]]
-name = "title_key"
-type = "text"
-
-[[tables.fields]]
-name = "body_keys"
-type = "list<text>"
+```scon
+fields {
+  title_key = "text"
+  body_keys = "list<text>"
+}
 ```
 
 `text` 保存的是 key，不是实际翻译文本。源数据里应填写 `quest.1001.title`、`ui.confirm` 这类值。目标语言支持独立生成运行时类型时，生成代码会暴露为 `TextKey`。
@@ -31,21 +28,16 @@ catalog 校验会扫描业务数据里的所有 `text` 值。key 不存在或翻
 
 在 project schema root 声明 localization：
 
-```toml
-[localization]
-locales = ["zh_cn", "en_us"]
-default_locale = "zh_cn"
-fallback_locale = "en_us"
-
-[[localization.sources]]
-name = "ui"
-file = "Core.xlsx"
-sheet = "UILocalization"
-
-[[localization.sources]]
-name = "quest"
-file = "Quest.xlsx"
-sheet = "QuestLocalization"
+```scon
+localization {
+  locales = ["zh_cn", "en_us"]
+  default_locale = "zh_cn"
+  fallback_locale = "en_us"
+  sources {
+    ui { file = "Core.xlsx" sheet = "UILocalization" }
+    quest { file = "Quest.xlsx" sheet = "QuestLocalization" }
+  }
+}
 ```
 
 每个 source 是宽表。默认 key 列名是 `key`：
@@ -70,12 +62,14 @@ sheet = "QuestLocalization"
 
 如果 key 列不叫 `key`，可以在 source 上指定：
 
-```toml
-[[localization.sources]]
-name = "ui"
-file = "Core.xlsx"
-sheet = "UILocalization"
-key = "id"
+```scon
+sources {
+  ui {
+    file = "Core.xlsx"
+    sheet = "UILocalization"
+    key = "id"
+  }
+}
 ```
 
 ## 导出语言包
@@ -84,20 +78,14 @@ key = "id"
 
 在 build manifest 里添加 i18n 导出：
 
-```toml
-[[build.exports]]
-format = "binary"
-out = "generated/config.sora"
-
-[[build.exports]]
-format = "i18n-binary"
-out = "generated/i18n/zh_cn.sora-i18n"
-locale = "zh_cn"
-
-[[build.exports]]
-format = "i18n-json"
-out = "generated/i18n/en_us.json"
-locale = "en_us"
+```scon
+build {
+  exports = [
+    { format = "binary", out = "generated/config.sora" },
+    { format = "i18n-binary", out = "generated/i18n/zh_cn.sora-i18n", locale = "zh_cn" },
+    { format = "i18n-json", out = "generated/i18n/en_us.json", locale = "en_us" },
+  ]
+}
 ```
 
 `i18n-binary` 面向生产语言包。`i18n-json` 面向检查、外包翻译交付和测试。

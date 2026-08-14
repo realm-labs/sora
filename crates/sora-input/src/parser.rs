@@ -876,7 +876,7 @@ mod tests {
         parse::parse_type,
         validate::validate_config_ir,
     };
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
 
     use super::*;
     use crate::cell::CellLocation;
@@ -1362,7 +1362,7 @@ mod tests {
     }
 
     fn string_ref_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "test" }
 groups = { common = { default = true } }

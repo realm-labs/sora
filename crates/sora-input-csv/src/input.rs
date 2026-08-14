@@ -4,7 +4,7 @@ use sora_data::model::{ConfigData, LocalizationData};
 use sora_diagnostics::Result;
 use sora_input::traits::{DataInput, SchemaInput};
 use sora_ir::model::ConfigIr;
-use sora_schema::model::SchemaFile;
+use sora_schema::model::ProjectSchema;
 
 use crate::reader::{load_csv_config_data, load_csv_localization_source_data};
 
@@ -28,7 +28,7 @@ impl<S> CsvProjectInput<S> {
 }
 
 impl<S: SchemaInput> SchemaInput for CsvProjectInput<S> {
-    fn load_schema(&self) -> Result<SchemaFile> {
+    fn load_schema(&self) -> Result<ProjectSchema> {
         self.schema_input.load_schema()
     }
 }

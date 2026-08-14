@@ -21,7 +21,7 @@ schema files -> schema model -> normalized IR -> generator registry -> target ge
 Generate a target directly:
 
 ```bash
-sora gen --target typescript --project project.toml --out generated/typescript
+sora gen --target typescript --project project.scon --out generated/typescript
 ```
 
 Or declare it in the build manifest:

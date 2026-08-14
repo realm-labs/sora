@@ -831,7 +831,7 @@ mod tests {
         assert!(
             plan.text_diffs
                 .iter()
-                .any(|diff| diff.diff.contains("+name = \"name\""))
+                .any(|diff| diff.diff.contains("+[tables.Item.fields.name]"))
         );
         let first = workspace
             .apply_schema_mutation(&id, "test-owner", &plan.plan_id, "request-1")
@@ -844,12 +844,12 @@ mod tests {
         assert!(
             fs::read_to_string(root.join("schema.toml"))
                 .unwrap()
-                .contains("name = \"name\"")
+                .contains("[tables.Item.fields.name]")
         );
         assert!(
             fs::read_to_string(root.join("schema.toml"))
                 .unwrap()
-                .contains("[[tables.indexes]]")
+                .contains("[tables.Item.indexes.by_id]")
         );
         let _ = fs::remove_dir_all(root);
     }
@@ -967,18 +967,15 @@ mod tests {
         .unwrap();
         fs::write(
             root.join("schema.toml"),
-            r#"[[tables]]
+            r#"[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
 
-[[tables.fields]]
-name = "id"
-type = "i32"
+[tables.Item.fields]
+id = "i32"
 
-[[tables.indexes]]
-name = "by_id"
+[tables.Item.indexes.by_id]
 fields = ["id"]
 unique = true
 "#,

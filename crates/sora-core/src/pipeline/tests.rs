@@ -4,9 +4,9 @@ use sora_diagnostics::Result;
 use sora_export::exporter::ExportOutput;
 use sora_input::loaded::LoadedInput;
 use sora_input::project::SplitProjectInput;
-use sora_input_schema::input::SchemaFileInput;
+use sora_input_schema::input::ProjectSchemaInput;
 use sora_input_toml::input::TomlDataInput;
-use sora_schema::model::SchemaFile;
+use sora_schema::model::ProjectSchema;
 use std::{
     collections::BTreeMap,
     fs,
@@ -19,7 +19,7 @@ static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 fn checks_schema_and_generates_outputs() {
     let base = temp_dir();
     let project_path = write_example(&base);
-    let input = SchemaFileInput::new(&project_path);
+    let input = ProjectSchemaInput::new(&project_path);
 
     check_schema(&input).unwrap();
     generate_schema_lock(&input, &base.join("schema.lock")).unwrap();
@@ -69,7 +69,7 @@ fn accepts_registered_codegen_target() {
 
     let base = temp_dir();
     let project_path = write_example(&base);
-    let input = SchemaFileInput::new(&project_path);
+    let input = ProjectSchemaInput::new(&project_path);
     let mut registry = sora_codegen::generator::CodegenRegistry::new();
     registry
         .register(sora_codegen::generator::CodegenRegistration {
@@ -107,7 +107,7 @@ fn exports_data_through_registry() {
     let base = temp_dir();
     let project_path = write_example(&base);
     let input = SplitProjectInput::new(
-        SchemaFileInput::new(&project_path),
+        ProjectSchemaInput::new(&project_path),
         TomlDataInput::new(base.join("data")),
     );
 
@@ -175,7 +175,7 @@ fn reports_unknown_export_format() {
     let base = temp_dir();
     let project_path = write_example(&base);
     let input = SplitProjectInput::new(
-        SchemaFileInput::new(&project_path),
+        ProjectSchemaInput::new(&project_path),
         TomlDataInput::new(base.join("data")),
     );
 
@@ -262,36 +262,30 @@ package = "game_config"
         schema_dir.join("items.toml"),
         r#"
 
-[[enums]]
-name = "ItemType"
+[enums.ItemType]
 values = [{ id = 0, name = "Weapon" }, { id = 1, name = "Armor" }, { id = 2, name = "Material" }, { id = 3, name = "Consumable" }]
 
-[[tables]]
+[tables.Item]
 id = "item"
-name = "Item"
 mode = "map"
 key = "id"
-[tables.source]
+[tables.Item.source]
 format = "toml"
 file = "items.toml"
 
-[[tables.fields]]
-name = "id"
+[tables.Item.fields.id]
 type = "i32"
 comment = "Item id"
 
-[[tables.fields]]
-name = "name"
+[tables.Item.fields.name]
 type = "string"
 comment = "Display name"
 
-[[tables.fields]]
-name = "item_type"
+[tables.Item.fields.item_type]
 type = "enum<ItemType>"
 comment = "Item type"
 
-[[tables.fields]]
-name = "max_stack"
+[tables.Item.fields.max_stack]
 type = "i32"
 comment = "Max stack count"
 "#,
@@ -316,7 +310,7 @@ fn temp_dir() -> std::path::PathBuf {
     std::env::temp_dir().join(format!("sora-core-test-{unique}"))
 }
 
-fn example_schema() -> SchemaFile {
+fn example_schema() -> ProjectSchema {
     toml::from_str(
         r#"
 project = { id = "game_config" }
@@ -360,7 +354,7 @@ comment = "Max stack count"
     .unwrap()
 }
 
-fn scoped_schema() -> SchemaFile {
+fn scoped_schema() -> ProjectSchema {
     toml::from_str(
         r#"
 project = { id = "game_config" }

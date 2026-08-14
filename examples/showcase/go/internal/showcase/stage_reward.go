@@ -3,57 +3,57 @@
 package showcase
 
 type StageReward struct {
-	StageID int32
-	Seq     int32
-	ItemID  int32
-	Count   int32
+    StageID int32
+    Seq int32
+    ItemID int32
+    Count int32
 }
 
 func decodeStageReward(reader *SoraReader) (StageReward, error) {
-	var value StageReward
-	var err error
-	value.StageID, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Seq, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.ItemID, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Count, err = reader.ReadInt32()
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value StageReward
+    var err error
+    value.StageID, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Seq, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.ItemID, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Count, err = reader.ReadInt32()
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func decodeStageRewardValue(input SoraValue) (StageReward, error) {
-	var value StageReward
-	obj, err := input.AsObject()
-	if err != nil {
-		return value, err
-	}
-	value.StageID, err = obj.Get("stage_id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Seq, err = obj.Get("seq").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.ItemID, err = obj.Get("item_id").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	value.Count, err = obj.Get("count").AsInt32()
-	if err != nil {
-		return value, err
-	}
-	return value, nil
+    var value StageReward
+    obj, err := input.AsObject()
+    if err != nil {
+        return value, err
+    }
+    value.StageID, err = obj.Get("stage_id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Seq, err = obj.Get("seq").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.ItemID, err = obj.Get("item_id").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    value.Count, err = obj.Get("count").AsInt32()
+    if err != nil {
+        return value, err
+    }
+    return value, nil
 }
 
 func (value StageReward) collectTextKeys(out *[]TextKey) {
@@ -62,34 +62,35 @@ func (value StageReward) collectTextKeys(out *[]TextKey) {
 const stageRewardTableName = "StageReward"
 
 var stageRewardTableInfo = SoraTableInfo{
-	Name:    stageRewardTableName,
-	RowType: "StageReward",
-	Shape:   SoraTableShapeList,
-	Indexes: []SoraIndexInfo{},
+    Name: stageRewardTableName,
+    RowType: "StageReward",
+    Shape: SoraTableShapeList,
+    Indexes: []SoraIndexInfo{
+    },
 }
 
 type StageRewardTable struct {
-	rows []StageReward
+    rows []StageReward
 }
 
 func buildStageRewardTable(rows []StageReward) (*StageRewardTable, error) {
-	return &StageRewardTable{rows: rows}, nil
+    return &StageRewardTable{rows: rows}, nil
 }
 
 func decodeStageRewardTable(source SoraTableSource) (*StageRewardTable, error) {
-	rows, err := DecodeSourceTable(source, stageRewardTableName, decodeStageReward, decodeStageRewardValue)
-	if err != nil {
-		return nil, err
-	}
-	return buildStageRewardTable(rows)
+    rows, err := DecodeSourceTable(source, stageRewardTableName, decodeStageReward, decodeStageRewardValue)
+    if err != nil {
+        return nil, err
+    }
+    return buildStageRewardTable(rows)
 }
 func (table *StageRewardTable) Rows() []StageReward {
-	return append([]StageReward(nil), table.rows...)
+    return append([]StageReward(nil), table.rows...)
 }
 func (table *StageRewardTable) Info() SoraTableInfo {
-	return stageRewardTableInfo
+    return stageRewardTableInfo
 }
 
 func (table *StageRewardTable) Len() int {
-	return len(table.rows)
+    return len(table.rows)
 }

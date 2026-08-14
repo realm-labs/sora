@@ -7,47 +7,47 @@
     from_binary/2,
     from_bundle/1,
     tables/1
-    , item/1
-    , shop/1
-    , shop_item/1
-    , recipe/1
-    , gacha_pool/1
-    , gacha_item/1
-    , equipment_set/1
-    , skill/1
+    , achievement/1
+    , buff/1
     , character/1
     , character_skill/1
-    , buff/1
-    , drop_group/1
-    , drop_entry/1
-    , monster/1
-    , stage/1
-    , stage_reward/1
-    , dungeon/1
-    , quest/1
-    , quest_reward/1
-    , level_exp/1
-    , achievement/1
-    , vip_level/1
-    , game_settings/1
-    , maintenance_window/1
-    , mail_template/1
-    , mail_reward/1
-    , dialogue/1
-    , event_rule/1
-    , complex_rule/1
+    , complex_action_entry/1
+    , complex_action_group/1
     , complex_condition_group/1
     , complex_condition_group_entry/1
+    , complex_rule/1
     , complex_rule_condition/1
-    , complex_action_group/1
-    , complex_action_entry/1
+    , dialogue/1
+    , drop_entry/1
+    , drop_group/1
+    , dungeon/1
+    , equipment_set/1
+    , event_rule/1
+    , gacha_item/1
+    , gacha_pool/1
+    , game_settings/1
+    , item/1
+    , level_exp/1
+    , mail_reward/1
+    , mail_template/1
+    , maintenance_window/1
+    , monster/1
+    , quest/1
+    , quest_reward/1
+    , recipe/1
+    , shop/1
+    , shop_item/1
+    , skill/1
+    , stage/1
+    , stage_reward/1
+    , vip_level/1
 ]).
 
 -export_type([t/0]).
 
 -type t() :: map().
 
--define(SORA_SCHEMA_FINGERPRINT, <<"9552056f96151363">>).
+-define(SORA_SCHEMA_FINGERPRINT, <<"5ae7c095b011eddf">>).
 
 -spec from_binary(binary()) -> t().
 from_binary(Bytes) ->
@@ -64,214 +64,214 @@ from_bundle(Bundle) ->
         ?SORA_SCHEMA_FINGERPRINT -> ok;
         Actual -> error({schema_fingerprint_mismatch, ?SORA_SCHEMA_FINGERPRINT, Actual})
     end,
-    Item = item:decode_table(Bundle),
-    Shop = shop:decode_table(Bundle),
-    ShopItem = shop_item:decode_table(Bundle),
-    Recipe = recipe:decode_table(Bundle),
-    GachaPool = gacha_pool:decode_table(Bundle),
-    GachaItem = gacha_item:decode_table(Bundle),
-    EquipmentSet = equipment_set:decode_table(Bundle),
-    Skill = skill:decode_table(Bundle),
+    Achievement = achievement:decode_table(Bundle),
+    Buff = buff:decode_table(Bundle),
     Character = character:decode_table(Bundle),
     CharacterSkill = character_skill:decode_table(Bundle),
-    Buff = buff:decode_table(Bundle),
-    DropGroup = drop_group:decode_table(Bundle),
-    DropEntry = drop_entry:decode_table(Bundle),
-    Monster = monster:decode_table(Bundle),
-    Stage = stage:decode_table(Bundle),
-    StageReward = stage_reward:decode_table(Bundle),
-    Dungeon = dungeon:decode_table(Bundle),
-    Quest = quest:decode_table(Bundle),
-    QuestReward = quest_reward:decode_table(Bundle),
-    LevelExp = level_exp:decode_table(Bundle),
-    Achievement = achievement:decode_table(Bundle),
-    VipLevel = vip_level:decode_table(Bundle),
-    GameSettings = game_settings:decode_table(Bundle),
-    MaintenanceWindow = maintenance_window:decode_table(Bundle),
-    MailTemplate = mail_template:decode_table(Bundle),
-    MailReward = mail_reward:decode_table(Bundle),
-    Dialogue = dialogue:decode_table(Bundle),
-    EventRule = event_rule:decode_table(Bundle),
-    ComplexRule = complex_rule:decode_table(Bundle),
+    ComplexActionEntry = complex_action_entry:decode_table(Bundle),
+    ComplexActionGroup = complex_action_group:decode_table(Bundle),
     ComplexConditionGroup = complex_condition_group:decode_table(Bundle),
     ComplexConditionGroupEntry = complex_condition_group_entry:decode_table(Bundle),
+    ComplexRule = complex_rule:decode_table(Bundle),
     ComplexRuleCondition = complex_rule_condition:decode_table(Bundle),
-    ComplexActionGroup = complex_action_group:decode_table(Bundle),
-    ComplexActionEntry = complex_action_entry:decode_table(Bundle),
+    Dialogue = dialogue:decode_table(Bundle),
+    DropEntry = drop_entry:decode_table(Bundle),
+    DropGroup = drop_group:decode_table(Bundle),
+    Dungeon = dungeon:decode_table(Bundle),
+    EquipmentSet = equipment_set:decode_table(Bundle),
+    EventRule = event_rule:decode_table(Bundle),
+    GachaItem = gacha_item:decode_table(Bundle),
+    GachaPool = gacha_pool:decode_table(Bundle),
+    GameSettings = game_settings:decode_table(Bundle),
+    Item = item:decode_table(Bundle),
+    LevelExp = level_exp:decode_table(Bundle),
+    MailReward = mail_reward:decode_table(Bundle),
+    MailTemplate = mail_template:decode_table(Bundle),
+    MaintenanceWindow = maintenance_window:decode_table(Bundle),
+    Monster = monster:decode_table(Bundle),
+    Quest = quest:decode_table(Bundle),
+    QuestReward = quest_reward:decode_table(Bundle),
+    Recipe = recipe:decode_table(Bundle),
+    Shop = shop:decode_table(Bundle),
+    ShopItem = shop_item:decode_table(Bundle),
+    Skill = skill:decode_table(Bundle),
+    Stage = stage:decode_table(Bundle),
+    StageReward = stage_reward:decode_table(Bundle),
+    VipLevel = vip_level:decode_table(Bundle),
     #{
-        item => Item,
-        shop => Shop,
-        shop_item => ShopItem,
-        recipe => Recipe,
-        gacha_pool => GachaPool,
-        gacha_item => GachaItem,
-        equipment_set => EquipmentSet,
-        skill => Skill,
+        achievement => Achievement,
+        buff => Buff,
         character => Character,
         character_skill => CharacterSkill,
-        buff => Buff,
-        drop_group => DropGroup,
-        drop_entry => DropEntry,
-        monster => Monster,
-        stage => Stage,
-        stage_reward => StageReward,
-        dungeon => Dungeon,
-        quest => Quest,
-        quest_reward => QuestReward,
-        level_exp => LevelExp,
-        achievement => Achievement,
-        vip_level => VipLevel,
-        game_settings => GameSettings,
-        maintenance_window => MaintenanceWindow,
-        mail_template => MailTemplate,
-        mail_reward => MailReward,
-        dialogue => Dialogue,
-        event_rule => EventRule,
-        complex_rule => ComplexRule,
+        complex_action_entry => ComplexActionEntry,
+        complex_action_group => ComplexActionGroup,
         complex_condition_group => ComplexConditionGroup,
         complex_condition_group_entry => ComplexConditionGroupEntry,
+        complex_rule => ComplexRule,
         complex_rule_condition => ComplexRuleCondition,
-        complex_action_group => ComplexActionGroup,
-        complex_action_entry => ComplexActionEntry
+        dialogue => Dialogue,
+        drop_entry => DropEntry,
+        drop_group => DropGroup,
+        dungeon => Dungeon,
+        equipment_set => EquipmentSet,
+        event_rule => EventRule,
+        gacha_item => GachaItem,
+        gacha_pool => GachaPool,
+        game_settings => GameSettings,
+        item => Item,
+        level_exp => LevelExp,
+        mail_reward => MailReward,
+        mail_template => MailTemplate,
+        maintenance_window => MaintenanceWindow,
+        monster => Monster,
+        quest => Quest,
+        quest_reward => QuestReward,
+        recipe => Recipe,
+        shop => Shop,
+        shop_item => ShopItem,
+        skill => Skill,
+        stage => Stage,
+        stage_reward => StageReward,
+        vip_level => VipLevel
     }.
 
 -spec tables(t()) -> [term()].
 tables(Config) ->
     [
-        item(Config),
-        shop(Config),
-        shop_item(Config),
-        recipe(Config),
-        gacha_pool(Config),
-        gacha_item(Config),
-        equipment_set(Config),
-        skill(Config),
+        achievement(Config),
+        buff(Config),
         character(Config),
         character_skill(Config),
-        buff(Config),
-        drop_group(Config),
-        drop_entry(Config),
-        monster(Config),
-        stage(Config),
-        stage_reward(Config),
-        dungeon(Config),
-        quest(Config),
-        quest_reward(Config),
-        level_exp(Config),
-        achievement(Config),
-        vip_level(Config),
-        game_settings(Config),
-        maintenance_window(Config),
-        mail_template(Config),
-        mail_reward(Config),
-        dialogue(Config),
-        event_rule(Config),
-        complex_rule(Config),
+        complex_action_entry(Config),
+        complex_action_group(Config),
         complex_condition_group(Config),
         complex_condition_group_entry(Config),
+        complex_rule(Config),
         complex_rule_condition(Config),
-        complex_action_group(Config),
-        complex_action_entry(Config)
+        dialogue(Config),
+        drop_entry(Config),
+        drop_group(Config),
+        dungeon(Config),
+        equipment_set(Config),
+        event_rule(Config),
+        gacha_item(Config),
+        gacha_pool(Config),
+        game_settings(Config),
+        item(Config),
+        level_exp(Config),
+        mail_reward(Config),
+        mail_template(Config),
+        maintenance_window(Config),
+        monster(Config),
+        quest(Config),
+        quest_reward(Config),
+        recipe(Config),
+        shop(Config),
+        shop_item(Config),
+        skill(Config),
+        stage(Config),
+        stage_reward(Config),
+        vip_level(Config)
     ].
--spec item(t()) -> item:table().
-item(Config) ->
-    maps:get(item, Config).
--spec shop(t()) -> shop:table().
-shop(Config) ->
-    maps:get(shop, Config).
--spec shop_item(t()) -> shop_item:table().
-shop_item(Config) ->
-    maps:get(shop_item, Config).
--spec recipe(t()) -> recipe:table().
-recipe(Config) ->
-    maps:get(recipe, Config).
--spec gacha_pool(t()) -> gacha_pool:table().
-gacha_pool(Config) ->
-    maps:get(gacha_pool, Config).
--spec gacha_item(t()) -> gacha_item:table().
-gacha_item(Config) ->
-    maps:get(gacha_item, Config).
--spec equipment_set(t()) -> equipment_set:table().
-equipment_set(Config) ->
-    maps:get(equipment_set, Config).
--spec skill(t()) -> skill:table().
-skill(Config) ->
-    maps:get(skill, Config).
+-spec achievement(t()) -> achievement:table().
+achievement(Config) ->
+    maps:get(achievement, Config).
+-spec buff(t()) -> buff:table().
+buff(Config) ->
+    maps:get(buff, Config).
 -spec character(t()) -> character:table().
 character(Config) ->
     maps:get(character, Config).
 -spec character_skill(t()) -> character_skill:table().
 character_skill(Config) ->
     maps:get(character_skill, Config).
--spec buff(t()) -> buff:table().
-buff(Config) ->
-    maps:get(buff, Config).
--spec drop_group(t()) -> drop_group:table().
-drop_group(Config) ->
-    maps:get(drop_group, Config).
--spec drop_entry(t()) -> drop_entry:table().
-drop_entry(Config) ->
-    maps:get(drop_entry, Config).
--spec monster(t()) -> monster:table().
-monster(Config) ->
-    maps:get(monster, Config).
--spec stage(t()) -> stage:table().
-stage(Config) ->
-    maps:get(stage, Config).
--spec stage_reward(t()) -> stage_reward:table().
-stage_reward(Config) ->
-    maps:get(stage_reward, Config).
--spec dungeon(t()) -> dungeon:table().
-dungeon(Config) ->
-    maps:get(dungeon, Config).
--spec quest(t()) -> quest:table().
-quest(Config) ->
-    maps:get(quest, Config).
--spec quest_reward(t()) -> quest_reward:table().
-quest_reward(Config) ->
-    maps:get(quest_reward, Config).
--spec level_exp(t()) -> level_exp:table().
-level_exp(Config) ->
-    maps:get(level_exp, Config).
--spec achievement(t()) -> achievement:table().
-achievement(Config) ->
-    maps:get(achievement, Config).
--spec vip_level(t()) -> vip_level:table().
-vip_level(Config) ->
-    maps:get(vip_level, Config).
--spec game_settings(t()) -> game_settings:table().
-game_settings(Config) ->
-    maps:get(game_settings, Config).
--spec maintenance_window(t()) -> maintenance_window:table().
-maintenance_window(Config) ->
-    maps:get(maintenance_window, Config).
--spec mail_template(t()) -> mail_template:table().
-mail_template(Config) ->
-    maps:get(mail_template, Config).
--spec mail_reward(t()) -> mail_reward:table().
-mail_reward(Config) ->
-    maps:get(mail_reward, Config).
--spec dialogue(t()) -> dialogue:table().
-dialogue(Config) ->
-    maps:get(dialogue, Config).
--spec event_rule(t()) -> event_rule:table().
-event_rule(Config) ->
-    maps:get(event_rule, Config).
--spec complex_rule(t()) -> complex_rule:table().
-complex_rule(Config) ->
-    maps:get(complex_rule, Config).
+-spec complex_action_entry(t()) -> complex_action_entry:table().
+complex_action_entry(Config) ->
+    maps:get(complex_action_entry, Config).
+-spec complex_action_group(t()) -> complex_action_group:table().
+complex_action_group(Config) ->
+    maps:get(complex_action_group, Config).
 -spec complex_condition_group(t()) -> complex_condition_group:table().
 complex_condition_group(Config) ->
     maps:get(complex_condition_group, Config).
 -spec complex_condition_group_entry(t()) -> complex_condition_group_entry:table().
 complex_condition_group_entry(Config) ->
     maps:get(complex_condition_group_entry, Config).
+-spec complex_rule(t()) -> complex_rule:table().
+complex_rule(Config) ->
+    maps:get(complex_rule, Config).
 -spec complex_rule_condition(t()) -> complex_rule_condition:table().
 complex_rule_condition(Config) ->
     maps:get(complex_rule_condition, Config).
--spec complex_action_group(t()) -> complex_action_group:table().
-complex_action_group(Config) ->
-    maps:get(complex_action_group, Config).
--spec complex_action_entry(t()) -> complex_action_entry:table().
-complex_action_entry(Config) ->
-    maps:get(complex_action_entry, Config).
+-spec dialogue(t()) -> dialogue:table().
+dialogue(Config) ->
+    maps:get(dialogue, Config).
+-spec drop_entry(t()) -> drop_entry:table().
+drop_entry(Config) ->
+    maps:get(drop_entry, Config).
+-spec drop_group(t()) -> drop_group:table().
+drop_group(Config) ->
+    maps:get(drop_group, Config).
+-spec dungeon(t()) -> dungeon:table().
+dungeon(Config) ->
+    maps:get(dungeon, Config).
+-spec equipment_set(t()) -> equipment_set:table().
+equipment_set(Config) ->
+    maps:get(equipment_set, Config).
+-spec event_rule(t()) -> event_rule:table().
+event_rule(Config) ->
+    maps:get(event_rule, Config).
+-spec gacha_item(t()) -> gacha_item:table().
+gacha_item(Config) ->
+    maps:get(gacha_item, Config).
+-spec gacha_pool(t()) -> gacha_pool:table().
+gacha_pool(Config) ->
+    maps:get(gacha_pool, Config).
+-spec game_settings(t()) -> game_settings:table().
+game_settings(Config) ->
+    maps:get(game_settings, Config).
+-spec item(t()) -> item:table().
+item(Config) ->
+    maps:get(item, Config).
+-spec level_exp(t()) -> level_exp:table().
+level_exp(Config) ->
+    maps:get(level_exp, Config).
+-spec mail_reward(t()) -> mail_reward:table().
+mail_reward(Config) ->
+    maps:get(mail_reward, Config).
+-spec mail_template(t()) -> mail_template:table().
+mail_template(Config) ->
+    maps:get(mail_template, Config).
+-spec maintenance_window(t()) -> maintenance_window:table().
+maintenance_window(Config) ->
+    maps:get(maintenance_window, Config).
+-spec monster(t()) -> monster:table().
+monster(Config) ->
+    maps:get(monster, Config).
+-spec quest(t()) -> quest:table().
+quest(Config) ->
+    maps:get(quest, Config).
+-spec quest_reward(t()) -> quest_reward:table().
+quest_reward(Config) ->
+    maps:get(quest_reward, Config).
+-spec recipe(t()) -> recipe:table().
+recipe(Config) ->
+    maps:get(recipe, Config).
+-spec shop(t()) -> shop:table().
+shop(Config) ->
+    maps:get(shop, Config).
+-spec shop_item(t()) -> shop_item:table().
+shop_item(Config) ->
+    maps:get(shop_item, Config).
+-spec skill(t()) -> skill:table().
+skill(Config) ->
+    maps:get(skill, Config).
+-spec stage(t()) -> stage:table().
+stage(Config) ->
+    maps:get(stage, Config).
+-spec stage_reward(t()) -> stage_reward:table().
+stage_reward(Config) ->
+    maps:get(stage_reward, Config).
+-spec vip_level(t()) -> vip_level:table().
+vip_level(Config) ->
+    maps:get(vip_level, Config).

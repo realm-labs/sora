@@ -356,7 +356,7 @@ fn ref_type_with_options<T>(
 mod tests {
     use super::*;
     use sora_ir::{normalize::normalize_schema, parse::parse_type};
-    use sora_schema::model::SchemaFile;
+    use sora_schema::model::ProjectSchema;
 
     #[test]
     fn maps_rust_types() {
@@ -670,7 +670,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: SchemaFile = toml::from_str(
+        let schema: ProjectSchema = toml::from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
