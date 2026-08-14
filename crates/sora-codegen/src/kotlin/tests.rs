@@ -13,7 +13,7 @@ use crate::{
     lua::LuaCodeGenerator,
     options::{
         GodotCodegenOptions, JavaCodegenOptions, LanguageCodegenOptions, RuntimeFormat,
-        RustCodegenOptions, RustMapType,
+        RustCodegenOptions, RustCrateOptions, RustDateTimeType, RustEdition, RustMapType,
     },
     python::PythonCodeGenerator,
     rust::RustCodeGenerator,
@@ -285,6 +285,85 @@ fn rust_config_api_can_use_fx_hash_map() {
     assert!(rust_item.contains("pub struct ItemTable"));
     assert!(rust_item.contains("rows: SoraMap<i32, Item>"));
     assert!(rust_mod.contains("tables: SoraMap<&'static str, Box<dyn ErasedSoraTable>>"));
+
+    let _ = std::fs::remove_dir_all(base);
+}
+
+#[test]
+fn rust_codegen_can_emit_a_standalone_crate_with_managed_dependencies() {
+    let ir = example_ir();
+    let base = temp_dir();
+    let rust_out = base.join("game-config");
+
+    RustCodeGenerator
+        .generate_with_options(
+            &ir,
+            RustCodegenOptions {
+                runtime_format: RuntimeFormat::Cbor,
+                map_type: RustMapType::FxHashMap,
+                datetime_type: RustDateTimeType::Chrono,
+                crate_options: Some(RustCrateOptions {
+                    name: "game-config".to_owned(),
+                    version: "1.2.3".to_owned(),
+                    edition: RustEdition::Rust2021,
+                    publish: true,
+                }),
+                ..Default::default()
+            },
+            &rust_out,
+        )
+        .unwrap();
+
+    assert!(rust_out.join("src/lib.rs").exists());
+    assert!(rust_out.join("src/runtime.rs").exists());
+    assert!(rust_out.join("src/item.rs").exists());
+    assert!(!rust_out.join("mod.rs").exists());
+
+    let manifest = std::fs::read_to_string(rust_out.join("Cargo.toml")).unwrap();
+    let manifest: toml::Value = toml::from_str(&manifest).unwrap();
+    assert_eq!(manifest["package"]["name"].as_str(), Some("game-config"));
+    assert_eq!(manifest["package"]["version"].as_str(), Some("1.2.3"));
+    assert_eq!(manifest["package"]["edition"].as_str(), Some("2021"));
+    assert_eq!(manifest["package"]["publish"].as_bool(), Some(true));
+    assert!(manifest["dependencies"].get("serde").is_some());
+    assert!(manifest["dependencies"].get("zstd").is_some());
+    assert!(manifest["dependencies"].get("rustc-hash").is_some());
+    assert!(manifest["dependencies"].get("chrono").is_some());
+    assert!(manifest["dependencies"].get("serde_json").is_some());
+    assert!(manifest["dependencies"].get("serde_cbor").is_some());
+    assert!(manifest["dependencies"].get("prost").is_none());
+
+    let _ = std::fs::remove_dir_all(base);
+}
+
+#[test]
+fn rust_codegen_rejects_invalid_crate_metadata() {
+    let ir = example_ir();
+    let base = temp_dir();
+
+    for package in [
+        RustCrateOptions {
+            name: "invalid crate".to_owned(),
+            ..Default::default()
+        },
+        RustCrateOptions {
+            name: "game-config".to_owned(),
+            version: "not-semver".to_owned(),
+            ..Default::default()
+        },
+    ] {
+        let error = RustCodeGenerator
+            .generate_with_options(
+                &ir,
+                RustCodegenOptions {
+                    crate_options: Some(package),
+                    ..Default::default()
+                },
+                &base,
+            )
+            .unwrap_err();
+        assert!(error.to_string().contains("Rust crate"));
+    }
 
     let _ = std::fs::remove_dir_all(base);
 }

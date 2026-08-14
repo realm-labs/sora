@@ -113,7 +113,7 @@ The C target uses write-into decode functions, so C mappings should use `decode_
 
 | Target | Options |
 | --- | --- |
-| `rust` | `runtime_format` default `sora`; `map_type = "std"` or `"fx_hash_map"` default `std`; `string_storage = "owned"` or `"arc"` default `owned`. |
+| `rust` | `runtime_format` default `sora`; `map_type = "std"` or `"fx_hash_map"` default `std`; `string_storage = "owned"` or `"arc"` default `owned`; optional `crate` emits a standalone library crate. |
 | `kotlin` | `runtime_format` default `sora`. |
 | `csharp` | `runtime_format` default `sora`. |
 | `java` | `runtime_format` default `sora`; `nullable_annotation` defaults to `SoraNullable`, set an annotation class such as `org.jetbrains.annotations.Nullable`, or set `""` to disable annotations. |
@@ -148,3 +148,39 @@ runtime_format = "json"
 enum_repr = "integer"
 emit_dts = true
 ```
+
+### Standalone Rust Crate
+
+Rust normally writes a module tree directly into the configured `out` directory. Set
+`codegen.rust.crate` to make `out` the root of a complete library crate instead:
+
+```scon
+build {
+  codegen = [{ target = "rust", out = "generated/game-config" }]
+}
+
+codegen {
+  rust {
+    runtime_format = "sora"
+    crate {
+      name = "game-config"
+      version = "0.1.0"
+      edition = "2024"
+      publish = false
+    }
+  }
+}
+```
+
+Sora then writes `Cargo.toml`, `src/lib.rs`, the generated models, and the runtime under
+`generated/game-config`. `name` is required. `version`, `edition`, and `publish` default to
+`0.1.0`, `2024`, and `false`. The manifest includes the dependencies required by the selected
+runtime format and Rust options. Applications can consume it with a normal path dependency:
+
+```toml
+[dependencies]
+game-config = { path = "../generated/game-config" }
+```
+
+Without `crate`, the existing module layout remains unchanged and `out` should point to the
+module directory inside the consuming crate.

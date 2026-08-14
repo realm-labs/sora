@@ -176,6 +176,12 @@ views {
 }
 includes = ["schema/items.scon"]
 
+codegen {
+  rust {
+    crate { name = "game-config" }
+  }
+}
+
 build {
   default_source_format = "xlsx"
   data_root = "data"
@@ -196,6 +202,9 @@ build {
 groups = { common = { default = true } }
 views = { default = { contract = "game_config/default", groups = ["common"] } }
 includes = ["schema/items.toml"]
+
+[codegen.rust.crate]
+name = "game-config"
 
 [build]
 default_source_format = "xlsx"
@@ -220,6 +229,9 @@ groups: { common: { default: true } }
 views: { default: { contract: game_config/default, groups: [common] } }
 includes:
   - schema/items.yaml
+codegen:
+  rust:
+    crate: { name: game-config }
 
 build:
   default_source_format: xlsx
@@ -244,6 +256,11 @@ build:
     "default": { "contract": "game_config/default", "groups": ["common"] }
   },
   "includes": ["schema/items.json"],
+  "codegen": {
+    "rust": {
+      "crate": { "name": "game-config" }
+    }
+  },
   "build": {
     "default_source_format": "xlsx",
     "data_root": "data",
@@ -268,6 +285,11 @@ build:
     default = { contract = "game_config/default", groups = { "common" } },
   },
   includes = { "schema/items.lua" },
+  codegen = {
+    rust = {
+      crate = { name = "game-config" },
+    },
+  },
   build = {
     default_source_format = "xlsx",
     data_root = "data",
@@ -488,7 +510,9 @@ mod tests {
         .unwrap();
 
         assert!(base.join("generated/schema.lock").exists());
-        assert!(base.join("generated/rust/item.rs").exists());
+        assert!(base.join("generated/rust/Cargo.toml").exists());
+        assert!(base.join("generated/rust/src/lib.rs").exists());
+        assert!(base.join("generated/rust/src/item.rs").exists());
         assert!(base.join("generated/config.sora").exists());
 
         let _ = fs::remove_dir_all(base);
@@ -513,7 +537,11 @@ mod tests {
             let project = base.join(format!("project.{}", format.extension()));
             let input = ProjectSchemaInput::new(project);
             sora_core::pipeline::check_schema(&input).unwrap();
+            sora_core::pipeline::generate_code(&input, "rust", &base.join("generated/rust"))
+                .unwrap();
             assert!(base.join("data/Item.xlsx").exists());
+            assert!(base.join("generated/rust/Cargo.toml").exists());
+            assert!(base.join("generated/rust/src/lib.rs").exists());
 
             let _ = fs::remove_dir_all(base);
         }

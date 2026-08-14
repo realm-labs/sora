@@ -24,6 +24,12 @@ views {
 }
 includes = ["schema/items.scon"]
 
+codegen {
+  rust {
+    crate { name = "game-config" }
+  }
+}
+
 build {
   default_source_format = "xlsx"
   data_root = "data"
@@ -96,7 +102,8 @@ sora build --project project.scon
 
 - `generated/schema.lock`
 - `generated/excel/Item.xlsx`
-- `generated/rust`
+- `generated/rust/Cargo.toml`
+- `generated/rust/src/lib.rs`
 - `generated/config.sora`
 
 如果只想校验 schema，可以运行 `sora check --project project.scon`。

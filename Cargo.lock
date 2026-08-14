@@ -2766,6 +2766,7 @@ dependencies = [
  "heck",
  "libc",
  "minijinja",
+ "semver",
  "serde",
  "serde_json",
  "sora-diagnostics",

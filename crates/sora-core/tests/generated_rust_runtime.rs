@@ -37,10 +37,9 @@ fn generated_rust_runtime_compiles_and_loads_config_bundles() {
         let base = temp_dir();
         let project_path = write_project(&base, case.runtime_format);
         let generated_dir = base.join("generated-crate");
-        let generated_src = generated_dir.join("src/generated");
 
         let schema_input = ProjectSchemaInput::new(&project_path);
-        sora_core::pipeline::generate_code(&schema_input, "rust", &generated_src).unwrap();
+        sora_core::pipeline::generate_code(&schema_input, "rust", &generated_dir).unwrap();
 
         let project_input = SplitProjectInput::new(
             ProjectSchemaInput::new(&project_path),
@@ -53,7 +52,7 @@ fn generated_rust_runtime_compiles_and_loads_config_bundles() {
         )
         .unwrap();
 
-        write_generated_crate(&generated_dir, case.runtime_format, case.file_name);
+        write_generated_crate_test(&generated_dir, case.runtime_format, case.file_name);
         assert_generated_crate_tests_pass(&generated_dir);
 
         let _ = fs::remove_dir_all(base);
@@ -84,6 +83,7 @@ includes = ["schema/items.toml"]
 
 [codegen.rust]
 runtime_format = "__RUNTIME_FORMAT__"
+crate = { name = "generated-sora-config-test" }
 "#
         .replace("__RUNTIME_FORMAT__", runtime_format),
     )
@@ -186,7 +186,7 @@ count = 2
     project_path
 }
 
-fn write_generated_crate(crate_dir: &Path, runtime_format: &str, file_name: &str) {
+fn write_generated_crate_test(crate_dir: &Path, runtime_format: &str, file_name: &str) {
     let bundle_type = match runtime_format {
         "sora" => "SoraBundle",
         "json" => "JsonBundle",
@@ -194,85 +194,64 @@ fn write_generated_crate(crate_dir: &Path, runtime_format: &str, file_name: &str
         "sora-protobuf" => "ProtobufBundle",
         other => panic!("unsupported Rust runtime format `{other}`"),
     };
+    fs::create_dir_all(crate_dir.join("tests")).unwrap();
     fs::write(
-        crate_dir.join("Cargo.toml"),
+        crate_dir.join("tests/runtime.rs"),
         r#"
-[package]
-name = "generated-sora-config-test"
-version = "0.1.0"
-edition = "2024"
+use generated_sora_config_test::{
+    item_type::ItemType,
+    runtime::{__BUNDLE_TYPE__, SoraDecode, SoraReadError, SoraTableSource},
+    SoraConfig,
+};
 
-[dependencies]
-prost = "0.14"
-serde = { version = "1", features = ["derive", "rc"] }
-serde_cbor = "0.11"
-serde_json = "1"
-zstd = "0.13"
-"#,
-    )
-    .unwrap();
-    fs::write(
-        crate_dir.join("src/lib.rs"),
-        r#"
-pub mod generated;
+#[test]
+fn loads_sora_bundle() {
+    let bundle = __BUNDLE_TYPE__::parse(include_bytes!("../__CONFIG_FILE__")).unwrap();
+    let config = SoraConfig::from_source(&bundle).unwrap();
+    let item = config.item().get(&1002).unwrap();
 
-#[cfg(test)]
-mod tests {
-    use super::generated::{
-        item_type::ItemType,
-        runtime::{__BUNDLE_TYPE__, SoraDecode, SoraReadError, SoraTableSource},
-        SoraConfig,
-    };
+    assert_eq!(item.name, "Magic Stone");
+    assert_eq!(item.item_type, ItemType::Material);
+    assert_eq!(item.max_stack, 999);
+    assert_eq!(item.signed_byte, 127);
+    assert_eq!(item.unsigned_byte, 0);
+    assert_eq!(item.signed_short, 32767);
+    assert_eq!(item.unsigned_short, 0);
+    assert_eq!(item.unsigned_int, 0);
+    assert_eq!(item.rewards.len(), 2);
+    assert_eq!(item.rewards[0].reward_item_id, 3001);
+    assert_eq!(item.rewards[0].count, 2);
+    assert_eq!(item.rewards[1].reward_item_id, 3002);
+    assert_eq!(config.item().values().count(), 2);
+    assert_eq!(config.item_reward().len(), 2);
 
-    #[test]
-    fn loads_sora_bundle() {
-        let bundle = __BUNDLE_TYPE__::parse(include_bytes!("../__CONFIG_FILE__")).unwrap();
-        let config = SoraConfig::from_source(&bundle).unwrap();
-        let item = config.item().get(&1002).unwrap();
+    let boundary_item = config.item().get(&1001).unwrap();
+    assert_eq!(boundary_item.signed_byte, -128);
+    assert_eq!(boundary_item.unsigned_byte, 255);
+    assert_eq!(boundary_item.signed_short, -32768);
+    assert_eq!(boundary_item.unsigned_short, 65535);
+    assert_eq!(boundary_item.unsigned_int, 4294967295);
+}
 
-        assert_eq!(item.name, "Magic Stone");
-        assert_eq!(item.item_type, ItemType::Material);
-        assert_eq!(item.max_stack, 999);
-        assert_eq!(item.signed_byte, 127);
-        assert_eq!(item.unsigned_byte, 0);
-        assert_eq!(item.signed_short, 32767);
-        assert_eq!(item.unsigned_short, 0);
-        assert_eq!(item.unsigned_int, 0);
-        assert_eq!(item.rewards.len(), 2);
-        assert_eq!(item.rewards[0].reward_item_id, 3001);
-        assert_eq!(item.rewards[0].count, 2);
-        assert_eq!(item.rewards[1].reward_item_id, 3002);
-        assert_eq!(config.item().values().count(), 2);
-        assert_eq!(config.item_reward().len(), 2);
+#[test]
+fn rejects_schema_fingerprint_mismatch() {
+    let error = SoraConfig::from_source(&BadSource).unwrap_err();
 
-        let boundary_item = config.item().get(&1001).unwrap();
-        assert_eq!(boundary_item.signed_byte, -128);
-        assert_eq!(boundary_item.unsigned_byte, 255);
-        assert_eq!(boundary_item.signed_short, -32768);
-        assert_eq!(boundary_item.unsigned_short, 65535);
-        assert_eq!(boundary_item.unsigned_int, 4294967295);
+    assert!(error.to_string().contains("schema fingerprint mismatch"));
+}
+
+struct BadSource;
+
+impl SoraTableSource for BadSource {
+    fn schema_fingerprint(&self) -> Result<&str, SoraReadError> {
+        Ok("bad-schema")
     }
 
-    #[test]
-    fn rejects_schema_fingerprint_mismatch() {
-        let error = SoraConfig::from_source(&BadSource).unwrap_err();
-
-        assert!(error.to_string().contains("schema fingerprint mismatch"));
-    }
-
-    struct BadSource;
-
-    impl SoraTableSource for BadSource {
-        fn schema_fingerprint(&self) -> Result<&str, SoraReadError> {
-            Ok("bad-schema")
-        }
-
-        fn decode_table<T>(&self, _name: &str) -> Result<Vec<T>, SoraReadError>
-        where
-            T: SoraDecode + serde::de::DeserializeOwned,
-        {
-            panic!("schema mismatch should be reported before decoding tables")
-        }
+    fn decode_table<T>(&self, _name: &str) -> Result<Vec<T>, SoraReadError>
+    where
+        T: SoraDecode + serde::de::DeserializeOwned,
+    {
+        panic!("schema mismatch should be reported before decoding tables")
     }
 }
 "#

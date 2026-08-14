@@ -24,6 +24,12 @@ views {
 }
 includes = ["schema/items.scon"]
 
+codegen {
+  rust {
+    crate { name = "game-config" }
+  }
+}
+
 build {
   default_source_format = "xlsx"
   data_root = "data"
@@ -96,7 +102,8 @@ Expected artifacts:
 
 - `generated/schema.lock`
 - `generated/excel/Item.xlsx`
-- `generated/rust`
+- `generated/rust/Cargo.toml`
+- `generated/rust/src/lib.rs`
 - `generated/config.sora`
 
 Use `sora check --project project.scon` when you only want schema validation.

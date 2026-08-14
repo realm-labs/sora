@@ -113,7 +113,7 @@ C target 使用写入目标指针的 decode 函数，所以 C 映射应使用 `d
 
 | Target | Options |
 | --- | --- |
-| `rust` | `runtime_format` 默认 `sora`；`map_type = "std"` 或 `"fx_hash_map"`，默认 `std`；`string_storage = "owned"` 或 `"arc"`，默认 `owned`。 |
+| `rust` | `runtime_format` 默认 `sora`；`map_type = "std"` 或 `"fx_hash_map"`，默认 `std`；`string_storage = "owned"` 或 `"arc"`，默认 `owned`；可选 `crate` 用于生成独立 library crate。 |
 | `kotlin` | `runtime_format` 默认 `sora`。 |
 | `csharp` | `runtime_format` 默认 `sora`。 |
 | `java` | `runtime_format` 默认 `sora`；`nullable_annotation` 默认 `SoraNullable`，也可以设置成 `org.jetbrains.annotations.Nullable` 这类 annotation class，或设置为 `""` 禁用 annotation。 |
@@ -148,3 +148,39 @@ runtime_format = "json"
 enum_repr = "integer"
 emit_dts = true
 ```
+
+### 独立 Rust Crate
+
+Rust 默认会把 module tree 直接写到配置的 `out` 目录。设置 `codegen.rust.crate` 后，
+`out` 表示一个完整 library crate 的根目录：
+
+```scon
+build {
+  codegen = [{ target = "rust", out = "generated/game-config" }]
+}
+
+codegen {
+  rust {
+    runtime_format = "sora"
+    crate {
+      name = "game-config"
+      version = "0.1.0"
+      edition = "2024"
+      publish = false
+    }
+  }
+}
+```
+
+Sora 会在 `generated/game-config` 下写出 `Cargo.toml`、`src/lib.rs`、生成的 model 和
+runtime。`name` 必填；`version`、`edition` 和 `publish` 分别默认取 `0.1.0`、`2024`
+和 `false`。生成的 manifest 会根据 runtime format 和 Rust 选项自动加入所需依赖。
+应用可以像普通 path dependency 一样使用它：
+
+```toml
+[dependencies]
+game-config = { path = "../generated/game-config" }
+```
+
+未设置 `crate` 时，原有 module 布局保持不变，此时 `out` 应指向消费方 crate 内部的
+module 目录。

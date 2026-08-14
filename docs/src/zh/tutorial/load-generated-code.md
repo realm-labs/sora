@@ -21,16 +21,37 @@ out = "generated/config.sora"
 
 ## Rust 示例
 
-```rust
-mod generated;
+要生成独立 crate，可以这样配置 Rust codegen：
 
-use generated::SoraConfig;
+```scon
+build {
+  codegen = [{ target = "rust", out = "generated/game-config" }]
+}
+
+codegen {
+  rust {
+    runtime_format = "sora"
+    crate { name = "game-config" }
+  }
+}
+```
+
+在消费方应用的 manifest 中加入：
+
+```toml
+[dependencies]
+game-config = { path = "../generated/game-config" }
+```
+
+```rust
+use game_config::{SoraConfig, runtime::SoraBundle};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let bytes = std::fs::read("generated/config.sora")?;
-    let config = SoraConfig::from_sora_bytes(&bytes)?;
+    let bundle = SoraBundle::parse(&bytes)?;
+    let config = SoraConfig::from_source(&bundle)?;
 
-    if let Some(item) = config.items.get(&1001) {
+    if let Some(item) = config.item().get(&1001) {
         println!("{} stacks to {}", item.name, item.max_stack);
     }
 
@@ -39,6 +60,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 具体名称会由 schema 名称和目标语言命名习惯决定。例如 `Item` 表通常会生成 item row type 和 item table accessor。
+
+不设置 `codegen.rust.crate` 时，仍会生成可在现有 crate 中通过 `mod generated;` 引入的
+module 目录。
 
 ## Adapter Targets
 

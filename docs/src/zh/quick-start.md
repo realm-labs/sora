@@ -47,6 +47,12 @@ views {
 }
 includes = ["schema/items.scon"]
 
+codegen {
+  rust {
+    crate { name = "game-config" }
+  }
+}
+
 build {
   default_source_format = "xlsx"
   data_root = "data"
@@ -62,7 +68,7 @@ build {
 }
 ```
 
-这里 `default_source_format = "xlsx"` 表示表数据默认来自 Excel。`data_root = "data"` 表示导出和 build 时会从 `data/Item.xlsx` 读取 `Item.xlsx`。`excel_templates = "generated/excel"` 只是生成模板的输出目录。Sora 会在这里写入带 schema 表头的新 workbook；它不是源数据目录。把它和 `data` 分开，重新生成模板时才不会覆盖已经填写过的行数据。`binary` export 会写出 Rust 代码要加载的运行时数据包，因为 Rust 默认使用 `runtime_format = "sora"`。
+这里 `default_source_format = "xlsx"` 表示表数据默认来自 Excel。`data_root = "data"` 表示导出和 build 时会从 `data/Item.xlsx` 读取 `Item.xlsx`。`excel_templates = "generated/excel"` 只是生成模板的输出目录。Sora 会在这里写入带 schema 表头的新 workbook；它不是源数据目录。把它和 `data` 分开，重新生成模板时才不会覆盖已经填写过的行数据。`codegen.rust.crate` 会让 `generated/rust` 成为带独立 `Cargo.toml` 的 library crate。`binary` export 会写出 Rust 代码要加载的运行时数据包，因为 Rust 默认使用 `runtime_format = "sora"`。
 
 创建 `schema/items.scon`：
 

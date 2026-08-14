@@ -347,6 +347,44 @@ fn build_command_generates_configured_outputs() {
 }
 
 #[test]
+fn build_command_generates_a_standalone_rust_crate() {
+    let base = temp_dir();
+    let project = write_project(&base);
+    let manifest = fs::read_to_string(&project).unwrap()
+        .replace("out = \"generated/rust\"", "out = \"generated/game-config\"")
+        .replace(
+            "[codegen.dart]",
+            "[codegen.rust]\ncrate = { name = \"game-config\", version = \"2.0.0\", edition = \"2021\" }\n\n[codegen.dart]",
+        );
+    fs::write(&project, manifest).unwrap();
+
+    run(
+        BuildArgs {
+            project: project.clone(),
+            default_source_format: None,
+            data_root: None,
+            view: None,
+            target: vec!["rust".to_owned()],
+            clean: true,
+        },
+        &test_context(),
+    )
+    .unwrap();
+
+    assert!(base.join("generated/game-config/Cargo.toml").exists());
+    assert!(base.join("generated/game-config/src/lib.rs").exists());
+    assert!(base.join("generated/game-config/src/runtime.rs").exists());
+    assert!(base.join("generated/game-config/src/item.rs").exists());
+    assert!(!base.join("generated/game-config/mod.rs").exists());
+    let cargo = fs::read_to_string(base.join("generated/game-config/Cargo.toml")).unwrap();
+    assert!(cargo.contains("name = \"game-config\""));
+    assert!(cargo.contains("version = \"2.0.0\""));
+    assert!(cargo.contains("edition = \"2021\""));
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
 fn build_command_can_filter_codegen_targets() {
     let base = temp_dir();
     let project = write_project(&base);

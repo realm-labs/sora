@@ -39,6 +39,8 @@ pub struct RustCodegenOptions {
     pub map_type: RustMapType,
     pub string_storage: RustStringStorage,
     pub datetime_type: RustDateTimeType,
+    #[serde(rename = "crate")]
+    pub crate_options: Option<RustCrateOptions>,
 }
 
 impl Default for RustCodegenOptions {
@@ -48,6 +50,7 @@ impl Default for RustCodegenOptions {
             map_type: RustMapType::Std,
             string_storage: RustStringStorage::Owned,
             datetime_type: RustDateTimeType::SystemTime,
+            crate_options: None,
         }
     }
 }
@@ -55,6 +58,26 @@ impl Default for RustCodegenOptions {
 impl HasRuntimeFormat for RustCodegenOptions {
     fn runtime_format(&self) -> Option<RuntimeFormat> {
         Some(self.runtime_format)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(default)]
+pub struct RustCrateOptions {
+    pub name: String,
+    pub version: String,
+    pub edition: RustEdition,
+    pub publish: bool,
+}
+
+impl Default for RustCrateOptions {
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            version: "0.1.0".to_owned(),
+            edition: RustEdition::Rust2024,
+            publish: false,
+        }
     }
 }
 
@@ -448,4 +471,28 @@ pub enum RustDateTimeType {
     #[default]
     SystemTime,
     Chrono,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, Default)]
+pub enum RustEdition {
+    #[serde(rename = "2015")]
+    Rust2015,
+    #[serde(rename = "2018")]
+    Rust2018,
+    #[serde(rename = "2021")]
+    Rust2021,
+    #[default]
+    #[serde(rename = "2024")]
+    Rust2024,
+}
+
+impl RustEdition {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Rust2015 => "2015",
+            Self::Rust2018 => "2018",
+            Self::Rust2021 => "2021",
+            Self::Rust2024 => "2024",
+        }
+    }
 }

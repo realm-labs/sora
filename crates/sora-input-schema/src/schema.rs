@@ -1373,6 +1373,11 @@ key = "id"
             r#"
 project { id = "game_config" }
 includes = ["schema/items.scon"]
+codegen {
+  rust {
+    crate { name = "game-config" }
+  }
+}
 "#,
         )
         .unwrap();
@@ -1404,6 +1409,10 @@ tables {
         assert_eq!(loaded.schema.tables[0].fields[0].name, "id");
         assert_eq!(loaded.schema.tables[0].fields[1].name, "name");
         assert_eq!(loaded.modules.len(), 2);
+        assert_eq!(
+            loaded.schema.codegen.targets["rust"]["crate"]["name"].as_str(),
+            Some("game-config")
+        );
 
         let module = load_schema_module(&module_path).unwrap();
         let rendered = render_schema_module(&module_path, &module).unwrap();

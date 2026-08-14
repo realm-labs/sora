@@ -47,6 +47,12 @@ views {
 }
 includes = ["schema/items.scon"]
 
+codegen {
+  rust {
+    crate { name = "game-config" }
+  }
+}
+
 build {
   default_source_format = "xlsx"
   data_root = "data"
@@ -62,7 +68,7 @@ build {
 }
 ```
 
-In this file, `default_source_format = "xlsx"` means table sources default to Excel. `data_root = "data"` means `Item.xlsx` is read from `data/Item.xlsx` during export and build. `excel_templates = "generated/excel"` is only the generated template output directory. It is where Sora writes fresh workbooks with schema headers; it is not the source data directory. Keep it separate from `data` so regenerating templates cannot overwrite edited row data. The `binary` export writes the runtime bundle that Rust code will load because Rust defaults to `runtime_format = "sora"`.
+In this file, `default_source_format = "xlsx"` means table sources default to Excel. `data_root = "data"` means `Item.xlsx` is read from `data/Item.xlsx` during export and build. `excel_templates = "generated/excel"` is only the generated template output directory. It is where Sora writes fresh workbooks with schema headers; it is not the source data directory. Keep it separate from `data` so regenerating templates cannot overwrite edited row data. `codegen.rust.crate` makes `generated/rust` a standalone library crate with its own `Cargo.toml`. The `binary` export writes the runtime bundle that Rust code will load because Rust defaults to `runtime_format = "sora"`.
 
 Create `schema/items.scon`:
 

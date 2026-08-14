@@ -469,6 +469,11 @@ const EMBEDDED_TEMPLATES: &[EmbeddedTemplate] = &[
     },
     EmbeddedTemplate {
         target: "rust",
+        file_name: "Cargo.toml.j2",
+        source: include_str!("../templates/rust/Cargo.toml.j2"),
+    },
+    EmbeddedTemplate {
+        target: "rust",
         file_name: "enum.rs.j2",
         source: include_str!("../templates/rust/enum.rs.j2"),
     },
@@ -549,7 +554,7 @@ mod tests {
 
     #[test]
     fn embeds_all_templates() {
-        assert_eq!(EMBEDDED_TEMPLATES.len(), 103);
+        assert_eq!(EMBEDDED_TEMPLATES.len(), 104);
         for template in EMBEDDED_TEMPLATES {
             let source = template_source(template.target, template.file_name)
                 .expect("embedded template should be registered");

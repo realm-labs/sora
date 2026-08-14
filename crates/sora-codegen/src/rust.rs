@@ -1,9 +1,9 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use heck::ToSnakeCase;
 use minijinja::context;
 use serde::Serialize;
-use sora_diagnostics::Result;
+use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
@@ -12,7 +12,10 @@ use crate::{
         BaseEnumValue, BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable,
         BaseUnion, BaseUnionVariant, build_base_model,
     },
-    options::{RustCodegenOptions, RustDateTimeType, RustMapType, RustStringStorage},
+    options::{
+        RuntimeFormat, RustCodegenOptions, RustCrateOptions, RustDateTimeType, RustMapType,
+        RustStringStorage,
+    },
     render::{ensure_dir, render_template, write_file},
     type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
@@ -24,7 +27,8 @@ impl CodeGenerator for RustCodeGenerator {
     fn generate(&self, context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
         let ir = context.ir;
         let options = context.options::<RustCodegenOptions>()?;
-        ensure_dir(out_dir)?;
+        let source_dir = rust_source_dir(out_dir, &options)?;
+        ensure_dir(&source_dir)?;
         let mapper = RustTypeMapper::new(context.target, ir, context.type_mappings, &options);
         let model = RustModel::from_base_model(ir, build_base_model(ir)?, &mapper);
         let runtime_format = runtime_format_name(options.runtime_format);
@@ -32,19 +36,25 @@ impl CodeGenerator for RustCodeGenerator {
         for item in &model.enums {
             let rendered = render_template("rust", "enum.rs.j2", context! { enum => item })?;
             write_file(
-                &out_dir.join(format!("{}.rs", item.name.to_snake_case())),
+                &source_dir.join(format!("{}.rs", item.name.to_snake_case())),
                 rendered,
             )?;
         }
 
         for record in &model.records {
             let rendered = render_template("rust", "struct.rs.j2", context! { record => record })?;
-            write_file(&out_dir.join(format!("{}.rs", record.snake_name)), rendered)?;
+            write_file(
+                &source_dir.join(format!("{}.rs", record.snake_name)),
+                rendered,
+            )?;
         }
 
         for union in &model.unions {
             let rendered = render_template("rust", "union.rs.j2", context! { union => union })?;
-            write_file(&out_dir.join(format!("{}.rs", union.snake_name)), rendered)?;
+            write_file(
+                &source_dir.join(format!("{}.rs", union.snake_name)),
+                rendered,
+            )?;
         }
 
         let rust_map_type = match options.map_type {
@@ -56,7 +66,12 @@ impl CodeGenerator for RustCodeGenerator {
             "mod.rs.j2",
             context! { model => &model, rust_map_type => rust_map_type, runtime_format => runtime_format },
         )?;
-        write_file(&out_dir.join("mod.rs"), rendered)?;
+        let root_file = if options.crate_options.is_some() {
+            "lib.rs"
+        } else {
+            "mod.rs"
+        };
+        write_file(&source_dir.join(root_file), rendered)?;
 
         let rendered = render_template(
             "rust",
@@ -67,7 +82,80 @@ impl CodeGenerator for RustCodeGenerator {
                 datetime_type => rust_datetime_type_name(options.datetime_type),
             },
         )?;
-        write_file(&out_dir.join("runtime.rs"), rendered)
+        write_file(&source_dir.join("runtime.rs"), rendered)?;
+
+        if let Some(package) = &options.crate_options {
+            let manifest = RustCrateManifest::new(package, &options);
+            let rendered =
+                render_template("rust", "Cargo.toml.j2", context! { package => &manifest })?;
+            write_file(&out_dir.join("Cargo.toml"), rendered)?;
+        }
+
+        Ok(())
+    }
+}
+
+fn rust_source_dir(out_dir: &Path, options: &RustCodegenOptions) -> Result<PathBuf> {
+    if let Some(package) = &options.crate_options {
+        validate_rust_crate_options(package)?;
+        Ok(out_dir.join("src"))
+    } else {
+        Ok(out_dir.to_path_buf())
+    }
+}
+
+fn validate_rust_crate_options(package: &RustCrateOptions) -> Result<()> {
+    let name = package.name.as_str();
+    let valid_name = name
+        .bytes()
+        .next()
+        .is_some_and(|first| first.is_ascii_alphabetic())
+        && name
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_'));
+    if !valid_name {
+        return Err(SoraError::InvalidSchema(format!(
+            "invalid Rust crate name `{name}`: expected an ASCII letter followed by ASCII letters, digits, `-`, or `_`"
+        )));
+    }
+    semver::Version::parse(&package.version).map_err(|error| {
+        SoraError::InvalidSchema(format!(
+            "invalid Rust crate version `{}`: {error}",
+            package.version
+        ))
+    })?;
+    Ok(())
+}
+
+#[derive(Debug, Serialize)]
+struct RustCrateManifest<'a> {
+    name: &'a str,
+    version: &'a str,
+    edition: &'static str,
+    publish: bool,
+    uses_rustc_hash: bool,
+    uses_chrono: bool,
+    uses_serde_json: bool,
+    uses_serde_cbor: bool,
+    uses_prost: bool,
+}
+
+impl<'a> RustCrateManifest<'a> {
+    fn new(package: &'a RustCrateOptions, options: &RustCodegenOptions) -> Self {
+        Self {
+            name: &package.name,
+            version: &package.version,
+            edition: package.edition.as_str(),
+            publish: package.publish,
+            uses_rustc_hash: options.map_type == RustMapType::FxHashMap,
+            uses_chrono: options.datetime_type == RustDateTimeType::Chrono,
+            uses_serde_json: matches!(
+                options.runtime_format,
+                RuntimeFormat::Json | RuntimeFormat::Cbor | RuntimeFormat::SoraProtobuf
+            ),
+            uses_serde_cbor: options.runtime_format == RuntimeFormat::Cbor,
+            uses_prost: options.runtime_format == RuntimeFormat::SoraProtobuf,
+        }
     }
 }
 
