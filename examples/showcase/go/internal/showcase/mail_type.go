@@ -7,41 +7,41 @@ import "fmt"
 type MailType int32
 
 const (
-    MailTypeSystem MailType = 0
-    MailTypeEvent MailType = 1
-    MailTypeCompensation MailType = 2
+	MailTypeSystem       MailType = 0
+	MailTypeEvent        MailType = 1
+	MailTypeCompensation MailType = 2
 )
 
 func decodeMailType(reader *SoraReader) (MailType, error) {
-    id, err := reader.ReadUInt32()
-    if err != nil {
-        return 0, err
-    }
-    switch id {
-    case 0:
-        return MailTypeSystem, nil
-    case 1:
-        return MailTypeEvent, nil
-    case 2:
-        return MailTypeCompensation, nil
-    default:
-        return 0, fmt.Errorf("invalid enum id %d for MailType", id)
-    }
+	id, err := reader.ReadUInt32()
+	if err != nil {
+		return 0, err
+	}
+	switch id {
+	case 0:
+		return MailTypeSystem, nil
+	case 1:
+		return MailTypeEvent, nil
+	case 2:
+		return MailTypeCompensation, nil
+	default:
+		return 0, fmt.Errorf("invalid enum id %d for MailType", id)
+	}
 }
 
 func decodeMailTypeValue(value SoraValue) (MailType, error) {
-    name, err := value.AsString()
-    if err != nil {
-        return 0, err
-    }
-    switch name {
-    case "System":
-        return MailTypeSystem, nil
-    case "Event":
-        return MailTypeEvent, nil
-    case "Compensation":
-        return MailTypeCompensation, nil
-    default:
-        return 0, fmt.Errorf("invalid enum value %s for MailType", name)
-    }
+	name, err := value.AsString()
+	if err != nil {
+		return 0, err
+	}
+	switch name {
+	case "System":
+		return MailTypeSystem, nil
+	case "Event":
+		return MailTypeEvent, nil
+	case "Compensation":
+		return MailTypeCompensation, nil
+	default:
+		return 0, fmt.Errorf("invalid enum value %s for MailType", name)
+	}
 }

@@ -2,8 +2,9 @@
 
 #nullable enable
 
-namespace com.sora.showcase;
+using com.sora.showcase;
 
+namespace com.sora.showcase;
 public enum ItemType
 {
     Weapon = 0,

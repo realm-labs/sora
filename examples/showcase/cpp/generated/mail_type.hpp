@@ -8,7 +8,6 @@
 #include <functional>
 
 namespace sora::showcase {
-
 enum class MailType : std::int32_t {
     System = 0,
     Event = 1,

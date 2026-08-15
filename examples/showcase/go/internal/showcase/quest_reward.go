@@ -3,57 +3,57 @@
 package showcase
 
 type QuestReward struct {
-    QuestID int32
-    Seq int32
-    ItemID int32
-    Count int32
+	QuestID int32
+	Seq     int32
+	ItemID  int32
+	Count   int32
 }
 
 func decodeQuestReward(reader *SoraReader) (QuestReward, error) {
-    var value QuestReward
-    var err error
-    value.QuestID, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Seq, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.ItemID, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Count, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value QuestReward
+	var err error
+	value.QuestID, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Seq, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.ItemID, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Count, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 func decodeQuestRewardValue(input SoraValue) (QuestReward, error) {
-    var value QuestReward
-    obj, err := input.AsObject()
-    if err != nil {
-        return value, err
-    }
-    value.QuestID, err = obj.Get("quest_id").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Seq, err = obj.Get("seq").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.ItemID, err = obj.Get("item_id").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Count, err = obj.Get("count").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value QuestReward
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.QuestID, err = obj.Get("quest_id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Seq, err = obj.Get("seq").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.ItemID, err = obj.Get("item_id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Count, err = obj.Get("count").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 func (value QuestReward) collectTextKeys(out *[]TextKey) {
@@ -62,35 +62,34 @@ func (value QuestReward) collectTextKeys(out *[]TextKey) {
 const questRewardTableName = "QuestReward"
 
 var questRewardTableInfo = SoraTableInfo{
-    Name: questRewardTableName,
-    RowType: "QuestReward",
-    Shape: SoraTableShapeList,
-    Indexes: []SoraIndexInfo{
-    },
+	Name:    questRewardTableName,
+	RowType: "QuestReward",
+	Shape:   SoraTableShapeList,
+	Indexes: []SoraIndexInfo{},
 }
 
 type QuestRewardTable struct {
-    rows []QuestReward
+	rows []QuestReward
 }
 
 func buildQuestRewardTable(rows []QuestReward) (*QuestRewardTable, error) {
-    return &QuestRewardTable{rows: rows}, nil
+	return &QuestRewardTable{rows: rows}, nil
 }
 
 func decodeQuestRewardTable(source SoraTableSource) (*QuestRewardTable, error) {
-    rows, err := DecodeSourceTable(source, questRewardTableName, decodeQuestReward, decodeQuestRewardValue)
-    if err != nil {
-        return nil, err
-    }
-    return buildQuestRewardTable(rows)
+	rows, err := DecodeSourceTable(source, questRewardTableName, decodeQuestReward, decodeQuestRewardValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildQuestRewardTable(rows)
 }
 func (table *QuestRewardTable) Rows() []QuestReward {
-    return append([]QuestReward(nil), table.rows...)
+	return append([]QuestReward(nil), table.rows...)
 }
 func (table *QuestRewardTable) Info() SoraTableInfo {
-    return questRewardTableInfo
+	return questRewardTableInfo
 }
 
 func (table *QuestRewardTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

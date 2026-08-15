@@ -26,7 +26,7 @@ impl super::runtime::SoraDecode for QuestReward {
 }
 
 impl QuestReward {
-    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+    pub(crate) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
         let _ = &out;
     }
 }
@@ -46,7 +46,7 @@ impl QuestRewardTable {
         indexes: &[],
     };
 
-    pub(super) fn from_rows(rows: Vec<QuestReward>) -> Result<Self, super::runtime::SoraReadError> {
+    pub(crate) fn from_rows(rows: Vec<QuestReward>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
     }
 }

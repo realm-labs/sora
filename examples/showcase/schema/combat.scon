@@ -3,8 +3,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Battle.xlsx"
-      sheet = "Skill"
+      file = "Skill.xlsx"
     }
     fields = {
       id = "i32"
@@ -47,8 +46,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Battle.xlsx"
-      sheet = "Character"
+      file = "Character.xlsx"
     }
     fields = {
       id = "i32"
@@ -79,8 +77,7 @@ tables = {
   CharacterSkill = {
     mode = "list"
     source = {
-      file = "Battle.xlsx"
-      sheet = "CharacterSkill"
+      file = "CharacterSkill.xlsx"
     }
     fields = {
       character_id = "ref<Character.id>"
@@ -92,8 +89,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Battle.xlsx"
-      sheet = "Buff"
+      file = "Buff.xlsx"
     }
     fields = {
       id = "i32"
@@ -113,8 +109,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Battle.xlsx"
-      sheet = "DropGroup"
+      file = "DropGroup.xlsx"
     }
     fields = {
       id = "i32"
@@ -124,8 +119,7 @@ tables = {
   DropEntry = {
     mode = "list"
     source = {
-      file = "Battle.xlsx"
-      sheet = "DropEntry"
+      file = "DropEntry.xlsx"
     }
     fields = {
       group_id = "ref<DropGroup.id>"
@@ -148,8 +142,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Battle.xlsx"
-      sheet = "Monster"
+      file = "Monster.xlsx"
     }
     fields = {
       id = "i32"
@@ -167,8 +160,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Battle.xlsx"
-      sheet = "Stage"
+      file = "Stage.xlsx"
     }
     fields = {
       id = "i32"
@@ -196,8 +188,7 @@ tables = {
   StageReward = {
     mode = "list"
     source = {
-      file = "Battle.xlsx"
-      sheet = "StageReward"
+      file = "StageReward.xlsx"
     }
     fields = {
       stage_id = "ref<Stage.id>"
@@ -210,8 +201,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Battle.xlsx"
-      sheet = "Dungeon"
+      file = "Dungeon.xlsx"
     }
     fields = {
       id = "i32"

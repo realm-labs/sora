@@ -15,7 +15,7 @@ use crate::projection::{
     DATA_START_ROW, DESC_ROW, FIELD_ROW, FIELD_START_COLUMN, NAME_ROW, TYPE_ROW, TemplateColumn,
     TemplateColumnGroupRole, table_template_columns, table_template_rows, tuple_shape,
 };
-use crate::sheets::resolve_table_sheet_names;
+use crate::sheets::{ensure_single_table_definition, resolve_table_sheet_names};
 
 const DATA_VALIDATION_ROWS: u32 = 1000;
 
@@ -29,6 +29,7 @@ pub(crate) fn write_workbook_with_rows(
     let mut workbook = deterministic_workbook(path)?;
     let formats = TemplateFormats::new();
 
+    ensure_single_table_definition(tables, &path.display().to_string())?;
     for table in tables {
         let sheet_names = resolve_table_sheet_names(table, &[])?;
         let data_rows = rows_for_table(table);
@@ -705,18 +706,42 @@ fn enum_validation(ir: &ConfigIr, enum_name: &str, path: &Path) -> Result<Option
         .iter()
         .map(|value| value.name.as_str())
         .collect::<Vec<_>>();
+    let title = enum_validation_title(enum_name);
+    let input_message = truncate_excel_text(
+        &format!("Select a value for enum `{enum_name}` from the dropdown."),
+        255,
+    );
+    let error_message =
+        truncate_excel_text(&format!("Value must be one of: {}", values.join(", ")), 255);
     let data_validation = DataValidation::new()
         .allow_list_strings(&values)
         .map_err(|source| excel_error(path, source))?
-        .set_input_title(format!("{} enum", enum_name))
+        .set_input_title(title)
         .map_err(|source| excel_error(path, source))?
-        .set_input_message("Select a value from the dropdown.")
+        .set_input_message(input_message)
         .map_err(|source| excel_error(path, source))?
         .set_error_title("Invalid enum value")
         .map_err(|source| excel_error(path, source))?
-        .set_error_message(format!("Value must be one of: {}", values.join(", ")))
+        .set_error_message(error_message)
         .map_err(|source| excel_error(path, source))?;
     Ok(Some(data_validation))
+}
+
+fn enum_validation_title(enum_name: &str) -> String {
+    let local_name = enum_name.rsplit('.').next().unwrap_or(enum_name);
+    truncate_excel_text(&format!("{local_name} enum"), 32)
+}
+
+fn truncate_excel_text(value: &str, limit: usize) -> String {
+    if value.chars().count() <= limit {
+        return value.to_owned();
+    }
+    if limit == 0 {
+        return String::new();
+    }
+    let mut truncated = value.chars().take(limit - 1).collect::<String>();
+    truncated.push('…');
+    truncated
 }
 
 fn union_tag_validation<'a>(
@@ -1033,6 +1058,19 @@ mod tests {
 
     use super::*;
     use sora_ir::model::{ConfigIr, DerivedFieldIr, EnumIr, GroupSetIr, StructIr, TypeIr};
+
+    #[test]
+    fn enum_validation_titles_use_local_names_and_respect_excel_limits() {
+        assert_eq!(
+            enum_validation_title("worldgen.geography.TraversalBarrierKind"),
+            "TraversalBarrierKind enum"
+        );
+        let long = enum_validation_title(
+            "worldgen.ThisEnumLocalNameIsMuchLongerThanExcelValidationAllows",
+        );
+        assert_eq!(long.chars().count(), 32);
+        assert!(long.ends_with('…'));
+    }
 
     #[test]
     fn field_note_text_includes_comment_and_metadata() {

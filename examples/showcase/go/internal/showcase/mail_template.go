@@ -3,134 +3,135 @@
 package showcase
 
 type MailTemplate struct {
-    ID int32
-    MailType MailType
-    TitleKey TextKey
-    BodyKey TextKey
-    Rewards []Reward
+	ID       int32
+	MailType MailType
+	TitleKey TextKey
+	BodyKey  TextKey
+	Rewards  []Reward
 }
 
 func decodeMailTemplate(reader *SoraReader) (MailTemplate, error) {
-    var value MailTemplate
-    var err error
-    value.ID, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.MailType, err = decodeMailType(reader)
-    if err != nil {
-        return value, err
-    }
-    value.TitleKey, err = ReadTextKey(reader)
-    if err != nil {
-        return value, err
-    }
-    value.BodyKey, err = ReadTextKey(reader)
-    if err != nil {
-        return value, err
-    }
-    value.Rewards, err = ReadList(reader, func(reader *SoraReader) (Reward, error) { return decodeReward(reader) })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value MailTemplate
+	var err error
+	value.ID, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.MailType, err = decodeMailType(reader)
+	if err != nil {
+		return value, err
+	}
+	value.TitleKey, err = ReadTextKey(reader)
+	if err != nil {
+		return value, err
+	}
+	value.BodyKey, err = ReadTextKey(reader)
+	if err != nil {
+		return value, err
+	}
+	value.Rewards, err = ReadList(reader, func(reader *SoraReader) (Reward, error) { return decodeReward(reader) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 func decodeMailTemplateValue(input SoraValue) (MailTemplate, error) {
-    var value MailTemplate
-    obj, err := input.AsObject()
-    if err != nil {
-        return value, err
-    }
-    value.ID, err = obj.Get("id").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.MailType, err = decodeMailTypeValue(obj.Get("mail_type"))
-    if err != nil {
-        return value, err
-    }
-    value.TitleKey, err = DecodeTextKeyValue(obj.Get("title_key"))
-    if err != nil {
-        return value, err
-    }
-    value.BodyKey, err = DecodeTextKeyValue(obj.Get("body_key"))
-    if err != nil {
-        return value, err
-    }
-    value.Rewards, err = DecodeSoraValueList(obj.Get("rewards"), func(item SoraValue) (Reward, error) { return decodeRewardValue(item) })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value MailTemplate
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.ID, err = obj.Get("id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.MailType, err = decodeMailTypeValue(obj.Get("mail_type"))
+	if err != nil {
+		return value, err
+	}
+	value.TitleKey, err = DecodeTextKeyValue(obj.Get("title_key"))
+	if err != nil {
+		return value, err
+	}
+	value.BodyKey, err = DecodeTextKeyValue(obj.Get("body_key"))
+	if err != nil {
+		return value, err
+	}
+	value.Rewards, err = DecodeSoraValueList(obj.Get("rewards"), func(item SoraValue) (Reward, error) { return decodeRewardValue(item) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 func (value MailTemplate) collectTextKeys(out *[]TextKey) {
-    *out = append(*out, value.TitleKey)
-    *out = append(*out, value.BodyKey)
-    for _, item := range value.Rewards { item.collectTextKeys(out) }
+	*out = append(*out, value.TitleKey)
+	*out = append(*out, value.BodyKey)
+	for _, item := range value.Rewards {
+		item.collectTextKeys(out)
+	}
 }
 
 const mailTemplateTableName = "MailTemplate"
 
 var mailTemplateTableInfo = SoraTableInfo{
-    Name: mailTemplateTableName,
-    RowType: "MailTemplate",
-    Shape: SoraTableShapeKeyed,
-    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-    Indexes: []SoraIndexInfo{
-    },
+	Name:       mailTemplateTableName,
+	RowType:    "MailTemplate",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
 }
 
 type MailTemplateTable struct {
-    keys []int32
-    rows map[int32]MailTemplate
+	keys []int32
+	rows map[int32]MailTemplate
 }
 
 func buildMailTemplateTable(rows []MailTemplate) (*MailTemplateTable, error) {
-    keys := make([]int32, 0, len(rows))
-    for _, row := range rows {
-        keys = append(keys, row.ID)
-    }
-    return &MailTemplateTable{keys: keys, rows: DecodeMapTable(rows, func(row MailTemplate) int32 { return row.ID })}, nil
+	keys := make([]int32, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.ID)
+	}
+	return &MailTemplateTable{keys: keys, rows: DecodeMapTable(rows, func(row MailTemplate) int32 { return row.ID })}, nil
 }
 
 func decodeMailTemplateTable(source SoraTableSource) (*MailTemplateTable, error) {
-    rows, err := DecodeSourceTable(source, mailTemplateTableName, decodeMailTemplate, decodeMailTemplateValue)
-    if err != nil {
-        return nil, err
-    }
-    return buildMailTemplateTable(rows)
+	rows, err := DecodeSourceTable(source, mailTemplateTableName, decodeMailTemplate, decodeMailTemplateValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildMailTemplateTable(rows)
 }
 func (table *MailTemplateTable) Rows() map[int32]MailTemplate {
-    rows := make(map[int32]MailTemplate, len(table.rows))
-    for key, row := range table.rows {
-        rows[key] = row
-    }
-    return rows
+	rows := make(map[int32]MailTemplate, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *MailTemplateTable) Get(key int32) (MailTemplate, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 
 func (table *MailTemplateTable) Keys() []int32 {
-    return append([]int32(nil), table.keys...)
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *MailTemplateTable) OrderedRows() []MailTemplate {
-    rows := make([]MailTemplate, 0, len(table.keys))
-    for _, key := range table.keys {
-        if row, ok := table.rows[key]; ok {
-            rows = append(rows, row)
-        }
-    }
-    return rows
+	rows := make([]MailTemplate, 0, len(table.keys))
+	for _, key := range table.keys {
+		if row, ok := table.rows[key]; ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
 }
 func (table *MailTemplateTable) Info() SoraTableInfo {
-    return mailTemplateTableInfo
+	return mailTemplateTableInfo
 }
 
 func (table *MailTemplateTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

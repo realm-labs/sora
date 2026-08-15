@@ -7,18 +7,19 @@ so the whole pipeline is easy to inspect. The showcase currently covers 34
 tables across core, battle, economy, quest, and complex-data domains, with
 hundreds of rows and mixed map/list/singleton table modes.
 
-`data/Complex.xlsx` is the stress case for Sora's Excel projection. It shows
+The `data/Complex*.xlsx` workbooks are the stress cases for Sora's Excel projection. They show
 single `union<T>` values edited through `tagged_columns`, non-JSON
 `list<union<T>>` values assembled from child rows, derived fields that point at
 other derived groups, and a nested tuple cell that combines struct, tuple-list,
 split, and map parsers.
 
-`data/Core.xlsx` also includes smaller coverage examples for struct columns,
-singleton tables, `f64`, fixed-size arrays, and an optional struct derived from
-a child table.
+The table workbooks each contain exactly one table definition. `data/Core.xlsx`
+is reserved for localization, while `Item.xlsx`, `GameSettings.xlsx`, and the
+other table-named files cover struct columns, singleton tables, `f64`, fixed-size
+arrays, and an optional struct derived from a child table.
 
 - schema: `project.scon` and `schema/*.scon`
-- Excel data: `data/Core.xlsx`, `data/Battle.xlsx`, `data/Economy.xlsx`, `data/Quest.xlsx`, `data/Complex.xlsx`
+- Excel data: one table-named workbook per table under `data/`, plus `data/Core.xlsx` for localization
 - Rust Cargo project: `rust`
 - Kotlin Gradle project: `kotlin`
 - C# .NET project: `csharp`

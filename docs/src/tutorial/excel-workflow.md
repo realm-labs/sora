@@ -63,24 +63,26 @@ Sync matches columns by the `#field` row, not by column position:
 - fields removed from schema are not deleted from Excel. They are kept as legacy columns ignored by Sora, so designers can delete them manually when they are ready;
 - non-schema sheets in the same workbook are preserved as value-only sheets.
 
-The workbook and sheet for each table come from that table's source:
+The XLSX file is the ownership boundary for one table definition. Two table definitions cannot reference the same workbook. Multiple worksheets in one workbook are supported only as row partitions of that one table, for example monthly activity data:
 
 ```scon
 tables {
-  Item { mode = "map" source { format = "xlsx" file = "Core.xlsx" sheet = "Item" } }
-  Quest { mode = "map" source { format = "xlsx" file = "Core.xlsx" sheet = "Quest" } }
+  Activity {
+    mode = "map"
+    source { format = "xlsx" file = "Activity.xlsx" sheets = ["2026-01", "2026-02"] }
+  }
 }
 ```
 
-This writes two sheets, `Item` and `Quest`, into `generated/excel/Core.xlsx`.
-
-A table with a different source file goes into a different workbook:
+Both sheets use the `Activity` schema and their rows are combined during loading. To bind another table, give it another file:
 
 ```scon
-source { format = "xlsx" file = "Battle.xlsx" sheet = "Skill" }
+tables {
+  Skill { mode = "map" source { format = "xlsx" file = "Skill.xlsx" } }
+}
 ```
 
-This writes the `Skill` sheet into `generated/excel/Battle.xlsx`.
+If `sheet` and `sheets` are omitted, a new template derives its default Sheet name from the workbook filename. For example, table `presentation.SurfaceResourceVisualProfile` with `file = "VisualProfile.xlsx"` uses the Sheet `VisualProfile`; the namespace never enters the physical Sheet name. The default is sanitized and truncated to Excel's 31-character limit. The complete canonical table name remains in each data Sheet's `@table` metadata. Explicit `sheet` and `sheets` values are preserved.
 
 ## Header Rows
 
@@ -88,7 +90,7 @@ Generated sheets include several header rows:
 
 | Row | Purpose |
 | --- | --- |
-| `@table` metadata | Table name, mode, key, groups, and schema hash. |
+| `@table` metadata | Canonical table name, mode, key, groups, and schema hash. |
 | `#name` | Display name row for the spreadsheet. |
 | `#field` | Stable schema field names read by Sora. |
 | `#type` | Type hints such as `i32`, `enum<ItemType>`, or `struct<Cost>(kind: enum<ResourceKind>, id: i32, count: i32)`. |

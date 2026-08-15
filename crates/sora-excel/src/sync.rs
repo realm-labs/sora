@@ -15,7 +15,7 @@ use crate::{
     projection::{
         DATA_START_ROW, FIELD_ROW, FIELD_START_COLUMN, table_template_columns, table_template_rows,
     },
-    sheets::resolve_table_sheet_names,
+    sheets::{ensure_single_table_definition, resolve_table_sheet_names_with_metadata},
     writer::{LegacyColumn, PreservedSheet, SyncedTableSheet, write_synced_workbook},
 };
 
@@ -64,15 +64,20 @@ impl ExcelTemplateSync {
     fn sync(&self, ir: &ConfigIr, data_root: &Path, write: bool) -> Result<ExcelSyncReport> {
         let mut report = ExcelSyncReport::default();
         for (file_name, tables) in group_xlsx_tables(ir)? {
-            let path = data_root.join(file_name);
+            let path = data_root.join(&file_name);
             ensure_workbook_path_is_bounded(data_root, &path)?;
             let existing = ExistingWorkbook::load(&path)?;
             let mut table_sheets = Vec::new();
             let mut sheet_reports = Vec::new();
             let mut handled_sheets = BTreeSet::new();
 
+            ensure_single_table_definition(&tables, &file_name)?;
             for table in tables {
-                let sheet_names = resolve_table_sheet_names(table, &existing.sheet_order)?;
+                let sheet_names = resolve_table_sheet_names_with_metadata(
+                    table,
+                    &existing.sheet_order,
+                    &existing.table_metadata(),
+                )?;
                 for sheet_name in sheet_names {
                     if !handled_sheets.insert(sheet_name.clone()) {
                         return Err(SoraError::InvalidSchema(format!(
@@ -586,6 +591,21 @@ impl ExistingWorkbook {
             sheets,
         })
     }
+
+    fn table_metadata(&self) -> BTreeMap<String, String> {
+        self.sheet_order
+            .iter()
+            .filter_map(|sheet| {
+                let rows = self.sheets.get(sheet)?;
+                let metadata = rows.first()?;
+                (metadata.first().is_some_and(|cell| cell == "@table"))
+                    .then(|| metadata.get(1))
+                    .flatten()
+                    .filter(|table| !table.is_empty())
+                    .map(|table| (sheet.clone(), table.clone()))
+            })
+            .collect()
+    }
 }
 
 fn range_to_rows(range: &calamine::Range<Data>) -> Vec<Vec<String>> {
@@ -622,6 +642,9 @@ fn group_xlsx_tables(ir: &ConfigIr) -> Result<BTreeMap<String, Vec<&TableIr>>> {
             .map(|source| source.file.clone())
             .unwrap_or_else(|| format!("{}.xlsx", table.name));
         workbooks.entry(file_name).or_default().push(table);
+    }
+    for (file, tables) in &workbooks {
+        ensure_single_table_definition(tables, file)?;
     }
     Ok(workbooks)
 }
@@ -828,6 +851,53 @@ mod tests {
     }
 
     #[test]
+    fn syncs_namespaced_table_using_the_short_physical_sheet_name() {
+        let ir = namespaced_ir();
+        let base = temp_dir();
+        fs::create_dir_all(&base).unwrap();
+
+        let first = ExcelTemplateSync.write(&ir, &base).unwrap();
+
+        assert!(first.workbooks[0].written);
+        assert_eq!(first.workbooks[0].sheets[0].sheet, "VisualProfile");
+        let mut workbook: calamine::Xlsx<_> =
+            calamine::open_workbook(base.join("VisualProfile.xlsx")).unwrap();
+        assert_eq!(workbook.sheet_names(), ["VisualProfile"]);
+        let range = workbook.worksheet_range("VisualProfile").unwrap();
+        assert_eq!(
+            cell_to_string(&range[(crate::projection::METADATA_ROW as usize, 1)]),
+            "presentation.SurfaceResourceVisualProfile"
+        );
+
+        let second = ExcelTemplateSync.write(&ir, &base).unwrap();
+        assert!(!second.workbooks[0].written);
+        assert!(!second.workbooks[0].sheets[0].changed);
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn sync_reuses_a_custom_sheet_identified_by_canonical_metadata() {
+        let ir = namespaced_ir();
+        let base = temp_dir();
+        fs::create_dir_all(&base).unwrap();
+        write_projected_workbook(
+            &ir,
+            &base.join("VisualProfile.xlsx"),
+            "VisualProfile",
+            &["1", "Blocked"],
+        );
+
+        let report = ExcelTemplateSync.write(&ir, &base).unwrap();
+
+        assert_eq!(report.workbooks[0].sheets[0].sheet, "VisualProfile");
+        assert!(!report.workbooks[0].written);
+        assert!(report.workbooks[0].preserved_sheets.is_empty());
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
     fn syncs_each_selected_sheet_without_merging_their_rows() {
         let mut ir = example_ir();
         let source = ir.tables[0].source.as_mut().unwrap();
@@ -958,6 +1028,26 @@ mod tests {
         workbook.save(path).unwrap();
     }
 
+    fn write_projected_workbook(ir: &ConfigIr, path: &Path, sheet_name: &str, values: &[&str]) {
+        let table = &ir.tables[0];
+        let mut workbook = Workbook::new();
+        let worksheet = workbook.add_worksheet();
+        worksheet.set_name(sheet_name).unwrap();
+        for (row, values) in table_template_rows(ir, table).iter().enumerate() {
+            for (column, value) in values.iter().enumerate() {
+                worksheet
+                    .write_string(row as u32, column as u16, value)
+                    .unwrap();
+            }
+        }
+        for (column, value) in values.iter().enumerate() {
+            worksheet
+                .write_string(DATA_START_ROW, FIELD_START_COLUMN + column as u16, *value)
+                .unwrap();
+        }
+        workbook.save(path).unwrap();
+    }
+
     fn example_ir() -> ConfigIr {
         let schema: ProjectSchema = toml::from_str(
             r#"
@@ -987,6 +1077,37 @@ type = "string"
 [[tables.fields]]
 name = "rarity"
 type = "string"
+"#,
+        )
+        .unwrap();
+        normalize_schema(schema).unwrap()
+    }
+
+    fn namespaced_ir() -> ConfigIr {
+        let schema: ProjectSchema = toml::from_str(
+            r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[enums]]
+name = "worldgen.geography.TraversalBarrierKind"
+values = [{ id = 0, name = "None" }, { id = 1, name = "Blocked" }]
+
+[[tables]]
+id = "visual_profile"
+name = "presentation.SurfaceResourceVisualProfile"
+mode = "map"
+key = "id"
+source = { format = "xlsx", file = "VisualProfile.xlsx" }
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "barrier"
+type = "enum<worldgen.geography.TraversalBarrierKind>"
 "#,
         )
         .unwrap();

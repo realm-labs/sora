@@ -4,7 +4,7 @@ use sora_diagnostics::{Result, SoraError};
 use sora_input::source::{SourceFormat, resolve_table_source_format};
 use sora_ir::model::{ConfigIr, TableIr};
 
-use crate::writer::write_workbook_with_rows;
+use crate::{sheets::ensure_single_table_definition, writer::write_workbook_with_rows};
 
 pub struct ExcelTemplateGenerator;
 
@@ -61,6 +61,7 @@ impl ExcelTemplateGenerator {
         }
 
         for (file_name, tables) in workbooks {
+            ensure_single_table_definition(&tables, &file_name)?;
             let path = out_dir.join(file_name);
             let sheets = additional_sheets
                 .iter()
@@ -76,7 +77,7 @@ impl ExcelTemplateGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::projection::{DATA_START_ROW, NAME_ROW};
+    use crate::projection::{DATA_START_ROW, METADATA_ROW, NAME_ROW};
     use calamine::Reader;
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::ProjectSchema;
@@ -95,6 +96,23 @@ mod tests {
         assert_eq!(&bytes[0..2], b"PK");
         assert!(bytes.len() > 1024);
 
+        let _ = fs::remove_dir_all(out_dir);
+    }
+
+    #[test]
+    fn rejects_two_table_definitions_in_one_workbook() {
+        let mut ir = example_ir();
+        let mut second = ir.tables[0].clone();
+        second.id = "second".to_owned();
+        second.name = "Second".to_owned();
+        second.canonical_name = "Second".to_owned();
+        ir.tables.push(second);
+        let out_dir = temp_dir();
+
+        let error = ExcelTemplateGenerator.generate(&ir, &out_dir).unwrap_err();
+
+        assert!(error.to_string().contains("exactly one table definition"));
+        assert!(!out_dir.join("Item.xlsx").exists());
         let _ = fs::remove_dir_all(out_dir);
     }
 
@@ -129,6 +147,25 @@ mod tests {
         assert_eq!(
             range.get((DATA_START_ROW as usize, 2)).unwrap().to_string(),
             "Iron Sword"
+        );
+
+        let _ = fs::remove_dir_all(out_dir);
+    }
+
+    #[test]
+    fn writes_namespaced_table_with_a_short_sheet_and_canonical_metadata() {
+        let ir = namespaced_ir();
+        let out_dir = temp_dir();
+
+        ExcelTemplateGenerator.generate(&ir, &out_dir).unwrap();
+
+        let mut workbook: calamine::Xlsx<_> =
+            calamine::open_workbook(out_dir.join("VisualProfile.xlsx")).unwrap();
+        assert_eq!(workbook.sheet_names(), ["VisualProfile"]);
+        let range = workbook.worksheet_range("VisualProfile").unwrap();
+        assert_eq!(
+            range[(METADATA_ROW as usize, 1)].to_string(),
+            "presentation.SurfaceResourceVisualProfile"
         );
 
         let _ = fs::remove_dir_all(out_dir);
@@ -244,6 +281,37 @@ name = "id"
 type = "i32"
 "#
         ))
+        .unwrap();
+        normalize_schema(schema).unwrap()
+    }
+
+    fn namespaced_ir() -> ConfigIr {
+        let schema: ProjectSchema = toml::from_str(
+            r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[enums]]
+name = "worldgen.geography.TraversalBarrierKind"
+values = [{ id = 0, name = "None" }, { id = 1, name = "Blocked" }]
+
+[[tables]]
+id = "visual_profile"
+name = "presentation.SurfaceResourceVisualProfile"
+mode = "map"
+key = "id"
+source = { format = "xlsx", file = "VisualProfile.xlsx" }
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "barrier"
+type = "enum<worldgen.geography.TraversalBarrierKind>"
+"#,
+        )
         .unwrap();
         normalize_schema(schema).unwrap()
     }

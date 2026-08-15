@@ -8,7 +8,6 @@
 #include <functional>
 
 namespace sora::showcase {
-
 enum class Rarity : std::int32_t {
     Common = 0,
     Uncommon = 1,

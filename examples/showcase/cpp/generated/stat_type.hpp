@@ -8,7 +8,6 @@
 #include <functional>
 
 namespace sora::showcase {
-
 enum class StatType : std::int32_t {
     Hp = 0,
     Attack = 1,

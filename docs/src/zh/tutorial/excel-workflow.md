@@ -63,24 +63,26 @@ sora excel-sync --project project.scon --data-root data --write
 - 从 schema 中删除的字段不会从 Excel 中删除，而是保留为 Sora 忽略的 legacy 列，由策划在合适的时候手动删除；
 - 同一个 workbook 中不属于 schema 的 sheet 会作为 value-only sheet 保留下来。
 
-每个表最终生成到哪个 workbook 和 sheet，由表自己的 source 决定：
+XLSX 文件是一个表定义的数据归属边界。两个表定义不能引用同一个 workbook。同一 workbook 可以有多个 sheet，但它们只能作为同一个表的数据分片，例如按月份拆分活动数据：
 
 ```scon
 tables {
-  Item { mode = "map" source { format = "xlsx" file = "Core.xlsx" sheet = "Item" } }
-  Quest { mode = "map" source { format = "xlsx" file = "Core.xlsx" sheet = "Quest" } }
+  Activity {
+    mode = "map"
+    source { format = "xlsx" file = "Activity.xlsx" sheets = ["2026-01", "2026-02"] }
+  }
 }
 ```
 
-上面的配置会在 `generated/excel/Core.xlsx` 中生成两个 sheet：`Item` 和 `Quest`。
-
-如果另一个表写成：
+两个 sheet 都使用 `Activity` 的 Schema，加载时会合并它们的数据行。另一个表必须使用另一个文件：
 
 ```scon
-source { format = "xlsx" file = "Battle.xlsx" sheet = "Skill" }
+tables {
+  Skill { mode = "map" source { format = "xlsx" file = "Skill.xlsx" } }
+}
 ```
 
-它就会生成到另一个文件：`generated/excel/Battle.xlsx` 的 `Skill` sheet。
+如果没有配置 `sheet` 或 `sheets`，新模板会从 workbook 文件名生成默认 Sheet 名。例如表 `presentation.SurfaceResourceVisualProfile` 配置 `file = "VisualProfile.xlsx"` 时，Sheet 名是 `VisualProfile`，命名空间不会进入物理 Sheet 名。默认名称会被清理并截断到 Excel 的 31 字符限制；完整规范表名保存在每个数据 Sheet 的 `@table` metadata 中。显式配置的 `sheet` 和 `sheets` 保持不变。
 
 ## 表头行
 
@@ -88,7 +90,7 @@ source { format = "xlsx" file = "Battle.xlsx" sheet = "Skill" }
 
 | Row | Purpose |
 | --- | --- |
-| `@table` metadata | 表名、mode、key、groups 和 schema hash。 |
+| `@table` metadata | 规范表名、mode、key、groups 和 schema hash。 |
 | `#name` | 面向表格编辑的显示名行。 |
 | `#field` | Sora 读取的稳定 schema 字段名。 |
 | `#type` | 类型提示，例如 `i32`、`enum<ItemType>` 或 `struct<Cost>(kind: enum<ResourceKind>, id: i32, count: i32)`。 |

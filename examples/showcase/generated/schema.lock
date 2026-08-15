@@ -1,9 +1,9 @@
 {
-  "version": 3,
+  "version": 4,
   "project_id": "com.sora.showcase",
   "contract_id": "com.sora.showcase/full",
   "view": "full",
-  "fingerprint": "5ae7c095b011eddf",
+  "fingerprint": "84561f8bdf846e87",
   "schema": {
     "project_id": "com.sora.showcase",
     "contract_id": "com.sora.showcase/full",
@@ -1129,8 +1129,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Economy.xlsx",
-          "sheet": "Achievement"
+          "file": "Achievement.xlsx"
         },
         "fields": [
           {
@@ -1217,8 +1216,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Battle.xlsx",
-          "sheet": "Buff"
+          "file": "Buff.xlsx"
         },
         "fields": [
           {
@@ -1310,8 +1308,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Battle.xlsx",
-          "sheet": "Character"
+          "file": "Character.xlsx"
         },
         "fields": [
           {
@@ -1474,8 +1471,7 @@
         "mode": "List",
         "key": null,
         "source": {
-          "file": "Battle.xlsx",
-          "sheet": "CharacterSkill"
+          "file": "CharacterSkill.xlsx"
         },
         "fields": [
           {
@@ -1556,8 +1552,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Complex.xlsx",
-          "sheet": "ComplexActionEntry"
+          "file": "ComplexActionEntry.xlsx"
         },
         "fields": [
           {
@@ -1651,8 +1646,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Complex.xlsx",
-          "sheet": "ComplexActionGroup"
+          "file": "ComplexActionGroup.xlsx"
         },
         "fields": [
           {
@@ -1722,8 +1716,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Complex.xlsx",
-          "sheet": "ComplexConditionGroup"
+          "file": "ComplexConditionGroup.xlsx"
         },
         "fields": [
           {
@@ -1793,8 +1786,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Complex.xlsx",
-          "sheet": "ComplexConditionGroupEntry"
+          "file": "ComplexConditionGroupEntry.xlsx"
         },
         "fields": [
           {
@@ -1888,8 +1880,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Complex.xlsx",
-          "sheet": "ComplexRule"
+          "file": "ComplexRule.xlsx"
         },
         "fields": [
           {
@@ -2021,8 +2012,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Complex.xlsx",
-          "sheet": "ComplexRuleCondition"
+          "file": "ComplexRuleCondition.xlsx"
         },
         "fields": [
           {
@@ -2100,8 +2090,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Quest.xlsx",
-          "sheet": "Dialogue"
+          "file": "Dialogue.xlsx"
         },
         "fields": [
           {
@@ -2175,8 +2164,7 @@
         "mode": "List",
         "key": null,
         "source": {
-          "file": "Battle.xlsx",
-          "sheet": "DropEntry"
+          "file": "DropEntry.xlsx"
         },
         "fields": [
           {
@@ -2287,8 +2275,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Battle.xlsx",
-          "sheet": "DropGroup"
+          "file": "DropGroup.xlsx"
         },
         "fields": [
           {
@@ -2338,8 +2325,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Battle.xlsx",
-          "sheet": "Dungeon"
+          "file": "Dungeon.xlsx"
         },
         "fields": [
           {
@@ -2439,8 +2425,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Economy.xlsx",
-          "sheet": "EquipmentSet"
+          "file": "EquipmentSet.xlsx"
         },
         "fields": [
           {
@@ -2537,8 +2522,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Quest.xlsx",
-          "sheet": "EventRule"
+          "file": "EventRule.xlsx"
         },
         "fields": [
           {
@@ -2632,8 +2616,7 @@
         "mode": "List",
         "key": null,
         "source": {
-          "file": "Economy.xlsx",
-          "sheet": "GachaItem"
+          "file": "GachaItem.xlsx"
         },
         "fields": [
           {
@@ -2727,8 +2710,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Economy.xlsx",
-          "sheet": "GachaPool"
+          "file": "GachaPool.xlsx"
         },
         "fields": [
           {
@@ -2799,8 +2781,7 @@
         "mode": "Singleton",
         "key": null,
         "source": {
-          "file": "Core.xlsx",
-          "sheet": "GameSettings"
+          "file": "GameSettings.xlsx"
         },
         "fields": [
           {
@@ -3013,8 +2994,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Core.xlsx",
-          "sheet": "Item"
+          "file": "Item.xlsx"
         },
         "fields": [
           {
@@ -3190,8 +3170,7 @@
         "mode": "Map",
         "key": "level",
         "source": {
-          "file": "Core.xlsx",
-          "sheet": "LevelExp"
+          "file": "LevelExp.xlsx"
         },
         "fields": [
           {
@@ -3265,8 +3244,7 @@
         "mode": "List",
         "key": null,
         "source": {
-          "file": "Quest.xlsx",
-          "sheet": "MailReward"
+          "file": "MailReward.xlsx"
         },
         "fields": [
           {
@@ -3358,8 +3336,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Quest.xlsx",
-          "sheet": "MailTemplate"
+          "file": "MailTemplate.xlsx"
         },
         "fields": [
           {
@@ -3463,8 +3440,7 @@
         "mode": "List",
         "key": null,
         "source": {
-          "file": "Core.xlsx",
-          "sheet": "MaintenanceWindow"
+          "file": "MaintenanceWindow.xlsx"
         },
         "fields": [
           {
@@ -3551,8 +3527,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Battle.xlsx",
-          "sheet": "Monster"
+          "file": "Monster.xlsx"
         },
         "fields": [
           {
@@ -3683,8 +3658,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Quest.xlsx",
-          "sheet": "Quest"
+          "file": "Quest.xlsx"
         },
         "fields": [
           {
@@ -3846,8 +3820,7 @@
         "mode": "List",
         "key": null,
         "source": {
-          "file": "Quest.xlsx",
-          "sheet": "QuestReward"
+          "file": "QuestReward.xlsx"
         },
         "fields": [
           {
@@ -3942,8 +3915,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Economy.xlsx",
-          "sheet": "Recipe"
+          "file": "Recipe.xlsx"
         },
         "fields": [
           {
@@ -4024,8 +3996,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Economy.xlsx",
-          "sheet": "Shop"
+          "file": "Shop.xlsx"
         },
         "fields": [
           {
@@ -4093,8 +4064,7 @@
         "mode": "List",
         "key": null,
         "source": {
-          "file": "Economy.xlsx",
-          "sheet": "ShopItem"
+          "file": "ShopItem.xlsx"
         },
         "fields": [
           {
@@ -4209,8 +4179,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Battle.xlsx",
-          "sheet": "Skill"
+          "file": "Skill.xlsx"
         },
         "fields": [
           {
@@ -4383,8 +4352,7 @@
         "mode": "Map",
         "key": "id",
         "source": {
-          "file": "Battle.xlsx",
-          "sheet": "Stage"
+          "file": "Stage.xlsx"
         },
         "fields": [
           {
@@ -4499,8 +4467,7 @@
         "mode": "List",
         "key": null,
         "source": {
-          "file": "Battle.xlsx",
-          "sheet": "StageReward"
+          "file": "StageReward.xlsx"
         },
         "fields": [
           {
@@ -4592,8 +4559,7 @@
         "mode": "Map",
         "key": "level",
         "source": {
-          "file": "Economy.xlsx",
-          "sheet": "VipLevel"
+          "file": "VipLevel.xlsx"
         },
         "fields": [
           {

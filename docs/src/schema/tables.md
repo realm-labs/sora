@@ -49,6 +49,8 @@ For JSON and YAML, `file` can also point to a directory. In that case Sora recur
 
 An XLSX-backed table can combine several worksheets into one logical table. This is useful for data that is naturally partitioned for editing, such as one activity sheet per month:
 
+An XLSX workbook belongs to exactly one table definition. Multiple tables cannot share the same `source.file`; use separate workbook files for separate schemas. Multiple sheets in that file are partitions of its one table, not separate table definitions.
+
 ```scon
 source {
   format = "xlsx"

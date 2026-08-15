@@ -8,7 +8,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 typedef enum sora_showcase_item_type {
     SORA_SHOWCASE_ITEM_TYPE_WEAPON = 0,
     SORA_SHOWCASE_ITEM_TYPE_ARMOR = 1,

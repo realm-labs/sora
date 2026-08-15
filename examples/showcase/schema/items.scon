@@ -3,8 +3,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Core.xlsx"
-      sheet = "Item"
+      file = "Item.xlsx"
     }
     fields = {
       id = {
@@ -72,8 +71,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Economy.xlsx"
-      sheet = "Shop"
+      file = "Shop.xlsx"
     }
     fields = {
       id = "i32"
@@ -84,8 +82,7 @@ tables = {
   ShopItem = {
     mode = "list"
     source = {
-      file = "Economy.xlsx"
-      sheet = "ShopItem"
+      file = "ShopItem.xlsx"
     }
     fields = {
       shop_id = "ref<Shop.id>"
@@ -102,8 +99,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Economy.xlsx"
-      sheet = "Recipe"
+      file = "Recipe.xlsx"
     }
     fields = {
       id = "i32"
@@ -122,8 +118,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Economy.xlsx"
-      sheet = "GachaPool"
+      file = "GachaPool.xlsx"
     }
     fields = {
       id = "i32"
@@ -137,8 +132,7 @@ tables = {
   GachaItem = {
     mode = "list"
     source = {
-      file = "Economy.xlsx"
-      sheet = "GachaItem"
+      file = "GachaItem.xlsx"
     }
     fields = {
       pool_id = "ref<GachaPool.id>"
@@ -151,8 +145,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Economy.xlsx"
-      sheet = "EquipmentSet"
+      file = "EquipmentSet.xlsx"
     }
     fields = {
       id = "i32"

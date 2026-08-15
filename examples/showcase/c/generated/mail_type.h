@@ -8,7 +8,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 typedef enum sora_showcase_mail_type {
     SORA_SHOWCASE_MAIL_TYPE_SYSTEM = 0,
     SORA_SHOWCASE_MAIL_TYPE_EVENT = 1,

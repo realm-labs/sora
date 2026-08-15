@@ -10,7 +10,10 @@ use sora_data::model::{
 use sora_diagnostics::{Result, SoraError};
 use sora_excel::{
     projection::{DATA_START_ROW, FIELD_ROW, FIELD_START_COLUMN},
-    sheets::resolve_table_sheet_names,
+    sheets::{
+        ensure_single_table_definition, resolve_table_sheet_names,
+        resolve_table_sheet_names_with_metadata,
+    },
 };
 use sora_execution::ExecutionContext;
 use sora_input::{
@@ -101,7 +104,26 @@ pub fn load_xlsx_table_source_data_with_ir_and_parsers(
         path: path.to_path_buf(),
         message: source.to_string(),
     })?;
-    let sheets = resolve_table_sheet_names(table, &workbook.sheet_names())?;
+    let available_sheets = workbook.sheet_names();
+    let mut sheets = resolve_table_sheets_in_ir(ir, table, &available_sheets, None)?;
+    if sheets.iter().any(|name| !available_sheets.contains(name)) {
+        let mut table_metadata = BTreeMap::new();
+        for sheet in &available_sheets {
+            let range = workbook
+                .worksheet_range(sheet)
+                .map_err(|source| SoraError::ParseData {
+                    path: path.to_path_buf(),
+                    message: format!("failed to inspect worksheet `{sheet}` metadata: {source}"),
+                })?;
+            if matches!(range.get((0, 0)), Some(Data::String(value)) if value == "@table")
+                && let Some(Data::String(declared_table)) = range.get((0, 1))
+                && !declared_table.is_empty()
+            {
+                table_metadata.insert(sheet.clone(), declared_table.clone());
+            }
+        }
+        sheets = resolve_table_sheets_in_ir(ir, table, &available_sheets, Some(&table_metadata))?;
+    }
     let mut rows = Vec::new();
     for sheet in sheets {
         let range = workbook
@@ -118,6 +140,33 @@ pub fn load_xlsx_table_source_data_with_ir_and_parsers(
         name: table.name.clone(),
         rows,
     })
+}
+
+fn resolve_table_sheets_in_ir(
+    ir: &ConfigIr,
+    table: &TableIr,
+    available: &[String],
+    table_metadata: Option<&BTreeMap<String, String>>,
+) -> Result<Vec<String>> {
+    let Some(source) = &table.source else {
+        return resolve_table_sheet_names(table, available);
+    };
+    let workbook_tables = ir
+        .tables
+        .iter()
+        .filter(|candidate| {
+            candidate
+                .source
+                .as_ref()
+                .is_some_and(|candidate_source| candidate_source.file == source.file)
+        })
+        .collect::<Vec<_>>();
+    ensure_single_table_definition(&workbook_tables, &source.file)?;
+    if let Some(metadata) = table_metadata {
+        resolve_table_sheet_names_with_metadata(table, available, metadata)
+    } else {
+        resolve_table_sheet_names(table, available)
+    }
 }
 
 pub fn load_xlsx_table_data(table: &TableIr, path: &Path, sheet: &str) -> Result<TableData> {
@@ -724,6 +773,22 @@ mod tests {
     }
 
     #[test]
+    fn rejects_two_table_definitions_reading_one_workbook() {
+        let mut ir = example_ir();
+        let mut second = ir.tables[0].clone();
+        second.id = "second".to_owned();
+        second.name = "Second".to_owned();
+        second.canonical_name = "Second".to_owned();
+        ir.tables.push(second);
+        let base = temp_dir();
+
+        let error = load_xlsx_config_data(&ir, &base).unwrap_err();
+
+        assert!(error.to_string().contains("exactly one table definition"));
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
     fn merges_wildcard_sheets_by_name_and_validates_globally() {
         let mut ir = example_ir();
         let source = ir.tables[0].source.as_mut().unwrap();
@@ -803,6 +868,49 @@ mod tests {
             data.tables[0].rows[1].values["name"],
             Value::String("Magic Stone".to_owned())
         );
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn loads_namespaced_table_from_its_short_default_sheet() {
+        let ir = namespaced_ir();
+        let base = temp_dir();
+        let path = base.join("VisualProfile.xlsx");
+        write_workbook_rows(&ir, &ir.tables[0], &path, &[vec!["1", "Blocked"]]);
+
+        let data = load_xlsx_config_data(&ir, &base).unwrap();
+
+        assert_eq!(
+            data.tables[0].name,
+            "presentation.SurfaceResourceVisualProfile"
+        );
+        assert_eq!(data.tables[0].rows[0].values["id"], Value::Integer(1));
+        assert_eq!(
+            data.tables[0].rows[0].values["barrier"],
+            Value::String("Blocked".to_owned())
+        );
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn loads_namespaced_table_from_a_custom_sheet_using_canonical_metadata() {
+        let ir = namespaced_ir();
+        let base = temp_dir();
+        let path = base.join("VisualProfile.xlsx");
+        write_workbook_rows_on_sheet(
+            &ir,
+            &ir.tables[0],
+            &path,
+            "VisualProfile",
+            &[vec!["1", "Blocked"]],
+        );
+
+        let data = load_xlsx_config_data(&ir, &base).unwrap();
+
+        assert_eq!(data.tables[0].rows.len(), 1);
+        assert_eq!(data.tables[0].rows[0].values["id"], Value::Integer(1));
 
         let _ = std::fs::remove_dir_all(base);
     }
@@ -1175,6 +1283,39 @@ type = "i32"
         ir
     }
 
+    fn namespaced_ir() -> ConfigIr {
+        let schema = toml::from_str(
+            r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[enums]]
+name = "worldgen.geography.TraversalBarrierKind"
+values = [{ id = 0, name = "None" }, { id = 1, name = "Blocked" }]
+
+[[tables]]
+id = "visual_profile"
+name = "presentation.SurfaceResourceVisualProfile"
+mode = "map"
+key = "id"
+source = { format = "xlsx", file = "VisualProfile.xlsx" }
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "barrier"
+type = "enum<worldgen.geography.TraversalBarrierKind>"
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        validate_config_ir(&ir).unwrap();
+        ir
+    }
+
     fn complex_ir() -> ConfigIr {
         let schema = toml::from_str(
             r#"
@@ -1457,9 +1598,50 @@ parser = { kind = "columns", prefix = "cost_" }
         field_columns: &[&str],
         rows: &[Vec<&str>],
     ) {
+        let sheet_names = resolve_table_sheet_names(table, &[]).unwrap();
+        write_workbook_rows_on_sheet_with_field_columns(
+            ir,
+            table,
+            path,
+            &sheet_names[0],
+            field_columns,
+            rows,
+        );
+    }
+
+    fn write_workbook_rows_on_sheet(
+        ir: &ConfigIr,
+        table: &TableIr,
+        path: &Path,
+        sheet_name: &str,
+        rows: &[Vec<&str>],
+    ) {
+        let field_names = table
+            .fields
+            .iter()
+            .map(|field| field.name.as_str())
+            .collect::<Vec<_>>();
+        write_workbook_rows_on_sheet_with_field_columns(
+            ir,
+            table,
+            path,
+            sheet_name,
+            &field_names,
+            rows,
+        );
+    }
+
+    fn write_workbook_rows_on_sheet_with_field_columns(
+        ir: &ConfigIr,
+        table: &TableIr,
+        path: &Path,
+        sheet_name: &str,
+        field_columns: &[&str],
+        rows: &[Vec<&str>],
+    ) {
         let mut workbook = Workbook::new();
         let worksheet = workbook.add_worksheet();
-        worksheet.set_name(&table.name).unwrap();
+        worksheet.set_name(sheet_name).unwrap();
 
         for (row_index, row) in table_template_rows(ir, table).iter().enumerate() {
             for (column_index, value) in row.iter().enumerate() {

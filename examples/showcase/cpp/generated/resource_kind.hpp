@@ -8,7 +8,6 @@
 #include <functional>
 
 namespace sora::showcase {
-
 enum class ResourceKind : std::int32_t {
     Item = 0,
     Gold = 1,

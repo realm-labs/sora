@@ -2,7 +2,7 @@
 
 package com.sora.showcase
 
-const val SORA_SCHEMA_FINGERPRINT = "5ae7c095b011eddf"
+const val SORA_SCHEMA_FINGERPRINT = "84561f8bdf846e87"
 
 enum class SoraTableShape {
     List,

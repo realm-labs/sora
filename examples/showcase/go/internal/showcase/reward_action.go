@@ -3,154 +3,158 @@
 package showcase
 
 import (
-    "fmt"
+	"fmt"
 )
 
 type RewardAction interface {
-    isRewardAction()
+	isRewardAction()
 }
 type RewardActionAddItem struct {
-    ItemID int32
-    Count int32
+	ItemID int32
+	Count  int32
 }
 
 func (RewardActionAddItem) isRewardAction() {}
+
 type RewardActionAddBuff struct {
-    BuffID int32
-    Duration float32
+	BuffID   int32
+	Duration float32
 }
 
 func (RewardActionAddBuff) isRewardAction() {}
+
 type RewardActionUnlockStage struct {
-    StageID int32
+	StageID int32
 }
 
 func (RewardActionUnlockStage) isRewardAction() {}
+
 type RewardActionSendMail struct {
-    MailID int32
+	MailID int32
 }
 
 func (RewardActionSendMail) isRewardAction() {}
+
 type RewardActionRunActionGroup struct {
-    ActionGroupID int32
+	ActionGroupID int32
 }
 
 func (RewardActionRunActionGroup) isRewardAction() {}
 func decodeRewardAction(reader *SoraReader) (RewardAction, error) {
-    ordinal, err := reader.ReadUInt32()
-    if err != nil {
-        return nil, err
-    }
-    switch ordinal {
-    case 0:
-        var value RewardActionAddItem
-        value.ItemID, err = reader.ReadInt32()
-        if err != nil {
-            return nil, err
-        }
-        value.Count, err = reader.ReadInt32()
-        if err != nil {
-            return nil, err
-        }
-        return value, nil
-    case 1:
-        var value RewardActionAddBuff
-        value.BuffID, err = reader.ReadInt32()
-        if err != nil {
-            return nil, err
-        }
-        value.Duration, err = reader.ReadFloat32()
-        if err != nil {
-            return nil, err
-        }
-        return value, nil
-    case 2:
-        var value RewardActionUnlockStage
-        value.StageID, err = reader.ReadInt32()
-        if err != nil {
-            return nil, err
-        }
-        return value, nil
-    case 3:
-        var value RewardActionSendMail
-        value.MailID, err = reader.ReadInt32()
-        if err != nil {
-            return nil, err
-        }
-        return value, nil
-    case 4:
-        var value RewardActionRunActionGroup
-        value.ActionGroupID, err = reader.ReadInt32()
-        if err != nil {
-            return nil, err
-        }
-        return value, nil
-    default:
-        return nil, fmt.Errorf("invalid union ordinal %d for RewardAction", ordinal)
-    }
+	ordinal, err := reader.ReadUInt32()
+	if err != nil {
+		return nil, err
+	}
+	switch ordinal {
+	case 0:
+		var value RewardActionAddItem
+		value.ItemID, err = reader.ReadInt32()
+		if err != nil {
+			return nil, err
+		}
+		value.Count, err = reader.ReadInt32()
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	case 1:
+		var value RewardActionAddBuff
+		value.BuffID, err = reader.ReadInt32()
+		if err != nil {
+			return nil, err
+		}
+		value.Duration, err = reader.ReadFloat32()
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	case 2:
+		var value RewardActionUnlockStage
+		value.StageID, err = reader.ReadInt32()
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	case 3:
+		var value RewardActionSendMail
+		value.MailID, err = reader.ReadInt32()
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	case 4:
+		var value RewardActionRunActionGroup
+		value.ActionGroupID, err = reader.ReadInt32()
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	default:
+		return nil, fmt.Errorf("invalid union ordinal %d for RewardAction", ordinal)
+	}
 }
 
 func decodeRewardActionValue(input SoraValue) (RewardAction, error) {
-    obj, err := input.AsObject()
-    if err != nil {
-        return nil, err
-    }
-    tag, err := obj.Get("type").AsString()
-    if err != nil {
-        return nil, err
-    }
-    switch tag {
-    case "AddItem":
-        var value RewardActionAddItem
-        value.ItemID, err = obj.Get("item_id").AsInt32()
-        if err != nil {
-            return nil, err
-        }
-        value.Count, err = obj.Get("count").AsInt32()
-        if err != nil {
-            return nil, err
-        }
-        return value, nil
-    case "AddBuff":
-        var value RewardActionAddBuff
-        value.BuffID, err = obj.Get("buff_id").AsInt32()
-        if err != nil {
-            return nil, err
-        }
-        value.Duration, err = obj.Get("duration").AsFloat32()
-        if err != nil {
-            return nil, err
-        }
-        return value, nil
-    case "UnlockStage":
-        var value RewardActionUnlockStage
-        value.StageID, err = obj.Get("stage_id").AsInt32()
-        if err != nil {
-            return nil, err
-        }
-        return value, nil
-    case "SendMail":
-        var value RewardActionSendMail
-        value.MailID, err = obj.Get("mail_id").AsInt32()
-        if err != nil {
-            return nil, err
-        }
-        return value, nil
-    case "RunActionGroup":
-        var value RewardActionRunActionGroup
-        value.ActionGroupID, err = obj.Get("action_group_id").AsInt32()
-        if err != nil {
-            return nil, err
-        }
-        return value, nil
-    default:
-        return nil, fmt.Errorf("invalid union tag %s for RewardAction", tag)
-    }
+	obj, err := input.AsObject()
+	if err != nil {
+		return nil, err
+	}
+	tag, err := obj.Get("type").AsString()
+	if err != nil {
+		return nil, err
+	}
+	switch tag {
+	case "AddItem":
+		var value RewardActionAddItem
+		value.ItemID, err = obj.Get("item_id").AsInt32()
+		if err != nil {
+			return nil, err
+		}
+		value.Count, err = obj.Get("count").AsInt32()
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	case "AddBuff":
+		var value RewardActionAddBuff
+		value.BuffID, err = obj.Get("buff_id").AsInt32()
+		if err != nil {
+			return nil, err
+		}
+		value.Duration, err = obj.Get("duration").AsFloat32()
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	case "UnlockStage":
+		var value RewardActionUnlockStage
+		value.StageID, err = obj.Get("stage_id").AsInt32()
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	case "SendMail":
+		var value RewardActionSendMail
+		value.MailID, err = obj.Get("mail_id").AsInt32()
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	case "RunActionGroup":
+		var value RewardActionRunActionGroup
+		value.ActionGroupID, err = obj.Get("action_group_id").AsInt32()
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	default:
+		return nil, fmt.Errorf("invalid union tag %s for RewardAction", tag)
+	}
 }
 
 func collectRewardActionTextKeys(value RewardAction, out *[]TextKey) {
-    switch typed := value.(type) {
-    default:
-        _ = typed
-    }
+	switch typed := value.(type) {
+	default:
+		_ = typed
+	}
 }

@@ -5,8 +5,6 @@ from __future__ import annotations
 from enum import Enum
 
 from .sora_runtime import SoraReadError, SoraReader
-
-
 class Rarity(Enum):
     COMMON = 0
     UNCOMMON = 1

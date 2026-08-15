@@ -71,7 +71,7 @@ import { StageRewardTable, collectStageRewardTextKeys, decodeStageReward, decode
 
 import { VipLevelTable, collectVipLevelTextKeys, decodeVipLevel, decodeVipLevelValue } from "./vip_level.js";
 
-export const SORA_SCHEMA_FINGERPRINT = "5ae7c095b011eddf";
+export const SORA_SCHEMA_FINGERPRINT = "84561f8bdf846e87";
 
 export class SoraConfig {
     private constructor(

@@ -31,7 +31,7 @@ struct sora_payload_view {
     uint8_t* owned;
 };
 
-static const uint32_t SORA_BUNDLE_VERSION = 2;
+static const uint32_t SORA_BUNDLE_VERSION = 3;
 static const size_t SORA_HEADER_LEN = 24;
 static const size_t SORA_SECTION_ENTRY_LEN = 28;
 static const uint32_t SORA_SECTION_KIND_MANIFEST = 0;

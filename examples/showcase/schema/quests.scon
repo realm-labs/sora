@@ -4,7 +4,6 @@ tables = {
     key = "id"
     source = {
       file = "Quest.xlsx"
-      sheet = "Quest"
     }
     fields = {
       id = "i32"
@@ -44,8 +43,7 @@ tables = {
   QuestReward = {
     mode = "list"
     source = {
-      file = "Quest.xlsx"
-      sheet = "QuestReward"
+      file = "QuestReward.xlsx"
     }
     fields = {
       quest_id = "ref<Quest.id>"
@@ -64,8 +62,7 @@ tables = {
     mode = "map"
     key = "level"
     source = {
-      file = "Core.xlsx"
-      sheet = "LevelExp"
+      file = "LevelExp.xlsx"
     }
     fields = {
       level = {
@@ -89,8 +86,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Economy.xlsx"
-      sheet = "Achievement"
+      file = "Achievement.xlsx"
     }
     fields = {
       id = "i32"
@@ -106,8 +102,7 @@ tables = {
     mode = "map"
     key = "level"
     source = {
-      file = "Economy.xlsx"
-      sheet = "VipLevel"
+      file = "VipLevel.xlsx"
     }
     fields = {
       level = "i32"

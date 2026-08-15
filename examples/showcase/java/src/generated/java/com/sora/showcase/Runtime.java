@@ -85,7 +85,7 @@ final class SoraText {
 }
 
 final class SoraBundle implements SoraTableSource {
-    private static final int BUNDLE_VERSION = 2;
+    private static final int BUNDLE_VERSION = 3;
     private static final int HEADER_LENGTH = 24;
     private static final int SECTION_ENTRY_LENGTH = 28;
     private static final int SECTION_KIND_MANIFEST = 0;

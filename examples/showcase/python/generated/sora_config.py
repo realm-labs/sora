@@ -53,7 +53,7 @@ from .resource_kind import ResourceKind
 from .stat_type import StatType
 
 
-SCHEMA_FINGERPRINT = "5ae7c095b011eddf"
+SCHEMA_FINGERPRINT = "84561f8bdf846e87"
 
 
 class SoraConfig:

@@ -81,8 +81,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Quest.xlsx"
-      sheet = "EventRule"
+      file = "EventRule.xlsx"
     }
     fields = {
       id = "i32"
@@ -102,8 +101,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Complex.xlsx"
-      sheet = "ComplexRule"
+      file = "ComplexRule.xlsx"
     }
     fields = {
       id = "i32"
@@ -144,8 +142,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Complex.xlsx"
-      sheet = "ComplexConditionGroup"
+      file = "ComplexConditionGroup.xlsx"
     }
     fields = {
       id = "i32"
@@ -167,8 +164,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Complex.xlsx"
-      sheet = "ComplexConditionGroupEntry"
+      file = "ComplexConditionGroupEntry.xlsx"
     }
     fields = {
       id = "i32"
@@ -187,8 +183,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Complex.xlsx"
-      sheet = "ComplexRuleCondition"
+      file = "ComplexRuleCondition.xlsx"
     }
     fields = {
       id = "i32"
@@ -206,8 +201,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Complex.xlsx"
-      sheet = "ComplexActionGroup"
+      file = "ComplexActionGroup.xlsx"
     }
     fields = {
       id = "i32"
@@ -228,8 +222,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Complex.xlsx"
-      sheet = "ComplexActionEntry"
+      file = "ComplexActionEntry.xlsx"
     }
     fields = {
       id = "i32"

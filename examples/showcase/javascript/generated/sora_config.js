@@ -71,7 +71,7 @@ import { VipLevelTable, collectVipLevelTextKeys, decodeVipLevel, decodeVipLevelV
 
 import { formatText } from "./sora_runtime.js";
 
-export const SORA_SCHEMA_FINGERPRINT = "5ae7c095b011eddf";
+export const SORA_SCHEMA_FINGERPRINT = "84561f8bdf846e87";
 
 export class SoraConfig {
     constructor(

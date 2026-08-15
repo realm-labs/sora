@@ -35,7 +35,7 @@ impl super::runtime::SoraDecode for LevelExp {
 }
 
 impl LevelExp {
-    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+    pub(crate) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
         let _ = &out;
     }
 }
@@ -59,7 +59,7 @@ impl LevelExpTable {
         indexes: &[],
     };
 
-    pub(super) fn from_rows(rows: Vec<LevelExp>) -> Result<Self, super::runtime::SoraReadError> {
+    pub(crate) fn from_rows(rows: Vec<LevelExp>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.level).collect::<Vec<_>>();
         Ok(Self {
             keys,

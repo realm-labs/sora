@@ -41,7 +41,7 @@
 
 -export_type([reader/0, text_key/0]).
 
--define(SORA_BUNDLE_VERSION, 2).
+-define(SORA_BUNDLE_VERSION, 3).
 -define(SORA_HEADER_LENGTH, 24).
 -define(SORA_SECTION_ENTRY_LENGTH, 28).
 -define(SECTION_KIND_MANIFEST, 0).

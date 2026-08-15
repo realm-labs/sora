@@ -8,7 +8,6 @@
 #include <functional>
 
 namespace sora::showcase {
-
 enum class ItemType : std::int32_t {
     Weapon = 0,
     Armor = 1,

@@ -5,8 +5,6 @@ from __future__ import annotations
 from enum import Enum
 
 from .sora_runtime import SoraReadError, SoraReader
-
-
 class ResourceKind(Enum):
     ITEM = 0
     GOLD = 1

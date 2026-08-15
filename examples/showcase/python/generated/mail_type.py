@@ -5,8 +5,6 @@ from __future__ import annotations
 from enum import Enum
 
 from .sora_runtime import SoraReadError, SoraReader
-
-
 class MailType(Enum):
     SYSTEM = 0
     EVENT = 1

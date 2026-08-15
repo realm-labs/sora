@@ -4,7 +4,8 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use sora_export::exporter::ExportOutput;
+use sora_execution::ExecutionContext;
+use sora_export::exporter::{ExportOptions, ExportOutput};
 use sora_input_schema::{input::ProjectSchemaInput, schema::load_project_schema};
 use sora_input_xlsx::input::XlsxProjectInput;
 use sora_ir::{model::ConfigIr, normalize::normalize_schema, validate::validate_config_ir};
@@ -67,6 +68,7 @@ fn main() -> Result<()> {
     clean_dir(&python_generated)?;
     clean_dir(&proto_generated)?;
     clean_dir(&generated_root.join("debug-json"))?;
+    clean_dir(&generated_root.join("i18n"))?;
     clean_dir(&generated_root.join("client"))?;
     clean_dir(&generated_root.join("server"))?;
     clean_dir(&root.join("godot/config"))?;
@@ -163,8 +165,48 @@ fn main() -> Result<()> {
         ExportOutput::Directory(generated_root.join("debug-json")),
         Some("full"),
     )?;
+    generate_i18n_exports(&project_input, &generated_root)?;
 
     println!("showcase generated under `{}`", root.display());
+    Ok(())
+}
+
+fn generate_i18n_exports(
+    input: &XlsxProjectInput<ProjectSchemaInput>,
+    generated_root: &Path,
+) -> Result<()> {
+    let execution = ExecutionContext::default();
+    let schema_parsers = sora_ir::parser::ParserRegistry::default();
+    let (ir, data, locale_catalog) =
+        sora_core::pipeline::load_project_data_and_catalog_with_context_and_parsers(
+            input,
+            &execution,
+            &schema_parsers,
+            sora_input::parser::builtin_registry(),
+        )?;
+    for locale in ["zh_cn", "en_us"] {
+        for (format, extension) in [("i18n-binary", "sora-i18n"), ("i18n-json", "json")] {
+            sora_core::pipeline::export_loaded_data(
+                sora_core::pipeline::LoadedDataExportRequest {
+                    ir: &ir,
+                    data: &data,
+                    locale_catalog: locale_catalog.as_ref(),
+                    format,
+                    output: ExportOutput::File(
+                        generated_root
+                            .join("i18n")
+                            .join(format!("{locale}.{extension}")),
+                    ),
+                    view: Some("full"),
+                    execution: &execution,
+                    options: ExportOptions {
+                        locale: Some(locale.to_owned()),
+                        ..ExportOptions::default()
+                    },
+                },
+            )?;
+        }
+    }
     Ok(())
 }
 

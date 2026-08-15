@@ -3,124 +3,125 @@
 package showcase
 
 type EventRule struct {
-    ID int32
-    Name string
-    Condition EventCondition
-    Actions []RewardAction
+	ID        int32
+	Name      string
+	Condition EventCondition
+	Actions   []RewardAction
 }
 
 func decodeEventRule(reader *SoraReader) (EventRule, error) {
-    var value EventRule
-    var err error
-    value.ID, err = reader.ReadInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Name, err = reader.ReadString()
-    if err != nil {
-        return value, err
-    }
-    value.Condition, err = decodeEventCondition(reader)
-    if err != nil {
-        return value, err
-    }
-    value.Actions, err = ReadList(reader, func(reader *SoraReader) (RewardAction, error) { return decodeRewardAction(reader) })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value EventRule
+	var err error
+	value.ID, err = reader.ReadInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = reader.ReadString()
+	if err != nil {
+		return value, err
+	}
+	value.Condition, err = decodeEventCondition(reader)
+	if err != nil {
+		return value, err
+	}
+	value.Actions, err = ReadList(reader, func(reader *SoraReader) (RewardAction, error) { return decodeRewardAction(reader) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 func decodeEventRuleValue(input SoraValue) (EventRule, error) {
-    var value EventRule
-    obj, err := input.AsObject()
-    if err != nil {
-        return value, err
-    }
-    value.ID, err = obj.Get("id").AsInt32()
-    if err != nil {
-        return value, err
-    }
-    value.Name, err = obj.Get("name").AsString()
-    if err != nil {
-        return value, err
-    }
-    value.Condition, err = decodeEventConditionValue(obj.Get("condition"))
-    if err != nil {
-        return value, err
-    }
-    value.Actions, err = DecodeSoraValueList(obj.Get("actions"), func(item SoraValue) (RewardAction, error) { return decodeRewardActionValue(item) })
-    if err != nil {
-        return value, err
-    }
-    return value, nil
+	var value EventRule
+	obj, err := input.AsObject()
+	if err != nil {
+		return value, err
+	}
+	value.ID, err = obj.Get("id").AsInt32()
+	if err != nil {
+		return value, err
+	}
+	value.Name, err = obj.Get("name").AsString()
+	if err != nil {
+		return value, err
+	}
+	value.Condition, err = decodeEventConditionValue(obj.Get("condition"))
+	if err != nil {
+		return value, err
+	}
+	value.Actions, err = DecodeSoraValueList(obj.Get("actions"), func(item SoraValue) (RewardAction, error) { return decodeRewardActionValue(item) })
+	if err != nil {
+		return value, err
+	}
+	return value, nil
 }
 
 func (value EventRule) collectTextKeys(out *[]TextKey) {
-    collectEventConditionTextKeys(value.Condition, out)
-    for _, item := range value.Actions { collectRewardActionTextKeys(item, out) }
+	collectEventConditionTextKeys(value.Condition, out)
+	for _, item := range value.Actions {
+		collectRewardActionTextKeys(item, out)
+	}
 }
 
 const eventRuleTableName = "EventRule"
 
 var eventRuleTableInfo = SoraTableInfo{
-    Name: eventRuleTableName,
-    RowType: "EventRule",
-    Shape: SoraTableShapeKeyed,
-    PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
-    Indexes: []SoraIndexInfo{
-    },
+	Name:       eventRuleTableName,
+	RowType:    "EventRule",
+	Shape:      SoraTableShapeKeyed,
+	PrimaryKey: &SoraKeyInfo{Name: "id", Type: "int32"},
+	Indexes:    []SoraIndexInfo{},
 }
 
 type EventRuleTable struct {
-    keys []int32
-    rows map[int32]EventRule
+	keys []int32
+	rows map[int32]EventRule
 }
 
 func buildEventRuleTable(rows []EventRule) (*EventRuleTable, error) {
-    keys := make([]int32, 0, len(rows))
-    for _, row := range rows {
-        keys = append(keys, row.ID)
-    }
-    return &EventRuleTable{keys: keys, rows: DecodeMapTable(rows, func(row EventRule) int32 { return row.ID })}, nil
+	keys := make([]int32, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.ID)
+	}
+	return &EventRuleTable{keys: keys, rows: DecodeMapTable(rows, func(row EventRule) int32 { return row.ID })}, nil
 }
 
 func decodeEventRuleTable(source SoraTableSource) (*EventRuleTable, error) {
-    rows, err := DecodeSourceTable(source, eventRuleTableName, decodeEventRule, decodeEventRuleValue)
-    if err != nil {
-        return nil, err
-    }
-    return buildEventRuleTable(rows)
+	rows, err := DecodeSourceTable(source, eventRuleTableName, decodeEventRule, decodeEventRuleValue)
+	if err != nil {
+		return nil, err
+	}
+	return buildEventRuleTable(rows)
 }
 func (table *EventRuleTable) Rows() map[int32]EventRule {
-    rows := make(map[int32]EventRule, len(table.rows))
-    for key, row := range table.rows {
-        rows[key] = row
-    }
-    return rows
+	rows := make(map[int32]EventRule, len(table.rows))
+	for key, row := range table.rows {
+		rows[key] = row
+	}
+	return rows
 }
 func (table *EventRuleTable) Get(key int32) (EventRule, bool) {
-    value, ok := table.rows[key]
-    return value, ok
+	value, ok := table.rows[key]
+	return value, ok
 }
 
 func (table *EventRuleTable) Keys() []int32 {
-    return append([]int32(nil), table.keys...)
+	return append([]int32(nil), table.keys...)
 }
 
 func (table *EventRuleTable) OrderedRows() []EventRule {
-    rows := make([]EventRule, 0, len(table.keys))
-    for _, key := range table.keys {
-        if row, ok := table.rows[key]; ok {
-            rows = append(rows, row)
-        }
-    }
-    return rows
+	rows := make([]EventRule, 0, len(table.keys))
+	for _, key := range table.keys {
+		if row, ok := table.rows[key]; ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
 }
 func (table *EventRuleTable) Info() SoraTableInfo {
-    return eventRuleTableInfo
+	return eventRuleTableInfo
 }
 
 func (table *EventRuleTable) Len() int {
-    return len(table.rows)
+	return len(table.rows)
 }

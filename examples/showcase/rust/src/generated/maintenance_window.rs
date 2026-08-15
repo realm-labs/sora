@@ -37,7 +37,7 @@ impl super::runtime::SoraDecode for MaintenanceWindow {
 }
 
 impl MaintenanceWindow {
-    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+    pub(crate) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
         let _ = &out;
     }
 }
@@ -57,7 +57,7 @@ impl MaintenanceWindowTable {
         indexes: &[],
     };
 
-    pub(super) fn from_rows(
+    pub(crate) fn from_rows(
         rows: Vec<MaintenanceWindow>,
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })

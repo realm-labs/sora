@@ -36,7 +36,7 @@ local Stage = require("generated.stage")
 local StageReward = require("generated.stage_reward")
 local VipLevel = require("generated.vip_level")
 
-local SORA_SCHEMA_FINGERPRINT = "5ae7c095b011eddf"
+local SORA_SCHEMA_FINGERPRINT = "84561f8bdf846e87"
 
 ---@class SoraConfig
 ---@field private _achievement AchievementTable

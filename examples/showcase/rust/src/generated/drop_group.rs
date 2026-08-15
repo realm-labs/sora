@@ -21,7 +21,7 @@ impl super::runtime::SoraDecode for DropGroup {
 }
 
 impl DropGroup {
-    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+    pub(crate) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
         let _ = &out;
     }
 }
@@ -45,7 +45,7 @@ impl DropGroupTable {
         indexes: &[],
     };
 
-    pub(super) fn from_rows(rows: Vec<DropGroup>) -> Result<Self, super::runtime::SoraReadError> {
+    pub(crate) fn from_rows(rows: Vec<DropGroup>) -> Result<Self, super::runtime::SoraReadError> {
         let keys = rows.iter().map(|row| row.id).collect::<Vec<_>>();
         Ok(Self {
             keys,

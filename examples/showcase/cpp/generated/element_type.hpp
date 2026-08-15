@@ -8,7 +8,6 @@
 #include <functional>
 
 namespace sora::showcase {
-
 enum class ElementType : std::int32_t {
     Fire = 0,
     Ice = 1,

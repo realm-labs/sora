@@ -8,7 +8,6 @@
 #include <functional>
 
 namespace sora::showcase {
-
 enum class QuestType : std::int32_t {
     Main = 0,
     Side = 1,

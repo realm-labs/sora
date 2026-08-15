@@ -13,12 +13,20 @@ pub const DESC_ROW: u32 = 6;
 pub const DATA_START_ROW: u32 = 7;
 pub const FIELD_START_COLUMN: u16 = 1;
 
+pub fn table_metadata_name(table: &TableIr) -> &str {
+    if table.canonical_name.is_empty() {
+        &table.name
+    } else {
+        &table.canonical_name
+    }
+}
+
 pub fn table_template_rows(ir: &ConfigIr, table: &TableIr) -> Vec<Vec<String>> {
     let columns = table_template_columns(ir, table);
     vec![
         vec![
             "@table".to_owned(),
-            table.name.clone(),
+            table_metadata_name(table).to_owned(),
             "@mode".to_owned(),
             table_mode_name(table.mode).to_owned(),
             "@key".to_owned(),

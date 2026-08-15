@@ -49,6 +49,8 @@ source {
 
 一个使用 XLSX source 的逻辑表可以合并多个工作表。这适合按编辑维度自然分区的数据，例如活动配置按月份拆分：
 
+一个 XLSX workbook 只归属于一个表定义。多个表不能共享同一个 `source.file`；不同 Schema 必须使用不同 workbook 文件。同一文件里的多个 Sheet 是同一个表的数据分片，不是不同表定义。
+
 ```scon
 source {
   format = "xlsx"

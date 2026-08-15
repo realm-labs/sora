@@ -2,7 +2,7 @@ use std::path::Path;
 
 use calamine::Data;
 use sora_diagnostics::{Result, SoraError};
-use sora_excel::projection::{FIELD_ROW, METADATA_ROW, schema_hash};
+use sora_excel::projection::{FIELD_ROW, METADATA_ROW, schema_hash, table_metadata_name};
 use sora_ir::model::{ConfigIr, TableIr};
 
 use crate::value::cell_to_string;
@@ -18,7 +18,7 @@ pub(crate) fn verify_projection(
     let field_row = FIELD_ROW as usize;
 
     expect_cell(path, sheet, range, metadata_row, 0, "@table")?;
-    expect_cell(path, sheet, range, metadata_row, 1, &table.name)?;
+    expect_table_name(path, sheet, range, table)?;
     expect_cell(path, sheet, range, metadata_row, 2, "@mode")?;
     expect_cell(path, sheet, range, metadata_row, 4, "@key")?;
     expect_cell(path, sheet, range, metadata_row, 6, "@groups")?;
@@ -27,6 +27,30 @@ pub(crate) fn verify_projection(
     expect_cell(path, sheet, range, field_row, 0, "#field")?;
 
     Ok(())
+}
+
+fn expect_table_name(
+    path: &Path,
+    sheet: &str,
+    range: &calamine::Range<Data>,
+    table: &TableIr,
+) -> Result<()> {
+    let actual = range
+        .get((METADATA_ROW as usize, 1))
+        .map(cell_to_string)
+        .unwrap_or_default();
+    if actual == table_metadata_name(table) || actual == table.name {
+        return Ok(());
+    }
+    Err(SoraError::InvalidSchema(format!(
+        "worksheet `{}` in `{}` has `{}` at row {}, column {}; expected canonical table name `{}`",
+        sheet,
+        path.display(),
+        actual,
+        METADATA_ROW + 1,
+        2,
+        table_metadata_name(table)
+    )))
 }
 
 fn expect_cell(

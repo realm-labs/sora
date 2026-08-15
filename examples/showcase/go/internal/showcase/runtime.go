@@ -3,1160 +3,1160 @@
 package showcase
 
 import (
-    "encoding/binary"
-    "encoding/json"
-    "errors"
-    "fmt"
-    "math"
-    "strconv"
-    "time"
-    "unicode/utf8"
-    "github.com/klauspost/compress/zstd"
+	"encoding/binary"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/klauspost/compress/zstd"
+	"math"
+	"strconv"
+	"time"
+	"unicode/utf8"
 )
 
 const (
-    soraBundleVersion     = 2
-    soraHeaderLength      = 24
-    soraSectionEntryLength = 28
-    soraSectionManifest   = 0
-    soraSectionSchema     = 1
-    soraSectionTable      = 2
-    soraSectionStrings    = 3
-    soraCompressionNone   = 0
-    soraCompressionZstd   = 1
+	soraBundleVersion      = 3
+	soraHeaderLength       = 24
+	soraSectionEntryLength = 28
+	soraSectionManifest    = 0
+	soraSectionSchema      = 1
+	soraSectionTable       = 2
+	soraSectionStrings     = 3
+	soraCompressionNone    = 0
+	soraCompressionZstd    = 1
 )
 
 type soraSection struct {
-    kind               int32
-    compression        int32
-    name               string
-    offset             int
-    length             int
-    uncompressedLength int
+	kind               int32
+	compression        int32
+	name               string
+	offset             int
+	length             int
+	uncompressedLength int
 }
 
 type SoraBundle struct {
-    bytes             []byte
-    sections          []soraSection
-    schemaFingerprint string
-    strings           []string
+	bytes             []byte
+	sections          []soraSection
+	schemaFingerprint string
+	strings           []string
 }
 
 type SoraTableSource interface {
-    SchemaFingerprint() (string, error)
-    DecodeTable(name string, decodeBinary func(*SoraReader) (any, error), decodeValue func(SoraValue) (any, error)) ([]any, error)
+	SchemaFingerprint() (string, error)
+	DecodeTable(name string, decodeBinary func(*SoraReader) (any, error), decodeValue func(SoraValue) (any, error)) ([]any, error)
 }
 
 type TextResolver interface {
-    Text(key TextKey) string
-    Format(key TextKey, args map[string]any) (string, error)
+	Text(key TextKey) string
+	Format(key TextKey, args map[string]any) (string, error)
 }
 
 type TextKey string
 
 func (key TextKey) String() string {
-    return string(key)
+	return string(key)
 }
 
 func ReadTextKey(reader *SoraReader) (TextKey, error) {
-    value, err := reader.ReadString()
-    if err != nil {
-        return "", err
-    }
-    return TextKey(value), nil
+	value, err := reader.ReadString()
+	if err != nil {
+		return "", err
+	}
+	return TextKey(value), nil
 }
 
 func DecodeTextKeyValue(value SoraValue) (TextKey, error) {
-    text, err := value.AsString()
-    if err != nil {
-        return "", err
-    }
-    return TextKey(text), nil
+	text, err := value.AsString()
+	if err != nil {
+		return "", err
+	}
+	return TextKey(text), nil
 }
 
 func ReadDuration(reader *SoraReader) (time.Duration, error) {
-    millis, err := reader.ReadInt64()
-    if err != nil {
-        return 0, err
-    }
-    if millis < 0 {
-        return 0, fmt.Errorf("duration must be non-negative")
-    }
-    return time.Duration(millis) * time.Millisecond, nil
+	millis, err := reader.ReadInt64()
+	if err != nil {
+		return 0, err
+	}
+	if millis < 0 {
+		return 0, fmt.Errorf("duration must be non-negative")
+	}
+	return time.Duration(millis) * time.Millisecond, nil
 }
 
 func DecodeDurationValue(value SoraValue) (time.Duration, error) {
-    millis, err := value.AsInt64()
-    if err != nil {
-        return 0, err
-    }
-    if millis < 0 {
-        return 0, fmt.Errorf("duration must be non-negative")
-    }
-    return time.Duration(millis) * time.Millisecond, nil
+	millis, err := value.AsInt64()
+	if err != nil {
+		return 0, err
+	}
+	if millis < 0 {
+		return 0, fmt.Errorf("duration must be non-negative")
+	}
+	return time.Duration(millis) * time.Millisecond, nil
 }
 
 func ReadDateTime(reader *SoraReader) (time.Time, error) {
-    millis, err := reader.ReadInt64()
-    if err != nil {
-        return time.Time{}, err
-    }
-    return time.Unix(millis/1000, (millis%1000)*int64(time.Millisecond)).UTC(), nil
+	millis, err := reader.ReadInt64()
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.Unix(millis/1000, (millis%1000)*int64(time.Millisecond)).UTC(), nil
 }
 
 func DecodeDateTimeValue(value SoraValue) (time.Time, error) {
-    millis, err := value.AsInt64()
-    if err != nil {
-        return time.Time{}, err
-    }
-    return time.Unix(millis/1000, (millis%1000)*int64(time.Millisecond)).UTC(), nil
+	millis, err := value.AsInt64()
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.Unix(millis/1000, (millis%1000)*int64(time.Millisecond)).UTC(), nil
 }
 
 type LocalePack struct {
-    schemaFingerprint string
-    locale string
-    translations map[string]string
+	schemaFingerprint string
+	locale            string
+	translations      map[string]string
 }
 
 func ParseLocalePack(bytes []byte) (*LocalePack, error) {
-    if len(bytes) < 8 || string(bytes[:4]) != "SORI" {
-        return nil, fmt.Errorf("invalid Sora i18n pack magic")
-    }
-    version := binary.LittleEndian.Uint32(bytes[4:8])
-    if version != 1 {
-        return nil, fmt.Errorf("unsupported Sora i18n pack version %d", version)
-    }
-    cursor := 8
-    schemaFingerprint, err := readLengthPrefixedString(bytes, &cursor)
-    if err != nil {
-        return nil, err
-    }
-    locale, err := readLengthPrefixedString(bytes, &cursor)
-    if err != nil {
-        return nil, err
-    }
-    count, err := readUInt32Cursor(bytes, &cursor)
-    if err != nil {
-        return nil, err
-    }
-    translations := make(map[string]string, int(count))
-    for i := uint32(0); i < count; i++ {
-        key, err := readLengthPrefixedString(bytes, &cursor)
-        if err != nil {
-            return nil, err
-        }
-        value, err := readLengthPrefixedString(bytes, &cursor)
-        if err != nil {
-            return nil, err
-        }
-        if value == "" {
-            return nil, fmt.Errorf("text key `%s` has empty text", key)
-        }
-        if _, ok := translations[key]; ok {
-            return nil, fmt.Errorf("duplicate text key `%s`", key)
-        }
-        translations[key] = value
-    }
-    if cursor != len(bytes) {
-        return nil, fmt.Errorf("Sora i18n pack has trailing bytes")
-    }
-    return &LocalePack{
-        schemaFingerprint: schemaFingerprint,
-        locale: locale,
-        translations: translations,
-    }, nil
+	if len(bytes) < 8 || string(bytes[:4]) != "SORI" {
+		return nil, fmt.Errorf("invalid Sora i18n pack magic")
+	}
+	version := binary.LittleEndian.Uint32(bytes[4:8])
+	if version != 1 {
+		return nil, fmt.Errorf("unsupported Sora i18n pack version %d", version)
+	}
+	cursor := 8
+	schemaFingerprint, err := readLengthPrefixedString(bytes, &cursor)
+	if err != nil {
+		return nil, err
+	}
+	locale, err := readLengthPrefixedString(bytes, &cursor)
+	if err != nil {
+		return nil, err
+	}
+	count, err := readUInt32Cursor(bytes, &cursor)
+	if err != nil {
+		return nil, err
+	}
+	translations := make(map[string]string, int(count))
+	for i := uint32(0); i < count; i++ {
+		key, err := readLengthPrefixedString(bytes, &cursor)
+		if err != nil {
+			return nil, err
+		}
+		value, err := readLengthPrefixedString(bytes, &cursor)
+		if err != nil {
+			return nil, err
+		}
+		if value == "" {
+			return nil, fmt.Errorf("text key `%s` has empty text", key)
+		}
+		if _, ok := translations[key]; ok {
+			return nil, fmt.Errorf("duplicate text key `%s`", key)
+		}
+		translations[key] = value
+	}
+	if cursor != len(bytes) {
+		return nil, fmt.Errorf("Sora i18n pack has trailing bytes")
+	}
+	return &LocalePack{
+		schemaFingerprint: schemaFingerprint,
+		locale:            locale,
+		translations:      translations,
+	}, nil
 }
 
 func (pack *LocalePack) SchemaFingerprint() string {
-    return pack.schemaFingerprint
+	return pack.schemaFingerprint
 }
 
 func (pack *LocalePack) Locale() string {
-    return pack.locale
+	return pack.locale
 }
 
 func (pack *LocalePack) Get(key TextKey) (string, bool) {
-    value, ok := pack.translations[key.String()]
-    return value, ok
+	value, ok := pack.translations[key.String()]
+	return value, ok
 }
 
 func FormatText(template string, args map[string]any) (string, error) {
-    out := make([]byte, 0, len(template))
-    rest := template
-    for {
-        start := -1
-        for index := 0; index < len(rest); index++ {
-            if rest[index] == '{' {
-                start = index
-                break
-            }
-        }
-        if start < 0 {
-            out = append(out, rest...)
-            return string(out), nil
-        }
-        out = append(out, rest[:start]...)
-        rest = rest[start+1:]
-        end := -1
-        for index := 0; index < len(rest); index++ {
-            if rest[index] == '}' {
-                end = index
-                break
-            }
-        }
-        if end < 0 {
-            return "", fmt.Errorf("unterminated text placeholder")
-        }
-        name := rest[:end]
-        if name == "" {
-            return "", fmt.Errorf("invalid text placeholder")
-        }
-        for index := 0; index < len(name); index++ {
-            if name[index] == '{' {
-                return "", fmt.Errorf("invalid text placeholder")
-            }
-        }
-        value, ok := args[name]
-        if !ok {
-            return "", fmt.Errorf("missing text argument `%s`", name)
-        }
-        out = append(out, fmt.Sprint(value)...)
-        rest = rest[end+1:]
-    }
+	out := make([]byte, 0, len(template))
+	rest := template
+	for {
+		start := -1
+		for index := 0; index < len(rest); index++ {
+			if rest[index] == '{' {
+				start = index
+				break
+			}
+		}
+		if start < 0 {
+			out = append(out, rest...)
+			return string(out), nil
+		}
+		out = append(out, rest[:start]...)
+		rest = rest[start+1:]
+		end := -1
+		for index := 0; index < len(rest); index++ {
+			if rest[index] == '}' {
+				end = index
+				break
+			}
+		}
+		if end < 0 {
+			return "", fmt.Errorf("unterminated text placeholder")
+		}
+		name := rest[:end]
+		if name == "" {
+			return "", fmt.Errorf("invalid text placeholder")
+		}
+		for index := 0; index < len(name); index++ {
+			if name[index] == '{' {
+				return "", fmt.Errorf("invalid text placeholder")
+			}
+		}
+		value, ok := args[name]
+		if !ok {
+			return "", fmt.Errorf("missing text argument `%s`", name)
+		}
+		out = append(out, fmt.Sprint(value)...)
+		rest = rest[end+1:]
+	}
 }
 
 func ParseSoraBundle(bytes []byte) (*SoraBundle, error) {
-    if len(bytes) < soraHeaderLength {
-        return nil, fmt.Errorf("Sora bundle is shorter than header")
-    }
-    if string(bytes[:4]) != "SORA" {
-        return nil, fmt.Errorf("invalid Sora bundle magic")
-    }
-    version := readInt32At(bytes, 4)
-    if version != soraBundleVersion {
-        return nil, fmt.Errorf("unsupported Sora bundle version %d", version)
-    }
+	if len(bytes) < soraHeaderLength {
+		return nil, fmt.Errorf("Sora bundle is shorter than header")
+	}
+	if string(bytes[:4]) != "SORA" {
+		return nil, fmt.Errorf("invalid Sora bundle magic")
+	}
+	version := readInt32At(bytes, 4)
+	if version != soraBundleVersion {
+		return nil, fmt.Errorf("unsupported Sora bundle version %d", version)
+	}
 
-    headerLength := int(readInt32At(bytes, 8))
-    directoryLength := int(readInt32At(bytes, 12))
-    sectionCount := int(readInt32At(bytes, 16))
-    flags := readInt32At(bytes, 20)
-    if flags != 0 {
-        return nil, fmt.Errorf("unsupported Sora bundle flags %d", flags)
-    }
-    if headerLength != soraHeaderLength || headerLength > len(bytes) {
-        return nil, fmt.Errorf("invalid Sora bundle header length")
-    }
-    directoryEnd, err := checkedAdd(headerLength, directoryLength, "Sora section directory length overflow")
-    if err != nil {
-        return nil, err
-    }
-    if directoryEnd > len(bytes) {
-        return nil, fmt.Errorf("Sora section directory exceeds bundle length")
-    }
+	headerLength := int(readInt32At(bytes, 8))
+	directoryLength := int(readInt32At(bytes, 12))
+	sectionCount := int(readInt32At(bytes, 16))
+	flags := readInt32At(bytes, 20)
+	if flags != 0 {
+		return nil, fmt.Errorf("unsupported Sora bundle flags %d", flags)
+	}
+	if headerLength != soraHeaderLength || headerLength > len(bytes) {
+		return nil, fmt.Errorf("invalid Sora bundle header length")
+	}
+	directoryEnd, err := checkedAdd(headerLength, directoryLength, "Sora section directory length overflow")
+	if err != nil {
+		return nil, err
+	}
+	if directoryEnd > len(bytes) {
+		return nil, fmt.Errorf("Sora section directory exceeds bundle length")
+	}
 
-    cursor := headerLength
-    sections := make([]soraSection, 0, sectionCount)
-    manifestCount := 0
-    schemaCount := 0
-    stringsCount := 0
-    tableNames := map[string]struct{}{}
-    for i := 0; i < sectionCount; i++ {
-        if cursor + soraSectionEntryLength > directoryEnd {
-            return nil, fmt.Errorf("truncated Sora section directory entry")
-        }
-        kind := readInt32At(bytes, cursor)
-        compression := readInt32At(bytes, cursor+4)
-        nameLength := int(readInt32At(bytes, cursor+8))
-        entryFlags := readInt32At(bytes, cursor+12)
-        offset := int(readInt32At(bytes, cursor+16))
-        length := int(readInt32At(bytes, cursor+20))
-        uncompressedLength := int(readInt32At(bytes, cursor+24))
-        if entryFlags != 0 {
-            return nil, fmt.Errorf("unsupported Sora section flags %d", entryFlags)
-        }
-        nameStart := cursor + soraSectionEntryLength
-        nameEnd, err := checkedAdd(nameStart, nameLength, "Sora section name length overflow")
-        if err != nil {
-            return nil, err
-        }
-        if nameEnd > directoryEnd {
-            return nil, fmt.Errorf("Sora section name exceeds directory")
-        }
-        payloadEnd, err := checkedAdd(offset, length, "Sora section payload length overflow")
-        if err != nil {
-            return nil, err
-        }
-        if payloadEnd > len(bytes) {
-            return nil, fmt.Errorf("Sora section payload exceeds bundle length")
-        }
-        name := string(bytes[nameStart:nameEnd])
-        switch kind {
-        case soraSectionManifest:
-            manifestCount++
-            if name != "$manifest" {
-                return nil, fmt.Errorf("Sora manifest section must be named `$manifest`")
-            }
-        case soraSectionSchema:
-            schemaCount++
-            if name != "$schema" {
-                return nil, fmt.Errorf("Sora schema section must be named `$schema`")
-            }
-        case soraSectionTable:
-            if _, exists := tableNames[name]; exists {
-                return nil, fmt.Errorf("duplicate Sora table section `%s`", name)
-            }
-            tableNames[name] = struct{}{}
-        case soraSectionStrings:
-            stringsCount++
-            if name != "$strings" {
-                return nil, fmt.Errorf("Sora string table section must be named `$strings`")
-            }
-        default:
-            return nil, fmt.Errorf("unknown Sora section kind %d", kind)
-        }
-        if compression == soraCompressionNone && uncompressedLength != length {
-            return nil, fmt.Errorf("uncompressed Sora section length mismatch")
-        }
-        sections = append(sections, soraSection{
-            kind: kind,
-            compression: compression,
-            name: name,
-            offset: offset,
-            length: length,
-            uncompressedLength: uncompressedLength,
-        })
-        cursor = nameEnd
-    }
-    if cursor != directoryEnd {
-        return nil, fmt.Errorf("Sora section directory has trailing bytes")
-    }
-    if manifestCount != 1 {
-        return nil, fmt.Errorf("expected exactly 1 Sora manifest section, got %d", manifestCount)
-    }
-    if schemaCount != 1 {
-        return nil, fmt.Errorf("expected exactly 1 Sora schema section, got %d", schemaCount)
-    }
-    if stringsCount != 1 {
-        return nil, fmt.Errorf("expected exactly 1 Sora string table section, got %d", stringsCount)
-    }
-    var schemaFingerprint string
-    var strings []string
-    for _, section := range sections {
-        if section.kind == soraSectionManifest {
-            schemaFingerprint, err = readJsonStringField(bytes[section.offset:section.offset+section.length], "schema_fingerprint")
-            if err != nil {
-                return nil, err
-            }
-        }
-        if section.kind == soraSectionStrings {
-            var payload []byte
-            payload, err = readSectionPayload(bytes, section)
-            if err != nil {
-                return nil, err
-            }
-            strings, err = decodeStringTable(payload)
-            if err != nil {
-                return nil, err
-            }
-        }
-    }
-    if schemaFingerprint == "" {
-        return nil, fmt.Errorf("missing Sora manifest section")
-    }
-    if strings == nil {
-        return nil, fmt.Errorf("missing Sora string table section")
-    }
-    return &SoraBundle{bytes: bytes, sections: sections, schemaFingerprint: schemaFingerprint, strings: strings}, nil
+	cursor := headerLength
+	sections := make([]soraSection, 0, sectionCount)
+	manifestCount := 0
+	schemaCount := 0
+	stringsCount := 0
+	tableNames := map[string]struct{}{}
+	for i := 0; i < sectionCount; i++ {
+		if cursor+soraSectionEntryLength > directoryEnd {
+			return nil, fmt.Errorf("truncated Sora section directory entry")
+		}
+		kind := readInt32At(bytes, cursor)
+		compression := readInt32At(bytes, cursor+4)
+		nameLength := int(readInt32At(bytes, cursor+8))
+		entryFlags := readInt32At(bytes, cursor+12)
+		offset := int(readInt32At(bytes, cursor+16))
+		length := int(readInt32At(bytes, cursor+20))
+		uncompressedLength := int(readInt32At(bytes, cursor+24))
+		if entryFlags != 0 {
+			return nil, fmt.Errorf("unsupported Sora section flags %d", entryFlags)
+		}
+		nameStart := cursor + soraSectionEntryLength
+		nameEnd, err := checkedAdd(nameStart, nameLength, "Sora section name length overflow")
+		if err != nil {
+			return nil, err
+		}
+		if nameEnd > directoryEnd {
+			return nil, fmt.Errorf("Sora section name exceeds directory")
+		}
+		payloadEnd, err := checkedAdd(offset, length, "Sora section payload length overflow")
+		if err != nil {
+			return nil, err
+		}
+		if payloadEnd > len(bytes) {
+			return nil, fmt.Errorf("Sora section payload exceeds bundle length")
+		}
+		name := string(bytes[nameStart:nameEnd])
+		switch kind {
+		case soraSectionManifest:
+			manifestCount++
+			if name != "$manifest" {
+				return nil, fmt.Errorf("Sora manifest section must be named `$manifest`")
+			}
+		case soraSectionSchema:
+			schemaCount++
+			if name != "$schema" {
+				return nil, fmt.Errorf("Sora schema section must be named `$schema`")
+			}
+		case soraSectionTable:
+			if _, exists := tableNames[name]; exists {
+				return nil, fmt.Errorf("duplicate Sora table section `%s`", name)
+			}
+			tableNames[name] = struct{}{}
+		case soraSectionStrings:
+			stringsCount++
+			if name != "$strings" {
+				return nil, fmt.Errorf("Sora string table section must be named `$strings`")
+			}
+		default:
+			return nil, fmt.Errorf("unknown Sora section kind %d", kind)
+		}
+		if compression == soraCompressionNone && uncompressedLength != length {
+			return nil, fmt.Errorf("uncompressed Sora section length mismatch")
+		}
+		sections = append(sections, soraSection{
+			kind:               kind,
+			compression:        compression,
+			name:               name,
+			offset:             offset,
+			length:             length,
+			uncompressedLength: uncompressedLength,
+		})
+		cursor = nameEnd
+	}
+	if cursor != directoryEnd {
+		return nil, fmt.Errorf("Sora section directory has trailing bytes")
+	}
+	if manifestCount != 1 {
+		return nil, fmt.Errorf("expected exactly 1 Sora manifest section, got %d", manifestCount)
+	}
+	if schemaCount != 1 {
+		return nil, fmt.Errorf("expected exactly 1 Sora schema section, got %d", schemaCount)
+	}
+	if stringsCount != 1 {
+		return nil, fmt.Errorf("expected exactly 1 Sora string table section, got %d", stringsCount)
+	}
+	var schemaFingerprint string
+	var strings []string
+	for _, section := range sections {
+		if section.kind == soraSectionManifest {
+			schemaFingerprint, err = readJsonStringField(bytes[section.offset:section.offset+section.length], "schema_fingerprint")
+			if err != nil {
+				return nil, err
+			}
+		}
+		if section.kind == soraSectionStrings {
+			var payload []byte
+			payload, err = readSectionPayload(bytes, section)
+			if err != nil {
+				return nil, err
+			}
+			strings, err = decodeStringTable(payload)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	if schemaFingerprint == "" {
+		return nil, fmt.Errorf("missing Sora manifest section")
+	}
+	if strings == nil {
+		return nil, fmt.Errorf("missing Sora string table section")
+	}
+	return &SoraBundle{bytes: bytes, sections: sections, schemaFingerprint: schemaFingerprint, strings: strings}, nil
 }
 
 func DecodeTable[T any](bundle *SoraBundle, name string, decode func(*SoraReader) (T, error)) ([]T, error) {
-    for _, section := range bundle.sections {
-        if section.kind == soraSectionTable && section.name == name {
-            payload, err := readSectionPayload(bundle.bytes, section)
-            if err != nil {
-                return nil, err
-            }
-            return decodeRows(payload, bundle.strings, decode)
-        }
-    }
-    return nil, fmt.Errorf("missing Sora table section `%s`", name)
+	for _, section := range bundle.sections {
+		if section.kind == soraSectionTable && section.name == name {
+			payload, err := readSectionPayload(bundle.bytes, section)
+			if err != nil {
+				return nil, err
+			}
+			return decodeRows(payload, bundle.strings, decode)
+		}
+	}
+	return nil, fmt.Errorf("missing Sora table section `%s`", name)
 }
 
 func (bundle *SoraBundle) DecodeTable(name string, decodeBinary func(*SoraReader) (any, error), _ func(SoraValue) (any, error)) ([]any, error) {
-    return DecodeTable(bundle, name, decodeBinary)
+	return DecodeTable(bundle, name, decodeBinary)
 }
 
 func (bundle *SoraBundle) SchemaFingerprint() (string, error) {
-    return bundle.schemaFingerprint, nil
+	return bundle.schemaFingerprint, nil
 }
 
 func readSectionPayload(bytes []byte, section soraSection) ([]byte, error) {
-    payload := bytes[section.offset:section.offset+section.length]
-    switch section.compression {
-    case soraCompressionNone:
-        if section.uncompressedLength != section.length {
-            return nil, fmt.Errorf("uncompressed Sora section length mismatch")
-        }
-        return payload, nil
-    case soraCompressionZstd:
-        decoder, err := zstd.NewReader(nil)
-        if err != nil {
-            return nil, err
-        }
-        defer decoder.Close()
-        decoded, err := decoder.DecodeAll(payload, make([]byte, 0, section.uncompressedLength))
-        if err != nil {
-            return nil, err
-        }
-        if len(decoded) != section.uncompressedLength {
-            return nil, fmt.Errorf("zstd Sora section length mismatch")
-        }
-        return decoded, nil
-    default:
-        return nil, fmt.Errorf("unsupported Sora section compression %d", section.compression)
-    }
+	payload := bytes[section.offset : section.offset+section.length]
+	switch section.compression {
+	case soraCompressionNone:
+		if section.uncompressedLength != section.length {
+			return nil, fmt.Errorf("uncompressed Sora section length mismatch")
+		}
+		return payload, nil
+	case soraCompressionZstd:
+		decoder, err := zstd.NewReader(nil)
+		if err != nil {
+			return nil, err
+		}
+		defer decoder.Close()
+		decoded, err := decoder.DecodeAll(payload, make([]byte, 0, section.uncompressedLength))
+		if err != nil {
+			return nil, err
+		}
+		if len(decoded) != section.uncompressedLength {
+			return nil, fmt.Errorf("zstd Sora section length mismatch")
+		}
+		return decoded, nil
+	default:
+		return nil, fmt.Errorf("unsupported Sora section compression %d", section.compression)
+	}
 }
 
 func DecodeSourceTable[T any](source SoraTableSource, name string, decodeBinary func(*SoraReader) (T, error), decodeValue func(SoraValue) (T, error)) ([]T, error) {
-    rows, err := source.DecodeTable(
-        name,
-        func(reader *SoraReader) (any, error) {
-            return decodeBinary(reader)
-        },
-        func(value SoraValue) (any, error) {
-            return decodeValue(value)
-        },
-    )
-    if err != nil {
-        return nil, err
-    }
-    typed := make([]T, 0, len(rows))
-    for _, row := range rows {
-        value, ok := row.(T)
-        if !ok {
-            return nil, fmt.Errorf("table `%s` decoded unexpected row type %T", name, row)
-        }
-        typed = append(typed, value)
-    }
-    return typed, nil
+	rows, err := source.DecodeTable(
+		name,
+		func(reader *SoraReader) (any, error) {
+			return decodeBinary(reader)
+		},
+		func(value SoraValue) (any, error) {
+			return decodeValue(value)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	typed := make([]T, 0, len(rows))
+	for _, row := range rows {
+		value, ok := row.(T)
+		if !ok {
+			return nil, fmt.Errorf("table `%s` decoded unexpected row type %T", name, row)
+		}
+		typed = append(typed, value)
+	}
+	return typed, nil
 }
 
 type SoraReader struct {
-    bytes  []byte
-    strings []string
-    cursor int
+	bytes   []byte
+	strings []string
+	cursor  int
 }
 
 func (reader *SoraReader) IsFinished() bool {
-    return reader.cursor == len(reader.bytes)
+	return reader.cursor == len(reader.bytes)
 }
 
 func (reader *SoraReader) ReadUInt8() (byte, error) {
-    bytes, err := reader.take(1)
-    if err != nil {
-        return 0, err
-    }
-    return bytes[0], nil
+	bytes, err := reader.take(1)
+	if err != nil {
+		return 0, err
+	}
+	return bytes[0], nil
 }
 
 func (reader *SoraReader) ReadUInt8Value() (uint8, error) {
-    value, err := reader.ReadUInt32()
-    if err != nil {
-        return 0, err
-    }
-    if value > math.MaxUint8 {
-        return 0, fmt.Errorf("integer %d exceeds uint8", value)
-    }
-    return uint8(value), nil
+	value, err := reader.ReadUInt32()
+	if err != nil {
+		return 0, err
+	}
+	if value > math.MaxUint8 {
+		return 0, fmt.Errorf("integer %d exceeds uint8", value)
+	}
+	return uint8(value), nil
 }
 
 func (reader *SoraReader) ReadInt8() (int8, error) {
-    value, err := reader.ReadInt32()
-    if err != nil {
-        return 0, err
-    }
-    if value < math.MinInt8 || value > math.MaxInt8 {
-        return 0, fmt.Errorf("integer %d exceeds int8", value)
-    }
-    return int8(value), nil
+	value, err := reader.ReadInt32()
+	if err != nil {
+		return 0, err
+	}
+	if value < math.MinInt8 || value > math.MaxInt8 {
+		return 0, fmt.Errorf("integer %d exceeds int8", value)
+	}
+	return int8(value), nil
 }
 
 func (reader *SoraReader) ReadUInt16() (uint16, error) {
-    value, err := reader.ReadUInt32()
-    if err != nil {
-        return 0, err
-    }
-    if value > math.MaxUint16 {
-        return 0, fmt.Errorf("integer %d exceeds uint16", value)
-    }
-    return uint16(value), nil
+	value, err := reader.ReadUInt32()
+	if err != nil {
+		return 0, err
+	}
+	if value > math.MaxUint16 {
+		return 0, fmt.Errorf("integer %d exceeds uint16", value)
+	}
+	return uint16(value), nil
 }
 
 func (reader *SoraReader) ReadInt16() (int16, error) {
-    value, err := reader.ReadInt32()
-    if err != nil {
-        return 0, err
-    }
-    if value < math.MinInt16 || value > math.MaxInt16 {
-        return 0, fmt.Errorf("integer %d exceeds int16", value)
-    }
-    return int16(value), nil
+	value, err := reader.ReadInt32()
+	if err != nil {
+		return 0, err
+	}
+	if value < math.MinInt16 || value > math.MaxInt16 {
+		return 0, fmt.Errorf("integer %d exceeds int16", value)
+	}
+	return int16(value), nil
 }
 
 func (reader *SoraReader) ReadBool() (bool, error) {
-    value, err := reader.ReadUInt8()
-    if err != nil {
-        return false, err
-    }
-    switch value {
-    case 0:
-        return false, nil
-    case 1:
-        return true, nil
-    default:
-        return false, fmt.Errorf("invalid bool value %d", value)
-    }
+	value, err := reader.ReadUInt8()
+	if err != nil {
+		return false, err
+	}
+	switch value {
+	case 0:
+		return false, nil
+	case 1:
+		return true, nil
+	default:
+		return false, fmt.Errorf("invalid bool value %d", value)
+	}
 }
 
 func (reader *SoraReader) ReadUInt32() (uint32, error) {
-    value, err := reader.readVarUInt64()
-    if err != nil {
-        return 0, err
-    }
-    if value > math.MaxUint32 {
-        return 0, fmt.Errorf("Sora varint exceeds uint32")
-    }
-    return uint32(value), nil
+	value, err := reader.readVarUInt64()
+	if err != nil {
+		return 0, err
+	}
+	if value > math.MaxUint32 {
+		return 0, fmt.Errorf("Sora varint exceeds uint32")
+	}
+	return uint32(value), nil
 }
 
 func (reader *SoraReader) ReadInt32() (int32, error) {
-    value, err := reader.ReadUInt32()
-    if err != nil {
-        return 0, err
-    }
-    unsigned := uint32(value)
-    return int32(unsigned >> 1) ^ -int32(unsigned&1), nil
+	value, err := reader.ReadUInt32()
+	if err != nil {
+		return 0, err
+	}
+	unsigned := uint32(value)
+	return int32(unsigned>>1) ^ -int32(unsigned&1), nil
 }
 
 func (reader *SoraReader) ReadInt64() (int64, error) {
-    unsigned, err := reader.readVarUInt64()
-    if err != nil {
-        return 0, err
-    }
-    return int64(unsigned >> 1) ^ -int64(unsigned&1), nil
+	unsigned, err := reader.readVarUInt64()
+	if err != nil {
+		return 0, err
+	}
+	return int64(unsigned>>1) ^ -int64(unsigned&1), nil
 }
 
 func (reader *SoraReader) ReadFloat32() (float32, error) {
-    bytes, err := reader.take(4)
-    if err != nil {
-        return 0, err
-    }
-    return math.Float32frombits(binary.LittleEndian.Uint32(bytes)), nil
+	bytes, err := reader.take(4)
+	if err != nil {
+		return 0, err
+	}
+	return math.Float32frombits(binary.LittleEndian.Uint32(bytes)), nil
 }
 
 func (reader *SoraReader) ReadFloat64() (float64, error) {
-    bytes, err := reader.take(8)
-    if err != nil {
-        return 0, err
-    }
-    return math.Float64frombits(binary.LittleEndian.Uint64(bytes)), nil
+	bytes, err := reader.take(8)
+	if err != nil {
+		return 0, err
+	}
+	return math.Float64frombits(binary.LittleEndian.Uint64(bytes)), nil
 }
 
 func (reader *SoraReader) ReadString() (string, error) {
-    id, err := reader.ReadUInt32()
-    if err != nil {
-        return "", err
-    }
-    if uint64(id) >= uint64(len(reader.strings)) {
-        return "", fmt.Errorf("invalid string id %d", id)
-    }
-    return reader.strings[int(id)], nil
+	id, err := reader.ReadUInt32()
+	if err != nil {
+		return "", err
+	}
+	if uint64(id) >= uint64(len(reader.strings)) {
+		return "", fmt.Errorf("invalid string id %d", id)
+	}
+	return reader.strings[int(id)], nil
 }
 
 func ReadOptional[T any](reader *SoraReader, read func(*SoraReader) (T, error)) (*T, error) {
-    presence, err := reader.ReadUInt8()
-    if err != nil {
-        return nil, err
-    }
-    switch presence {
-    case 0:
-        return nil, nil
-    case 1:
-        value, err := read(reader)
-        if err != nil {
-            return nil, err
-        }
-        return &value, nil
-    default:
-        return nil, fmt.Errorf("invalid option presence %d", presence)
-    }
+	presence, err := reader.ReadUInt8()
+	if err != nil {
+		return nil, err
+	}
+	switch presence {
+	case 0:
+		return nil, nil
+	case 1:
+		value, err := read(reader)
+		if err != nil {
+			return nil, err
+		}
+		return &value, nil
+	default:
+		return nil, fmt.Errorf("invalid option presence %d", presence)
+	}
 }
 
 func ReadList[T any](reader *SoraReader, read func(*SoraReader) (T, error)) ([]T, error) {
-    length, err := reader.ReadUInt32()
-    if err != nil {
-        return nil, err
-    }
-    if uint64(length) > uint64(int(^uint(0)>>1)) {
-        return nil, fmt.Errorf("list length exceeds int")
-    }
-    values := make([]T, 0, int(length))
-    for i := uint32(0); i < length; i++ {
-        value, err := read(reader)
-        if err != nil {
-            return nil, err
-        }
-        values = append(values, value)
-    }
-    return values, nil
+	length, err := reader.ReadUInt32()
+	if err != nil {
+		return nil, err
+	}
+	if uint64(length) > uint64(int(^uint(0)>>1)) {
+		return nil, fmt.Errorf("list length exceeds int")
+	}
+	values := make([]T, 0, int(length))
+	for i := uint32(0); i < length; i++ {
+		value, err := read(reader)
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, value)
+	}
+	return values, nil
 }
 
 func ReadMap[K comparable, V any](reader *SoraReader, readKey func(*SoraReader) (K, error), readValue func(*SoraReader) (V, error)) (map[K]V, error) {
-    length, err := reader.ReadUInt32()
-    if err != nil {
-        return nil, err
-    }
-    if uint64(length) > uint64(int(^uint(0)>>1)) {
-        return nil, fmt.Errorf("map length exceeds int")
-    }
-    values := make(map[K]V, int(length))
-    for i := uint32(0); i < length; i++ {
-        key, err := readKey(reader)
-        if err != nil {
-            return nil, err
-        }
-        value, err := readValue(reader)
-        if err != nil {
-            return nil, err
-        }
-        values[key] = value
-    }
-    return values, nil
+	length, err := reader.ReadUInt32()
+	if err != nil {
+		return nil, err
+	}
+	if uint64(length) > uint64(int(^uint(0)>>1)) {
+		return nil, fmt.Errorf("map length exceeds int")
+	}
+	values := make(map[K]V, int(length))
+	for i := uint32(0); i < length; i++ {
+		key, err := readKey(reader)
+		if err != nil {
+			return nil, err
+		}
+		value, err := readValue(reader)
+		if err != nil {
+			return nil, err
+		}
+		values[key] = value
+	}
+	return values, nil
 }
 
 func (reader *SoraReader) take(length int) ([]byte, error) {
-    end, err := checkedAdd(reader.cursor, length, "Sora reader cursor overflow")
-    if err != nil {
-        return nil, err
-    }
-    if end > len(reader.bytes) {
-        return nil, fmt.Errorf("Sora reader reached end of row")
-    }
-    bytes := reader.bytes[reader.cursor:end]
-    reader.cursor = end
-    return bytes, nil
+	end, err := checkedAdd(reader.cursor, length, "Sora reader cursor overflow")
+	if err != nil {
+		return nil, err
+	}
+	if end > len(reader.bytes) {
+		return nil, fmt.Errorf("Sora reader reached end of row")
+	}
+	bytes := reader.bytes[reader.cursor:end]
+	reader.cursor = end
+	return bytes, nil
 }
 
 func (reader *SoraReader) readVarUInt64() (uint64, error) {
-    var value uint64
-    var shift uint
-    for {
-        if shift >= 64 {
-            return 0, fmt.Errorf("Sora varint is too long")
-        }
-        next, err := reader.ReadUInt8()
-        if err != nil {
-            return 0, err
-        }
-        value |= uint64(next&0x7f) << shift
-        if next&0x80 == 0 {
-            return value, nil
-        }
-        shift += 7
-    }
+	var value uint64
+	var shift uint
+	for {
+		if shift >= 64 {
+			return 0, fmt.Errorf("Sora varint is too long")
+		}
+		next, err := reader.ReadUInt8()
+		if err != nil {
+			return 0, err
+		}
+		value |= uint64(next&0x7f) << shift
+		if next&0x80 == 0 {
+			return value, nil
+		}
+		shift += 7
+	}
 }
 
 func decodeRows[T any](payload []byte, strings []string, decode func(*SoraReader) (T, error)) ([]T, error) {
-    if len(payload) < 8 {
-        return nil, fmt.Errorf("Sora table section is too short")
-    }
-    rowCount := int(readInt32At(payload, 0))
-    offsetsLength, err := checkedAdd(rowCount, 1, "Sora row offset count overflow")
-    if err != nil {
-        return nil, err
-    }
-    rowDataStart, err := checkedAdd(4, offsetsLength*4, "Sora row data offset overflow")
-    if err != nil {
-        return nil, err
-    }
-    if rowDataStart > len(payload) {
-        return nil, fmt.Errorf("Sora row offset table exceeds payload length")
-    }
+	if len(payload) < 8 {
+		return nil, fmt.Errorf("Sora table section is too short")
+	}
+	rowCount := int(readInt32At(payload, 0))
+	offsetsLength, err := checkedAdd(rowCount, 1, "Sora row offset count overflow")
+	if err != nil {
+		return nil, err
+	}
+	rowDataStart, err := checkedAdd(4, offsetsLength*4, "Sora row data offset overflow")
+	if err != nil {
+		return nil, err
+	}
+	if rowDataStart > len(payload) {
+		return nil, fmt.Errorf("Sora row offset table exceeds payload length")
+	}
 
-    rows := make([]T, 0, rowCount)
-    for index := 0; index < rowCount; index++ {
-        start := int(readInt32At(payload, 4+index*4))
-        end := int(readInt32At(payload, 4+(index+1)*4))
-        if start > end {
-            return nil, fmt.Errorf("Sora row offsets are not monotonic")
-        }
-        absoluteStart, err := checkedAdd(rowDataStart, start, "Sora row start overflow")
-        if err != nil {
-            return nil, err
-        }
-        absoluteEnd, err := checkedAdd(rowDataStart, end, "Sora row end overflow")
-        if err != nil {
-            return nil, err
-        }
-        if absoluteEnd > len(payload) {
-            return nil, fmt.Errorf("Sora row exceeds payload length")
-        }
-        reader := &SoraReader{bytes: payload[absoluteStart:absoluteEnd], strings: strings}
-        row, err := decode(reader)
-        if err != nil {
-            return nil, err
-        }
-        if !reader.IsFinished() {
-            return nil, fmt.Errorf("Sora row has trailing bytes")
-        }
-        rows = append(rows, row)
-    }
-    return rows, nil
+	rows := make([]T, 0, rowCount)
+	for index := 0; index < rowCount; index++ {
+		start := int(readInt32At(payload, 4+index*4))
+		end := int(readInt32At(payload, 4+(index+1)*4))
+		if start > end {
+			return nil, fmt.Errorf("Sora row offsets are not monotonic")
+		}
+		absoluteStart, err := checkedAdd(rowDataStart, start, "Sora row start overflow")
+		if err != nil {
+			return nil, err
+		}
+		absoluteEnd, err := checkedAdd(rowDataStart, end, "Sora row end overflow")
+		if err != nil {
+			return nil, err
+		}
+		if absoluteEnd > len(payload) {
+			return nil, fmt.Errorf("Sora row exceeds payload length")
+		}
+		reader := &SoraReader{bytes: payload[absoluteStart:absoluteEnd], strings: strings}
+		row, err := decode(reader)
+		if err != nil {
+			return nil, err
+		}
+		if !reader.IsFinished() {
+			return nil, fmt.Errorf("Sora row has trailing bytes")
+		}
+		rows = append(rows, row)
+	}
+	return rows, nil
 }
 
 func decodeStringTable(payload []byte) ([]string, error) {
-    if len(payload) == 0 {
-        return nil, fmt.Errorf("Sora string table section is too short")
-    }
-    cursor := 0
-    countValue, err := readVarUInt32At(payload, &cursor)
-    if err != nil {
-        return nil, err
-    }
-    count := int(countValue)
-    values := make([]string, 0, count)
-    for i := 0; i < count; i++ {
-        lengthValue, err := readVarUInt32At(payload, &cursor)
-        if err != nil {
-            return nil, err
-        }
-        length := int(lengthValue)
-        end, err := checkedAdd(cursor, length, "Sora string length overflow")
-        if err != nil {
-            return nil, err
-        }
-        if end > len(payload) {
-            return nil, fmt.Errorf("Sora string exceeds string table section")
-        }
-        values = append(values, string(payload[cursor:end]))
-        cursor = end
-    }
-    if cursor != len(payload) {
-        return nil, fmt.Errorf("Sora string table section has trailing bytes")
-    }
-    return values, nil
+	if len(payload) == 0 {
+		return nil, fmt.Errorf("Sora string table section is too short")
+	}
+	cursor := 0
+	countValue, err := readVarUInt32At(payload, &cursor)
+	if err != nil {
+		return nil, err
+	}
+	count := int(countValue)
+	values := make([]string, 0, count)
+	for i := 0; i < count; i++ {
+		lengthValue, err := readVarUInt32At(payload, &cursor)
+		if err != nil {
+			return nil, err
+		}
+		length := int(lengthValue)
+		end, err := checkedAdd(cursor, length, "Sora string length overflow")
+		if err != nil {
+			return nil, err
+		}
+		if end > len(payload) {
+			return nil, fmt.Errorf("Sora string exceeds string table section")
+		}
+		values = append(values, string(payload[cursor:end]))
+		cursor = end
+	}
+	if cursor != len(payload) {
+		return nil, fmt.Errorf("Sora string table section has trailing bytes")
+	}
+	return values, nil
 }
 
 func readInt32At(bytes []byte, offset int) int32 {
-    return int32(binary.LittleEndian.Uint32(bytes[offset:offset+4]))
+	return int32(binary.LittleEndian.Uint32(bytes[offset : offset+4]))
 }
 
 func readUInt32Cursor(bytes []byte, cursor *int) (uint32, error) {
-    end, err := checkedAdd(*cursor, 4, "Sora i18n cursor overflow")
-    if err != nil {
-        return 0, err
-    }
-    if end > len(bytes) {
-        return 0, fmt.Errorf("unexpected end while reading i18n u32")
-    }
-    value := binary.LittleEndian.Uint32(bytes[*cursor:end])
-    *cursor = end
-    return value, nil
+	end, err := checkedAdd(*cursor, 4, "Sora i18n cursor overflow")
+	if err != nil {
+		return 0, err
+	}
+	if end > len(bytes) {
+		return 0, fmt.Errorf("unexpected end while reading i18n u32")
+	}
+	value := binary.LittleEndian.Uint32(bytes[*cursor:end])
+	*cursor = end
+	return value, nil
 }
 
 func readLengthPrefixedString(bytes []byte, cursor *int) (string, error) {
-    lengthValue, err := readUInt32Cursor(bytes, cursor)
-    if err != nil {
-        return "", err
-    }
-    length := int(lengthValue)
-    end, err := checkedAdd(*cursor, length, "Sora i18n string length overflow")
-    if err != nil {
-        return "", err
-    }
-    if end > len(bytes) {
-        return "", fmt.Errorf("Sora i18n string exceeds pack length")
-    }
-    raw := bytes[*cursor:end]
-    if !utf8.Valid(raw) {
-        return "", fmt.Errorf("invalid Sora i18n UTF-8")
-    }
-    *cursor = end
-    return string(raw), nil
+	lengthValue, err := readUInt32Cursor(bytes, cursor)
+	if err != nil {
+		return "", err
+	}
+	length := int(lengthValue)
+	end, err := checkedAdd(*cursor, length, "Sora i18n string length overflow")
+	if err != nil {
+		return "", err
+	}
+	if end > len(bytes) {
+		return "", fmt.Errorf("Sora i18n string exceeds pack length")
+	}
+	raw := bytes[*cursor:end]
+	if !utf8.Valid(raw) {
+		return "", fmt.Errorf("invalid Sora i18n UTF-8")
+	}
+	*cursor = end
+	return string(raw), nil
 }
 
 func readInt64At(bytes []byte, offset int) int64 {
-    return int64(binary.LittleEndian.Uint64(bytes[offset:offset+8]))
+	return int64(binary.LittleEndian.Uint64(bytes[offset : offset+8]))
 }
 
 func readVarUInt32At(bytes []byte, cursor *int) (uint32, error) {
-    var value uint32
-    var shift uint
-    for {
-        if shift >= 32 {
-            return 0, fmt.Errorf("Sora varint exceeds uint32")
-        }
-        if *cursor >= len(bytes) {
-            return 0, fmt.Errorf("unexpected end while reading varint")
-        }
-        next := bytes[*cursor]
-        *cursor = *cursor + 1
-        value |= uint32(next&0x7f) << shift
-        if next&0x80 == 0 {
-            return value, nil
-        }
-        shift += 7
-    }
+	var value uint32
+	var shift uint
+	for {
+		if shift >= 32 {
+			return 0, fmt.Errorf("Sora varint exceeds uint32")
+		}
+		if *cursor >= len(bytes) {
+			return 0, fmt.Errorf("unexpected end while reading varint")
+		}
+		next := bytes[*cursor]
+		*cursor = *cursor + 1
+		value |= uint32(next&0x7f) << shift
+		if next&0x80 == 0 {
+			return value, nil
+		}
+		shift += 7
+	}
 }
 
 func checkedAdd(left int, right int, message string) (int, error) {
-    value := int64(left) + int64(right)
-    if value > int64(^uint(0)>>1) || value < -int64(^uint(0)>>1)-1 {
-        return 0, errors.New(message)
-    }
-    return int(value), nil
+	value := int64(left) + int64(right)
+	if value > int64(^uint(0)>>1) || value < -int64(^uint(0)>>1)-1 {
+		return 0, errors.New(message)
+	}
+	return int(value), nil
 }
 
 func checkedInt64ToInt(value int64, message string) (int, error) {
-    if value > int64(^uint(0)>>1) || value < -int64(^uint(0)>>1)-1 {
-        return 0, errors.New(message)
-    }
-    return int(value), nil
+	if value > int64(^uint(0)>>1) || value < -int64(^uint(0)>>1)-1 {
+		return 0, errors.New(message)
+	}
+	return int(value), nil
 }
 
 func readJsonStringField(bytes []byte, field string) (string, error) {
-    var values map[string]any
-    if err := json.Unmarshal(bytes, &values); err != nil {
-        return "", fmt.Errorf("failed to parse Sora manifest: %w", err)
-    }
-    value, ok := values[field].(string)
-    if !ok {
-        return "", fmt.Errorf("Sora manifest is missing string field `%s`", field)
-    }
-    return value, nil
+	var values map[string]any
+	if err := json.Unmarshal(bytes, &values); err != nil {
+		return "", fmt.Errorf("failed to parse Sora manifest: %w", err)
+	}
+	value, ok := values[field].(string)
+	if !ok {
+		return "", fmt.Errorf("Sora manifest is missing string field `%s`", field)
+	}
+	return value, nil
 }
 
 type SoraValue struct {
-    value any
+	value any
 }
 
 type SoraObject map[string]SoraValue
 
 type SoraValueBundle struct {
-    tables            map[string][]SoraValue
-    schemaFingerprint string
+	tables            map[string][]SoraValue
+	schemaFingerprint string
 }
 
 func DecodeValueTable[T any](bundle *SoraValueBundle, name string, decode func(SoraValue) (T, error)) ([]T, error) {
-    values, ok := bundle.tables[name]
-    if !ok {
-        return nil, fmt.Errorf("missing table `%s`", name)
-    }
-    rows := make([]T, 0, len(values))
-    for _, value := range values {
-        row, err := decode(value)
-        if err != nil {
-            return nil, err
-        }
-        rows = append(rows, row)
-    }
-    return rows, nil
+	values, ok := bundle.tables[name]
+	if !ok {
+		return nil, fmt.Errorf("missing table `%s`", name)
+	}
+	rows := make([]T, 0, len(values))
+	for _, value := range values {
+		row, err := decode(value)
+		if err != nil {
+			return nil, err
+		}
+		rows = append(rows, row)
+	}
+	return rows, nil
 }
 
 func (bundle *SoraValueBundle) DecodeTable(name string, _ func(*SoraReader) (any, error), decodeValue func(SoraValue) (any, error)) ([]any, error) {
-    return DecodeValueTable(bundle, name, decodeValue)
+	return DecodeValueTable(bundle, name, decodeValue)
 }
 
 func (bundle *SoraValueBundle) SchemaFingerprint() (string, error) {
-    return bundle.schemaFingerprint, nil
+	return bundle.schemaFingerprint, nil
 }
 
 func (object SoraObject) Get(name string) SoraValue {
-    value, ok := object[name]
-    if !ok {
-        return SoraValue{}
-    }
-    return value
+	value, ok := object[name]
+	if !ok {
+		return SoraValue{}
+	}
+	return value
 }
 
 func (value SoraValue) IsNull() bool {
-    return value.value == nil
+	return value.value == nil
 }
 
 func (value SoraValue) AsObject() (SoraObject, error) {
-    object, ok := value.value.(SoraObject)
-    if !ok {
-        return nil, fmt.Errorf("expected object")
-    }
-    return object, nil
+	object, ok := value.value.(SoraObject)
+	if !ok {
+		return nil, fmt.Errorf("expected object")
+	}
+	return object, nil
 }
 
 func (value SoraValue) AsList() ([]SoraValue, error) {
-    values, ok := value.value.([]SoraValue)
-    if !ok {
-        return nil, fmt.Errorf("expected list")
-    }
-    return values, nil
+	values, ok := value.value.([]SoraValue)
+	if !ok {
+		return nil, fmt.Errorf("expected list")
+	}
+	return values, nil
 }
 
 func (value SoraValue) AsBool() (bool, error) {
-    typed, ok := value.value.(bool)
-    if !ok {
-        return false, fmt.Errorf("expected bool")
-    }
-    return typed, nil
+	typed, ok := value.value.(bool)
+	if !ok {
+		return false, fmt.Errorf("expected bool")
+	}
+	return typed, nil
 }
 
 func (value SoraValue) AsInt32() (int32, error) {
-    typed, err := value.AsInt64()
-    if err != nil {
-        return 0, err
-    }
-    if typed < math.MinInt32 || typed > math.MaxInt32 {
-        return 0, fmt.Errorf("integer %d exceeds int32", typed)
-    }
-    return int32(typed), nil
+	typed, err := value.AsInt64()
+	if err != nil {
+		return 0, err
+	}
+	if typed < math.MinInt32 || typed > math.MaxInt32 {
+		return 0, fmt.Errorf("integer %d exceeds int32", typed)
+	}
+	return int32(typed), nil
 }
 
 func (value SoraValue) AsUInt32() (uint32, error) {
-    typed, err := value.AsInt64()
-    if err != nil {
-        return 0, err
-    }
-    if typed < 0 || typed > math.MaxUint32 {
-        return 0, fmt.Errorf("integer %d exceeds uint32", typed)
-    }
-    return uint32(typed), nil
+	typed, err := value.AsInt64()
+	if err != nil {
+		return 0, err
+	}
+	if typed < 0 || typed > math.MaxUint32 {
+		return 0, fmt.Errorf("integer %d exceeds uint32", typed)
+	}
+	return uint32(typed), nil
 }
 
 func (value SoraValue) AsInt8() (int8, error) {
-    typed, err := value.AsInt32()
-    if err != nil {
-        return 0, err
-    }
-    if typed < math.MinInt8 || typed > math.MaxInt8 {
-        return 0, fmt.Errorf("integer %d exceeds int8", typed)
-    }
-    return int8(typed), nil
+	typed, err := value.AsInt32()
+	if err != nil {
+		return 0, err
+	}
+	if typed < math.MinInt8 || typed > math.MaxInt8 {
+		return 0, fmt.Errorf("integer %d exceeds int8", typed)
+	}
+	return int8(typed), nil
 }
 
 func (value SoraValue) AsUInt8() (uint8, error) {
-    typed, err := value.AsUInt32()
-    if err != nil {
-        return 0, err
-    }
-    if typed > math.MaxUint8 {
-        return 0, fmt.Errorf("integer %d exceeds uint8", typed)
-    }
-    return uint8(typed), nil
+	typed, err := value.AsUInt32()
+	if err != nil {
+		return 0, err
+	}
+	if typed > math.MaxUint8 {
+		return 0, fmt.Errorf("integer %d exceeds uint8", typed)
+	}
+	return uint8(typed), nil
 }
 
 func (value SoraValue) AsInt16() (int16, error) {
-    typed, err := value.AsInt32()
-    if err != nil {
-        return 0, err
-    }
-    if typed < math.MinInt16 || typed > math.MaxInt16 {
-        return 0, fmt.Errorf("integer %d exceeds int16", typed)
-    }
-    return int16(typed), nil
+	typed, err := value.AsInt32()
+	if err != nil {
+		return 0, err
+	}
+	if typed < math.MinInt16 || typed > math.MaxInt16 {
+		return 0, fmt.Errorf("integer %d exceeds int16", typed)
+	}
+	return int16(typed), nil
 }
 
 func (value SoraValue) AsUInt16() (uint16, error) {
-    typed, err := value.AsUInt32()
-    if err != nil {
-        return 0, err
-    }
-    if typed > math.MaxUint16 {
-        return 0, fmt.Errorf("integer %d exceeds uint16", typed)
-    }
-    return uint16(typed), nil
+	typed, err := value.AsUInt32()
+	if err != nil {
+		return 0, err
+	}
+	if typed > math.MaxUint16 {
+		return 0, fmt.Errorf("integer %d exceeds uint16", typed)
+	}
+	return uint16(typed), nil
 }
 
 func (value SoraValue) AsInt64() (int64, error) {
-    switch typed := value.value.(type) {
-    case int64:
-        return typed, nil
-    case uint64:
-        if typed > math.MaxInt64 {
-            return 0, fmt.Errorf("integer %d exceeds int64", typed)
-        }
-        return int64(typed), nil
-    case float64:
-        if math.Trunc(typed) != typed || typed < math.MinInt64 || typed > math.MaxInt64 {
-            return 0, fmt.Errorf("number %v is not an int64", typed)
-        }
-        return int64(typed), nil
-    case json.Number:
-        value, err := strconv.ParseInt(string(typed), 10, 64)
-        if err == nil {
-            return value, nil
-        }
-        number, floatErr := strconv.ParseFloat(string(typed), 64)
-        if floatErr != nil || math.Trunc(number) != number || number < math.MinInt64 || number > math.MaxInt64 {
-            return 0, fmt.Errorf("number %s is not an int64", typed)
-        }
-        return int64(number), nil
-    default:
-        return 0, fmt.Errorf("expected integer")
-    }
+	switch typed := value.value.(type) {
+	case int64:
+		return typed, nil
+	case uint64:
+		if typed > math.MaxInt64 {
+			return 0, fmt.Errorf("integer %d exceeds int64", typed)
+		}
+		return int64(typed), nil
+	case float64:
+		if math.Trunc(typed) != typed || typed < math.MinInt64 || typed > math.MaxInt64 {
+			return 0, fmt.Errorf("number %v is not an int64", typed)
+		}
+		return int64(typed), nil
+	case json.Number:
+		value, err := strconv.ParseInt(string(typed), 10, 64)
+		if err == nil {
+			return value, nil
+		}
+		number, floatErr := strconv.ParseFloat(string(typed), 64)
+		if floatErr != nil || math.Trunc(number) != number || number < math.MinInt64 || number > math.MaxInt64 {
+			return 0, fmt.Errorf("number %s is not an int64", typed)
+		}
+		return int64(number), nil
+	default:
+		return 0, fmt.Errorf("expected integer")
+	}
 }
 
 func (value SoraValue) AsFloat32() (float32, error) {
-    typed, err := value.AsFloat64()
-    if err != nil {
-        return 0, err
-    }
-    return float32(typed), nil
+	typed, err := value.AsFloat64()
+	if err != nil {
+		return 0, err
+	}
+	return float32(typed), nil
 }
 
 func (value SoraValue) AsFloat64() (float64, error) {
-    switch typed := value.value.(type) {
-    case float64:
-        return typed, nil
-    case int64:
-        return float64(typed), nil
-    case uint64:
-        return float64(typed), nil
-    case json.Number:
-        number, err := strconv.ParseFloat(string(typed), 64)
-        if err != nil {
-            return 0, err
-        }
-        return number, nil
-    default:
-        return 0, fmt.Errorf("expected float")
-    }
+	switch typed := value.value.(type) {
+	case float64:
+		return typed, nil
+	case int64:
+		return float64(typed), nil
+	case uint64:
+		return float64(typed), nil
+	case json.Number:
+		number, err := strconv.ParseFloat(string(typed), 64)
+		if err != nil {
+			return 0, err
+		}
+		return number, nil
+	default:
+		return 0, fmt.Errorf("expected float")
+	}
 }
 
 func (value SoraValue) AsString() (string, error) {
-    typed, ok := value.value.(string)
-    if !ok {
-        return "", fmt.Errorf("expected string")
-    }
-    return typed, nil
+	typed, ok := value.value.(string)
+	if !ok {
+		return "", fmt.Errorf("expected string")
+	}
+	return typed, nil
 }
 
 func DecodeSoraValueList[T any](value SoraValue, decode func(SoraValue) (T, error)) ([]T, error) {
-    values, err := value.AsList()
-    if err != nil {
-        return nil, err
-    }
-    decoded := make([]T, 0, len(values))
-    for _, item := range values {
-        value, err := decode(item)
-        if err != nil {
-            return nil, err
-        }
-        decoded = append(decoded, value)
-    }
-    return decoded, nil
+	values, err := value.AsList()
+	if err != nil {
+		return nil, err
+	}
+	decoded := make([]T, 0, len(values))
+	for _, item := range values {
+		value, err := decode(item)
+		if err != nil {
+			return nil, err
+		}
+		decoded = append(decoded, value)
+	}
+	return decoded, nil
 }
 
 func DecodeSoraValueMap[K comparable, V any](value SoraValue, decodeKey func(SoraValue) (K, error), decodeValue func(SoraValue) (V, error)) (map[K]V, error) {
-    values, err := value.AsList()
-    if err != nil {
-        return nil, err
-    }
-    decoded := make(map[K]V, len(values))
-    for _, item := range values {
-        pair, err := item.AsList()
-        if err != nil {
-            return nil, err
-        }
-        if len(pair) != 2 {
-            return nil, fmt.Errorf("expected map entry pair")
-        }
-        key, err := decodeKey(pair[0])
-        if err != nil {
-            return nil, err
-        }
-        value, err := decodeValue(pair[1])
-        if err != nil {
-            return nil, err
-        }
-        decoded[key] = value
-    }
-    return decoded, nil
+	values, err := value.AsList()
+	if err != nil {
+		return nil, err
+	}
+	decoded := make(map[K]V, len(values))
+	for _, item := range values {
+		pair, err := item.AsList()
+		if err != nil {
+			return nil, err
+		}
+		if len(pair) != 2 {
+			return nil, fmt.Errorf("expected map entry pair")
+		}
+		key, err := decodeKey(pair[0])
+		if err != nil {
+			return nil, err
+		}
+		value, err := decodeValue(pair[1])
+		if err != nil {
+			return nil, err
+		}
+		decoded[key] = value
+	}
+	return decoded, nil
 }
 
 func DecodeOptionalSoraValue[T any](value SoraValue, decode func(SoraValue) (T, error)) (*T, error) {
-    if value.IsNull() {
-        return nil, nil
-    }
-    decoded, err := decode(value)
-    if err != nil {
-        return nil, err
-    }
-    return &decoded, nil
+	if value.IsNull() {
+		return nil, nil
+	}
+	decoded, err := decode(value)
+	if err != nil {
+		return nil, err
+	}
+	return &decoded, nil
 }
 
 func newSoraValueBundle(expectedFormat string, root SoraValue) (*SoraValueBundle, error) {
-    object, err := root.AsObject()
-    if err != nil {
-        return nil, err
-    }
-    format, err := object.Get("format").AsString()
-    if err != nil {
-        return nil, err
-    }
-    if format != expectedFormat {
-        return nil, fmt.Errorf("expected %s bundle, got %s", expectedFormat, format)
-    }
-    version, err := object.Get("format_version").AsInt64()
-    if err != nil {
-        return nil, err
-    }
-    if version != soraBundleVersion {
-        return nil, fmt.Errorf("unsupported %s bundle version %d", expectedFormat, version)
-    }
-    schemaFingerprint, err := object.Get("schema_fingerprint").AsString()
-    if err != nil {
-        return nil, err
-    }
-    data, err := object.Get("data").AsObject()
-    if err != nil {
-        return nil, err
-    }
-    tables, err := data.Get("tables").AsList()
-    if err != nil {
-        return nil, err
-    }
-    decoded := make(map[string][]SoraValue, len(tables))
-    for _, tableValue := range tables {
-        table, err := tableValue.AsObject()
-        if err != nil {
-            return nil, err
-        }
-        name, err := table.Get("name").AsString()
-        if err != nil {
-            return nil, err
-        }
-        rows, err := table.Get("rows").AsList()
-        if err != nil {
-            return nil, err
-        }
-        decoded[name] = rows
-    }
-    return &SoraValueBundle{tables: decoded, schemaFingerprint: schemaFingerprint}, nil
+	object, err := root.AsObject()
+	if err != nil {
+		return nil, err
+	}
+	format, err := object.Get("format").AsString()
+	if err != nil {
+		return nil, err
+	}
+	if format != expectedFormat {
+		return nil, fmt.Errorf("expected %s bundle, got %s", expectedFormat, format)
+	}
+	version, err := object.Get("format_version").AsInt64()
+	if err != nil {
+		return nil, err
+	}
+	if version != soraBundleVersion {
+		return nil, fmt.Errorf("unsupported %s bundle version %d", expectedFormat, version)
+	}
+	schemaFingerprint, err := object.Get("schema_fingerprint").AsString()
+	if err != nil {
+		return nil, err
+	}
+	data, err := object.Get("data").AsObject()
+	if err != nil {
+		return nil, err
+	}
+	tables, err := data.Get("tables").AsList()
+	if err != nil {
+		return nil, err
+	}
+	decoded := make(map[string][]SoraValue, len(tables))
+	for _, tableValue := range tables {
+		table, err := tableValue.AsObject()
+		if err != nil {
+			return nil, err
+		}
+		name, err := table.Get("name").AsString()
+		if err != nil {
+			return nil, err
+		}
+		rows, err := table.Get("rows").AsList()
+		if err != nil {
+			return nil, err
+		}
+		decoded[name] = rows
+	}
+	return &SoraValueBundle{tables: decoded, schemaFingerprint: schemaFingerprint}, nil
 }
 
 func soraValueFromJson(value any) SoraValue {
-    switch typed := value.(type) {
-    case map[string]any:
-        object := make(SoraObject, len(typed))
-        for key, value := range typed {
-            object[key] = soraValueFromJson(value)
-        }
-        return SoraValue{value: object}
-    case []any:
-        values := make([]SoraValue, 0, len(typed))
-        for _, value := range typed {
-            values = append(values, soraValueFromJson(value))
-        }
-        return SoraValue{value: values}
-    default:
-        return SoraValue{value: typed}
-    }
+	switch typed := value.(type) {
+	case map[string]any:
+		object := make(SoraObject, len(typed))
+		for key, value := range typed {
+			object[key] = soraValueFromJson(value)
+		}
+		return SoraValue{value: object}
+	case []any:
+		values := make([]SoraValue, 0, len(typed))
+		for _, value := range typed {
+			values = append(values, soraValueFromJson(value))
+		}
+		return SoraValue{value: values}
+	default:
+		return SoraValue{value: typed}
+	}
 }

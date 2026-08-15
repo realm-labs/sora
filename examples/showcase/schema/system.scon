@@ -2,8 +2,7 @@ tables = {
   GameSettings = {
     mode = "singleton"
     source = {
-      file = "Core.xlsx"
-      sheet = "GameSettings"
+      file = "GameSettings.xlsx"
     }
     fields = {
       version = "string"
@@ -63,8 +62,7 @@ tables = {
     groups = "server"
     mode = "list"
     source = {
-      file = "Core.xlsx"
-      sheet = "MaintenanceWindow"
+      file = "MaintenanceWindow.xlsx"
     }
     fields = {
       version = "string"
@@ -83,8 +81,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Quest.xlsx"
-      sheet = "MailTemplate"
+      file = "MailTemplate.xlsx"
     }
     fields = {
       id = "i32"
@@ -105,8 +102,7 @@ tables = {
   MailReward = {
     mode = "list"
     source = {
-      file = "Quest.xlsx"
-      sheet = "MailReward"
+      file = "MailReward.xlsx"
     }
     fields = {
       mail_id = "ref<MailTemplate.id>"
@@ -119,8 +115,7 @@ tables = {
     mode = "map"
     key = "id"
     source = {
-      file = "Quest.xlsx"
-      sheet = "Dialogue"
+      file = "Dialogue.xlsx"
     }
     fields = {
       id = "i32"

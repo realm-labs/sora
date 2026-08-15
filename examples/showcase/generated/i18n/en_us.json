@@ -1,7 +1,7 @@
 {
   "format": "i18n-json",
-  "format_version": 2,
-  "schema_fingerprint": "5ae7c095b011eddf",
+  "format_version": 3,
+  "schema_fingerprint": "84561f8bdf846e87",
   "locale": "en_us",
   "fallback_locale": "en_us",
   "translations": {

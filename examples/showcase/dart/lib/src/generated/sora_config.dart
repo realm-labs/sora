@@ -52,7 +52,7 @@ import 'vip_level.dart';
 import 'event_condition.dart';
 import 'reward_action.dart';
 
-const soraSchemaFingerprint = 'a738802174e37792';
+const soraSchemaFingerprint = '607bc658615f5c50';
 
 final class SoraConfig {
   final Map<Type, Object> _tables;

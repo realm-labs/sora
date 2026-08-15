@@ -8,7 +8,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 typedef enum sora_showcase_rarity {
     SORA_SHOWCASE_RARITY_COMMON = 0,
     SORA_SHOWCASE_RARITY_UNCOMMON = 1,

@@ -29,7 +29,7 @@ impl super::runtime::SoraDecode for DropEntry {
 }
 
 impl DropEntry {
-    pub(super) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
+    pub(crate) fn collect_text_keys<'a>(&'a self, out: &mut Vec<&'a super::runtime::TextKey>) {
         let _ = &out;
     }
 }
@@ -49,7 +49,7 @@ impl DropEntryTable {
         indexes: &[],
     };
 
-    pub(super) fn from_rows(rows: Vec<DropEntry>) -> Result<Self, super::runtime::SoraReadError> {
+    pub(crate) fn from_rows(rows: Vec<DropEntry>) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self { rows })
     }
 }

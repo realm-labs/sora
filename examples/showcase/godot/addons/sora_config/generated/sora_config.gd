@@ -3,7 +3,7 @@
 class_name SoraConfig
 extends RefCounted
 
-const SORA_SCHEMA_FINGERPRINT := "a738802174e37792"
+const SORA_SCHEMA_FINGERPRINT := "607bc658615f5c50"
 var _tables: Dictionary = {}
 
 static func load_json_file(path: String) -> SoraConfig:

@@ -8,7 +8,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 typedef enum sora_showcase_stat_type {
     SORA_SHOWCASE_STAT_TYPE_HP = 0,
     SORA_SHOWCASE_STAT_TYPE_ATTACK = 1,

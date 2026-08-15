@@ -8,7 +8,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 typedef enum sora_showcase_quest_type {
     SORA_SHOWCASE_QUEST_TYPE_MAIN = 0,
     SORA_SHOWCASE_QUEST_TYPE_SIDE = 1,
