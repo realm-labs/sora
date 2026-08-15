@@ -162,6 +162,8 @@ pub struct DerivedFieldIr {
     pub source_table: String,
     pub parent_key: String,
     pub child_key: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub map_key: Option<String>,
     pub value_field: Option<String>,
     pub order_by: Option<String>,
 }

@@ -607,6 +607,83 @@ pub mod serde_system_time_millis {
     }
 }
 
+fn map_from_pairs<K, V, E>(
+    pairs: Vec<(K, V)>,
+) -> Result<std::collections::HashMap<K, V>, E>
+where
+    K: Eq + std::hash::Hash,
+    E: serde::de::Error,
+{
+    let mut values = std::collections::HashMap::with_capacity(pairs.len());
+    for (key, value) in pairs {
+        if values.insert(key, value).is_some() {
+            return Err(E::custom("duplicate map key"));
+        }
+    }
+    Ok(values)
+}
+
+pub mod serde_map_pairs {
+    use serde::ser::SerializeSeq;
+
+    pub fn serialize<S, K, V>(
+        value: &std::collections::HashMap<K, V>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+        K: serde::Serialize,
+        V: serde::Serialize,
+    {
+        let mut sequence = serializer.serialize_seq(Some(value.len()))?;
+        for (key, value) in value {
+            sequence.serialize_element(&(key, value))?;
+        }
+        sequence.end()
+    }
+
+    pub fn deserialize<'de, D, K, V>(
+        deserializer: D,
+    ) -> Result<std::collections::HashMap<K, V>, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+        K: serde::Deserialize<'de> + Eq + std::hash::Hash,
+        V: serde::Deserialize<'de>,
+    {
+        let pairs = <Vec<(K, V)> as serde::Deserialize>::deserialize(deserializer)?;
+        super::map_from_pairs(pairs)
+    }
+}
+
+pub mod serde_optional_map_pairs {
+    pub fn serialize<S, K, V>(
+        value: &Option<std::collections::HashMap<K, V>>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+        K: serde::Serialize,
+        V: serde::Serialize,
+    {
+        match value {
+            Some(value) => super::serde_map_pairs::serialize(value, serializer),
+            None => serializer.serialize_none(),
+        }
+    }
+
+    pub fn deserialize<'de, D, K, V>(
+        deserializer: D,
+    ) -> Result<Option<std::collections::HashMap<K, V>>, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+        K: serde::Deserialize<'de> + Eq + std::hash::Hash,
+        V: serde::Deserialize<'de>,
+    {
+        let pairs = <Option<Vec<(K, V)>> as serde::Deserialize>::deserialize(deserializer)?;
+        pairs.map(super::map_from_pairs).transpose()
+    }
+}
+
 {%- if datetime_type == "chrono" %}
 impl SoraDecode for chrono::DateTime<chrono::Utc> {
     fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError> {

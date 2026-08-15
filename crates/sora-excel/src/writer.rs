@@ -620,6 +620,12 @@ fn field_note_text(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
         if let Some(value_field) = &derived_from.value_field {
             lines.push(format!("From field: {value_field}"));
         }
+        if let Some(map_key) = &derived_from.map_key {
+            lines.push(format!("Map key: {map_key}"));
+        }
+        if let Some(order_by) = &derived_from.order_by {
+            lines.push(format!("Order by: {order_by}"));
+        }
     }
 
     Some(lines.join("\n"))
@@ -1040,6 +1046,7 @@ mod tests {
                 source_table: "Reward".to_owned(),
                 parent_key: "id".to_owned(),
                 child_key: "item_id".to_owned(),
+                map_key: None,
                 value_field: Some("value".to_owned()),
                 order_by: Some("rank".to_owned()),
             }),

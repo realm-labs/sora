@@ -869,6 +869,10 @@ fn rust_datetime_type_name(datetime_type: RustDateTimeType) -> &'static str {
 
 fn rust_serde_with(ty: &TypeIr, options: &RustCodegenOptions) -> Option<String> {
     match ty {
+        TypeIr::Map { .. } => Some("crate::runtime::serde_map_pairs".to_owned()),
+        TypeIr::Optional(element) if matches!(element.as_ref(), TypeIr::Map { .. }) => {
+            Some("crate::runtime::serde_optional_map_pairs".to_owned())
+        }
         TypeIr::DateTime => Some(
             match options.datetime_type {
                 RustDateTimeType::SystemTime => "crate::runtime::serde_system_time_millis",

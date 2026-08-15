@@ -337,6 +337,9 @@ fn table_field_value(field: &StudioField) -> Value {
         from.insert("table".to_owned(), Value::String(source.table));
         from.insert("parent_key".to_owned(), Value::String(source.parent_key));
         from.insert("child_key".to_owned(), Value::String(source.child_key));
+        if let Some(map_key) = source.map_key {
+            from.insert("key".to_owned(), Value::String(map_key));
+        }
         if let Some(value_field) = source.value_field {
             from.insert("field".to_owned(), Value::String(value_field));
         }
@@ -545,6 +548,7 @@ pub(crate) struct SourceParts {
     pub(crate) table: String,
     pub(crate) parent_key: String,
     pub(crate) child_key: String,
+    pub(crate) map_key: Option<String>,
     value_field: Option<String>,
     order_by: Option<String>,
 }
@@ -554,6 +558,7 @@ pub(crate) fn parse_source(value: &Option<String>) -> Option<SourceParts> {
     let (table, rest) = value.split_once(':')?;
     let (keys, options) = rest.split_once(',').unwrap_or((rest, ""));
     let (child_key, parent_key) = keys.trim().split_once(" -> ")?;
+    let mut map_key = None;
     let mut value_field = None;
     let mut order_by = None;
     for option in options.split(',') {
@@ -561,6 +566,7 @@ pub(crate) fn parse_source(value: &Option<String>) -> Option<SourceParts> {
             continue;
         };
         match key {
+            "key" => map_key = Some(value.to_owned()),
             "field" => value_field = Some(value.to_owned()),
             "order_by" => order_by = Some(value.to_owned()),
             _ => {}
@@ -570,6 +576,7 @@ pub(crate) fn parse_source(value: &Option<String>) -> Option<SourceParts> {
         table: table.trim().to_owned(),
         parent_key: parent_key.trim().to_owned(),
         child_key: child_key.trim().to_owned(),
+        map_key,
         value_field,
         order_by,
     })

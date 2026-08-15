@@ -102,6 +102,62 @@ id = "string"
 }
 
 #[test]
+fn studio_shows_reverse_derived_map_usage_and_preserves_key() {
+    let base = temp_dir();
+    let project = write_project(
+        &base,
+        r#"
+[tables.Item]
+mode = "map"
+key = "id"
+
+[tables.Item.fields]
+id = "i32"
+rates = { type = "map<string,i32>", from = { table = "ItemRate", parent_key = "id", child_key = "item_id", key = "slot", field = "rate" } }
+
+[tables.ItemRate]
+mode = "list"
+
+[tables.ItemRate.fields]
+item_id = "ref<Item.id>"
+slot = "string"
+rate = "i32"
+"#,
+    );
+
+    let response = load_studio_schema(&project);
+    assert!(response.ok, "{:?}", response.diagnostics);
+    let schema = response.schema.unwrap();
+    let item_rate = schema
+        .nodes
+        .iter()
+        .find(|node| node.id == "table:ItemRate")
+        .unwrap();
+    assert_eq!(
+        item_rate.metadata.get("derived_by").map(String::as_str),
+        Some("Item.rates (item_id -> id, key=slot, field=rate)")
+    );
+
+    let item = schema
+        .nodes
+        .iter()
+        .find(|node| node.id == "table:Item")
+        .unwrap();
+    assert!(
+        item.fields
+            .iter()
+            .find(|field| field.name == "rates")
+            .and_then(|field| field.source.as_deref())
+            .is_some_and(|source| source.contains("key=slot"))
+    );
+
+    let rendered = render_schema_module(&schema);
+    assert!(rendered.contains("key = \"slot\""), "{rendered}");
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
 fn returns_partial_graph_for_validation_error() {
     let base = temp_dir();
     let project = write_project(

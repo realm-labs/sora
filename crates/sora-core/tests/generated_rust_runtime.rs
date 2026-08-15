@@ -122,6 +122,10 @@ unsigned_int = "u32"
 type = "list<Reward>"
 from = { table = "ItemReward", parent_key = "id", child_key = "item_id", order_by = "seq" }
 
+[tables.Item.fields.rates]
+type = "map<string,i32>"
+from = { table = "ItemRate", parent_key = "id", child_key = "item_id", key = "slot", field = "rate" }
+
 [tables.ItemReward]
 id = "item_reward"
 mode = "list"
@@ -135,6 +139,19 @@ item_id = "i32"
 seq = "i32"
 reward_item_id = "i32"
 count = "i32"
+
+[tables.ItemRate]
+id = "item_rate"
+mode = "list"
+
+[tables.ItemRate.source]
+format = "toml"
+file = "item_rates.toml"
+
+[tables.ItemRate.fields]
+item_id = "ref<Item.id>"
+slot = "string"
+rate = "i32"
 "#,
     )
     .unwrap();
@@ -182,6 +199,21 @@ count = 2
 "#,
     )
     .unwrap();
+    fs::write(
+        data_dir.join("item_rates.toml"),
+        r#"
+[[rows]]
+item_id = 1002
+slot = "normal"
+rate = 80
+
+[[rows]]
+item_id = 1002
+slot = "epic"
+rate = 20
+"#,
+    )
+    .unwrap();
 
     project_path
 }
@@ -222,8 +254,11 @@ fn loads_sora_bundle() {
     assert_eq!(item.rewards[0].reward_item_id, 3001);
     assert_eq!(item.rewards[0].count, 2);
     assert_eq!(item.rewards[1].reward_item_id, 3002);
+    assert_eq!(item.rates.get("normal"), Some(&80));
+    assert_eq!(item.rates.get("epic"), Some(&20));
     assert_eq!(config.item().values().count(), 2);
     assert_eq!(config.item_reward().len(), 2);
+    assert_eq!(config.item_rate().len(), 2);
 
     let boundary_item = config.item().get(&1001).unwrap();
     assert_eq!(boundary_item.signed_byte, -128);

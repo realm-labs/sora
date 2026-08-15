@@ -72,6 +72,7 @@ pub(super) fn validate_derived_field(
         )));
     }
 
+    validate_derived_map_key(field, derived_from, source_table, tables)?;
     validate_derived_field_result_type(field, derived_from, source_table, structs, tables)?;
 
     if let Some(order_by) = &derived_from.order_by
@@ -90,6 +91,52 @@ pub(super) fn validate_derived_field(
     }
 
     Ok(())
+}
+
+fn validate_derived_map_key(
+    field: &FieldIr,
+    derived_from: &DerivedFieldIr,
+    source_table: &TableIr,
+    tables: &[TableIr],
+) -> Result<()> {
+    let target_key = match &field.ty {
+        TypeIr::Map { key, .. } => Some(key.as_ref()),
+        _ => None,
+    };
+
+    match (target_key, derived_from.map_key.as_deref()) {
+        (Some(_), None) => Err(SoraError::InvalidSchema(format!(
+            "derived map field `{}` must declare `from.key`",
+            field.name
+        ))),
+        (None, Some(map_key)) => Err(SoraError::InvalidSchema(format!(
+            "derived field `{}` declares `from.key = \"{map_key}\"`, but its type `{}` is not a map",
+            field.name, field.ty
+        ))),
+        (None, None) => Ok(()),
+        (Some(target_key), Some(map_key)) => {
+            let Some(source_field) = source_table
+                .fields
+                .iter()
+                .find(|candidate| candidate.name == map_key)
+            else {
+                return Err(SoraError::UnknownRefField {
+                    owner_kind: "table",
+                    owner: source_table.name.clone(),
+                    field: field.name.clone(),
+                    table: source_table.name.clone(),
+                    ref_field: map_key.to_owned(),
+                });
+            };
+            if !types_compatible(target_key, &source_field.ty, tables) {
+                return Err(SoraError::InvalidSchema(format!(
+                    "derived map field `{}` source key `{}` has type `{}`, which does not exactly match map key type `{}`",
+                    field.name, source_field.name, source_field.ty, target_key
+                )));
+            }
+            Ok(())
+        }
+    }
 }
 
 fn validate_derived_field_result_type(
@@ -165,6 +212,7 @@ fn derived_field_value_type(ty: &TypeIr) -> &TypeIr {
     match ty {
         TypeIr::List(element) => element,
         TypeIr::Optional(element) => element,
+        TypeIr::Map { value, .. } => value,
         _ => ty,
     }
 }

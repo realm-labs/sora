@@ -21,6 +21,7 @@ pub(crate) fn build_schema(
 ) -> StudioSchema {
     let mut nodes = Vec::new();
     let mut edges = BTreeSet::new();
+    let derived_usages = derived_table_usages(ir);
 
     for item in &ir.enums {
         nodes.push(StudioNode {
@@ -167,6 +168,10 @@ pub(crate) fn build_schema(
                 metadata.insert("sheet".to_owned(), sheet.clone());
             }
         }
+        if let Some(usages) = derived_usages.get(&item.name) {
+            metadata.insert("derived_usage_count".to_owned(), usages.len().to_string());
+            metadata.insert("derived_by".to_owned(), usages.join("; "));
+        }
         nodes.push(StudioNode {
             id: owner,
             name: item.name.clone(),
@@ -234,6 +239,36 @@ pub(crate) fn build_schema(
         nodes,
         edges,
     }
+}
+
+fn derived_table_usages(ir: &ConfigIr) -> BTreeMap<String, Vec<String>> {
+    let mut usages = BTreeMap::<String, Vec<String>>::new();
+    for table in &ir.tables {
+        for field in &table.fields {
+            let Some(from) = &field.derived_from else {
+                continue;
+            };
+            let mut usage = format!(
+                "{}.{} ({} -> {}",
+                table.name, field.name, from.child_key, from.parent_key
+            );
+            if let Some(map_key) = &from.map_key {
+                usage.push_str(&format!(", key={map_key}"));
+            }
+            if let Some(value_field) = &from.value_field {
+                usage.push_str(&format!(", field={value_field}"));
+            }
+            if let Some(order_by) = &from.order_by {
+                usage.push_str(&format!(", order_by={order_by}"));
+            }
+            usage.push(')');
+            usages
+                .entry(from.source_table.clone())
+                .or_default()
+                .push(usage);
+        }
+    }
+    usages
 }
 
 pub(crate) fn build_schema_from_raw(
@@ -529,6 +564,9 @@ fn raw_from(from: &Option<TableFieldFromSchema>) -> Option<String> {
             from.child_key.as_deref().unwrap_or("<child_key>"),
             from.parent_key.as_deref().unwrap_or("<parent_key>")
         );
+        if let Some(map_key) = &from.map_key {
+            value.push_str(&format!(", key={map_key}"));
+        }
         if let Some(field) = &from.value_field {
             value.push_str(&format!(", field={field}"));
         }
@@ -578,6 +616,9 @@ fn studio_field(field: &FieldIr) -> StudioField {
                 "{}: {} -> {}",
                 from.source_table, from.child_key, from.parent_key
             );
+            if let Some(map_key) = &from.map_key {
+                value.push_str(&format!(", key={map_key}"));
+            }
             if let Some(field) = &from.value_field {
                 value.push_str(&format!(", field={field}"));
             }

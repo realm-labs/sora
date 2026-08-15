@@ -95,6 +95,8 @@ pub struct DerivedFieldSource {
     pub table: String,
     pub parent_key: String,
     pub child_key: String,
+    #[serde(default)]
+    pub map_key: Option<String>,
     pub value_field: Option<String>,
     pub order_by: Option<String>,
 }
@@ -1131,7 +1133,7 @@ fn rename_derived_field(source: &str, table: &str, from: &str, to: &str) -> Stri
                 return option.trim().to_owned();
             };
             let value = if source_table.trim() == table
-                && matches!(key, "field" | "order_by")
+                && matches!(key, "key" | "field" | "order_by")
                 && value == from
             {
                 to
@@ -1328,6 +1330,9 @@ fn format_derived_source(source: &DerivedFieldSource) -> String {
         "{}: {} -> {}",
         source.table, source.child_key, source.parent_key
     );
+    if let Some(map_key) = &source.map_key {
+        value.push_str(&format!(", key={map_key}"));
+    }
     if let Some(field) = &source.value_field {
         value.push_str(&format!(", field={field}"));
     }
@@ -1713,6 +1718,7 @@ mod tests {
                     table: "Item".to_owned(),
                     parent_key: "id".to_owned(),
                     child_key: "id".to_owned(),
+                    map_key: None,
                     value_field: Some("id".to_owned()),
                     order_by: None,
                 }),

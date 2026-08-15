@@ -130,8 +130,71 @@ The field type controls how many child rows may match:
 | `list<T>` | zero or more | empty list |
 | `optional<T>` | zero or one | `null` |
 | `T` | exactly one | validation error |
+| `map<K,V>` | zero or more, with unique keys | empty map |
 
 If `T` or `optional<T>` matches more than one child row, Sora reports an error.
+
+## Deriving a Map
+
+A derived map uses the same parent/child join as a derived list. Add `from.key` to select the child field that becomes each map entry's key, and use `from.field` to select the value:
+
+```scon
+tables {
+  Item {
+    mode = "map"
+    key = "id"
+    fields {
+      id = "i32"
+      drop_rates {
+        type = "map<string,i32>"
+        from {
+          table = "ItemDropRate"
+          parent_key = "id"
+          child_key = "item_id"
+          key = "rarity"
+          field = "rate"
+        }
+      }
+    }
+  }
+
+  ItemDropRate {
+    mode = "list"
+    fields {
+      item_id = "ref<Item.id>"
+      rarity = "string"
+      rate = "i32"
+    }
+  }
+}
+```
+
+Editable rows stay simple and need no synthetic child-row id:
+
+| item_id | rarity | rate |
+| ---: | --- | ---: |
+| 1001 | Common | 80 |
+| 1001 | Epic | 20 |
+
+For `Item.id = 1001`, Sora materializes:
+
+```json
+"drop_rates": [["Common", 80], ["Epic", 20]]
+```
+
+Sora uses pair arrays for maps so non-string key types remain unambiguous. Generated runtimes expose the target language's normal map or dictionary type.
+
+The rules are deliberately narrow:
+
+- An exact `map<K,V>` derived field must declare `from.key`; `from.key` is invalid on non-map fields.
+- The child key field must exist and its type must exactly match `K`. Sora resolves `ref<Table.field>` to the referenced field type before comparing; it performs no implicit conversion.
+- `from.field`, when present, must be type-compatible with `V`.
+- Without `from.field`, `V` must be a struct assembled from same-named child fields.
+- Duplicate map keys among rows matched to the same parent are an error. Enum aliases count as their canonical enum value for duplicate detection.
+- No matching child rows produce an empty map.
+- `order_by` may control deterministic pair order, although map lookup semantics do not depend on order.
+
+Studio derives reverse usages from the existing `from` relationships. A source table can therefore show entries such as `Item.drop_rates (item_id -> id, key=rarity, field=rate)` without adding a second ownership declaration to the schema. One source table may still feed several parent fields or tables.
 
 ## Copying One Child Field
 
@@ -201,6 +264,7 @@ The `from` object has these options:
 | `table` | yes | Child table name. Sora scans this table for matching rows. |
 | `parent_key` | yes | Field name on the parent table. Each parent row uses this field value for matching. |
 | `child_key` | yes | Field name on the child table. A child row is selected when this value equals the parent key. |
+| `key` | for `map<K,V>` | Child field copied into each map entry's key. Invalid for non-map derived fields. |
 | `field` | no | Field name on the child table. When present, Sora copies this field's value instead of assembling a struct from the child row. |
 | `order_by` | no | Field name on the child table. When present, matched child rows are sorted by this field in ascending order. |
 
@@ -208,7 +272,7 @@ The `from` object has these options:
 
 The `order_by` field must exist on the child table. It is usually an `i32` ordering field such as `sort_order`, `seq`, or `rank`. Sorting is ascending.
 
-Without `from.field`, the derived value type must be a struct, either `list<struct<...>>`, `struct<...>`, or `optional<struct<...>>`. Struct fields are copied from child table fields with the same names:
+Without `from.field`, the derived value type must be a struct: `list<struct<...>>`, `struct<...>`, `optional<struct<...>>`, or `map<K,struct<...>>`. Struct fields are copied from child table fields with the same names:
 
 ```toml
 [[structs]]

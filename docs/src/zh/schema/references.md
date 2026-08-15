@@ -130,8 +130,71 @@ type = "i32"
 | `list<T>` | 0 到多行 | 空列表 |
 | `optional<T>` | 0 或 1 行 | `null` |
 | `T` | 必须正好 1 行 | 校验错误 |
+| `map<K,V>` | 0 到多行，key 必须唯一 | 空 Map |
 
 如果 `T` 或 `optional<T>` 匹配到多行，Sora 会报错。
+
+## 派生 Map
+
+派生 Map 仍使用和派生 list 相同的父子表关联。增加 `from.key` 指定哪个子表字段成为 Map key，再用 `from.field` 指定 Map value：
+
+```scon
+tables {
+  Item {
+    mode = "map"
+    key = "id"
+    fields {
+      id = "i32"
+      drop_rates {
+        type = "map<string,i32>"
+        from {
+          table = "ItemDropRate"
+          parent_key = "id"
+          child_key = "item_id"
+          key = "rarity"
+          field = "rate"
+        }
+      }
+    }
+  }
+
+  ItemDropRate {
+    mode = "list"
+    fields {
+      item_id = "ref<Item.id>"
+      rarity = "string"
+      rate = "i32"
+    }
+  }
+}
+```
+
+可编辑数据仍然是普通子表行，不需要人为添加子行 id：
+
+| item_id | rarity | rate |
+| ---: | --- | ---: |
+| 1001 | Common | 80 |
+| 1001 | Epic | 20 |
+
+对于 `Item.id = 1001`，Sora 会物化出：
+
+```json
+"drop_rates": [["Common", 80], ["Epic", 20]]
+```
+
+Sora 使用 pair array 表示 Map，因此非 string key 也不会产生歧义；生成运行时会暴露目标语言正常的 Map 或 Dictionary 类型。
+
+规则保持刻意收敛：
+
+- 类型正好是 `map<K,V>` 的派生字段必须声明 `from.key`；非 Map 字段不能声明 `from.key`。
+- 子表 key 字段必须存在，并且类型必须和 `K` 严格匹配。比较前会把 `ref<Table.field>` 展开为目标字段类型，但不会进行任何隐式转换。
+- 存在 `from.field` 时，对应子字段类型必须和 `V` 兼容。
+- 不写 `from.field` 时，`V` 必须是由子表同名字段组装的 struct。
+- 同一个父行匹配出来的 Map key 不能重复；enum alias 在重复检查时按规范枚举值处理。
+- 没有匹配子行时得到空 Map。
+- `order_by` 可以控制 pair 的确定顺序，但 Map 查找语义不依赖顺序。
+
+Studio 会从现有 `from` 自动建立反向使用关系，因此源表可以显示 `Item.drop_rates (item_id -> id, key=rarity, field=rate)`，不需要在 Schema 中再声明一份 owner。一张源表仍然可以供多个父字段或父表使用。
 
 ## 复制子表的单个字段
 
@@ -201,6 +264,7 @@ parser = { kind = "tagged_columns", prefix = "" }
 | `table` | 是 | 子表名。Sora 会从这张表扫描匹配行。 |
 | `parent_key` | 是 | 父表上的字段名。每个父行用这个字段值参与匹配。 |
 | `child_key` | 是 | 子表上的字段名。子行的这个字段值等于父 key 时，就会被选中。 |
+| `key` | `map<K,V>` 必填 | 子表上的字段名，其值成为每个 Map entry 的 key；非 Map 派生字段不能使用。 |
 | `field` | 否 | 子表上的字段名。存在时，Sora 复制这个字段的值，而不是从整行组装 struct。 |
 | `order_by` | 否 | 子表上的字段名。存在时，匹配到的子行按这个字段升序排序。 |
 
@@ -208,7 +272,7 @@ parser = { kind = "tagged_columns", prefix = "" }
 
 `order_by` 指向的字段必须存在于子表中。它通常会是 `i32` 这类排序字段，例如 `sort_order`、`seq`、`rank`。排序是升序。
 
-不写 `from.field` 时，派生值类型必须是 struct，也就是 `list<struct<...>>`、`struct<...>` 或 `optional<struct<...>>`。结构体字段会从子表同名字段复制：
+不写 `from.field` 时，派生值类型必须是 struct，也就是 `list<struct<...>>`、`struct<...>`、`optional<struct<...>>` 或 `map<K,struct<...>>`。结构体字段会从子表同名字段复制：
 
 ```toml
 [[structs]]

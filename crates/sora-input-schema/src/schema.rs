@@ -713,6 +713,8 @@ struct TableFieldFromRepr {
     parent_key: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     child_key: Option<String>,
+    #[serde(default, rename = "key", skip_serializing_if = "Option::is_none")]
+    map_key: Option<String>,
     #[serde(default, rename = "field", skip_serializing_if = "Option::is_none")]
     value_field: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1110,6 +1112,7 @@ fn lower_table_field(name: String, value: TableFieldRepr) -> TableFieldSchema {
             table: value.table,
             parent_key: value.parent_key,
             child_key: value.child_key,
+            map_key: value.map_key,
             value_field: value.value_field,
             order_by: value.order_by,
         }),
@@ -1309,6 +1312,7 @@ fn table_field_repr(value: &TableFieldSchema, explicit: bool) -> TableFieldRepr 
                 table: value.table.clone(),
                 parent_key: value.parent_key.clone(),
                 child_key: value.child_key.clone(),
+                map_key: value.map_key.clone(),
                 value_field: value.value_field.clone(),
                 order_by: value.order_by.clone(),
             }),
@@ -1737,11 +1741,29 @@ tables {
           "type": "struct<Cost>",
           "parser": { "kind": "tuple", "separator": "," }
         },
-        "rewards": { "type": "list<union<Reward>>", "parser": "json" }
+        "rewards": { "type": "list<union<Reward>>", "parser": "json" },
+        "rates": {
+          "type": "map<string,i32>",
+          "from": {
+            "table": "ItemRate",
+            "parent_key": "id",
+            "child_key": "item_id",
+            "key": "slot",
+            "field": "rate"
+          }
+        }
       },
       "indexes": {
         "by_rarity": ["rarity"],
         "by_name": { "fields": ["name"], "unique": true }
+      }
+    },
+    "ItemRate": {
+      "mode": "list",
+      "fields": {
+        "item_id": "ref<Item.id>",
+        "slot": "string",
+        "rate": "i32"
       }
     }
   }
@@ -1764,6 +1786,21 @@ tables {
         assert_eq!(
             expected_ir.enums[0].values[0].comment.as_deref(),
             Some("Common item")
+        );
+        assert_eq!(
+            expected_ir
+                .tables
+                .iter()
+                .find(|table| table.name == "Item")
+                .unwrap()
+                .fields
+                .iter()
+                .find(|field| field.name == "rates")
+                .unwrap()
+                .derived_from
+                .as_ref()
+                .and_then(|from| from.map_key.as_deref()),
+            Some("slot")
         );
 
         for extension in ["scon", "toml", "yaml", "json", "lua"] {

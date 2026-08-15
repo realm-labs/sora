@@ -563,6 +563,7 @@ fn convert_table_field_with_parsers(
                 source_table: from.table,
                 parent_key,
                 child_key,
+                map_key: from.map_key,
                 value_field: from.value_field,
                 order_by: from.order_by,
             })

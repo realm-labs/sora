@@ -619,6 +619,185 @@ type = "ref<Item.id>"
 }
 
 #[test]
+fn validates_derived_map_field() {
+    let ir = example_ir(
+        r#"
+[[tables]]
+id = "item"
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "rates"
+type = "map<string,i32>"
+from = { table = "ItemRate", parent_key = "id", child_key = "item_id", key = "slot", field = "rate" }
+
+[[tables]]
+id = "item_rate"
+name = "ItemRate"
+mode = "list"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[tables.fields]]
+name = "slot"
+type = "string"
+
+[[tables.fields]]
+name = "rate"
+type = "i32"
+"#,
+    );
+
+    validate_config_ir(&ir).unwrap();
+    assert_eq!(
+        ir.tables[0].fields[1]
+            .derived_from
+            .as_ref()
+            .and_then(|from| from.map_key.as_deref()),
+        Some("slot")
+    );
+}
+
+#[test]
+fn rejects_derived_map_without_key() {
+    let ir = example_ir(
+        r#"
+[[tables]]
+id = "item"
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "rates"
+type = "map<string,i32>"
+from = { table = "ItemRate", parent_key = "id", child_key = "item_id", field = "rate" }
+
+[[tables]]
+id = "item_rate"
+name = "ItemRate"
+mode = "list"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[tables.fields]]
+name = "rate"
+type = "i32"
+"#,
+    );
+
+    assert!(matches!(
+        validate_config_ir(&ir).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("derived map field `rates` must declare `from.key`")
+    ));
+}
+
+#[test]
+fn rejects_derived_key_on_non_map_field() {
+    let ir = example_ir(
+        r#"
+[[tables]]
+id = "item"
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "rates"
+type = "list<i32>"
+from = { table = "ItemRate", parent_key = "id", child_key = "item_id", key = "slot", field = "rate" }
+
+[[tables]]
+id = "item_rate"
+name = "ItemRate"
+mode = "list"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[tables.fields]]
+name = "slot"
+type = "string"
+
+[[tables.fields]]
+name = "rate"
+type = "i32"
+"#,
+    );
+
+    assert!(matches!(
+        validate_config_ir(&ir).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("declares `from.key = \"slot\"`, but its type `list<i32>` is not a map")
+    ));
+}
+
+#[test]
+fn rejects_incompatible_derived_map_key_type() {
+    let ir = example_ir(
+        r#"
+[[tables]]
+id = "item"
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "rates"
+type = "map<string,i32>"
+from = { table = "ItemRate", parent_key = "id", child_key = "item_id", key = "slot", field = "rate" }
+
+[[tables]]
+id = "item_rate"
+name = "ItemRate"
+mode = "list"
+
+[[tables.fields]]
+name = "item_id"
+type = "ref<Item.id>"
+
+[[tables.fields]]
+name = "slot"
+type = "i32"
+
+[[tables.fields]]
+name = "rate"
+type = "i32"
+"#,
+    );
+
+    assert!(matches!(
+        validate_config_ir(&ir).unwrap_err(),
+        SoraError::InvalidSchema(message)
+            if message.contains("source key `slot` has type `i32`, which does not exactly match map key type `string`")
+    ));
+}
+
+#[test]
 fn rejects_incompatible_derived_source_field_type() {
     let ir = example_ir(
         r#"

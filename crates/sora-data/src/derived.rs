@@ -1,4 +1,7 @@
-use std::{cmp::Ordering, collections::BTreeMap};
+use std::{
+    cmp::Ordering,
+    collections::{BTreeMap, BTreeSet},
+};
 
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, DerivedFieldIr, FieldIr, StructIr, TableIr, TypeIr};
@@ -60,13 +63,23 @@ fn materialize_table_derived_field(
             child_rows.sort_by(|left, right| compare_order_field(left, right, order_by));
         }
 
-        let values = child_rows
-            .into_iter()
-            .map(|row| derive_child_value(&derived_from.source_table, row, &shape.value))
-            .collect::<Result<Vec<_>>>()?;
         let value = match shape.cardinality {
-            DerivedFieldCardinality::List => Value::List(values),
+            DerivedFieldCardinality::Map { key_field, key_ty } => Value::List(derive_map_entries(
+                ir,
+                parent_table,
+                field,
+                derived_from,
+                parent_key,
+                child_rows,
+                key_field,
+                key_ty,
+                &shape.value,
+            )?),
+            DerivedFieldCardinality::List => {
+                Value::List(derive_child_values(child_rows, derived_from, &shape.value)?)
+            }
             DerivedFieldCardinality::RequiredOne => {
+                let values = derive_child_values(child_rows, derived_from, &shape.value)?;
                 if values.len() != 1 {
                     return Err(derived_field_row_count_error(
                         parent_table,
@@ -80,6 +93,7 @@ fn materialize_table_derived_field(
                 values.into_iter().next().expect("checked one value")
             }
             DerivedFieldCardinality::OptionalOne => {
+                let values = derive_child_values(child_rows, derived_from, &shape.value)?;
                 if values.len() > 1 {
                     return Err(derived_field_row_count_error(
                         parent_table,
@@ -100,15 +114,19 @@ fn materialize_table_derived_field(
 }
 
 struct DerivedFieldShape<'a> {
-    cardinality: DerivedFieldCardinality,
+    cardinality: DerivedFieldCardinality<'a>,
     value: DerivedFieldValue<'a>,
 }
 
 #[derive(Debug, Clone, Copy)]
-enum DerivedFieldCardinality {
+enum DerivedFieldCardinality<'a> {
     List,
     RequiredOne,
     OptionalOne,
+    Map {
+        key_field: &'a str,
+        key_ty: &'a TypeIr,
+    },
 }
 
 enum DerivedFieldValue<'a> {
@@ -124,6 +142,21 @@ fn derived_field_shape<'a>(ir: &'a ConfigIr, field: &'a FieldIr) -> Result<Deriv
     let (cardinality, value_ty) = match &field.ty {
         TypeIr::List(element) => (DerivedFieldCardinality::List, element.as_ref()),
         TypeIr::Optional(element) => (DerivedFieldCardinality::OptionalOne, element.as_ref()),
+        TypeIr::Map { key, value } => {
+            let key_field = derived_from.map_key.as_deref().ok_or_else(|| {
+                SoraError::InvalidSchema(format!(
+                    "derived map field `{}` must declare `from.key`",
+                    field.name
+                ))
+            })?;
+            (
+                DerivedFieldCardinality::Map {
+                    key_field,
+                    key_ty: key.as_ref(),
+                },
+                value.as_ref(),
+            )
+        }
         ty => (DerivedFieldCardinality::RequiredOne, ty),
     };
 
@@ -209,6 +242,88 @@ fn derive_child_value(
                     field: (*field).to_owned(),
                 })
         }
+    }
+}
+
+fn derive_child_values(
+    child_rows: Vec<&RowData>,
+    derived_from: &DerivedFieldIr,
+    value: &DerivedFieldValue<'_>,
+) -> Result<Vec<Value>> {
+    child_rows
+        .into_iter()
+        .map(|row| derive_child_value(&derived_from.source_table, row, value))
+        .collect()
+}
+
+#[allow(clippy::too_many_arguments)]
+fn derive_map_entries(
+    ir: &ConfigIr,
+    parent_table: &TableIr,
+    field: &FieldIr,
+    derived_from: &DerivedFieldIr,
+    parent_key: &Value,
+    child_rows: Vec<&RowData>,
+    key_field: &str,
+    key_ty: &TypeIr,
+    value: &DerivedFieldValue<'_>,
+) -> Result<Vec<Value>> {
+    let mut seen = BTreeSet::new();
+    let mut entries = Vec::with_capacity(child_rows.len());
+    for row in child_rows {
+        let key = row.values.get(key_field).ok_or_else(|| {
+            SoraError::InvalidSchema(format!(
+                "derived map field `{}.{}` is missing source key `{}.{key_field}` for parent key `{}`",
+                parent_table.name,
+                field.name,
+                derived_from.source_table,
+                stable_key(parent_key)
+            ))
+        })?;
+        let identity = canonical_typed_key(ir, key_ty, key);
+        if !seen.insert(identity.clone()) {
+            return Err(SoraError::InvalidSchema(format!(
+                "derived map field `{}.{}` has duplicate key `{identity}` from `{}` for parent key `{}`",
+                parent_table.name,
+                field.name,
+                derived_from.source_table,
+                stable_key(parent_key)
+            )));
+        }
+        let value = derive_child_value(&derived_from.source_table, row, value)?;
+        entries.push(Value::List(vec![key.clone(), value]));
+    }
+    Ok(entries)
+}
+
+fn canonical_typed_key(ir: &ConfigIr, ty: &TypeIr, value: &Value) -> String {
+    match (ty, value) {
+        (TypeIr::Enum(name), Value::String(value)) => ir
+            .enums
+            .iter()
+            .find(|candidate| candidate.name == *name)
+            .and_then(|item| {
+                item.aliases
+                    .iter()
+                    .find(|alias| alias.alias == *value)
+                    .map(|alias| alias.name.clone())
+            })
+            .unwrap_or_else(|| value.clone()),
+        (TypeIr::Ref { table, field }, value) => ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == *table)
+            .and_then(|table| {
+                table
+                    .fields
+                    .iter()
+                    .find(|candidate| candidate.name == *field)
+            })
+            .map_or_else(
+                || stable_key(value),
+                |field| canonical_typed_key(ir, &field.ty, value),
+            ),
+        _ => stable_key(value),
     }
 }
 
@@ -393,6 +508,187 @@ mod tests {
     }
 
     #[test]
+    fn materializes_child_rows_into_map_field() {
+        let ir = map_derived_field_ir();
+        let data = ConfigData {
+            tables: vec![
+                TableData {
+                    name: "Item".to_owned(),
+                    rows: vec![RowData {
+                        values: BTreeMap::from([("id".to_owned(), Value::Integer(1001))]),
+                    }],
+                },
+                TableData {
+                    name: "ItemRate".to_owned(),
+                    rows: vec![
+                        RowData {
+                            values: BTreeMap::from([
+                                ("item_id".to_owned(), Value::Integer(1001)),
+                                ("slot".to_owned(), Value::String("normal".to_owned())),
+                                ("rate".to_owned(), Value::Integer(80)),
+                            ]),
+                        },
+                        RowData {
+                            values: BTreeMap::from([
+                                ("item_id".to_owned(), Value::Integer(1001)),
+                                ("slot".to_owned(), Value::String("epic".to_owned())),
+                                ("rate".to_owned(), Value::Integer(20)),
+                            ]),
+                        },
+                    ],
+                },
+            ],
+        };
+
+        let materialized = materialize_derived_fields(&ir, &data).unwrap();
+
+        assert_eq!(
+            materialized.tables[0].rows[0].values["rates"],
+            Value::List(vec![
+                Value::List(vec![Value::String("normal".to_owned()), Value::Integer(80),]),
+                Value::List(vec![Value::String("epic".to_owned()), Value::Integer(20),]),
+            ])
+        );
+    }
+
+    #[test]
+    fn rejects_duplicate_derived_map_keys() {
+        let ir = map_derived_field_ir();
+        let data = ConfigData {
+            tables: vec![
+                TableData {
+                    name: "Item".to_owned(),
+                    rows: vec![RowData {
+                        values: BTreeMap::from([("id".to_owned(), Value::Integer(1001))]),
+                    }],
+                },
+                TableData {
+                    name: "ItemRate".to_owned(),
+                    rows: vec![
+                        RowData {
+                            values: BTreeMap::from([
+                                ("item_id".to_owned(), Value::Integer(1001)),
+                                ("slot".to_owned(), Value::String("normal".to_owned())),
+                                ("rate".to_owned(), Value::Integer(80)),
+                            ]),
+                        },
+                        RowData {
+                            values: BTreeMap::from([
+                                ("item_id".to_owned(), Value::Integer(1001)),
+                                ("slot".to_owned(), Value::String("normal".to_owned())),
+                                ("rate".to_owned(), Value::Integer(20)),
+                            ]),
+                        },
+                    ],
+                },
+            ],
+        };
+
+        let error = materialize_derived_fields(&ir, &data).unwrap_err();
+
+        assert!(
+            error
+                .to_string()
+                .contains("derived map field `Item.rates` has duplicate key `normal`")
+        );
+    }
+
+    #[test]
+    fn materializes_struct_values_into_map_field() {
+        let schema: ProjectSchema = toml::from_str(
+            r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[structs]]
+name = "Rate"
+
+[[structs.fields]]
+name = "limit"
+type = "i32"
+
+[[structs.fields]]
+name = "rate"
+type = "i32"
+
+[[tables]]
+id = "item"
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "rates"
+type = "map<string,struct<Rate>>"
+from = { table = "ItemRate", parent_key = "id", child_key = "item_id", key = "slot" }
+
+[[tables]]
+id = "item_rate"
+name = "ItemRate"
+mode = "list"
+
+[[tables.fields]]
+name = "item_id"
+type = "i32"
+
+[[tables.fields]]
+name = "slot"
+type = "string"
+
+[[tables.fields]]
+name = "limit"
+type = "i32"
+
+[[tables.fields]]
+name = "rate"
+type = "i32"
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        validate_config_ir(&ir).unwrap();
+        let data = ConfigData {
+            tables: vec![
+                TableData {
+                    name: "Item".to_owned(),
+                    rows: vec![RowData {
+                        values: BTreeMap::from([("id".to_owned(), Value::Integer(1001))]),
+                    }],
+                },
+                TableData {
+                    name: "ItemRate".to_owned(),
+                    rows: vec![RowData {
+                        values: BTreeMap::from([
+                            ("item_id".to_owned(), Value::Integer(1001)),
+                            ("slot".to_owned(), Value::String("epic".to_owned())),
+                            ("limit".to_owned(), Value::Integer(10)),
+                            ("rate".to_owned(), Value::Integer(20)),
+                        ]),
+                    }],
+                },
+            ],
+        };
+
+        let materialized = materialize_derived_fields(&ir, &data).unwrap();
+
+        assert_eq!(
+            materialized.tables[0].rows[0].values["rates"],
+            Value::List(vec![Value::List(vec![
+                Value::String("epic".to_owned()),
+                Value::Object(BTreeMap::from([
+                    ("limit".to_owned(), Value::Integer(10)),
+                    ("rate".to_owned(), Value::Integer(20)),
+                ])),
+            ])])
+        );
+    }
+
+    #[test]
     fn rejects_missing_required_single_child_value() {
         let ir = single_value_derived_field_ir("string");
         let data = ConfigData {
@@ -564,6 +860,52 @@ name = "notes"
 type = "string"
 "#
         ))
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        validate_config_ir(&ir).unwrap();
+        ir
+    }
+
+    fn map_derived_field_ir() -> ConfigIr {
+        let schema: ProjectSchema = toml::from_str(
+            r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[tables]]
+id = "item"
+name = "Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+
+[[tables.fields]]
+name = "rates"
+type = "map<string,i32>"
+from = { table = "ItemRate", parent_key = "id", child_key = "item_id", key = "slot", field = "rate" }
+
+[[tables]]
+id = "item_rate"
+name = "ItemRate"
+mode = "list"
+
+[[tables.fields]]
+name = "item_id"
+type = "i32"
+
+[[tables.fields]]
+name = "slot"
+type = "string"
+
+[[tables.fields]]
+name = "rate"
+type = "i32"
+"#,
+        )
         .unwrap();
         let ir = normalize_schema(schema).unwrap();
         validate_config_ir(&ir).unwrap();

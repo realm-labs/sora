@@ -300,6 +300,8 @@ pub struct TableFieldFromSchema {
     pub table: String,
     pub parent_key: Option<String>,
     pub child_key: Option<String>,
+    #[serde(rename = "key")]
+    pub map_key: Option<String>,
     #[serde(rename = "field")]
     pub value_field: Option<String>,
     pub order_by: Option<String>,
