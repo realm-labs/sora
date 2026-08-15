@@ -220,3 +220,5 @@ cargo test -p sora-mcp --test build_workflow
 
 第一个测试打开 showcase、检查项目、查询 Excel-backed validated data，并确认 revision
 不变化；第二个测试执行事务 build、接收 progress，并通过 MCP 读取 immutable artifact。
+
+事务写入会在替换或删除已有文件前，将旧文件备份到 `.sora/backups/<transaction-id>/`。该目录会自动从 Git 中忽略，并且只保留最近 20 个已完成备份批次；仍在执行或可恢复事务所需的备份不会被清理。

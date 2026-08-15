@@ -43,9 +43,12 @@ pub fn run(args: InitArgs) -> Result<()> {
         args.force,
     )?;
     write_sample_data(&layout, args.force)?;
+    ensure_backup_ignores(&args.out.join(".gitignore"))?;
 
     Ok(())
 }
+
+const BACKUP_GITIGNORE_ENTRIES: [&str; 2] = [".sora/", ".sora-backup/"];
 
 struct InitLayout {
     schema_dir: PathBuf,
@@ -105,6 +108,30 @@ fn write_text_file(path: &Path, content: &'static str, force: bool) -> Result<()
         );
     }
     fs::write(path, content).with_context(|| format!("failed to write `{}`", path.display()))
+}
+
+fn ensure_backup_ignores(path: &Path) -> Result<()> {
+    let mut content = if path.exists() {
+        fs::read_to_string(path).with_context(|| format!("failed to read `{}`", path.display()))?
+    } else {
+        String::new()
+    };
+    let mut changed = false;
+    for entry in BACKUP_GITIGNORE_ENTRIES {
+        if !content.lines().any(|line| line.trim() == entry) {
+            if !content.is_empty() && !content.ends_with('\n') {
+                content.push('\n');
+            }
+            content.push_str(entry);
+            content.push('\n');
+            changed = true;
+        }
+    }
+    if changed {
+        fs::write(path, content)
+            .with_context(|| format!("failed to write `{}`", path.display()))?;
+    }
+    Ok(())
 }
 
 fn write_sample_data(layout: &InitLayout, force: bool) -> Result<()> {
@@ -495,6 +522,9 @@ mod tests {
         assert!(base.join("project.toml").exists());
         assert!(base.join("schema/items.toml").exists());
         assert!(base.join("data/Item.xlsx").exists());
+        let gitignore = fs::read_to_string(base.join(".gitignore")).unwrap();
+        assert!(gitignore.lines().any(|line| line == ".sora/"));
+        assert!(gitignore.lines().any(|line| line == ".sora-backup/"));
 
         build::run(
             BuildArgs {
@@ -568,6 +598,27 @@ mod tests {
         })
         .unwrap();
         assert!(base.join("schema/items.toml").exists());
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn init_preserves_existing_gitignore_entries() {
+        let base = temp_dir();
+        fs::create_dir_all(&base).unwrap();
+        fs::write(base.join(".gitignore"), "custom-output/\n").unwrap();
+
+        run(InitArgs {
+            out: base.clone(),
+            schema_format: SchemaFormatArg::Toml,
+            force: false,
+        })
+        .unwrap();
+
+        let gitignore = fs::read_to_string(base.join(".gitignore")).unwrap();
+        assert!(gitignore.lines().any(|line| line == "custom-output/"));
+        assert!(gitignore.lines().any(|line| line == ".sora/"));
+        assert!(gitignore.lines().any(|line| line == ".sora-backup/"));
 
         let _ = fs::remove_dir_all(base);
     }

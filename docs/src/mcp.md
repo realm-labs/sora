@@ -251,3 +251,5 @@ cargo test -p sora-mcp --test build_workflow
 The first test opens the showcase, inspects it, queries validated Excel-backed
 data, and verifies that revisions do not change. The second runs a transactional
 build, observes progress, and reads the immutable artifact through MCP.
+
+Transactional writes back up existing targets under `.sora/backups/<transaction-id>/` before replacement or deletion. The directory ignores itself from Git and retains the 20 most recent completed backup sets; backups belonging to active or recoverable transactions are never pruned.

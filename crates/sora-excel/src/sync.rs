@@ -209,6 +209,9 @@ fn resolve_through_existing_ancestor(path: &Path) -> Result<PathBuf> {
 }
 
 static WORKBOOK_WRITE_COUNTER: AtomicU64 = AtomicU64::new(0);
+static BACKUP_COUNTER: AtomicU64 = AtomicU64::new(0);
+const MAX_BACKUP_BATCHES: usize = 20;
+const BACKUP_GITIGNORE: &[u8] = b"*\n";
 
 fn write_synced_workbook_transactionally(
     ir: &ConfigIr,
@@ -267,12 +270,14 @@ fn sibling_temp_path(target: &Path) -> PathBuf {
 fn backup_existing_workbook(data_root: &Path, path: &Path) -> Result<PathBuf> {
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map(|duration| duration.as_secs())
+        .map(|duration| duration.as_nanos())
         .unwrap_or_default();
+    let sequence = BACKUP_COUNTER.fetch_add(1, Ordering::Relaxed);
     let relative = path.strip_prefix(data_root).unwrap_or(path);
-    let backup_path = data_root
-        .join(".sora-backup")
-        .join(timestamp.to_string())
+    let backup_root = data_root.join(".sora-backup");
+    ensure_backup_root(&backup_root)?;
+    let backup_path = backup_root
+        .join(format!("{timestamp}-{}-{sequence}", std::process::id()))
         .join(relative);
     if let Some(parent) = backup_path.parent() {
         fs::create_dir_all(parent).map_err(|source| SoraError::CreateDir {
@@ -284,7 +289,45 @@ fn backup_existing_workbook(data_root: &Path, path: &Path) -> Result<PathBuf> {
         path: backup_path.clone(),
         source,
     })?;
+    prune_backup_batches(&backup_root);
     Ok(backup_path)
+}
+
+fn ensure_backup_root(path: &Path) -> Result<()> {
+    fs::create_dir_all(path).map_err(|source| SoraError::CreateDir {
+        path: path.to_path_buf(),
+        source,
+    })?;
+    let ignore = path.join(".gitignore");
+    if !ignore.exists() {
+        fs::write(&ignore, BACKUP_GITIGNORE).map_err(|source| SoraError::WriteFile {
+            path: ignore,
+            source,
+        })?;
+    }
+    Ok(())
+}
+
+fn prune_backup_batches(backup_root: &Path) {
+    let Ok(entries) = fs::read_dir(backup_root) else {
+        return;
+    };
+    let mut batches = entries
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.file_type().is_ok_and(|kind| kind.is_dir()))
+        .map(|entry| {
+            let modified = entry
+                .metadata()
+                .and_then(|metadata| metadata.modified())
+                .unwrap_or(SystemTime::UNIX_EPOCH);
+            (modified, entry.file_name(), entry.path())
+        })
+        .collect::<Vec<_>>();
+    batches.sort_by(|left, right| left.0.cmp(&right.0).then_with(|| left.1.cmp(&right.1)));
+    let remove_count = batches.len().saturating_sub(MAX_BACKUP_BATCHES);
+    for (_, _, path) in batches.into_iter().take(remove_count) {
+        let _ = fs::remove_dir_all(path);
+    }
 }
 
 struct SyncedSheet<'a> {
@@ -780,6 +823,34 @@ mod tests {
         assert!(second_report.workbooks[0].backup_path.is_none());
         assert!(!second_report.workbooks[0].sheets[0].changed);
         assert_eq!(fs::read(&path).unwrap(), before);
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn workbook_backups_are_unique_ignored_and_bounded() {
+        let base = temp_dir();
+        fs::create_dir_all(&base).unwrap();
+        let workbook = base.join("Item.xlsx");
+        fs::write(&workbook, b"workbook").unwrap();
+
+        let mut paths = BTreeSet::new();
+        for _ in 0..=MAX_BACKUP_BATCHES {
+            paths.insert(backup_existing_workbook(&base, &workbook).unwrap());
+        }
+
+        assert_eq!(paths.len(), MAX_BACKUP_BATCHES + 1);
+        let backup_root = base.join(".sora-backup");
+        assert_eq!(
+            fs::read_to_string(backup_root.join(".gitignore")).unwrap(),
+            "*\n"
+        );
+        let backup_count = fs::read_dir(backup_root)
+            .unwrap()
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| entry.file_type().is_ok_and(|kind| kind.is_dir()))
+            .count();
+        assert_eq!(backup_count, MAX_BACKUP_BATCHES);
 
         let _ = fs::remove_dir_all(base);
     }

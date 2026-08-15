@@ -1,7 +1,9 @@
 use std::{
+    collections::BTreeSet,
     fs::{self, File},
     io::Write,
     path::{Component, Path, PathBuf},
+    time::SystemTime,
 };
 
 use schemars::JsonSchema;
@@ -13,6 +15,8 @@ use crate::studio::service::TextFileWrite;
 const STATE_DIRECTORY: &str = ".sora";
 const TRANSACTION_DIRECTORY: &str = "transactions";
 const BACKUP_DIRECTORY: &str = "backups";
+const MAX_BACKUP_SETS: usize = 20;
+const BACKUP_GITIGNORE: &[u8] = b"*\n";
 
 #[derive(Debug, Clone)]
 pub(crate) struct FileWrite {
@@ -113,7 +117,6 @@ where
     let transaction_root = state_root.join(TRANSACTION_DIRECTORY).join(&id);
     let backup_root = state_root.join(BACKUP_DIRECTORY).join(&id);
     create_dir_all(&transaction_root)?;
-    create_dir_all(&backup_root)?;
 
     let mut journal = TransactionJournal {
         version: 1,
@@ -143,6 +146,7 @@ where
             })
             .transpose()?;
         let backup = if target.exists() {
+            ensure_backup_root(&state_root.join(BACKUP_DIRECTORY))?;
             let backup = backup_root.join(format!("{index}.backup"));
             copy_file(&target, &backup)?;
             Some(relative_string(backup.strip_prefix(&root).map_err(
@@ -203,6 +207,7 @@ where
     write_journal(&journal_path, &journal)?;
     remove_file_if_exists(&journal_path)?;
     remove_dir_all_if_exists(&transaction_root)?;
+    prune_backup_sets(&state_root);
     Ok(TransactionReceipt {
         transaction_id: format!("txn:{id}"),
         backup_id: format!("backup:{id}"),
@@ -244,6 +249,7 @@ pub(crate) fn recover_transactions(project_root: &Path) -> Result<(), Transactio
                 .join(&journal.transaction_id),
         )?;
     }
+    prune_backup_sets(&root.join(STATE_DIRECTORY));
     Ok(())
 }
 
@@ -256,6 +262,13 @@ fn rollback_failure<T>(
     match rollback(root, journal) {
         Ok(()) => {
             remove_file_if_exists(journal_path)?;
+            remove_dir_all_if_exists(
+                &root
+                    .join(STATE_DIRECTORY)
+                    .join(TRANSACTION_DIRECTORY)
+                    .join(&journal.transaction_id),
+            )?;
+            prune_backup_sets(&root.join(STATE_DIRECTORY));
             Err(TransactionError::PostValidation(cause))
         }
         Err(error) => Err(TransactionError::Rollback {
@@ -263,6 +276,59 @@ fn rollback_failure<T>(
             rollback: error.to_string(),
         }),
     }
+}
+
+fn ensure_backup_root(path: &Path) -> Result<(), TransactionError> {
+    create_dir_all(path)?;
+    let ignore = path.join(".gitignore");
+    if !ignore.exists() {
+        write_durable(&ignore, BACKUP_GITIGNORE)?;
+    }
+    Ok(())
+}
+
+fn prune_backup_sets(state_root: &Path) {
+    let backup_root = state_root.join(BACKUP_DIRECTORY);
+    let Ok(entries) = fs::read_dir(&backup_root) else {
+        return;
+    };
+    let protected = active_transaction_ids(&state_root.join(TRANSACTION_DIRECTORY));
+    let mut backups = entries
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.file_type().is_ok_and(|kind| kind.is_dir()))
+        .filter(|entry| !protected.contains(&entry.file_name().to_string_lossy().into_owned()))
+        .map(|entry| {
+            let modified = entry
+                .metadata()
+                .and_then(|metadata| metadata.modified())
+                .unwrap_or(SystemTime::UNIX_EPOCH);
+            (modified, entry.file_name(), entry.path())
+        })
+        .collect::<Vec<_>>();
+    backups.sort_by(|left, right| left.0.cmp(&right.0).then_with(|| left.1.cmp(&right.1)));
+    let remove_count = backups.len().saturating_sub(MAX_BACKUP_SETS);
+    for (_, _, path) in backups.into_iter().take(remove_count) {
+        let _ = fs::remove_dir_all(path);
+    }
+}
+
+fn active_transaction_ids(transaction_root: &Path) -> BTreeSet<String> {
+    let Ok(entries) = fs::read_dir(transaction_root) else {
+        return BTreeSet::new();
+    };
+    entries
+        .filter_map(|entry| entry.ok())
+        .filter_map(|entry| {
+            if entry.file_type().is_ok_and(|kind| kind.is_dir()) {
+                return Some(entry.file_name().to_string_lossy().into_owned());
+            }
+            entry
+                .path()
+                .file_stem()
+                .and_then(|stem| stem.to_str())
+                .map(str::to_owned)
+        })
+        .collect()
 }
 
 fn rollback(root: &Path, journal: &TransactionJournal) -> Result<(), TransactionError> {
@@ -580,6 +646,40 @@ mod tests {
 
         assert_eq!(fs::read_to_string(target).unwrap(), "old");
         assert!(!journal_path.exists());
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn transaction_backups_are_ignored_and_bounded() {
+        let root = temp_dir();
+        fs::create_dir_all(&root).unwrap();
+        let target = root.join("schema.toml");
+        fs::write(&target, "initial").unwrap();
+
+        for index in 0..=MAX_BACKUP_SETS {
+            commit_text_transaction(
+                &root,
+                &[TextFileWrite {
+                    path: target.clone(),
+                    content: format!("version-{index}"),
+                }],
+                || Ok(()),
+            )
+            .unwrap();
+        }
+
+        let backup_root = root.join(".sora/backups");
+        assert_eq!(
+            fs::read_to_string(backup_root.join(".gitignore")).unwrap(),
+            "*\n"
+        );
+        let backup_count = fs::read_dir(backup_root)
+            .unwrap()
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| entry.file_type().is_ok_and(|kind| kind.is_dir()))
+            .count();
+        assert_eq!(backup_count, MAX_BACKUP_SETS);
+
         let _ = fs::remove_dir_all(root);
     }
 

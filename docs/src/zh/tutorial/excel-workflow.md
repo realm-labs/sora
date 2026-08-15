@@ -53,7 +53,7 @@ sora excel-sync --project project.scon --data-root data
 sora excel-sync --project project.scon --data-root data --write
 ```
 
-写入已有 workbook 前，Sora 会先把旧文件复制到 `data/.sora-backup/<timestamp>/` 下。
+写入已有 workbook 前，Sora 会先把旧文件复制到 `data/.sora-backup/<unique-batch>/` 下。备份目录会自动从 Git 中忽略，并且只保留最近 20 个批次。
 
 同步时按 `#field` 行匹配字段，而不是按列位置匹配：
 

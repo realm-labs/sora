@@ -53,7 +53,7 @@ Without `--write`, the command only previews what would change. To write the upd
 sora excel-sync --project project.scon --data-root data --write
 ```
 
-When writing an existing workbook, Sora first copies the old file under `data/.sora-backup/<timestamp>/`.
+When writing an existing workbook, Sora first copies the old file under `data/.sora-backup/<unique-batch>/`. The backup directory ignores itself from Git and retains only the 20 most recent batches.
 
 Sync matches columns by the `#field` row, not by column position:
 

@@ -1,6 +1,8 @@
 /target
 /generated
 /docs/book
+.sora/
+.sora-backup/
 __pycache__/
 .dart_tool/
 node_modules/
