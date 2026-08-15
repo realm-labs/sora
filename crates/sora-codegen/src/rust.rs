@@ -269,6 +269,7 @@ struct RustEnum {
     name: String,
     snake_name: String,
     module_path: String,
+    root_path: String,
     comment: Option<String>,
     values: Vec<BaseEnumValue>,
 }
@@ -278,6 +279,7 @@ struct RustUnion {
     pascal_name: String,
     snake_name: String,
     module_path: String,
+    root_path: String,
     tag: String,
     variants: Vec<RustUnionVariant>,
     imports: Vec<RustImport>,
@@ -296,6 +298,7 @@ struct RustRecord {
     pascal_name: String,
     snake_name: String,
     module_path: String,
+    root_path: String,
     imports: Vec<RustImport>,
     custom_imports: Vec<String>,
     fields: Vec<RustField>,
@@ -374,6 +377,7 @@ impl RustModel {
                 .enums
                 .into_iter()
                 .map(|item| RustEnum {
+                    root_path: rust_module_root(&item.module_path),
                     name: item.pascal_name,
                     snake_name: item.snake_name,
                     module_path: item.module_path,
@@ -426,16 +430,18 @@ impl RustModel {
 }
 
 fn rust_union(ir: &ConfigIr, union: BaseUnion, mapper: &RustTypeMapper<'_>) -> RustUnion {
+    let root_path = rust_module_root(&union.module_path);
     let variants = union
         .variants
         .into_iter()
-        .map(|variant| rust_variant(ir, variant, mapper))
+        .map(|variant| rust_variant(ir, variant, mapper, &root_path))
         .collect::<Vec<_>>();
     let custom_imports = collect_rust_imports(variants.iter().flat_map(|variant| &variant.fields));
     RustUnion {
         pascal_name: union.pascal_name,
         snake_name: union.snake_name,
         module_path: union.module_path,
+        root_path,
         tag: union.tag,
         variants,
         imports: Vec::new(),
@@ -447,11 +453,12 @@ fn rust_variant(
     ir: &ConfigIr,
     variant: BaseUnionVariant,
     mapper: &RustTypeMapper<'_>,
+    root_path: &str,
 ) -> RustUnionVariant {
     let mut fields = variant
         .fields
         .into_iter()
-        .map(|field| rust_field(ir, field, mapper))
+        .map(|field| rust_field(ir, field, mapper, root_path))
         .collect::<Vec<_>>();
     for (index, field) in fields.iter_mut().enumerate() {
         field.text_key_binding = format!("__sora_text_field_{index}");
@@ -475,16 +482,18 @@ fn rust_record(
     table: Option<RustTable>,
     mapper: &RustTypeMapper<'_>,
 ) -> RustRecord {
+    let root_path = rust_module_root(&record.module_path);
     let fields = record
         .fields
         .into_iter()
-        .map(|field| rust_field(ir, field, mapper))
+        .map(|field| rust_field(ir, field, mapper, &root_path))
         .collect::<Vec<_>>();
     let custom_imports = collect_rust_imports(fields.iter());
     RustRecord {
         pascal_name: record.pascal_name,
         snake_name: record.snake_name,
         module_path: record.module_path,
+        root_path,
         imports: Vec::new(),
         custom_imports,
         fields,
@@ -493,6 +502,7 @@ fn rust_record(
 }
 
 fn rust_table(ir: &ConfigIr, table: BaseTable, mapper: &RustTypeMapper<'_>) -> RustTable {
+    let root_path = rust_module_root(&table.module_path);
     let row_type = table.pascal_name.clone();
     let rust_module_path = table.module_path.replace('/', "::");
     let row_path = format!("{rust_module_path}::{}", table.pascal_name);
@@ -500,11 +510,11 @@ fn rust_table(ir: &ConfigIr, table: BaseTable, mapper: &RustTypeMapper<'_>) -> R
     let key_type = table
         .key_field
         .as_ref()
-        .map(|field| mapper.local_table_key_type(&field.ty));
+        .map(|field| mapper.local_table_key_type(&field.ty, &root_path));
     let key_param_type = table
         .key_field
         .as_ref()
-        .map(|field| mapper.key_param_type(&field.ty));
+        .map(|field| mapper.key_param_type(&field.ty, &root_path));
     let container_type = rust_container_type(table.mode, &row_type, key_type.as_deref());
     let key_field_name = table
         .key_field
@@ -533,37 +543,47 @@ fn rust_table(ir: &ConfigIr, table: BaseTable, mapper: &RustTypeMapper<'_>) -> R
         unique_indexes: table
             .unique_indexes
             .into_iter()
-            .map(|index| rust_index(ir, index, mapper))
+            .map(|index| rust_index(ir, index, mapper, &root_path))
             .collect(),
         non_unique_indexes: table
             .non_unique_indexes
             .into_iter()
-            .map(|index| rust_index(ir, index, mapper))
+            .map(|index| rust_index(ir, index, mapper, &root_path))
             .collect(),
     }
 }
 
-fn rust_index(_ir: &ConfigIr, index: BaseIndex, mapper: &RustTypeMapper<'_>) -> RustIndex {
+fn rust_index(
+    _ir: &ConfigIr,
+    index: BaseIndex,
+    mapper: &RustTypeMapper<'_>,
+    root_path: &str,
+) -> RustIndex {
     RustIndex {
         name: index.snake_name,
         method_name: index.method_name,
         field_name: index.field.snake_name.clone(),
         param_name: index.field.snake_name.clone(),
-        param_type: mapper.key_param_type(&index.field.ty),
-        key_type: mapper.local_table_key_type(&index.field.ty),
+        param_type: mapper.key_param_type(&index.field.ty, root_path),
+        key_type: mapper.local_table_key_type(&index.field.ty, root_path),
         key_is_copy: mapper.key_type_is_copy(&index.field.ty),
     }
 }
 
-fn rust_field(ir: &ConfigIr, field: BaseField, mapper: &RustTypeMapper<'_>) -> RustField {
+fn rust_field(
+    ir: &ConfigIr,
+    field: BaseField,
+    mapper: &RustTypeMapper<'_>,
+    root_path: &str,
+) -> RustField {
     let collect_text_keys =
         rust_collect_text_keys(ir, &field.ty, &format!("self.{}", field.snake_name), mapper);
     RustField {
         raw_name: field.raw_name,
         name: field.snake_name,
-        type_name: mapper.type_name(&field.ty),
-        serde_with: rust_serde_with(&field.ty, mapper.options),
-        decode: rust_decode_expr(ir, &field.ty, mapper),
+        type_name: mapper.type_name(&field.ty, root_path),
+        serde_with: rust_serde_with(&field.ty, mapper.options, root_path),
+        decode: rust_decode_expr(ir, &field.ty, mapper, root_path),
         collect_text_keys,
         text_key_binding: String::new(),
         imports: mapper.imports(&field.ty),
@@ -671,7 +691,7 @@ impl<'a> RustTypeMapper<'a> {
         }
     }
 
-    fn type_name(&self, ty: &TypeIr) -> String {
+    fn type_name(&self, ty: &TypeIr, root_path: &str) -> String {
         if let Some(mapping) = self.mapping(ty) {
             return mapping.type_name;
         }
@@ -696,34 +716,39 @@ impl<'a> RustTypeMapper<'a> {
                 RustStringStorage::Owned => "String".to_owned(),
                 RustStringStorage::Arc => "std::sync::Arc<str>".to_owned(),
             },
-            TypeIr::Text => "crate::runtime::TextKey".to_owned(),
+            TypeIr::Text => format!("{root_path}::runtime::TextKey"),
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-                rust_named_type_path(name)
+                rust_named_type_path(name, root_path)
             }
-            TypeIr::List(element) => format!("Vec<{}>", self.type_name(element)),
+            TypeIr::List(element) => format!("Vec<{}>", self.type_name(element, root_path)),
             TypeIr::Set(element) => {
-                format!("std::collections::HashSet<{}>", self.type_name(element))
+                format!(
+                    "std::collections::HashSet<{}>",
+                    self.type_name(element, root_path)
+                )
             }
             TypeIr::Map { key, value } => {
                 format!(
                     "std::collections::HashMap<{}, {}>",
-                    self.type_name(key),
-                    self.type_name(value)
+                    self.type_name(key, root_path),
+                    self.type_name(value, root_path)
                 )
             }
-            TypeIr::Array { element, len } => format!("[{}; {len}]", self.type_name(element)),
+            TypeIr::Array { element, len } => {
+                format!("[{}; {len}]", self.type_name(element, root_path))
+            }
             TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
-                .map(|ty| self.type_name(ty))
+                .map(|ty| self.type_name(ty, root_path))
                 .unwrap_or_else(|| "i32".to_owned()),
             TypeIr::Optional(element) => self
                 .mapping(element)
                 .and_then(|mapping| mapping.nullable_type_name)
-                .unwrap_or_else(|| format!("Option<{}>", self.type_name(element))),
+                .unwrap_or_else(|| format!("Option<{}>", self.type_name(element, root_path))),
         }
     }
 
-    fn key_param_type(&self, ty: &TypeIr) -> String {
-        let type_name = self.local_table_key_type(ty);
+    fn key_param_type(&self, ty: &TypeIr, root_path: &str) -> String {
+        let type_name = self.local_table_key_type(ty, root_path);
         if type_name == "String" || type_name == "std::sync::Arc<str>" {
             "str".to_owned()
         } else {
@@ -731,12 +756,12 @@ impl<'a> RustTypeMapper<'a> {
         }
     }
 
-    fn local_table_key_type(&self, ty: &TypeIr) -> String {
+    fn local_table_key_type(&self, ty: &TypeIr, root_path: &str) -> String {
         match ty {
             TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
-                .map(|ty| self.local_table_key_type(ty))
-                .unwrap_or_else(|| self.type_name(ty)),
-            _ => self.type_name(ty),
+                .map(|ty| self.local_table_key_type(ty, root_path))
+                .unwrap_or_else(|| self.type_name(ty, root_path)),
+            _ => self.type_name(ty, root_path),
         }
     }
 
@@ -789,57 +814,70 @@ impl<'a> RustTypeMapper<'a> {
     }
 }
 
-fn rust_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &RustTypeMapper<'_>) -> String {
+fn rust_decode_expr(
+    ir: &ConfigIr,
+    ty: &TypeIr,
+    mapper: &RustTypeMapper<'_>,
+    root_path: &str,
+) -> String {
     match ty {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper.wrap_decode(
             ty,
             format!(
-                "<{} as crate::runtime::SoraDecode>::decode(reader)?",
-                rust_named_type_path(name)
+                "<{} as {root_path}::runtime::SoraDecode>::decode(reader)?",
+                rust_named_type_path(name, root_path)
             ),
         ),
         TypeIr::List(element) => format!(
             "{{ let len = reader.read_var_u32()? as usize; let mut values = Vec::with_capacity(len); for _ in 0..len {{ values.push({}); }} values }}",
-            rust_decode_expr(ir, element, mapper)
+            rust_decode_expr(ir, element, mapper, root_path)
         ),
         TypeIr::Set(element) => format!(
             "{{ let len = reader.read_var_u32()? as usize; let mut values = std::collections::HashSet::with_capacity(len); for _ in 0..len {{ values.insert({}); }} values }}",
-            rust_decode_expr(ir, element, mapper)
+            rust_decode_expr(ir, element, mapper, root_path)
         ),
         TypeIr::Map { key, value } => format!(
             "{{ let len = reader.read_var_u32()? as usize; let mut values = std::collections::HashMap::with_capacity(len); for _ in 0..len {{ values.insert({}, {}); }} values }}",
-            rust_decode_expr(ir, key, mapper),
-            rust_decode_expr(ir, value, mapper)
+            rust_decode_expr(ir, key, mapper, root_path),
+            rust_decode_expr(ir, value, mapper, root_path)
         ),
         TypeIr::Array { element, len } => {
-            let element_type = mapper.type_name(element);
+            let element_type = mapper.type_name(element, root_path);
             format!(
-                "{{ let mut values = Vec::with_capacity({len}); let actual_len = reader.read_var_u32()? as usize; if actual_len != {len} {{ return Err(crate::runtime::SoraReadError::new(format!(\"expected array length {len}, got {{}}\", actual_len))); }} for _ in 0..{len} {{ values.push({}); }} values.try_into().map_err(|values: Vec<{element_type}>| crate::runtime::SoraReadError::new(format!(\"expected array length {len}, got {{}}\", values.len())))? }}",
-                rust_decode_expr(ir, element, mapper)
+                "{{ let mut values = Vec::with_capacity({len}); let actual_len = reader.read_var_u32()? as usize; if actual_len != {len} {{ return Err({root_path}::runtime::SoraReadError::new(format!(\"expected array length {len}, got {{}}\", actual_len))); }} for _ in 0..{len} {{ values.push({}); }} values.try_into().map_err(|values: Vec<{element_type}>| {root_path}::runtime::SoraReadError::new(format!(\"expected array length {len}, got {{}}\", values.len())))? }}",
+                rust_decode_expr(ir, element, mapper, root_path)
             )
         }
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
-            .map(|ty| rust_decode_expr(ir, ty, mapper))
-            .unwrap_or_else(|| "<i32 as crate::runtime::SoraDecode>::decode(reader)?".to_owned()),
+            .map(|ty| rust_decode_expr(ir, ty, mapper, root_path))
+            .unwrap_or_else(|| {
+                format!("<i32 as {root_path}::runtime::SoraDecode>::decode(reader)?")
+            }),
         TypeIr::Optional(element) => {
             format!(
-                "match reader.read_u8()? {{ 0 => None, 1 => Some({}), value => return Err(crate::runtime::SoraReadError::new(format!(\"invalid option presence {{}}\", value))), }}",
-                rust_decode_expr(ir, element, mapper)
+                "match reader.read_u8()? {{ 0 => None, 1 => Some({}), value => return Err({root_path}::runtime::SoraReadError::new(format!(\"invalid option presence {{}}\", value))), }}",
+                rust_decode_expr(ir, element, mapper, root_path)
             )
         }
         _ => format!(
-            "<{} as crate::runtime::SoraDecode>::decode(reader)?",
-            mapper.type_name(ty)
+            "<{} as {root_path}::runtime::SoraDecode>::decode(reader)?",
+            mapper.type_name(ty, root_path)
         ),
     }
 }
 
-fn rust_named_type_path(name: &str) -> String {
+fn rust_named_type_path(name: &str, root_path: &str) -> String {
     format!(
-        "crate::{}::{}",
+        "{root_path}::{}::{}",
         schema_module_path(name).replace('/', "::"),
         schema_local_name(name)
     )
+}
+
+fn rust_module_root(module_path: &str) -> String {
+    std::iter::repeat_n("super", module_path.split('/').count())
+        .collect::<Vec<_>>()
+        .join("::")
 }
 
 fn rust_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>) -> String {
@@ -867,19 +905,19 @@ fn rust_datetime_type_name(datetime_type: RustDateTimeType) -> &'static str {
     }
 }
 
-fn rust_serde_with(ty: &TypeIr, options: &RustCodegenOptions) -> Option<String> {
+fn rust_serde_with(ty: &TypeIr, options: &RustCodegenOptions, root_path: &str) -> Option<String> {
     match ty {
-        TypeIr::Map { .. } => Some("crate::runtime::serde_map_pairs".to_owned()),
+        TypeIr::Map { .. } => Some(format!("{root_path}::runtime::serde_map_pairs")),
         TypeIr::Optional(element) if matches!(element.as_ref(), TypeIr::Map { .. }) => {
-            Some("crate::runtime::serde_optional_map_pairs".to_owned())
+            Some(format!("{root_path}::runtime::serde_optional_map_pairs"))
         }
-        TypeIr::DateTime => Some(
+        TypeIr::DateTime => Some(format!(
+            "{root_path}::runtime::{}",
             match options.datetime_type {
-                RustDateTimeType::SystemTime => "crate::runtime::serde_system_time_millis",
-                RustDateTimeType::Chrono => "crate::runtime::serde_chrono_datetime_millis",
+                RustDateTimeType::SystemTime => "serde_system_time_millis",
+                RustDateTimeType::Chrono => "serde_chrono_datetime_millis",
             }
-            .to_owned(),
-        ),
+        )),
         _ => None,
     }
 }
@@ -911,6 +949,10 @@ project = { id = "game_config" }
 groups = { common = { default = true } }
 views = { default = { contract = "game_config/default", groups = ["common"] } }
 
+[[enums]]
+name = "Status"
+values = [{ id = 0, name = "Active" }]
+
 [[structs]]
 name = "common.Reward"
 
@@ -931,6 +973,10 @@ type = "string"
 [[tables.fields]]
 name = "reward"
 type = "struct<common.Reward>"
+
+[[tables.fields]]
+name = "status"
+type = "enum<Status>"
 "#,
         )
         .unwrap();
@@ -944,14 +990,20 @@ type = "struct<common.Reward>"
 
         assert!(out.join("common/reward.rs").exists());
         assert!(out.join("items/item.rs").exists());
+        assert!(out.join("status.rs").exists());
         assert!(out.join("common/mod.rs").exists());
         assert!(out.join("items/mod.rs").exists());
         let root = std::fs::read_to_string(out.join("mod.rs")).unwrap();
         let items = std::fs::read_to_string(out.join("items/item.rs")).unwrap();
+        let status = std::fs::read_to_string(out.join("status.rs")).unwrap();
         let items_mod = std::fs::read_to_string(out.join("items/mod.rs")).unwrap();
         assert!(root.contains("pub mod common;"));
         assert!(root.contains("pub mod items;"));
-        assert!(items.contains("pub reward: crate::common::reward::Reward"));
+        assert!(items.contains("pub reward: super::super::common::reward::Reward"));
+        assert!(items.contains("impl super::super::runtime::SoraDecode for Item"));
+        assert!(status.contains("impl super::runtime::SoraDecode for Status"));
+        assert!(!items.contains("crate::"));
+        assert!(!status.contains("crate::"));
         assert!(items_mod.contains("pub use item::{Item, ItemTable};"));
         let _ = std::fs::remove_dir_all(out);
     }
