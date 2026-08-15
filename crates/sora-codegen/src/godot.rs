@@ -43,29 +43,29 @@ impl CodeGenerator for GodotCodeGenerator {
 
         for item in &model.enums {
             let rendered = render_template("godot", "enum.gd.j2", context! { enum => item })?;
-            write_file(&out_dir.join(format!("{}.gd", item.file_name)), rendered)?;
+            write_file(&out_dir.join(format!("{}.gd", item.file_path)), rendered)?;
         }
 
         for record in &model.records {
             let rendered = render_template("godot", "record.gd.j2", context! { record => record })?;
-            write_file(&out_dir.join(format!("{}.gd", record.file_name)), rendered)?;
+            write_file(&out_dir.join(format!("{}.gd", record.file_path)), rendered)?;
         }
 
         for union in &model.unions {
             let rendered = render_template("godot", "union.gd.j2", context! { union => union })?;
-            write_file(&out_dir.join(format!("{}.gd", union.file_name)), rendered)?;
+            write_file(&out_dir.join(format!("{}.gd", union.file_path)), rendered)?;
             for variant in &union.variants {
                 let rendered = render_template(
                     "godot",
                     "union_variant.gd.j2",
                     context! { union => union, variant => variant },
                 )?;
-                write_file(&out_dir.join(format!("{}.gd", variant.file_name)), rendered)?;
+                write_file(&out_dir.join(format!("{}.gd", variant.file_path)), rendered)?;
             }
             let rendered =
                 render_template("godot", "union_codec.gd.j2", context! { union => union })?;
             write_file(
-                &out_dir.join(format!("{}.gd", union.codec_file_name)),
+                &out_dir.join(format!("{}.gd", union.codec_file_path)),
                 rendered,
             )?;
         }
@@ -91,7 +91,7 @@ struct GodotModel {
 #[derive(Debug, Clone, Serialize)]
 struct GodotEnum {
     class_name: String,
-    file_name: String,
+    file_path: String,
     comment: Option<String>,
     values: Vec<GodotEnumValue>,
 }
@@ -106,7 +106,7 @@ struct GodotEnumValue {
 #[derive(Debug, Clone, Serialize)]
 struct GodotRecord {
     class_name: String,
-    file_name: String,
+    file_path: String,
     fields: Vec<GodotField>,
     table: Option<GodotTable>,
     custom_imports: Vec<String>,
@@ -115,9 +115,9 @@ struct GodotRecord {
 #[derive(Debug, Clone, Serialize)]
 struct GodotUnion {
     class_name: String,
-    file_name: String,
+    file_path: String,
     codec_class_name: String,
-    codec_file_name: String,
+    codec_file_path: String,
     raw_tag: String,
     tag: String,
     variants: Vec<GodotUnionVariant>,
@@ -127,7 +127,7 @@ struct GodotUnion {
 struct GodotUnionVariant {
     raw_name: String,
     class_name: String,
-    file_name: String,
+    file_path: String,
     fields: Vec<GodotField>,
     custom_imports: Vec<String>,
 }
@@ -179,8 +179,8 @@ impl GodotModel {
             .enums
             .into_iter()
             .map(|item| GodotEnum {
-                class_name: godot_type_identifier(&item.pascal_name),
-                file_name: godot_file_name(&item.snake_name),
+                class_name: godot_type_identifier(&item.qualified_name),
+                file_path: item.module_path,
                 comment: item.comment,
                 values: item
                     .values
@@ -202,7 +202,7 @@ impl GodotModel {
             .records
             .into_iter()
             .map(|item| {
-                let class_name = godot_type_identifier(&item.pascal_name);
+                let class_name = godot_type_identifier(&item.qualified_name);
                 let table = tables
                     .iter()
                     .find(|table| table.row_type == class_name)
@@ -240,8 +240,8 @@ fn godot_record(
         .collect::<Vec<_>>();
     let custom_imports = collect_godot_imports(fields.iter());
     GodotRecord {
-        class_name: godot_type_identifier(&record.pascal_name),
-        file_name: godot_file_name(&record.snake_name),
+        class_name: godot_type_identifier(&record.qualified_name),
+        file_path: record.module_path,
         fields,
         table,
         custom_imports,
@@ -249,18 +249,21 @@ fn godot_record(
 }
 
 fn godot_union(ir: &ConfigIr, union: BaseUnion, mapper: &GodotTypeMapper<'_>) -> GodotUnion {
-    let class_name = godot_type_identifier(&union.pascal_name);
+    let class_name = godot_type_identifier(&union.qualified_name);
+    let namespace_path = union.namespace_path.clone();
     let variants = union
         .variants
         .into_iter()
-        .map(|variant| godot_union_variant(ir, &class_name, variant, mapper))
+        .map(|variant| godot_union_variant(ir, &class_name, &namespace_path, variant, mapper))
         .collect::<Vec<_>>();
+
+    let codec_file_name = godot_file_name(&format!("{}_codec", union.snake_name));
 
     GodotUnion {
         codec_class_name: format!("{class_name}Codec"),
-        codec_file_name: godot_file_name(&format!("{}_codec", union.snake_name)),
+        codec_file_path: namespaced_file_path(&namespace_path, &codec_file_name),
         class_name,
-        file_name: godot_file_name(&union.snake_name),
+        file_path: union.module_path,
         raw_tag: union.tag.clone(),
         tag: godot_field_identifier(&union.tag),
         variants,
@@ -270,6 +273,7 @@ fn godot_union(ir: &ConfigIr, union: BaseUnion, mapper: &GodotTypeMapper<'_>) ->
 fn godot_union_variant(
     ir: &ConfigIr,
     union_class_name: &str,
+    namespace_path: &str,
     variant: BaseUnionVariant,
     mapper: &GodotTypeMapper<'_>,
 ) -> GodotUnionVariant {
@@ -283,9 +287,10 @@ fn godot_union_variant(
         "{union_class_name}{}",
         godot_type_identifier(&variant.pascal_name)
     );
+    let file_name = godot_file_name(&class_name);
     GodotUnionVariant {
         raw_name: variant.name,
-        file_name: godot_file_name(&class_name),
+        file_path: namespaced_file_path(namespace_path, &file_name),
         class_name,
         fields,
         custom_imports,
@@ -302,7 +307,7 @@ fn godot_table(table: BaseTable, mapper: &GodotTypeMapper<'_>) -> GodotTable {
         .as_ref()
         .map(|field| mapper.type_name(&field.ty))
         .unwrap_or_else(|| "Variant".to_owned());
-    let row_type = godot_type_identifier(&table.pascal_name);
+    let row_type = godot_type_identifier(&table.name);
     let row_array_type = format!("Array[{row_type}]");
     let key_array_type = typed_array_type(&key_type);
     let rows_dictionary_type = if mapper.typed_dictionaries {
@@ -311,11 +316,12 @@ fn godot_table(table: BaseTable, mapper: &GodotTypeMapper<'_>) -> GodotTable {
         "Dictionary".to_owned()
     };
     let typed_rows_dictionary = mapper.typed_dictionaries;
+    let field_name = godot_field_identifier(&table.name);
 
     GodotTable {
         name: table.name,
-        class_name: godot_type_identifier(&format!("{}Table", table.pascal_name)),
-        field_name: godot_field_identifier(&table.snake_name),
+        class_name: godot_type_identifier(&format!("{row_type}Table")),
+        field_name,
         mode: table.mode_name,
         row_type: row_type.clone(),
         key_name: table.key_name,
@@ -598,6 +604,14 @@ fn godot_file_name(value: &str) -> String {
     sanitize_identifier(&value.to_snake_case(), CaseKind::Snake)
 }
 
+fn namespaced_file_path(namespace_path: &str, file_name: &str) -> String {
+    if namespace_path.is_empty() {
+        file_name.to_owned()
+    } else {
+        format!("{namespace_path}/{file_name}")
+    }
+}
+
 fn ref_target_type<'a>(ir: &'a ConfigIr, table: &str, field: &str) -> Option<&'a TypeIr> {
     ir.tables
         .iter()
@@ -869,5 +883,54 @@ fields = ["item_type"]
         assert!(supports_typed_dictionaries("4.7").unwrap());
         assert!(supports_typed_dictionaries("3.5").is_err());
         assert!(supports_typed_dictionaries("latest").is_err());
+    }
+
+    #[test]
+    fn generates_namespaced_godot_files_with_globally_unique_classes() {
+        let schema: ProjectSchema = toml::from_str(
+            r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[structs]]
+name = "common.Reward"
+
+[[structs.fields]]
+name = "amount"
+type = "i32"
+
+[[tables]]
+id = "items.item"
+name = "items.Item"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "string"
+
+[[tables.fields]]
+name = "reward"
+type = "struct<common.Reward>"
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        let out = std::env::temp_dir().join("sora-codegen-godot-namespace-test");
+        let _ = std::fs::remove_dir_all(&out);
+
+        GodotCodeGenerator
+            .generate_with_options(&ir, GodotCodegenOptions::default(), &out)
+            .unwrap();
+
+        let reward = std::fs::read_to_string(out.join("common/reward.gd")).unwrap();
+        let item = std::fs::read_to_string(out.join("items/item.gd")).unwrap();
+        let config = std::fs::read_to_string(out.join("sora_config.gd")).unwrap();
+        assert!(reward.contains("class_name CommonReward"));
+        assert!(item.contains("class_name ItemsItem"));
+        assert!(item.contains("var reward: CommonReward"));
+        assert!(config.contains("func items_item()"));
+        let _ = std::fs::remove_dir_all(out);
     }
 }

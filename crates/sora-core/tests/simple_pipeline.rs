@@ -7,7 +7,9 @@ use std::{
 use rust_xlsxwriter::Workbook;
 use sora_excel::projection::{DATA_START_ROW, FIELD_START_COLUMN, table_template_rows};
 use sora_export::exporter::ExportOutput;
+use sora_input::project::SplitProjectInput;
 use sora_input_schema::{input::ProjectSchemaInput, schema::load_project_schema};
+use sora_input_toml::input::TomlDataInput;
 use sora_input_xlsx::input::XlsxProjectInput;
 use sora_ir::{normalize::normalize_schema, validate::validate_config_ir};
 
@@ -108,6 +110,83 @@ fn simple_example_pipeline_generates_all_artifacts() {
     );
 
     let _ = fs::remove_dir_all(out_dir);
+}
+
+#[test]
+fn namespaced_project_builds_code_and_data_end_to_end() {
+    let root = temp_dir();
+    let schema_dir = root.join("schema");
+    let data_dir = root.join("data");
+    fs::create_dir_all(&schema_dir).unwrap();
+    fs::create_dir_all(&data_dir).unwrap();
+    let project = root.join("project.scon");
+    fs::write(
+        &project,
+        r#"project { id = "game" }
+groups { common { default = true } }
+views {
+  default {
+    contract = "game/default"
+    groups = ["common"]
+  }
+}
+includes = ["schema/items.scon"]
+"#,
+    )
+    .unwrap();
+    fs::write(
+        schema_dir.join("items.scon"),
+        r#"namespace = "game.items"
+tables {
+  Item {
+    mode = "map"
+    key = "id"
+    source {
+      format = "toml"
+      file = "items.toml"
+    }
+    fields {
+      id = "string"
+      name = "string"
+    }
+  }
+}
+"#,
+    )
+    .unwrap();
+    fs::write(
+        data_dir.join("items.toml"),
+        "[[rows]]\nid = \"iron_sword\"\nname = \"Iron Sword\"\n",
+    )
+    .unwrap();
+
+    let schema_input = ProjectSchemaInput::new(&project);
+    let project_input = SplitProjectInput::new(
+        ProjectSchemaInput::new(&project),
+        TomlDataInput::new(&data_dir),
+    );
+    let out = root.join("generated");
+    sora_core::pipeline::check_schema(&schema_input).unwrap();
+    sora_core::pipeline::generate_code(&schema_input, "rust", &out.join("rust")).unwrap();
+    sora_core::pipeline::export_data(
+        &project_input,
+        "binary",
+        ExportOutput::File(out.join("config.sora")),
+    )
+    .unwrap();
+    sora_core::pipeline::export_data(
+        &project_input,
+        "json-debug",
+        ExportOutput::Directory(out.join("debug")),
+    )
+    .unwrap();
+
+    let item = fs::read_to_string(out.join("rust/game/items/item.rs")).unwrap();
+    assert!(item.contains("pub const NAME: &'static str = \"game.items.Item\""));
+    assert!(out.join("debug/game/items/Item.json").is_file());
+    assert_eq!(&fs::read(out.join("config.sora")).unwrap()[0..4], b"SORA");
+
+    let _ = fs::remove_dir_all(root);
 }
 
 fn write_item_workbook(project: &Path, out_dir: &Path) {

@@ -4,7 +4,7 @@ use minijinja::context;
 use sora_diagnostics::Result;
 
 use crate::{
-    ecmascript::{EcmaScriptModel, EcmaScriptOptionsView, EcmaScriptTarget},
+    ecmascript::{EcmaScriptModel, EcmaScriptOptionsView, EcmaScriptTarget, ecmascript_barrels},
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::build_base_model,
     options::JavaScriptCodegenOptions,
@@ -39,14 +39,17 @@ impl CodeGenerator for JavaScriptCodeGenerator {
                 "enum.js.j2",
                 context! { enum => item, options => &options, runtime_format => runtime_format },
             )?;
-            write_file(&out_dir.join(format!("{}.js", item.snake_name)), rendered)?;
+            write_file(&out_dir.join(format!("{}.js", item.module_path)), rendered)?;
             if options.emit_dts {
                 let rendered = render_template(
                     "javascript",
                     "enum.d.ts.j2",
                     context! { enum => item, options => &options, runtime_format => runtime_format },
                 )?;
-                write_file(&out_dir.join(format!("{}.d.ts", item.snake_name)), rendered)?;
+                write_file(
+                    &out_dir.join(format!("{}.d.ts", item.module_path)),
+                    rendered,
+                )?;
             }
         }
 
@@ -56,7 +59,10 @@ impl CodeGenerator for JavaScriptCodeGenerator {
                 "record.js.j2",
                 context! { record => record, options => &options, runtime_format => runtime_format },
             )?;
-            write_file(&out_dir.join(format!("{}.js", record.snake_name)), rendered)?;
+            write_file(
+                &out_dir.join(format!("{}.js", record.module_path)),
+                rendered,
+            )?;
             if options.emit_dts {
                 let rendered = render_template(
                     "javascript",
@@ -64,7 +70,7 @@ impl CodeGenerator for JavaScriptCodeGenerator {
                     context! { record => record, options => &options, runtime_format => runtime_format },
                 )?;
                 write_file(
-                    &out_dir.join(format!("{}.d.ts", record.snake_name)),
+                    &out_dir.join(format!("{}.d.ts", record.module_path)),
                     rendered,
                 )?;
             }
@@ -76,7 +82,7 @@ impl CodeGenerator for JavaScriptCodeGenerator {
                 "union.js.j2",
                 context! { union => union, options => &options, runtime_format => runtime_format },
             )?;
-            write_file(&out_dir.join(format!("{}.js", union.snake_name)), rendered)?;
+            write_file(&out_dir.join(format!("{}.js", union.module_path)), rendered)?;
             if options.emit_dts {
                 let rendered = render_template(
                     "javascript",
@@ -84,7 +90,7 @@ impl CodeGenerator for JavaScriptCodeGenerator {
                     context! { union => union, options => &options, runtime_format => runtime_format },
                 )?;
                 write_file(
-                    &out_dir.join(format!("{}.d.ts", union.snake_name)),
+                    &out_dir.join(format!("{}.d.ts", union.module_path)),
                     rendered,
                 )?;
             }
@@ -120,19 +126,11 @@ impl CodeGenerator for JavaScriptCodeGenerator {
             write_file(&out_dir.join("sora_config.d.ts"), rendered)?;
         }
 
-        let rendered = render_template(
-            "javascript",
-            "index.js.j2",
-            context! { model => &model, options => &options },
-        )?;
-        write_file(&out_dir.join("index.js"), rendered)?;
-        if options.emit_dts {
-            let rendered = render_template(
-                "javascript",
-                "index.d.ts.j2",
-                context! { model => &model, options => &options },
-            )?;
-            write_file(&out_dir.join("index.d.ts"), rendered)?;
+        for (module_path, rendered) in ecmascript_barrels(&model.modules, options.import_ext) {
+            write_file(&out_dir.join(format!("{module_path}.js")), rendered.clone())?;
+            if options.emit_dts {
+                write_file(&out_dir.join(format!("{module_path}.d.ts")), rendered)?;
+            }
         }
 
         let rendered = render_template("javascript", "package.json.j2", context! {})?;

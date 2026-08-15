@@ -4,7 +4,7 @@ use minijinja::context;
 use sora_diagnostics::Result;
 
 use crate::{
-    ecmascript::{EcmaScriptModel, EcmaScriptOptionsView, EcmaScriptTarget},
+    ecmascript::{EcmaScriptModel, EcmaScriptOptionsView, EcmaScriptTarget, ecmascript_barrels},
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::build_base_model,
     options::TypeScriptCodegenOptions,
@@ -39,7 +39,7 @@ impl CodeGenerator for TypeScriptCodeGenerator {
                 "enum.ts.j2",
                 context! { enum => item, options => &options, runtime_format => runtime_format },
             )?;
-            write_file(&out_dir.join(format!("{}.ts", item.snake_name)), rendered)?;
+            write_file(&out_dir.join(format!("{}.ts", item.module_path)), rendered)?;
         }
 
         for record in &model.records {
@@ -48,7 +48,10 @@ impl CodeGenerator for TypeScriptCodeGenerator {
                 "record.ts.j2",
                 context! { record => record, options => &options, runtime_format => runtime_format },
             )?;
-            write_file(&out_dir.join(format!("{}.ts", record.snake_name)), rendered)?;
+            write_file(
+                &out_dir.join(format!("{}.ts", record.module_path)),
+                rendered,
+            )?;
         }
 
         for union in &model.unions {
@@ -57,7 +60,7 @@ impl CodeGenerator for TypeScriptCodeGenerator {
                 "union.ts.j2",
                 context! { union => union, options => &options, runtime_format => runtime_format },
             )?;
-            write_file(&out_dir.join(format!("{}.ts", union.snake_name)), rendered)?;
+            write_file(&out_dir.join(format!("{}.ts", union.module_path)), rendered)?;
         }
 
         let rendered = render_template(
@@ -74,12 +77,10 @@ impl CodeGenerator for TypeScriptCodeGenerator {
         )?;
         write_file(&out_dir.join("sora_config.ts"), rendered)?;
 
-        let rendered = render_template(
-            "typescript",
-            "index.ts.j2",
-            context! { model => &model, options => &options },
-        )?;
-        write_file(&out_dir.join("index.ts"), rendered)
+        for (module_path, rendered) in ecmascript_barrels(&model.modules, options.import_ext) {
+            write_file(&out_dir.join(format!("{module_path}.ts")), rendered)?;
+        }
+        Ok(())
     }
 }
 
@@ -213,6 +214,65 @@ mod tests {
 
             let _ = std::fs::remove_dir_all(base);
         }
+    }
+
+    #[test]
+    fn generates_namespaced_typescript_modules() {
+        let schema: ProjectSchema = toml::from_str(
+            r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[structs]]
+name = "common.Reward"
+[[structs.fields]]
+name = "amount"
+type = "i32"
+
+[[structs]]
+name = "quests.Reward"
+[[structs.fields]]
+name = "quest_id"
+type = "string"
+
+[[tables]]
+id = "items.item"
+name = "items.Item"
+mode = "map"
+key = "id"
+[[tables.fields]]
+name = "id"
+type = "string"
+[[tables.fields]]
+name = "reward"
+type = "struct<common.Reward>"
+[[tables.fields]]
+name = "quest_reward"
+type = "struct<quests.Reward>"
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        let base = temp_dir();
+        TypeScriptCodeGenerator.generate(&ir, &base).unwrap();
+
+        let item = std::fs::read_to_string(base.join("items/item.ts")).unwrap();
+        let root_index = std::fs::read_to_string(base.join("index.ts")).unwrap();
+        let items_index = std::fs::read_to_string(base.join("items/index.ts")).unwrap();
+        let config = std::fs::read_to_string(base.join("sora_config.ts")).unwrap();
+        assert!(item.contains("from \"../sora_runtime.js\""));
+        assert!(item.contains("from \"./../common/reward.js\""));
+        assert!(item.contains("Reward as CommonReward"));
+        assert!(item.contains("Reward as QuestsReward"));
+        assert!(item.contains("readonly reward: CommonReward"));
+        assert!(item.contains("readonly questReward: QuestsReward"));
+        assert!(config.contains("ItemTable as ItemsItemTable"));
+        assert!(config.contains("from \"./items/item.js\""));
+        assert!(config.contains("itemsItem(): ItemsItemTable"));
+        assert!(root_index.contains("export * as items from \"./items/index.js\";"));
+        assert!(items_index.contains("export * from \"./item.js\";"));
+        let _ = std::fs::remove_dir_all(base);
     }
 
     fn example_ir() -> ConfigIr {

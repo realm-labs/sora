@@ -3,14 +3,14 @@
 import type { LocalePack, SoraConfigTable, SoraTableSource, SoraTextResolver, TextKey } from "./sora_runtime{{ options.import_ext }}";
 import { formatText } from "./sora_runtime{{ options.import_ext }}";
 {% for table in model.tables %}
-import { {{ table.pascal_name }}Table, collect{{ table.row_type }}TextKeys, decode{{ table.row_type }}, decode{{ table.row_type }}Value } from "./{{ table.snake_name }}{{ options.import_ext }}";
+import { {{ table.pascal_name }}Table{% if table.config_name != table.pascal_name %} as {{ table.config_name }}Table{% endif %}, collect{{ table.row_type }}TextKeys{% if table.config_name != table.row_type %} as collect{{ table.config_name }}TextKeys{% endif %}, decode{{ table.row_type }}{% if table.config_name != table.row_type %} as decode{{ table.config_name }}{% endif %}, decode{{ table.row_type }}Value{% if table.config_name != table.row_type %} as decode{{ table.config_name }}Value{% endif %} } from "./{{ table.module_path }}{{ options.import_ext }}";
 {% endfor %}
 export const SORA_SCHEMA_FINGERPRINT = "{{ model.schema_fingerprint }}";
 
 export class SoraConfig {
     private constructor(
 {%- for table in model.tables %}
-        private readonly _{{ table.camel_name }}: {{ table.pascal_name }}Table,
+        private readonly _{{ table.camel_name }}: {{ table.config_name }}Table,
 {%- endfor %}
     ) {}
 
@@ -22,7 +22,7 @@ export class SoraConfig {
         }
         return new SoraConfig(
 {%- for table in model.tables %}
-            {{ table.pascal_name }}Table.decode(source.decodeTable({{ table.pascal_name }}Table.tableName, decode{{ table.row_type }}, decode{{ table.row_type }}Value)),
+            {{ table.config_name }}Table.decode(source.decodeTable({{ table.config_name }}Table.tableName, decode{{ table.config_name }}, decode{{ table.config_name }}Value)),
 {%- endfor %}
         );
     }
@@ -52,10 +52,10 @@ export class SoraConfig {
         const keys: TextKey[] = [];
 {%- for table in model.tables %}
 {%- if table.mode == "singleton" %}
-        collect{{ table.row_type }}TextKeys(this.{{ table.camel_name }}().row, keys);
+        collect{{ table.config_name }}TextKeys(this.{{ table.camel_name }}().row, keys);
 {%- else %}
         for (const row of this.{{ table.camel_name }}()) {
-            collect{{ table.row_type }}TextKeys(row, keys);
+            collect{{ table.config_name }}TextKeys(row, keys);
         }
 {%- endif %}
 {%- endfor %}
@@ -64,7 +64,7 @@ export class SoraConfig {
 
 {%- endif %}
 {%- for table in model.tables %}
-    {{ table.camel_name }}(): {{ table.pascal_name }}Table {
+    {{ table.camel_name }}(): {{ table.config_name }}Table {
         return this._{{ table.camel_name }};
     }
 

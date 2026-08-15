@@ -10,7 +10,7 @@ use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
-        BaseUnionVariant, build_base_model,
+        BaseUnionVariant, build_base_model, schema_flat_pascal_name,
     },
     options::LanguageCodegenOptions,
     render::{ensure_dir, render_template, write_file},
@@ -186,8 +186,8 @@ impl PythonModel {
             .enums
             .into_iter()
             .map(|item| PythonEnum {
-                name: python_type_identifier(&item.pascal_name),
-                snake_name: python_module_name(&item.snake_name),
+                name: python_type_identifier(&item.qualified_pascal_name),
+                snake_name: python_module_name(&item.qualified_snake_name),
                 comment: item.comment,
                 values: item
                     .values
@@ -211,7 +211,7 @@ impl PythonModel {
             .records
             .into_iter()
             .map(|item| {
-                let row_type = python_type_identifier(&item.pascal_name);
+                let row_type = python_type_identifier(&item.qualified_pascal_name);
                 let table = tables
                     .iter()
                     .find(|table| table.row_type == row_type)
@@ -275,8 +275,8 @@ fn python_record(
         .iter()
         .any(|field| field.type_name.contains("datetime."));
     PythonRecord {
-        pascal_name: python_type_identifier(&record.pascal_name),
-        snake_name: python_module_name(&record.snake_name),
+        pascal_name: python_type_identifier(&record.qualified_pascal_name),
+        snake_name: python_module_name(&record.qualified_snake_name),
         imports: record.imports.into_iter().map(python_import).collect(),
         custom_imports: collect_python_imports(fields.iter()),
         fields,
@@ -300,8 +300,8 @@ fn python_union(ir: &ConfigIr, union: BaseUnion, mapper: &PythonTypeMapper<'_>) 
     let custom_imports =
         collect_python_imports(variants.iter().flat_map(|variant| &variant.fields));
     PythonUnion {
-        pascal_name: python_type_identifier(&union.pascal_name),
-        snake_name: python_module_name(&union.snake_name),
+        pascal_name: python_type_identifier(&union.qualified_pascal_name),
+        snake_name: python_module_name(&union.qualified_snake_name),
         tag: python_field_identifier(&union.tag),
         variants,
         imports: union.imports.into_iter().map(python_import).collect(),
@@ -338,10 +338,10 @@ fn python_table(ir: &ConfigIr, table: BaseTable, mapper: &PythonTypeMapper<'_>) 
         .map(|field| mapper.type_name(&field.ty));
     PythonTable {
         name: table.name,
-        pascal_name: python_type_identifier(&table.pascal_name),
-        snake_name: python_module_name(&table.snake_name),
+        pascal_name: python_type_identifier(&table.qualified_pascal_name),
+        snake_name: python_module_name(&table.qualified_snake_name),
         mode: table.mode_name,
-        row_type: python_type_identifier(&table.pascal_name),
+        row_type: python_type_identifier(&table.qualified_pascal_name),
         key_name: table.key_name,
         key_field_name: table
             .key_field
@@ -403,8 +403,10 @@ fn collect_python_imports<'a>(fields: impl Iterator<Item = &'a PythonField>) -> 
 
 fn python_import(import: BaseImport) -> PythonImport {
     PythonImport {
-        module: python_module_name(&import.module),
-        name: python_type_identifier(&import.name),
+        module: python_module_name(&import.absolute_module.replace('/', "_")),
+        name: python_type_identifier(&schema_flat_pascal_name(
+            &import.absolute_module.replace('/', "."),
+        )),
     }
 }
 
@@ -512,7 +514,7 @@ impl<'a> PythonTypeMapper<'a> {
             TypeIr::String => "str".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-                python_type_identifier(name)
+                python_type_identifier(&schema_flat_pascal_name(name))
             }
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
                 format!("list[{}]", self.type_name(element))
@@ -572,7 +574,10 @@ fn python_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &PythonTypeMapper<'_>)
         TypeIr::Text => "TextKey(reader.read_string())".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper.wrap_decode(
             ty,
-            format!("{}.decode(reader)", python_type_identifier(name)),
+            format!(
+                "{}.decode(reader)",
+                python_type_identifier(&schema_flat_pascal_name(name))
+            ),
         ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
@@ -624,7 +629,10 @@ fn python_value_decode_expr(
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper
             .wrap_value_decode(
                 ty,
-                format!("{}.decode_value({value})", python_type_identifier(name)),
+                format!(
+                    "{}.decode_value({value})",
+                    python_type_identifier(&schema_flat_pascal_name(name))
+                ),
             ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             let item_decode = python_value_decode_expr(ir, element, "item", mapper);

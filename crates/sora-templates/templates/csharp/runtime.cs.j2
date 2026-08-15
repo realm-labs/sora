@@ -174,7 +174,7 @@ public static class SoraText
 
 public sealed class SoraBundle : ISoraTableSource
 {
-    private const int BundleVersion = 2;
+    private const int BundleVersion = 3;
     private const int HeaderLength = 24;
     private const int SectionEntryLength = 28;
     private const int SectionKindManifest = 0;
@@ -887,7 +887,7 @@ internal static class SoraValueObjectExtensions
 
 public sealed class SoraValueBundle : ISoraTableSource
 {
-    private const int BundleVersion = 2;
+    private const int BundleVersion = 3;
     private readonly Dictionary<string, List<SoraValue>> tables;
 
     private SoraValueBundle(Dictionary<string, List<SoraValue>> tables, string schemaFingerprint)

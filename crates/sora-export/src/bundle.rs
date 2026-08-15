@@ -5,7 +5,7 @@ use sora_data::model::{ConfigData, RowData, TableData, Value};
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::{fingerprint, model::ConfigIr};
 
-pub(crate) const FORMAT_VERSION: u32 = 2;
+pub(crate) const FORMAT_VERSION: u32 = 3;
 
 #[derive(Serialize)]
 pub(crate) struct DataBundleView<'a> {

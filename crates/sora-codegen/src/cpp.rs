@@ -10,7 +10,7 @@ use crate::{
     generator::{CodeGenerator, CodegenContext, ensure_sora_runtime_format},
     model::{
         BaseEnumValue, BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable,
-        BaseUnion, BaseUnionVariant, build_base_model,
+        BaseUnion, BaseUnionVariant, build_base_model, schema_flat_pascal_name,
     },
     options::{CppCodegenOptions, CppStandard},
     render::{ensure_dir, render_template, write_file},
@@ -204,8 +204,8 @@ impl CppModel {
             .enums
             .into_iter()
             .map(|item| CppEnum {
-                name: item.pascal_name,
-                snake_name: item.snake_name,
+                name: item.qualified_pascal_name,
+                snake_name: item.qualified_snake_name,
                 comment: item.comment,
                 values: item.values,
             })
@@ -221,7 +221,7 @@ impl CppModel {
             .map(|item| {
                 let table = tables
                     .iter()
-                    .find(|table| table.row_type == item.pascal_name)
+                    .find(|table| table.row_type == item.qualified_pascal_name)
                     .cloned();
                 cpp_record(ir, item, table, mapper)
             })
@@ -238,7 +238,11 @@ impl CppModel {
             unions,
             records,
             tables,
-            modules: model.modules,
+            modules: model
+                .modules
+                .into_iter()
+                .map(|module| module.replace('/', "_"))
+                .collect(),
         }
     }
 }
@@ -251,8 +255,8 @@ fn cpp_union(ir: &ConfigIr, union: BaseUnion, mapper: &CppTypeMapper<'_>) -> Cpp
         .collect::<Vec<_>>();
     let custom_imports = collect_cpp_imports(variants.iter().flat_map(|variant| &variant.fields));
     CppUnion {
-        pascal_name: union.pascal_name,
-        snake_name: union.snake_name,
+        pascal_name: union.qualified_pascal_name,
+        snake_name: union.qualified_snake_name,
         tag: union.tag,
         variants,
         imports: union.imports.into_iter().map(cpp_import).collect(),
@@ -289,8 +293,8 @@ fn cpp_record(
         .collect::<Vec<_>>();
     let custom_imports = collect_cpp_imports(fields.iter());
     CppRecord {
-        pascal_name: record.pascal_name,
-        snake_name: record.snake_name,
+        pascal_name: record.qualified_pascal_name,
+        snake_name: record.qualified_snake_name,
         imports: record.imports.into_iter().map(cpp_import).collect(),
         custom_imports,
         fields,
@@ -299,7 +303,7 @@ fn cpp_record(
 }
 
 fn cpp_table(ir: &ConfigIr, table: BaseTable, mapper: &CppTypeMapper<'_>) -> CppTable {
-    let row_type = table.pascal_name.clone();
+    let row_type = table.qualified_pascal_name.clone();
     let key_type = table
         .key_field
         .as_ref()
@@ -312,8 +316,8 @@ fn cpp_table(ir: &ConfigIr, table: BaseTable, mapper: &CppTypeMapper<'_>) -> Cpp
 
     CppTable {
         name: table.name,
-        pascal_name: table.pascal_name,
-        snake_name: table.snake_name,
+        pascal_name: table.qualified_pascal_name,
+        snake_name: table.qualified_snake_name,
         mode: table.mode_name,
         container_type,
         row_type,
@@ -365,7 +369,7 @@ fn collect_cpp_imports<'a>(fields: impl Iterator<Item = &'a CppField>) -> Vec<St
 
 fn cpp_import(import: BaseImport) -> CppImport {
     CppImport {
-        module: import.module,
+        module: import.absolute_module.replace('/', "_"),
     }
 }
 
@@ -422,7 +426,9 @@ impl<'a> CppTypeMapper<'a> {
             TypeIr::F64 => "double".to_owned(),
             TypeIr::String => "std::string".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
-            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+                schema_flat_pascal_name(name)
+            }
             TypeIr::List(element) | TypeIr::Set(element) => {
                 format!("std::vector<{}>", self.type_name(element))
             }
@@ -485,10 +491,14 @@ fn cpp_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &CppTypeMapper<'_>) -> St
         TypeIr::F64 => "reader.read_f64()".to_owned(),
         TypeIr::String => "reader.read_string()".to_owned(),
         TypeIr::Text => "reader.read_text_key()".to_owned(),
-        TypeIr::Enum(name) => mapper.wrap_decode(ty, format!("decode_value<{name}>(reader)")),
-        TypeIr::Struct(name) | TypeIr::Union(name) => {
-            mapper.wrap_decode(ty, format!("{name}::decode(reader)"))
-        }
+        TypeIr::Enum(name) => mapper.wrap_decode(
+            ty,
+            format!("decode_value<{}>(reader)", schema_flat_pascal_name(name)),
+        ),
+        TypeIr::Struct(name) | TypeIr::Union(name) => mapper.wrap_decode(
+            ty,
+            format!("{}::decode(reader)", schema_flat_pascal_name(name)),
+        ),
         TypeIr::List(element) | TypeIr::Set(element) => {
             format!(
                 "([&reader]() {{ std::uint32_t length = reader.read_u32(); std::vector<{}> values; values.reserve(length); for (std::uint32_t index = 0; index < length; ++index) {{ values.push_back({}); }} return values; }})()",

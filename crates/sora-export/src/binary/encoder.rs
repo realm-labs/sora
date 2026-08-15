@@ -11,7 +11,7 @@ use crate::{
 };
 
 const MAGIC: &[u8; 4] = b"SORA";
-const VERSION: u32 = 2;
+const VERSION: u32 = 3;
 const HEADER_LEN: u32 = 24;
 const SECTION_ENTRY_LEN: usize = 28;
 const SECTION_KIND_MANIFEST: u32 = 0;

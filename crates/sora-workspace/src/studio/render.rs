@@ -51,9 +51,37 @@ pub(crate) fn document_format(path: &Path) -> Result<StudioDocumentFormat> {
 }
 
 fn schema_module_from_studio(schema: &StudioSchema) -> Result<SchemaModule> {
-    let document = serde_json::from_value::<StudioModuleDocument>(schema_module_value(schema))
+    let mut document = serde_json::from_value::<StudioModuleDocument>(schema_module_value(schema))
         .context("failed to materialize Studio schema module")?;
+    let source = schema
+        .sources
+        .first()
+        .map(String::as_str)
+        .unwrap_or_default();
+    let namespace = schema
+        .module_namespaces
+        .get(source)
+        .cloned()
+        .unwrap_or_default();
+    for item in &mut document.enums {
+        item.name = local_declaration_name(&item.name, &namespace)?;
+    }
+    for item in &mut document.structs {
+        item.name = local_declaration_name(&item.name, &namespace)?;
+    }
+    for item in &mut document.unions {
+        item.name = local_declaration_name(&item.name, &namespace)?;
+    }
+    for item in &mut document.tables {
+        item.name = local_declaration_name(&item.name, &namespace)?;
+    }
     Ok(SchemaModule {
+        namespace,
+        imports: schema
+            .module_imports
+            .get(source)
+            .cloned()
+            .unwrap_or_default(),
         project: None,
         groups: BTreeMap::new(),
         views: BTreeMap::new(),
@@ -65,6 +93,17 @@ fn schema_module_from_studio(schema: &StudioSchema) -> Result<SchemaModule> {
         unions: document.unions,
         tables: document.tables,
     })
+}
+
+fn local_declaration_name(name: &str, namespace: &str) -> Result<String> {
+    if namespace.is_empty() {
+        return Ok(name.to_owned());
+    }
+    let prefix = format!("{namespace}.");
+    name.strip_prefix(&prefix)
+        .filter(|local| !local.contains('.'))
+        .map(str::to_owned)
+        .with_context(|| format!("declaration `{name}` does not belong to namespace `{namespace}`"))
 }
 
 #[derive(Debug, Deserialize)]

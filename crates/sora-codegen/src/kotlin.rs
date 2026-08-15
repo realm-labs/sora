@@ -10,7 +10,7 @@ use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
-        build_base_model,
+        build_base_model, schema_flat_pascal_name,
     },
     options::{PackageCodegenOptions, required_binding},
     render::{ensure_dir, render_template, write_file},
@@ -185,7 +185,7 @@ impl KotlinModel {
                 .enums
                 .into_iter()
                 .map(|item| KotlinEnum {
-                    name: item.pascal_name,
+                    name: item.qualified_pascal_name,
                     comment: item.comment,
                     values: item
                         .values
@@ -210,7 +210,7 @@ impl KotlinModel {
                 .map(|item| {
                     let table = tables
                         .iter()
-                        .find(|table| table.row_type == item.pascal_name)
+                        .find(|table| table.row_type == item.qualified_pascal_name)
                         .cloned();
                     kotlin_record(ir, item, table, mapper)
                 })
@@ -239,7 +239,7 @@ fn kotlin_union(ir: &ConfigIr, union: BaseUnion, mapper: &KotlinTypeMapper<'_>) 
         .collect::<Vec<_>>();
     let imports = collect_kotlin_imports(variants.iter().flat_map(|variant| &variant.fields));
     KotlinUnion {
-        pascal_name: union.pascal_name,
+        pascal_name: union.qualified_pascal_name,
         tag: union.tag,
         variants,
         imports,
@@ -282,7 +282,7 @@ fn kotlin_record(
         .any(|field| !field.collect_text_keys.is_empty());
     let imports = collect_kotlin_imports(fields.iter());
     KotlinRecord {
-        pascal_name: record.pascal_name,
+        pascal_name: record.qualified_pascal_name,
         fields,
         has_text_keys,
         table,
@@ -291,7 +291,7 @@ fn kotlin_record(
 }
 
 fn kotlin_table(ir: &ConfigIr, table: BaseTable, mapper: &KotlinTypeMapper<'_>) -> KotlinTable {
-    let row_type = table.pascal_name.clone();
+    let row_type = table.qualified_pascal_name.clone();
     let key_type = table
         .key_field
         .as_ref()
@@ -304,9 +304,9 @@ fn kotlin_table(ir: &ConfigIr, table: BaseTable, mapper: &KotlinTypeMapper<'_>) 
 
     KotlinTable {
         name: table.name,
-        pascal_name: table.pascal_name,
-        camel_name: table.camel_name,
-        snake_name: table.snake_name,
+        pascal_name: table.qualified_pascal_name,
+        camel_name: table.qualified_camel_name,
+        snake_name: table.qualified_snake_name,
         mode: table.mode_name,
         container_type,
         row_type,
@@ -411,7 +411,9 @@ impl<'a> KotlinTypeMapper<'a> {
             TypeIr::F64 => "Double".to_owned(),
             TypeIr::String => "String".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
-            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+                schema_flat_pascal_name(name)
+            }
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
                 format!("List<{}>", self.type_name(element))
             }
@@ -469,9 +471,10 @@ fn kotlin_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &KotlinTypeMapper<'_>)
         TypeIr::F64 => "reader.readF64()".to_owned(),
         TypeIr::String => "reader.readString()".to_owned(),
         TypeIr::Text => "TextKey(reader.readString())".to_owned(),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            mapper.wrap_decode(ty, format!("{name}.decode(reader)"))
-        }
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper.wrap_decode(
+            ty,
+            format!("{}.decode(reader)", schema_flat_pascal_name(name)),
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader.readList {{ {} }}",
@@ -524,9 +527,11 @@ fn kotlin_value_decode_expr(
         TypeIr::F64 => format!("{value}.asDouble()"),
         TypeIr::String => format!("{value}.asString()"),
         TypeIr::Text => format!("TextKey({value}.asString())"),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            mapper.wrap_value_decode(ty, format!("{name}.decode({value})"))
-        }
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper
+            .wrap_value_decode(
+                ty,
+                format!("{}.decode({value})", schema_flat_pascal_name(name)),
+            ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "{value}.asList {{ item -> {} }}",
@@ -604,7 +609,10 @@ fn kotlin_collect_text_keys(
             }
         }
         TypeIr::Struct(_) => format!("{pad}{value}.collectTextKeys(out)"),
-        TypeIr::Union(name) => format!("{pad}{name}.collectTextKeys({value}, out)"),
+        TypeIr::Union(name) => format!(
+            "{pad}{}.collectTextKeys({value}, out)",
+            schema_flat_pascal_name(name)
+        ),
         TypeIr::Ref { table, field } => ir
             .tables
             .iter()

@@ -10,7 +10,7 @@ use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseEnumValue, BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
-        BaseUnionVariant, build_base_model,
+        BaseUnionVariant, build_base_model, schema_flat_pascal_name,
     },
     options::{PackageCodegenOptions, required_binding},
     render::{ensure_dir, render_template, write_file},
@@ -174,8 +174,8 @@ impl GoModel {
                 .enums
                 .into_iter()
                 .map(|item| GoEnum {
-                    name: go_exported_identifier(&item.name),
-                    snake_name: item.snake_name,
+                    name: go_exported_identifier(&item.qualified_pascal_name),
+                    snake_name: item.qualified_snake_name,
                     comment: item.comment,
                     values: item.values,
                 })
@@ -191,7 +191,9 @@ impl GoModel {
                 .map(|item| {
                     let table = tables
                         .iter()
-                        .find(|table| table.row_type == go_exported_identifier(&item.name))
+                        .find(|table| {
+                            table.row_type == go_exported_identifier(&item.qualified_pascal_name)
+                        })
                         .cloned();
                     go_record(ir, item, table, mapper)
                 })
@@ -228,8 +230,8 @@ fn go_union(ir: &ConfigIr, union: BaseUnion, mapper: &GoTypeMapper<'_>) -> GoUni
         .any(|field| field.type_name.contains("time."));
     let imports = collect_go_imports(variants.iter().flat_map(|variant| &variant.fields));
     GoUnion {
-        pascal_name: go_exported_identifier(&union.name),
-        snake_name: union.snake_name,
+        pascal_name: go_exported_identifier(&union.qualified_pascal_name),
+        snake_name: union.qualified_snake_name,
         tag: union.tag,
         variants,
         has_time,
@@ -271,8 +273,8 @@ fn go_record(
     let has_time = fields.iter().any(|field| field.type_name.contains("time."));
     let imports = collect_go_imports(fields.iter());
     GoRecord {
-        pascal_name: go_exported_identifier(&record.name),
-        snake_name: record.snake_name,
+        pascal_name: go_exported_identifier(&record.qualified_pascal_name),
+        snake_name: record.qualified_snake_name,
         fields,
         has_time,
         table,
@@ -281,9 +283,9 @@ fn go_record(
 }
 
 fn go_table(ir: &ConfigIr, table: BaseTable, mapper: &GoTypeMapper<'_>) -> GoTable {
-    let row_type = go_exported_identifier(&table.name);
+    let row_type = go_exported_identifier(&table.qualified_pascal_name);
     let pascal_name = row_type.clone();
-    let camel_name = go_unexported_identifier(&table.name);
+    let camel_name = go_unexported_identifier(&table.qualified_camel_name);
     let key_type = table
         .key_field
         .as_ref()
@@ -399,7 +401,7 @@ impl<'a> GoTypeMapper<'a> {
             TypeIr::String => "string".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-                go_exported_identifier(name)
+                go_exported_identifier(&schema_flat_pascal_name(name))
             }
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
                 format!("[]{}", self.type_name(element))
@@ -460,7 +462,10 @@ fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &GoTypeMapper<'_>) -> Stri
         TypeIr::Text => "ReadTextKey(reader)".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper.wrap_decode(
             ty,
-            format!("decode{}(reader)", go_exported_identifier(name)),
+            format!(
+                "decode{}(reader)",
+                go_exported_identifier(&schema_flat_pascal_name(name))
+            ),
         ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
@@ -522,7 +527,10 @@ fn go_value_decode_expr(
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper
             .wrap_value_decode(
                 ty,
-                format!("decode{}Value({value})", go_exported_identifier(name)),
+                format!(
+                    "decode{}Value({value})",
+                    go_exported_identifier(&schema_flat_pascal_name(name))
+                ),
             ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
@@ -608,7 +616,7 @@ fn go_collect_text_keys(
         TypeIr::Struct(_) => format!("{value}.collectTextKeys(out)"),
         TypeIr::Union(name) => format!(
             "collect{}TextKeys({value}, out)",
-            go_exported_identifier(name)
+            go_exported_identifier(&schema_flat_pascal_name(name))
         ),
         TypeIr::Ref { table, field } => ir
             .tables

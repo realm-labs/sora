@@ -10,7 +10,7 @@ use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
-        build_base_model,
+        build_base_model, schema_flat_pascal_name,
     },
     options::{JavaCodegenOptions, required_binding},
     render::{ensure_dir, render_template, write_file},
@@ -240,7 +240,7 @@ impl JavaModel {
                 .enums
                 .into_iter()
                 .map(|item| JavaEnum {
-                    name: item.pascal_name,
+                    name: item.qualified_pascal_name,
                     comment: item.comment,
                     values: item
                         .values
@@ -265,7 +265,7 @@ impl JavaModel {
                 .map(|item| {
                     let table = tables
                         .iter()
-                        .find(|table| table.row_type == item.pascal_name)
+                        .find(|table| table.row_type == item.qualified_pascal_name)
                         .cloned();
                     java_record(ir, item, table, nullable_annotation.as_ref(), mapper)
                 })
@@ -306,7 +306,7 @@ fn java_union(
     let imports = collect_java_imports(variants.iter().flat_map(|variant| &variant.fields));
     let imports = with_nullable_import(imports, nullable_annotation);
     JavaUnion {
-        pascal_name: union.pascal_name,
+        pascal_name: union.qualified_pascal_name,
         tag: union.tag,
         variants,
         imports,
@@ -351,7 +351,7 @@ fn java_record(
         .any(|field| !field.collect_text_keys.is_empty());
     let imports = with_nullable_import(collect_java_imports(fields.iter()), nullable_annotation);
     JavaRecord {
-        pascal_name: record.pascal_name,
+        pascal_name: record.qualified_pascal_name,
         fields,
         has_text_keys,
         table,
@@ -365,7 +365,7 @@ fn java_table(
     nullable_annotation: Option<&JavaNullableAnnotation>,
     mapper: &JavaTypeMapper<'_>,
 ) -> JavaTable {
-    let row_type = table.pascal_name.clone();
+    let row_type = table.qualified_pascal_name.clone();
     let key_type = table
         .key_field
         .as_ref()
@@ -378,8 +378,8 @@ fn java_table(
 
     JavaTable {
         name: table.name,
-        pascal_name: table.pascal_name,
-        camel_name: table.camel_name,
+        pascal_name: table.qualified_pascal_name,
+        camel_name: table.qualified_camel_name,
         mode: table.mode_name,
         container_type,
         row_type,
@@ -543,7 +543,9 @@ impl<'a> JavaTypeMapper<'a> {
             TypeIr::F64 => "double".to_owned(),
             TypeIr::String => "String".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
-            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+                schema_flat_pascal_name(name)
+            }
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
                 format!("java.util.List<{}>", self.boxed_type_name(element))
             }
@@ -625,9 +627,10 @@ fn java_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &JavaTypeMapper<'_>) -> 
         TypeIr::F64 => "reader.readF64()".to_owned(),
         TypeIr::String => "reader.readString()".to_owned(),
         TypeIr::Text => "new TextKey(reader.readString())".to_owned(),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            mapper.wrap_decode(ty, format!("{name}.decode(reader)"))
-        }
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper.wrap_decode(
+            ty,
+            format!("{}.decode(reader)", schema_flat_pascal_name(name)),
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader.readList(() -> {})",
@@ -678,9 +681,11 @@ fn java_value_decode_expr(
         TypeIr::F64 => format!("{value}.asDouble()"),
         TypeIr::String => format!("{value}.asString()"),
         TypeIr::Text => format!("new TextKey({value}.asString())"),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            mapper.wrap_value_decode(ty, format!("{name}.decode({value})"))
-        }
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper
+            .wrap_value_decode(
+                ty,
+                format!("{}.decode({value})", schema_flat_pascal_name(name)),
+            ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "{value}.asList(item -> {})",
@@ -762,7 +767,10 @@ fn java_collect_text_keys(
             }
         }
         TypeIr::Struct(_) => format!("{pad}{value}.collectTextKeys(out);"),
-        TypeIr::Union(name) => format!("{pad}{name}.collectTextKeys({value}, out);"),
+        TypeIr::Union(name) => format!(
+            "{pad}{}.collectTextKeys({value}, out);",
+            schema_flat_pascal_name(name)
+        ),
         TypeIr::Ref { table, field } => ir
             .tables
             .iter()

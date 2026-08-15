@@ -29,6 +29,15 @@ pub fn validate_config_ir(ir: &ConfigIr) -> Result<()> {
         "canonical table",
         ir.tables.iter().map(|item| item.canonical_name.as_str()),
     )?;
+    validate_unique_names(
+        "type",
+        ir.enums
+            .iter()
+            .map(|item| item.name.as_str())
+            .chain(ir.structs.iter().map(|item| item.name.as_str()))
+            .chain(ir.unions.iter().map(|item| item.name.as_str()))
+            .chain(ir.tables.iter().map(|item| item.canonical_name.as_str())),
+    )?;
     for table in &ir.tables {
         if table.id.is_empty()
             || !table

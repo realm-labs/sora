@@ -28,13 +28,13 @@ fn parse_type_inner(input: &str) -> Result<TypeIr> {
         "text" => TypeIr::Text,
         _ => {
             if let Some(inner) = generic_inner(input, "enum") {
-                require_identifier(inner)?;
+                require_qualified_identifier(inner)?;
                 TypeIr::Enum(inner.to_owned())
             } else if let Some(inner) = generic_inner(input, "struct") {
-                require_identifier(inner)?;
+                require_qualified_identifier(inner)?;
                 TypeIr::Struct(inner.to_owned())
             } else if let Some(inner) = generic_inner(input, "union") {
-                require_identifier(inner)?;
+                require_qualified_identifier(inner)?;
                 TypeIr::Union(inner.to_owned())
             } else if let Some(inner) = generic_inner(input, "list") {
                 TypeIr::List(Box::new(parse_nested_type(inner)?))
@@ -48,7 +48,7 @@ fn parse_type_inner(input: &str) -> Result<TypeIr> {
                 parse_array_type(input, inner)?
             } else if let Some(inner) = generic_inner(input, "ref") {
                 parse_ref_type(input, inner)?
-            } else if is_identifier(input) {
+            } else if input.split('.').all(is_identifier) {
                 TypeIr::Struct(input.to_owned())
             } else {
                 return Err(SoraError::UnknownType(input.to_owned()));
@@ -98,9 +98,9 @@ fn parse_map_type(original: &str, inner: &str) -> Result<TypeIr> {
 
 fn parse_ref_type(original: &str, inner: &str) -> Result<TypeIr> {
     let (table, field) = inner
-        .split_once('.')
+        .rsplit_once('.')
         .ok_or_else(|| SoraError::InvalidType(original.to_owned()))?;
-    require_identifier(table)?;
+    require_qualified_identifier(table)?;
     require_identifier(field)?;
 
     Ok(TypeIr::Ref {
@@ -130,6 +130,14 @@ fn split_top_level(input: &str, separator: char) -> Vec<&str> {
 
 fn require_identifier(input: &str) -> Result<()> {
     if is_identifier(input) {
+        Ok(())
+    } else {
+        Err(SoraError::InvalidType(input.to_owned()))
+    }
+}
+
+fn require_qualified_identifier(input: &str) -> Result<()> {
+    if !input.is_empty() && input.split('.').all(is_identifier) {
         Ok(())
     } else {
         Err(SoraError::InvalidType(input.to_owned()))

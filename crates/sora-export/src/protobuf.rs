@@ -207,7 +207,7 @@ mod tests {
             .unwrap();
 
         let bundle = ProtoBundle::decode(fs::read(&path).unwrap().as_slice()).unwrap();
-        assert_eq!(bundle.format_version, 2);
+        assert_eq!(bundle.format_version, 3);
         assert_eq!(bundle.format, "sora-protobuf");
         assert_eq!(bundle.contract_id, "game_config/default");
         assert!(bundle.schema_fingerprint.len() > 8);

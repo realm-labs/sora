@@ -48,6 +48,8 @@ pub struct ProjectMetadataSchema {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct SchemaModule {
+    pub namespace: String,
+    pub imports: BTreeMap<String, String>,
     pub project: Option<ProjectMetadataSchema>,
     pub groups: BTreeMap<String, GroupSchema>,
     pub views: BTreeMap<String, ViewSchema>,

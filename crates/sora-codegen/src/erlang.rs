@@ -10,7 +10,7 @@ use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion, BaseUnionVariant,
-        build_base_model,
+        build_base_model, schema_flat_snake_name,
     },
     options::{ErlangCodegenOptions, ErlangEnumRepr},
     render::{ensure_dir, render_template, write_file},
@@ -186,8 +186,8 @@ impl ErlangModel {
             .enums
             .into_iter()
             .map(|item| ErlangEnum {
-                name: item.pascal_name,
-                snake_name: item.snake_name,
+                name: item.qualified_pascal_name,
+                snake_name: item.qualified_snake_name,
                 comment: item.comment,
                 values: item
                     .values
@@ -212,7 +212,7 @@ impl ErlangModel {
             .map(|item| {
                 let table = tables
                     .iter()
-                    .find(|table| table.snake_name == item.snake_name)
+                    .find(|table| table.snake_name == item.qualified_snake_name)
                     .cloned();
                 erlang_record(ir, item, table, mapper)
             })
@@ -236,7 +236,7 @@ impl ErlangModel {
 
 fn erlang_union(ir: &ConfigIr, union: BaseUnion, mapper: &ErlangTypeMapper<'_>) -> ErlangUnion {
     ErlangUnion {
-        snake_name: union.snake_name,
+        snake_name: union.qualified_snake_name,
         tag_atom: erlang_atom_literal(&union.tag.to_snake_case()),
         tag: union.tag,
         variants: union
@@ -278,7 +278,7 @@ fn erlang_record(
         .map(|field| erlang_field(ir, field, mapper))
         .collect::<Vec<_>>();
     ErlangRecord {
-        snake_name: record.snake_name,
+        snake_name: record.qualified_snake_name,
         reader_var: format!("Reader{}", fields.len()),
         fields,
         table,
@@ -286,7 +286,7 @@ fn erlang_record(
 }
 
 fn erlang_table(ir: &ConfigIr, table: BaseTable, mapper: &ErlangTypeMapper<'_>) -> ErlangTable {
-    let row_type = format!("{}:t()", table.snake_name);
+    let row_type = format!("{}:t()", table.qualified_snake_name);
     let snake_atom = erlang_atom_literal(&table.name.to_snake_case());
     let key_type = table
         .key_field
@@ -301,8 +301,8 @@ fn erlang_table(ir: &ConfigIr, table: BaseTable, mapper: &ErlangTypeMapper<'_>) 
 
     ErlangTable {
         name: table.name,
-        pascal_name: table.pascal_name,
-        snake_name: table.snake_name,
+        pascal_name: table.qualified_pascal_name,
+        snake_name: table.qualified_snake_name,
         snake_atom,
         mode: table.mode_name,
         container_type,
@@ -416,7 +416,7 @@ impl<'a> ErlangTypeMapper<'a> {
             TypeIr::String => "binary()".to_owned(),
             TypeIr::Text => "sora_runtime:text_key()".to_owned(),
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-                format!("{}:t()", name.to_snake_case())
+                format!("{}:t()", schema_flat_snake_name(name))
             }
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
                 format!("[{}]", self.type_name(element))
@@ -468,7 +468,7 @@ fn erlang_decode_fun(ir: &ConfigIr, ty: &TypeIr, mapper: &ErlangTypeMapper<'_>) 
         TypeIr::String => "fun sora_runtime:read_string/1".to_owned(),
         TypeIr::Text => "fun sora_runtime:read_text_key/1".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            mapper.wrap_decode(ty, format!("fun {}:decode/1", name.to_snake_case()))
+            mapper.wrap_decode(ty, format!("fun {}:decode/1", schema_flat_snake_name(name)))
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
@@ -516,7 +516,7 @@ fn erlang_value_decode_expr(
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper
             .wrap_value_decode(
                 ty,
-                format!("{}:decode_value({value})", name.to_snake_case()),
+                format!("{}:decode_value({value})", schema_flat_snake_name(name)),
             ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(

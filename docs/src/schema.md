@@ -11,6 +11,29 @@ Every file is first parsed into a format-specific keyed representation and then 
 
 Declaration names are keys and are not repeated inside bodies. Unknown properties are rejected.
 
+## Namespaces and Imports
+
+Each module may declare a logical namespace and aliases for other namespaces:
+
+```scon
+namespace = "game.items"
+imports {
+  common = "game.common"
+}
+
+structs {
+  Drop {
+    fields {
+      reward = "struct<common.Reward>"
+    }
+  }
+}
+```
+
+Declarations stay local in the source file: `Drop` above has the canonical name `game.items.Drop`. An unqualified reference such as `struct<Cost>` resolves in the current namespace, an alias-qualified reference such as `common.Reward` expands through `imports`, and any other dotted reference is an absolute project-qualified name. `ref<items.Item.id>` treats the final segment as the field and everything before it as the table name.
+
+Namespace, import-alias, and declaration segments must be ASCII identifiers. The empty namespace is the project root namespace. Canonical qualified names are used by validation, schema locks, fingerprints, bundles, and runtime table lookup.
+
 ## Enums
 
 ```scon

@@ -14,13 +14,13 @@ pub enum {{ enum.name }} {
 {%- endfor %}
 }
 
-impl super::runtime::SoraDecode for {{ enum.name }} {
-    fn decode(reader: &mut super::runtime::SoraReader<'_>) -> Result<Self, super::runtime::SoraReadError> {
+impl crate::runtime::SoraDecode for {{ enum.name }} {
+    fn decode(reader: &mut crate::runtime::SoraReader<'_>) -> Result<Self, crate::runtime::SoraReadError> {
         match reader.read_var_u32()? {
 {%- for value in enum.values %}
             {{ value.id }} => Ok(Self::{{ value.name }}),
 {%- endfor %}
-            value => Err(super::runtime::SoraReadError::new(format!("invalid enum id {} for {{ enum.name }}", value))),
+            value => Err(crate::runtime::SoraReadError::new(format!("invalid enum id {} for {{ enum.name }}", value))),
         }
     }
 }

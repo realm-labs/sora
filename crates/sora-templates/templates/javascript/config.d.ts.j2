@@ -2,7 +2,7 @@
 
 import type { LocalePack, SoraConfigTable, SoraTableSource, SoraTextResolver, TextKey } from "./sora_runtime{{ options.import_ext }}";
 {% for table in model.tables %}
-import type { {{ table.pascal_name }}Table } from "./{{ table.snake_name }}{{ options.import_ext }}";
+import type { {{ table.pascal_name }}Table{% if table.config_name != table.pascal_name %} as {{ table.config_name }}Table{% endif %} } from "./{{ table.module_path }}{{ options.import_ext }}";
 {% endfor %}
 export declare const SORA_SCHEMA_FINGERPRINT: string;
 
@@ -13,7 +13,7 @@ export declare class SoraConfig {
     validateLocalePack(pack: LocalePack): void;
 {%- endif %}
 {%- for table in model.tables %}
-    {{ table.camel_name }}(): {{ table.pascal_name }}Table;
+    {{ table.camel_name }}(): {{ table.config_name }}Table;
 {%- endfor %}
 }
 

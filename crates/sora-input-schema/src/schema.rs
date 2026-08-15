@@ -55,6 +55,7 @@ pub fn load_project_schema_with_modules(path: &Path) -> Result<LoadedProjectSche
         ))
     })?;
     let views = load_views(path, &project, root.views.clone())?;
+    let qualified_root = qualify_module(&root)?;
     let mut merged = ProjectSchema {
         project,
         groups: root.groups.clone(),
@@ -62,10 +63,10 @@ pub fn load_project_schema_with_modules(path: &Path) -> Result<LoadedProjectSche
         codegen: root.codegen.clone().unwrap_or_default(),
         localization: root.localization.clone(),
         includes: root.includes.clone(),
-        enums: root.enums.clone(),
-        structs: root.structs.clone(),
-        unions: root.unions.clone(),
-        tables: root.tables.clone(),
+        enums: qualified_root.enums.clone(),
+        structs: qualified_root.structs.clone(),
+        unions: qualified_root.unions.clone(),
+        tables: qualified_root.tables.clone(),
     };
 
     let root_path = canonical_or_owned(path);
@@ -75,7 +76,7 @@ pub fn load_project_schema_with_modules(path: &Path) -> Result<LoadedProjectSche
         module: root.clone(),
     }];
     let mut declaration_sources = BTreeMap::new();
-    register_declaration_sources(&root, &root_path, &mut declaration_sources)?;
+    register_declaration_sources(&qualified_root, &root_path, &mut declaration_sources)?;
     merge_includes(
         path,
         &root.includes,
@@ -138,11 +139,12 @@ fn merge_includes(
             )));
         }
 
-        register_declaration_sources(&module, &canonical_key, declaration_sources)?;
-        merged.enums.extend(module.enums.clone());
-        merged.structs.extend(module.structs.clone());
-        merged.unions.extend(module.unions.clone());
-        merged.tables.extend(module.tables.clone());
+        let qualified_module = qualify_module(&module)?;
+        register_declaration_sources(&qualified_module, &canonical_key, declaration_sources)?;
+        merged.enums.extend(qualified_module.enums);
+        merged.structs.extend(qualified_module.structs);
+        merged.unions.extend(qualified_module.unions);
+        merged.tables.extend(qualified_module.tables);
         modules.push(LoadedSchemaModule {
             path: canonical_key,
             module: module.clone(),
@@ -157,6 +159,216 @@ fn merge_includes(
         )?;
     }
 
+    Ok(())
+}
+
+fn qualify_module(module: &SchemaModule) -> Result<SchemaModule> {
+    validate_namespace(&module.namespace)?;
+    for (alias, namespace) in &module.imports {
+        validate_identifier(alias, "import alias")?;
+        validate_namespace(namespace)?;
+    }
+
+    let mut qualified = module.clone();
+    for item in &mut qualified.enums {
+        validate_identifier(&item.name, "enum")?;
+        item.name = qualify_local_name(&module.namespace, &item.name);
+    }
+    for item in &mut qualified.structs {
+        validate_identifier(&item.name, "struct")?;
+        item.name = qualify_local_name(&module.namespace, &item.name);
+        qualify_fields(&mut item.fields, module)?;
+    }
+    for item in &mut qualified.unions {
+        validate_identifier(&item.name, "union")?;
+        item.name = qualify_local_name(&module.namespace, &item.name);
+        for variant in &mut item.variants {
+            qualify_fields(&mut variant.fields, module)?;
+        }
+    }
+    for item in &mut qualified.tables {
+        let local_name = item.name.clone();
+        validate_identifier(&local_name, "table")?;
+        item.name = qualify_local_name(&module.namespace, &local_name);
+        if !module.namespace.is_empty() && item.id == default_table_id(&local_name) {
+            item.id = format!("{}.{}", module.namespace, item.id);
+        }
+        for field in &mut item.fields {
+            field.ty = qualify_type_expression(&field.ty, module)?;
+            if let Some(from) = &mut field.from {
+                from.table = resolve_schema_name(&from.table, module)?;
+            }
+        }
+    }
+    Ok(qualified)
+}
+
+fn qualify_fields(fields: &mut [FieldSchema], module: &SchemaModule) -> Result<()> {
+    for field in fields {
+        field.ty = qualify_type_expression(&field.ty, module)?;
+    }
+    Ok(())
+}
+
+fn qualify_type_expression(input: &str, module: &SchemaModule) -> Result<String> {
+    let input = input.trim();
+    if matches!(
+        input,
+        "bool"
+            | "i8"
+            | "u8"
+            | "i16"
+            | "u16"
+            | "i32"
+            | "u32"
+            | "i64"
+            | "f32"
+            | "f64"
+            | "string"
+            | "duration"
+            | "datetime"
+            | "text"
+    ) {
+        return Ok(input.to_owned());
+    }
+
+    for kind in ["enum", "struct", "union"] {
+        if let Some(inner) = schema_generic_inner(input, kind) {
+            return Ok(format!("{kind}<{}>", resolve_schema_name(inner, module)?));
+        }
+    }
+    for kind in ["list", "set", "optional"] {
+        if let Some(inner) = schema_generic_inner(input, kind) {
+            return Ok(format!(
+                "{kind}<{}>",
+                qualify_type_expression(inner, module)?
+            ));
+        }
+    }
+    if let Some(inner) = schema_generic_inner(input, "map") {
+        let parts = split_schema_top_level(inner, ',');
+        let [key, value] = parts.as_slice() else {
+            return Err(SoraError::InvalidType(input.to_owned()));
+        };
+        return Ok(format!(
+            "map<{},{}>",
+            qualify_type_expression(key, module)?,
+            qualify_type_expression(value, module)?
+        ));
+    }
+    if let Some(inner) = schema_generic_inner(input, "array") {
+        let parts = split_schema_top_level(inner, ',');
+        let [element, len] = parts.as_slice() else {
+            return Err(SoraError::InvalidType(input.to_owned()));
+        };
+        let len = len
+            .trim()
+            .parse::<usize>()
+            .map_err(|_| SoraError::InvalidType(input.to_owned()))?;
+        return Ok(format!(
+            "array<{},{}>",
+            qualify_type_expression(element, module)?,
+            len
+        ));
+    }
+    if let Some(inner) = schema_generic_inner(input, "ref") {
+        let (table, field) = inner
+            .rsplit_once('.')
+            .ok_or_else(|| SoraError::InvalidType(input.to_owned()))?;
+        validate_identifier(field.trim(), "reference field")?;
+        return Ok(format!(
+            "ref<{}.{}>",
+            resolve_schema_name(table, module)?,
+            field.trim()
+        ));
+    }
+
+    resolve_schema_name(input, module)
+}
+
+fn schema_generic_inner<'a>(input: &'a str, name: &str) -> Option<&'a str> {
+    input
+        .strip_prefix(&format!("{name}<"))
+        .and_then(|rest| rest.strip_suffix('>'))
+}
+
+fn split_schema_top_level(input: &str, separator: char) -> Vec<&str> {
+    let mut parts = Vec::new();
+    let mut depth = 0usize;
+    let mut start = 0usize;
+    for (index, ch) in input.char_indices() {
+        match ch {
+            '<' => depth += 1,
+            '>' => depth = depth.saturating_sub(1),
+            _ if ch == separator && depth == 0 => {
+                parts.push(input[start..index].trim());
+                start = index + ch.len_utf8();
+            }
+            _ => {}
+        }
+    }
+    parts.push(input[start..].trim());
+    parts
+}
+
+fn resolve_schema_name(input: &str, module: &SchemaModule) -> Result<String> {
+    let input = input.trim();
+    validate_qualified_name(input, "schema reference")?;
+    let mut segments = input.split('.');
+    let first = segments.next().expect("qualified name is non-empty");
+    if let Some(imported) = module.imports.get(first) {
+        let suffix = segments.collect::<Vec<_>>().join(".");
+        return if suffix.is_empty() {
+            Err(SoraError::InvalidSchema(format!(
+                "schema reference `{input}` names import alias `{first}` without a declaration"
+            )))
+        } else {
+            Ok(format!("{imported}.{suffix}"))
+        };
+    }
+    if input.contains('.') || module.namespace.is_empty() {
+        Ok(input.to_owned())
+    } else {
+        Ok(format!("{}.{}", module.namespace, input))
+    }
+}
+
+fn qualify_local_name(namespace: &str, name: &str) -> String {
+    if namespace.is_empty() {
+        name.to_owned()
+    } else {
+        format!("{namespace}.{name}")
+    }
+}
+
+fn validate_namespace(namespace: &str) -> Result<()> {
+    if namespace.is_empty() {
+        return Ok(());
+    }
+    validate_qualified_name(namespace, "namespace")
+}
+
+fn validate_qualified_name(value: &str, kind: &str) -> Result<()> {
+    if value.is_empty() {
+        return Err(SoraError::InvalidSchema(format!(
+            "{kind} must not be empty"
+        )));
+    }
+    for segment in value.split('.') {
+        validate_identifier(segment, kind)?;
+    }
+    Ok(())
+}
+
+fn validate_identifier(value: &str, kind: &str) -> Result<()> {
+    let mut chars = value.chars();
+    if !matches!(chars.next(), Some(first) if first == '_' || first.is_ascii_alphabetic())
+        || !chars.all(|ch| ch == '_' || ch.is_ascii_alphanumeric())
+    {
+        return Err(SoraError::InvalidSchema(format!(
+            "{kind} `{value}` must be an ASCII identifier"
+        )));
+    }
     Ok(())
 }
 
@@ -274,6 +486,10 @@ fn sort_project_declarations(schema: &mut ProjectSchema) {
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct SchemaDocumentRepr {
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    namespace: String,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    imports: BTreeMap<String, String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     project: Option<ProjectMetadataSchema>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
@@ -620,6 +836,8 @@ impl SchemaDocumentRepr {
         unions.sort_by(|left, right| left.name.cmp(&right.name));
         tables.sort_by(|left, right| left.name.cmp(&right.name));
         Ok(SchemaModule {
+            namespace: self.namespace,
+            imports: self.imports,
             project: self.project,
             groups: self.groups,
             views: self.views,
@@ -635,6 +853,8 @@ impl SchemaDocumentRepr {
 
     fn from_module(module: &SchemaModule, lua_ordered: bool, explicit_fields: bool) -> Self {
         Self {
+            namespace: module.namespace.clone(),
+            imports: module.imports.clone(),
             project: module.project.clone(),
             groups: module.groups.clone(),
             views: module.views.clone(),
@@ -1687,6 +1907,59 @@ tables {
                 "{name}: {message}"
             );
         }
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn qualifies_module_declarations_and_references() {
+        let base = temp_dir();
+        let schema_dir = base.join("schema");
+        fs::create_dir_all(&schema_dir).unwrap();
+        let project = base.join("project.scon");
+        fs::write(
+            &project,
+            "project { id = \"game\" }\nincludes = [\"schema/common.scon\", \"schema/items.scon\"]\n",
+        )
+        .unwrap();
+        fs::write(
+            schema_dir.join("common.scon"),
+            "namespace = \"common\"\nenums { Rarity = [\"Common\", \"Rare\"] }\n",
+        )
+        .unwrap();
+        fs::write(
+            schema_dir.join("items.scon"),
+            r#"
+namespace = "items"
+imports { shared = "common" }
+structs {
+  Reward { fields { rarity = "enum<shared.Rarity>" } }
+}
+tables {
+  Item {
+    mode = "map"
+    key = "id"
+    fields {
+      id = "string"
+      reward = "struct<Reward>"
+      parent = "optional<ref<items.Item.id>>"
+    }
+  }
+}
+"#,
+        )
+        .unwrap();
+
+        let schema = load_project_schema(&project).unwrap();
+        assert_eq!(schema.enums[0].name, "common.Rarity");
+        assert_eq!(schema.structs[0].name, "items.Reward");
+        assert_eq!(schema.structs[0].fields[0].ty, "enum<common.Rarity>");
+        assert_eq!(schema.tables[0].name, "items.Item");
+        assert_eq!(schema.tables[0].id, "items.item");
+        assert_eq!(schema.tables[0].fields[1].ty, "struct<items.Reward>");
+        assert_eq!(
+            schema.tables[0].fields[2].ty,
+            "optional<ref<items.Item.id>>"
+        );
         let _ = fs::remove_dir_all(base);
     }
 

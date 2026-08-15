@@ -17,6 +17,10 @@ Sora 会先从每个 schema 名称派生通用命名形式，再交给语言生�
 
 语言生成器会选择合适的形式，并可以继续做语言相关的合法化处理，例如处理非法字符或保留字。
 
+如果目标语言有稳定的 module 边界，限定 schema 名会投影成原生命名空间。例如 `game.items.Item` 在 Rust 中生成 `game/items/item.rs` 和对应 module，在配置的 C# 根命名空间下生成 `Game.Items.Item`，在 TypeScript/JavaScript 中生成 `game/items/item.ts` 和 ESM namespace barrel。Godot 会生成命名空间目录，同时使用 `GameItemsItem` 这类全局唯一的 `class_name`，因为 GDScript class 注册表是全局的。
+
+如果生成运行时有意使用单 package 或单 translation unit，生成器会把完整限定名编码成无碰撞符号：`game.items.Item` 按语言变成 `GameItemsItem` 或 `game_items_item`。C、C++、Go、Java、Kotlin、Scala、Dart、Python、Lua、Erlang 和 protobuf 当前采用这种表示，确保 `items.Entry` 与 `quests.Entry` 不依赖文件顺序也能共存。
+
 ## 语言约定
 
 内置生成器遵循目标语言常见的公开 API 风格：
@@ -45,7 +49,7 @@ Sora 会先从每个 schema 名称派生通用命名形式，再交给语言生�
 
 下面这些值保留原始 schema 拼写：
 
-- 数据包和 table metadata 中的 table 名；
+- 数据包和 table metadata 中的规范限定 table 名；
 - 从运行时 row 中读取的 field 名；
 - enum string value；
 - union variant tag value；

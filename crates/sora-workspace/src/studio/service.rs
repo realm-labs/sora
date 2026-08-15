@@ -59,10 +59,13 @@ pub(super) fn load_studio_schema_with_parsers(
     let raw_schema = loaded.schema;
 
     let raw_fallback = || {
-        build_schema_from_raw(
-            &raw_schema,
-            &source_index.sources,
-            &source_index.source_by_node,
+        with_module_context(
+            build_schema_from_raw(
+                &raw_schema,
+                &source_index.sources,
+                &source_index.source_by_node,
+            ),
+            &source_index,
         )
     };
     match normalize_schema_with_parsers(raw_schema.clone(), parser_registry) {
@@ -76,20 +79,22 @@ pub(super) fn load_studio_schema_with_parsers(
                     ok: true,
                     project: project.display().to_string(),
                     diagnostics: vec![StudioDiagnostic::info("schema loaded successfully")],
-                    schema: Some(build_schema(
-                        &displayed_ir,
-                        &source_index.sources,
-                        &source_index.source_by_node,
+                    schema: Some(with_module_context(
+                        build_schema(
+                            &displayed_ir,
+                            &source_index.sources,
+                            &source_index.source_by_node,
+                        ),
+                        &source_index,
                     )),
                 },
                 Err(error) => StudioSchemaResponse {
                     ok: false,
                     project: project.display().to_string(),
                     diagnostics: studio_diagnostics(&error),
-                    schema: Some(build_schema(
-                        &ir,
-                        &source_index.sources,
-                        &source_index.source_by_node,
+                    schema: Some(with_module_context(
+                        build_schema(&ir, &source_index.sources, &source_index.source_by_node),
+                        &source_index,
                     )),
                 },
             }
@@ -327,6 +332,8 @@ struct SchemaInclude {
 struct SchemaSourceIndex {
     sources: Vec<String>,
     source_by_node: BTreeMap<String, String>,
+    module_namespaces: BTreeMap<String, String>,
+    module_imports: BTreeMap<String, BTreeMap<String, String>>,
 }
 
 fn schema_source_index(project: &Path, loaded: &LoadedProjectSchema) -> SchemaSourceIndex {
@@ -339,6 +346,8 @@ fn schema_source_index(project: &Path, loaded: &LoadedProjectSchema) -> SchemaSo
         .unwrap_or_else(|_| project.to_path_buf());
     let mut source_by_path = BTreeMap::new();
     let mut sources = Vec::new();
+    let mut module_namespaces = BTreeMap::new();
+    let mut module_imports = BTreeMap::new();
     for module in &loaded.modules {
         if module.path == root {
             continue;
@@ -350,6 +359,8 @@ fn schema_source_index(project: &Path, loaded: &LoadedProjectSchema) -> SchemaSo
             .to_string_lossy()
             .replace('\\', "/");
         source_by_path.insert(module.path.clone(), relative.clone());
+        module_namespaces.insert(relative.clone(), module.module.namespace.clone());
+        module_imports.insert(relative.clone(), module.module.imports.clone());
         sources.push(relative);
     }
     let mut source_by_node = BTreeMap::new();
@@ -367,7 +378,15 @@ fn schema_source_index(project: &Path, loaded: &LoadedProjectSchema) -> SchemaSo
     SchemaSourceIndex {
         sources,
         source_by_node,
+        module_namespaces,
+        module_imports,
     }
+}
+
+fn with_module_context(mut schema: StudioSchema, source_index: &SchemaSourceIndex) -> StudioSchema {
+    schema.module_namespaces = source_index.module_namespaces.clone();
+    schema.module_imports = source_index.module_imports.clone();
+    schema
 }
 
 #[cfg(test)]
@@ -570,6 +589,16 @@ fn schema_for_source(schema: &StudioSchema, source: &str) -> StudioSchema {
         groups: schema.groups.clone(),
         views: schema.views.clone(),
         sources: vec![source.to_owned()],
+        module_namespaces: schema
+            .module_namespaces
+            .get(source)
+            .map(|namespace| BTreeMap::from([(source.to_owned(), namespace.clone())]))
+            .unwrap_or_default(),
+        module_imports: schema
+            .module_imports
+            .get(source)
+            .map(|imports| BTreeMap::from([(source.to_owned(), imports.clone())]))
+            .unwrap_or_default(),
         summary: super::model::StudioSummary {
             enums: nodes
                 .iter()

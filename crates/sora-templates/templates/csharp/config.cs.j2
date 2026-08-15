@@ -75,7 +75,7 @@ public sealed class SoraConfig
         }
         var tables = new Dictionary<string, ISoraTable>({{ model.tables | length }});
 {%- for table in model.tables %}
-        tables[{{ table.pascal_name }}Table.TableName] = {{ table.pascal_name }}Table.Decode(source);
+        tables[{{ table.table_type }}.TableName] = {{ table.table_type }}.Decode(source);
 {%- endfor %}
         return new SoraConfig(tables);
     }
@@ -104,14 +104,14 @@ public sealed class SoraConfig
         var keys = new List<TextKey>();
 {%- for table in model.tables %}
 {%- if table.mode == "singleton" %}
-        {{ table.pascal_name }}.Row.CollectTextKeys(keys);
+        {{ table.accessor_name }}.Row.CollectTextKeys(keys);
 {%- elif table.mode == "map" %}
-        foreach (var row in {{ table.pascal_name }}.Rows.Values)
+        foreach (var row in {{ table.accessor_name }}.Rows.Values)
         {
             row.CollectTextKeys(keys);
         }
 {%- else %}
-        foreach (var row in {{ table.pascal_name }}.Rows)
+        foreach (var row in {{ table.accessor_name }}.Rows)
         {
             row.CollectTextKeys(keys);
         }
@@ -132,7 +132,7 @@ public sealed class SoraConfig
     }
 
 {%- for table in model.tables %}
-    public {{ table.pascal_name }}Table {{ table.pascal_name }} => Table<{{ table.pascal_name }}Table>({{ table.pascal_name }}Table.TableName);
+    public {{ table.table_type }} {{ table.accessor_name }} => Table<{{ table.table_type }}>({{ table.table_type }}.TableName);
 
 {%- endfor %}
     internal static Dictionary<TKey, TValue> DecodeMapTable<TKey, TValue>(List<TValue> rows, Func<TValue, TKey> key)

@@ -222,6 +222,8 @@ pub(crate) fn build_schema(
             })
             .collect(),
         sources: sources.to_vec(),
+        module_namespaces: BTreeMap::new(),
+        module_imports: BTreeMap::new(),
         summary: StudioSummary {
             enums: ir.enums.len(),
             structs: ir.structs.len(),
@@ -407,6 +409,8 @@ pub(crate) fn build_schema_from_raw(
             })
             .collect(),
         sources: sources.to_vec(),
+        module_namespaces: BTreeMap::new(),
+        module_imports: BTreeMap::new(),
         summary: StudioSummary {
             enums: schema.enums.len(),
             structs: schema.structs.len(),

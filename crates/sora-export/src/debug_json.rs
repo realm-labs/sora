@@ -4,7 +4,7 @@ use sora_diagnostics::{Result, SoraError};
 
 use crate::{
     exporter::{DataExporter, ExportOutput, ExportRequest, OutputKind},
-    fs_util::{create_dir_all, write_file},
+    fs_util::{create_dir_all, create_parent_dir, write_file},
 };
 
 pub struct DebugJsonExporter;
@@ -28,7 +28,16 @@ impl DataExporter for DebugJsonExporter {
 
         create_dir_all(&path)?;
         for table in &request.data.tables {
-            let file_path = path.join(format!("{}.json", table.name));
+            let mut file_path = path.clone();
+            let mut segments = table.name.split('.').peekable();
+            while let Some(segment) = segments.next() {
+                if segments.peek().is_some() {
+                    file_path.push(segment);
+                } else {
+                    file_path.push(format!("{segment}.json"));
+                }
+            }
+            create_parent_dir(&file_path)?;
             let content = serde_json::to_string_pretty(&DebugTableView { table })
                 .map_err(SoraError::SerializeData)?;
             write_file(file_path, content)?;
@@ -79,6 +88,28 @@ mod tests {
         assert!(content.contains("\"name\": \"Item\""));
         assert!(content.contains("\"Iron Sword\""));
 
+        let _ = fs::remove_dir_all(out_dir);
+    }
+
+    #[test]
+    fn debug_json_exporter_uses_namespace_directories() {
+        let ir = example_ir();
+        let mut data = example_data();
+        data.tables[0].name = "items.Item".to_owned();
+        let out_dir = temp_dir();
+
+        DebugJsonExporter
+            .export(ExportRequest {
+                ir: &ir,
+                data: &data,
+                locale_catalog: None,
+                execution: &sora_execution::ExecutionContext::default(),
+                options: Default::default(),
+                output: ExportOutput::Directory(out_dir.clone()),
+            })
+            .unwrap();
+
+        assert!(out_dir.join("items/Item.json").is_file());
         let _ = fs::remove_dir_all(out_dir);
     }
 

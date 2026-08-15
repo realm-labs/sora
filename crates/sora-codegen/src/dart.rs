@@ -10,7 +10,7 @@ use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
-        BaseUnionVariant, build_base_model,
+        BaseUnionVariant, build_base_model, schema_flat_pascal_name,
     },
     options::LanguageCodegenOptions,
     render::{ensure_dir, render_template, write_file},
@@ -176,8 +176,8 @@ impl DartModel {
             .enums
             .into_iter()
             .map(|item| DartEnum {
-                pascal_name: dart_type_identifier(&item.pascal_name),
-                snake_name: dart_module_name(&item.snake_name),
+                pascal_name: dart_type_identifier(&item.qualified_pascal_name),
+                snake_name: dart_module_name(&item.qualified_snake_name),
                 comment: item.comment,
                 values: item
                     .values
@@ -208,7 +208,9 @@ impl DartModel {
             .map(|item| {
                 let table = tables
                     .iter()
-                    .find(|table| table.row_type == dart_type_identifier(&item.pascal_name))
+                    .find(|table| {
+                        table.row_type == dart_type_identifier(&item.qualified_pascal_name)
+                    })
                     .cloned();
                 dart_record(ir, item, table, mapper)
             })
@@ -257,8 +259,8 @@ fn dart_record(
         .iter()
         .any(|field| !field.collect_text_keys.is_empty());
     DartRecord {
-        pascal_name: dart_type_identifier(&record.pascal_name),
-        snake_name: dart_module_name(&record.snake_name),
+        pascal_name: dart_type_identifier(&record.qualified_pascal_name),
+        snake_name: dart_module_name(&record.qualified_snake_name),
         imports: record.imports.into_iter().map(dart_import).collect(),
         custom_imports: collect_dart_imports(fields.iter()),
         fields,
@@ -271,12 +273,12 @@ fn dart_union(ir: &ConfigIr, union: BaseUnion, mapper: &DartTypeMapper<'_>) -> D
     let variants = union
         .variants
         .into_iter()
-        .map(|variant| dart_variant(ir, &union.name, variant, mapper))
+        .map(|variant| dart_variant(ir, &union.qualified_pascal_name, variant, mapper))
         .collect::<Vec<_>>();
     let custom_imports = collect_dart_imports(variants.iter().flat_map(|variant| &variant.fields));
     DartUnion {
-        pascal_name: dart_type_identifier(&union.pascal_name),
-        snake_name: dart_module_name(&union.snake_name),
+        pascal_name: dart_type_identifier(&union.qualified_pascal_name),
+        snake_name: dart_module_name(&union.qualified_snake_name),
         tag: union.tag,
         variants,
         imports: union.imports.into_iter().map(dart_import).collect(),
@@ -318,11 +320,11 @@ fn dart_table(ir: &ConfigIr, table: BaseTable, mapper: &DartTypeMapper<'_>) -> D
 
     DartTable {
         name: table.name,
-        pascal_name: dart_type_identifier(&table.pascal_name),
-        camel_name: dart_field_identifier(&table.camel_name),
-        snake_name: dart_module_name(&table.snake_name),
+        pascal_name: dart_type_identifier(&table.qualified_pascal_name),
+        camel_name: dart_field_identifier(&table.qualified_camel_name),
+        snake_name: dart_module_name(&table.qualified_snake_name),
         mode: table.mode_name,
-        row_type: dart_type_identifier(&table.pascal_name),
+        row_type: dart_type_identifier(&table.qualified_pascal_name),
         key_name: table.key_name,
         key_field_name,
         key_type,
@@ -380,8 +382,10 @@ fn collect_dart_imports<'a>(fields: impl Iterator<Item = &'a DartField>) -> Vec<
 
 fn dart_import(import: BaseImport) -> DartImport {
     DartImport {
-        module: dart_module_name(&import.module),
-        name: dart_type_identifier(&import.name),
+        module: dart_module_name(&import.absolute_module.replace('/', "_")),
+        name: dart_type_identifier(&schema_flat_pascal_name(
+            &import.absolute_module.replace('/', "."),
+        )),
     }
 }
 
@@ -420,7 +424,7 @@ impl<'a> DartTypeMapper<'a> {
             TypeIr::String => "String".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-                dart_type_identifier(name)
+                dart_type_identifier(&schema_flat_pascal_name(name))
             }
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
                 format!("List<{}>", self.type_name(element))
@@ -482,7 +486,10 @@ fn dart_value_decode_expr(
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper
             .wrap_value_decode(
                 ty,
-                format!("{}.decode({value})", dart_type_identifier(name)),
+                format!(
+                    "{}.decode({value})",
+                    dart_type_identifier(&schema_flat_pascal_name(name))
+                ),
             ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(

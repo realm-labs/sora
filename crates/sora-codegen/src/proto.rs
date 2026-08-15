@@ -6,6 +6,7 @@ use sora_ir::model::{ConfigIr, FieldIr, TypeIr};
 
 use crate::{
     generator::{CodeGenerator, CodegenContext},
+    model::{schema_flat_pascal_name, schema_flat_snake_name},
     options::{ProtoCodegenOptions, required_binding},
     render::{ensure_dir, write_file},
 };
@@ -34,8 +35,8 @@ fn render_proto(ir: &ConfigIr, package: &str) -> String {
 
     output.push_str("message SoraConfigData {\n");
     for (index, table) in ir.tables.iter().enumerate() {
-        let field_name = table.name.to_snake_case();
-        let message_name = &table.name;
+        let field_name = schema_flat_snake_name(&table.name);
+        let message_name = schema_flat_pascal_name(&table.name);
         if matches!(table.mode, sora_ir::model::TableModeIr::Singleton) {
             output.push_str(&format!("  {message_name} {field_name} = {};\n", index + 1));
         } else {
@@ -51,8 +52,9 @@ fn render_proto(ir: &ConfigIr, package: &str) -> String {
         if let Some(comment) = &item.comment {
             output.push_str(&format!("// {comment}\n"));
         }
-        output.push_str(&format!("enum {} {{\n", item.name));
-        let prefix = item.name.to_shouty_snake_case();
+        let enum_name = schema_flat_pascal_name(&item.name);
+        output.push_str(&format!("enum {enum_name} {{\n"));
+        let prefix = schema_flat_snake_name(&item.name).to_shouty_snake_case();
         if !item.values.iter().any(|value| value.id == 0) {
             output.push_str(&format!("  {prefix}_UNSPECIFIED = 0;\n"));
         }
@@ -75,16 +77,21 @@ fn render_proto(ir: &ConfigIr, package: &str) -> String {
     }
 
     for item in &ir.structs {
-        output.push_str(&render_message(ir, &item.name, &item.fields));
+        output.push_str(&render_message(
+            ir,
+            &schema_flat_pascal_name(&item.name),
+            &item.fields,
+        ));
     }
 
     for item in &ir.unions {
-        output.push_str(&format!("message {} {{\n", item.name));
+        let union_name = schema_flat_pascal_name(&item.name);
+        output.push_str(&format!("message {union_name} {{\n"));
         output.push_str("  oneof kind {\n");
         for (index, variant) in item.variants.iter().enumerate() {
             output.push_str(&format!(
                 "    {}{} {} = {};\n",
-                item.name,
+                union_name,
                 variant.name,
                 variant.name.to_snake_case(),
                 index + 1
@@ -96,14 +103,18 @@ fn render_proto(ir: &ConfigIr, package: &str) -> String {
         for variant in &item.variants {
             output.push_str(&render_message(
                 ir,
-                &format!("{}{}", item.name, variant.name),
+                &format!("{}{}", union_name, variant.name),
                 &variant.fields,
             ));
         }
     }
 
     for table in &ir.tables {
-        output.push_str(&render_message(ir, &table.name, &table.fields));
+        output.push_str(&render_message(
+            ir,
+            &schema_flat_pascal_name(&table.name),
+            &table.fields,
+        ));
     }
 
     output
@@ -223,7 +234,9 @@ fn proto_type(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F32 => "float".to_owned(),
         TypeIr::F64 => "double".to_owned(),
         TypeIr::String | TypeIr::Text => "string".to_owned(),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            schema_flat_pascal_name(name)
+        }
         TypeIr::List(element)
         | TypeIr::Set(element)
         | TypeIr::Array { element, .. }

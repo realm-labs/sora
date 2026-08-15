@@ -58,6 +58,50 @@ values = [
 }
 
 #[test]
+fn studio_preserves_module_namespace_and_imports() {
+    let base = temp_dir();
+    let project = write_project(
+        &base,
+        r#"
+namespace = "game.items"
+imports = { common = "game.common" }
+
+[tables.Item]
+id = "game.items.item"
+mode = "map"
+key = "id"
+
+[tables.Item.fields]
+id = "string"
+"#,
+    );
+
+    let schema = load_studio_schema(&project).schema.unwrap();
+    assert!(
+        schema
+            .nodes
+            .iter()
+            .any(|node| node.name == "game.items.Item")
+    );
+    write_studio_schema(&project, &schema).unwrap();
+
+    let rendered = fs::read_to_string(base.join("schema/items.toml")).unwrap();
+    assert!(
+        rendered.contains("namespace = \"game.items\""),
+        "{rendered}"
+    );
+    assert!(rendered.contains("common = \"game.common\""), "{rendered}");
+    assert!(rendered.contains("[tables.Item]"), "{rendered}");
+    assert!(
+        !rendered.contains("tables.\"game.items.Item\""),
+        "{rendered}"
+    );
+    assert!(load_studio_schema(&project).ok);
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
 fn returns_partial_graph_for_validation_error() {
     let base = temp_dir();
     let project = write_project(
@@ -152,6 +196,8 @@ fn renders_editable_table_and_field_settings() {
             }),
         )]),
         sources: vec!["schema/items.toml".to_owned()],
+        module_namespaces: std::collections::BTreeMap::new(),
+        module_imports: std::collections::BTreeMap::new(),
         summary: StudioSummary {
             enums: 0,
             structs: 0,
@@ -255,6 +301,8 @@ fn does_not_render_key_for_non_map_table() {
             }),
         )]),
         sources: vec!["schema/items.toml".to_owned()],
+        module_namespaces: std::collections::BTreeMap::new(),
+        module_imports: std::collections::BTreeMap::new(),
         summary: StudioSummary {
             enums: 0,
             structs: 0,

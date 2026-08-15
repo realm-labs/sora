@@ -17,6 +17,10 @@ Sora derives common name forms from each schema name before language generation:
 
 Language generators choose from these forms and may apply additional language-specific sanitization for invalid identifiers or reserved words.
 
+Qualified schema names are projected as namespaces where the target has a stable module boundary. For example, `game.items.Item` becomes `game/items/item.rs` plus Rust modules, `Game.Items.Item` under the configured C# root namespace, and `game/items/item.ts` with ESM namespace barrels. Godot uses namespace directories and a globally unique `class_name` such as `GameItemsItem` because GDScript classes share a global registry.
+
+Targets whose generated runtime is intentionally a single package or translation unit encode the complete qualified name into a collision-free symbol instead: `game.items.Item` becomes `GameItemsItem` or `game_items_item` according to that language. C, C++, Go, Java, Kotlin, Scala, Dart, Python, Lua, Erlang, and protobuf currently use this representation. This keeps two declarations such as `items.Entry` and `quests.Entry` distinct without relying on source-file order.
+
 ## Language Conventions
 
 The built-in generators follow the target language's normal public API style:
@@ -45,7 +49,7 @@ This table describes generated code identifiers, not runtime data names.
 
 The following values keep the original schema spelling:
 
-- table names in bundles and table metadata;
+- canonical qualified table names in bundles and table metadata;
 - field names read from runtime rows;
 - enum string values;
 - union variant tag values;

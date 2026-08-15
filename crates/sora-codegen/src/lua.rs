@@ -10,7 +10,7 @@ use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseEnumValue, BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable,
-        BaseUnion, BaseUnionVariant, build_base_model,
+        BaseUnion, BaseUnionVariant, build_base_model, schema_flat_pascal_name,
     },
     options::{LuaCodegenOptions, LuaEnumRepr, LuaVersion},
     render::{ensure_dir, render_template, write_file},
@@ -203,7 +203,7 @@ impl LuaModel {
             .enums
             .into_iter()
             .map(|item| LuaEnum {
-                name: item.pascal_name,
+                name: item.qualified_pascal_name,
                 comment: item.comment,
                 values: item.values,
             })
@@ -219,7 +219,7 @@ impl LuaModel {
             .map(|item| {
                 let table = tables
                     .iter()
-                    .find(|table| table.row_type == item.pascal_name)
+                    .find(|table| table.row_type == item.qualified_pascal_name)
                     .cloned();
                 lua_record(ir, item, options, table, mapper)
             })
@@ -259,8 +259,8 @@ fn lua_union(
     mapper: &LuaTypeMapper<'_>,
 ) -> LuaUnion {
     LuaUnion {
-        pascal_name: union.pascal_name,
-        snake_name: union.snake_name,
+        pascal_name: union.qualified_pascal_name,
+        snake_name: union.qualified_snake_name,
         tag: union.tag,
         variants: union
             .variants
@@ -300,8 +300,8 @@ fn lua_record(
     mapper: &LuaTypeMapper<'_>,
 ) -> LuaRecord {
     LuaRecord {
-        pascal_name: record.pascal_name,
-        snake_name: record.snake_name,
+        pascal_name: record.qualified_pascal_name,
+        snake_name: record.qualified_snake_name,
         imports: record.imports.into_iter().map(lua_import).collect(),
         fields: record
             .fields
@@ -318,7 +318,7 @@ fn lua_table(
     options: &LuaOptionsView,
     mapper: &LuaTypeMapper<'_>,
 ) -> LuaTable {
-    let row_type = table.pascal_name.clone();
+    let row_type = table.qualified_pascal_name.clone();
     let key_type = table
         .key_field
         .as_ref()
@@ -330,8 +330,8 @@ fn lua_table(
 
     LuaTable {
         name: table.name,
-        pascal_name: table.pascal_name,
-        snake_name: table.snake_name,
+        pascal_name: table.qualified_pascal_name,
+        snake_name: table.qualified_snake_name,
         mode: table.mode_name,
         row_type,
         key_name: table.key_name,
@@ -389,8 +389,8 @@ fn lua_field(
 
 fn lua_import(import: BaseImport) -> LuaImport {
     LuaImport {
-        module: import.module,
-        name: import.name,
+        module: import.absolute_module.replace('/', "_"),
+        name: schema_flat_pascal_name(&import.absolute_module.replace('/', ".")),
     }
 }
 
@@ -423,7 +423,9 @@ impl<'a> LuaTypeMapper<'a> {
             TypeIr::F32 | TypeIr::F64 => "number".to_owned(),
             TypeIr::String => "string".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
-            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+                schema_flat_pascal_name(name)
+            }
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
                 format!("{}[]", self.type_name(element, options))
             }
@@ -473,9 +475,10 @@ fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &LuaTypeMapper<'_>) -> St
         TypeIr::F64 => "reader:read_f64()".to_owned(),
         TypeIr::String => "reader:read_string()".to_owned(),
         TypeIr::Text => "Runtime.new_text_key(reader:read_string())".to_owned(),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            mapper.wrap_decode(ty, format!("{name}.decode(reader)"))
-        }
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper.wrap_decode(
+            ty,
+            format!("{}.decode(reader)", schema_flat_pascal_name(name)),
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader:read_list(function() return {} end)",
@@ -519,9 +522,11 @@ fn lua_value_decode_expr(
         TypeIr::F32 | TypeIr::F64 => format!("Runtime.expect_number({value})"),
         TypeIr::String => format!("Runtime.expect_string({value})"),
         TypeIr::Text => format!("Runtime.new_text_key(Runtime.expect_string({value}))"),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            mapper.wrap_value_decode(ty, format!("{name}.decode_value({value})"))
-        }
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => mapper
+            .wrap_value_decode(
+                ty,
+                format!("{}.decode_value({value})", schema_flat_pascal_name(name)),
+            ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "Runtime.decode_value_list({value}, function(item) return {} end)",
@@ -591,7 +596,10 @@ fn lua_collect_text_keys(
             }
         }
         TypeIr::Struct(name) | TypeIr::Union(name) => {
-            format!("{name}.collect_text_keys({value}, out)")
+            format!(
+                "{}.collect_text_keys({value}, out)",
+                schema_flat_pascal_name(name)
+            )
         }
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
             .map(|ty| lua_collect_text_keys(ir, ty, value, mapper))

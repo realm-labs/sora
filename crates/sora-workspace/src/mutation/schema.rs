@@ -1460,6 +1460,8 @@ mod tests {
             groups: std::collections::BTreeMap::from([("common".to_owned(), true)]),
             views: std::collections::BTreeMap::new(),
             sources: vec!["schema.toml".to_owned()],
+            module_namespaces: std::collections::BTreeMap::new(),
+            module_imports: std::collections::BTreeMap::new(),
             summary: StudioSummary {
                 enums: 0,
                 structs: 0,

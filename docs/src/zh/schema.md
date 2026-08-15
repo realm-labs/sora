@@ -11,6 +11,29 @@ includes = ["schema/items.scon", "schema/skills.scon"]
 
 声明名只存在于 key，body 内不再重复 `name`；未知属性会被拒绝。
 
+## 命名空间与导入
+
+每个 module 可以声明逻辑命名空间，并为其他命名空间声明别名：
+
+```scon
+namespace = "game.items"
+imports {
+  common = "game.common"
+}
+
+structs {
+  Drop {
+    fields {
+      reward = "struct<common.Reward>"
+    }
+  }
+}
+```
+
+源文件中的声明仍写本地名；上面的 `Drop` 的规范名称是 `game.items.Drop`。`struct<Cost>` 这类无前缀引用解析到当前命名空间，`common.Reward` 先通过 `imports` 展开，其他带点名称按项目绝对限定名处理。`ref<items.Item.id>` 把最后一段当字段名，前面的全部内容当表名。
+
+namespace、import alias 和声明名的每一段都必须是 ASCII 标识符。空 namespace 表示项目根命名空间。校验、schema lock、fingerprint、bundle 和运行时 table 查找统一使用规范限定名。
+
 ```scon
 enums {
   ItemType = ["Weapon", "Armor", "Material"]

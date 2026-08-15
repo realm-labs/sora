@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, path::Path};
 
-use heck::{ToShoutySnakeCase, ToSnakeCase};
+use heck::ToShoutySnakeCase;
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
@@ -10,7 +10,7 @@ use crate::{
     generator::{CodeGenerator, CodegenContext, ensure_sora_runtime_format},
     model::{
         BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
-        BaseUnionVariant, build_base_model,
+        BaseUnionVariant, build_base_model, schema_flat_snake_name,
     },
     options::{CCodegenOptions, CStandard},
     render::{ensure_dir, render_template, write_file},
@@ -264,26 +264,29 @@ impl CModel {
         let enums = model
             .enums
             .into_iter()
-            .map(|item| CEnum {
-                type_name: c_named_type(options, &item.snake_name),
-                decode_fn: c_decode_fn(options, &item.snake_name),
-                name: item.pascal_name,
-                snake_name: item.snake_name.clone(),
-                comment: item.comment,
-                values: item
-                    .values
-                    .into_iter()
-                    .map(|value| CEnumValue {
-                        name: format!(
-                            "{}_{}_{}",
-                            options.prefix_upper,
-                            item.snake_name.to_shouty_snake_case(),
-                            value.name.to_shouty_snake_case()
-                        ),
-                        id: value.id,
-                        comment: value.comment,
-                    })
-                    .collect(),
+            .map(|item| {
+                let snake_name = item.qualified_snake_name;
+                CEnum {
+                    type_name: c_named_type(options, &snake_name),
+                    decode_fn: c_decode_fn(options, &snake_name),
+                    name: item.qualified_pascal_name,
+                    snake_name: snake_name.clone(),
+                    comment: item.comment,
+                    values: item
+                        .values
+                        .into_iter()
+                        .map(|value| CEnumValue {
+                            name: format!(
+                                "{}_{}_{}",
+                                options.prefix_upper,
+                                snake_name.to_shouty_snake_case(),
+                                value.name.to_shouty_snake_case()
+                            ),
+                            id: value.id,
+                            comment: value.comment,
+                        })
+                        .collect(),
+                }
             })
             .collect();
         let tables = model
@@ -297,7 +300,7 @@ impl CModel {
             .map(|item| {
                 let table = tables
                     .iter()
-                    .find(|table| table.snake_name == item.snake_name)
+                    .find(|table| table.snake_name == item.qualified_snake_name)
                     .cloned();
                 c_record(ir, item, mapper, helpers, table)
             })
@@ -315,7 +318,11 @@ impl CModel {
             unions,
             records,
             tables,
-            modules: model.modules,
+            modules: model
+                .modules
+                .into_iter()
+                .map(|module| module.replace('/', "_"))
+                .collect(),
             custom_imports,
         }
     }
@@ -328,6 +335,7 @@ fn c_record(
     helpers: &mut CHelperRegistry,
     table: Option<CTable>,
 ) -> CRecord {
+    let snake_name = record.qualified_snake_name;
     let fields = record
         .fields
         .into_iter()
@@ -335,11 +343,11 @@ fn c_record(
         .collect::<Vec<_>>();
     let custom_imports = collect_c_imports(fields.iter());
     CRecord {
-        pascal_name: record.pascal_name,
-        type_name: c_named_type(mapper.options, &record.snake_name),
-        decode_fn: c_decode_fn(mapper.options, &record.snake_name),
-        free_fn: c_free_fn(mapper.options, &record.snake_name),
-        snake_name: record.snake_name,
+        pascal_name: record.qualified_pascal_name,
+        type_name: c_named_type(mapper.options, &snake_name),
+        decode_fn: c_decode_fn(mapper.options, &snake_name),
+        free_fn: c_free_fn(mapper.options, &snake_name),
+        snake_name,
         imports: record.imports.into_iter().map(c_import).collect(),
         custom_imports,
         fields,
@@ -353,7 +361,7 @@ fn c_union(
     mapper: &CTypeMapper<'_>,
     helpers: &mut CHelperRegistry,
 ) -> CUnion {
-    let snake_name = union.snake_name;
+    let snake_name = union.qualified_snake_name;
     let variants = union
         .variants
         .into_iter()
@@ -361,7 +369,7 @@ fn c_union(
         .collect::<Vec<_>>();
     let custom_imports = collect_c_imports(variants.iter().flat_map(|variant| &variant.fields));
     CUnion {
-        pascal_name: union.pascal_name,
+        pascal_name: union.qualified_pascal_name,
         type_name: c_named_type(mapper.options, &snake_name),
         tag_type_name: format!("{}_tag", c_named_type(mapper.options, &snake_name)),
         decode_fn: c_decode_fn(mapper.options, &snake_name),
@@ -462,7 +470,7 @@ fn collect_c_model_imports(records: &[CRecord], unions: &[CUnion]) -> Vec<String
 
 fn c_import(import: BaseImport) -> CImport {
     CImport {
-        module: import.module,
+        module: import.absolute_module.replace('/', "_"),
     }
 }
 
@@ -472,6 +480,7 @@ fn c_table(
     mapper: &CTypeMapper<'_>,
     helpers: &mut CHelperRegistry,
 ) -> CTable {
+    let snake_name = table.qualified_snake_name.clone();
     let key_type = table
         .key_field
         .as_ref()
@@ -487,13 +496,13 @@ fn c_table(
 
     CTable {
         name: table.name,
-        table_type: format!("{}_{}_table", mapper.options.prefix, table.snake_name),
-        table_load_fn: format!("{}_{}_table_load", mapper.options.prefix, table.snake_name),
-        table_free_fn: format!("{}_{}_table_free", mapper.options.prefix, table.snake_name),
-        row_type: c_named_type(mapper.options, &table.snake_name),
+        table_type: format!("{}_{}_table", mapper.options.prefix, snake_name),
+        table_load_fn: format!("{}_{}_table_load", mapper.options.prefix, snake_name),
+        table_free_fn: format!("{}_{}_table_free", mapper.options.prefix, snake_name),
+        row_type: c_named_type(mapper.options, &snake_name),
         mode: table.mode_name,
-        rows_field: format!("{}_rows", table.snake_name),
-        len_field: format!("{}_len", table.snake_name),
+        rows_field: format!("{}_rows", snake_name),
+        len_field: format!("{}_len", snake_name),
         key_field_name: table
             .key_field
             .as_ref()
@@ -511,7 +520,7 @@ fn c_table(
             .into_iter()
             .map(|index| c_index(ir, index, mapper, helpers))
             .collect(),
-        snake_name: table.snake_name,
+        snake_name,
     }
 }
 
@@ -880,7 +889,7 @@ fn c_type_name(
         TypeIr::String => "sora_string".to_owned(),
         TypeIr::Text => "sora_text_key".to_owned(),
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
-            c_named_type(mapper.options, &name.to_snake_case())
+            c_named_type(mapper.options, &schema_flat_snake_name(name))
         }
         TypeIr::List(element) | TypeIr::Set(element) => {
             helpers.ensure_collection(ir, element, None, mapper)
@@ -910,7 +919,9 @@ fn c_type_suffix(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F64 => "f64".to_owned(),
         TypeIr::String => "string".to_owned(),
         TypeIr::Text => "text".to_owned(),
-        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.to_snake_case(),
+        TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+            schema_flat_snake_name(name)
+        }
         TypeIr::List(element) | TypeIr::Set(element) => {
             format!("{}_array", c_type_suffix(ir, element))
         }
@@ -941,7 +952,7 @@ fn c_decode_into(
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
                 format!(
                     "{}(reader, {target})",
-                    c_decode_fn(mapper.options, &name.to_snake_case())
+                    c_decode_fn(mapper.options, &schema_flat_snake_name(name))
                 )
             }
             _ => String::new(),
@@ -967,7 +978,7 @@ fn c_decode_into(
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             format!(
                 "{}(reader, {target})",
-                c_decode_fn(mapper.options, &name.to_snake_case())
+                c_decode_fn(mapper.options, &schema_flat_snake_name(name))
             )
         }
         TypeIr::List(_)
@@ -1000,7 +1011,7 @@ fn c_free_into(
         TypeIr::Text => Some(format!("sora_text_key_free({target});")),
         TypeIr::Struct(name) | TypeIr::Union(name) => Some(format!(
             "{}({target});",
-            c_free_fn(mapper.options, &name.to_snake_case())
+            c_free_fn(mapper.options, &schema_flat_snake_name(name))
         )),
         TypeIr::List(_)
         | TypeIr::Set(_)

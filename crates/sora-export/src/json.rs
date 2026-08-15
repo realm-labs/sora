@@ -67,7 +67,7 @@ mod tests {
 
         let value: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
         assert_eq!(value["format"], "json");
-        assert_eq!(value["format_version"], 2);
+        assert_eq!(value["format_version"], 3);
         assert!(value["schema_fingerprint"].as_str().unwrap().len() > 8);
         assert!(value["data_fingerprint"].as_str().unwrap().len() > 8);
         assert_eq!(value["schema"]["project_id"], "game_config");

@@ -16,6 +16,12 @@ pub struct BaseModel {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BaseEnum {
+    pub qualified_name: String,
+    pub namespace: String,
+    pub namespace_path: String,
+    pub module_path: String,
+    pub qualified_pascal_name: String,
+    pub qualified_snake_name: String,
     pub name: String,
     pub pascal_name: String,
     pub snake_name: String,
@@ -32,6 +38,12 @@ pub struct BaseEnumValue {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BaseUnion {
+    pub qualified_name: String,
+    pub namespace: String,
+    pub namespace_path: String,
+    pub module_path: String,
+    pub qualified_pascal_name: String,
+    pub qualified_snake_name: String,
     pub name: String,
     pub pascal_name: String,
     pub snake_name: String,
@@ -50,6 +62,13 @@ pub struct BaseUnionVariant {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BaseRecord {
+    pub qualified_name: String,
+    pub namespace: String,
+    pub namespace_path: String,
+    pub module_path: String,
+    pub qualified_pascal_name: String,
+    pub qualified_snake_name: String,
+    pub qualified_camel_name: String,
     pub name: String,
     pub pascal_name: String,
     pub snake_name: String,
@@ -61,12 +80,20 @@ pub struct BaseRecord {
 #[derive(Debug, Clone, Serialize)]
 pub struct BaseImport {
     pub module: String,
+    pub absolute_module: String,
     pub name: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BaseTable {
     pub name: String,
+    pub local_name: String,
+    pub namespace: String,
+    pub namespace_path: String,
+    pub module_path: String,
+    pub qualified_pascal_name: String,
+    pub qualified_snake_name: String,
+    pub qualified_camel_name: String,
     pub pascal_name: String,
     pub camel_name: String,
     pub snake_name: String,
@@ -102,20 +129,29 @@ pub fn build_base_model(ir: &ConfigIr) -> Result<BaseModel> {
     let enums = ir
         .enums
         .iter()
-        .map(|item| BaseEnum {
-            name: item.name.clone(),
-            pascal_name: item.name.to_pascal_case(),
-            snake_name: item.name.to_snake_case(),
-            comment: item.comment.clone(),
-            values: item
-                .values
-                .iter()
-                .map(|value| BaseEnumValue {
-                    id: value.id,
-                    name: value.name.clone(),
-                    comment: value.comment.clone(),
-                })
-                .collect(),
+        .map(|item| {
+            let parts = SchemaNameParts::new(&item.name);
+            BaseEnum {
+                qualified_name: item.name.clone(),
+                namespace: parts.namespace,
+                namespace_path: parts.namespace_path,
+                module_path: parts.module_path,
+                qualified_pascal_name: schema_flat_pascal_name(&item.name),
+                qualified_snake_name: schema_flat_snake_name(&item.name),
+                name: parts.local.clone(),
+                pascal_name: parts.local.to_pascal_case(),
+                snake_name: parts.local.to_snake_case(),
+                comment: item.comment.clone(),
+                values: item
+                    .values
+                    .iter()
+                    .map(|value| BaseEnumValue {
+                        id: value.id,
+                        name: value.name.clone(),
+                        comment: value.comment.clone(),
+                    })
+                    .collect(),
+            }
         })
         .collect::<Vec<_>>();
 
@@ -148,9 +184,9 @@ pub fn build_base_model(ir: &ConfigIr) -> Result<BaseModel> {
 
     let modules = enums
         .iter()
-        .map(|item| item.snake_name.clone())
-        .chain(records.iter().map(|item| item.snake_name.clone()))
-        .chain(unions.iter().map(|item| item.snake_name.clone()))
+        .map(|item| item.module_path.clone())
+        .chain(records.iter().map(|item| item.module_path.clone()))
+        .chain(unions.iter().map(|item| item.module_path.clone()))
         .collect();
 
     Ok(BaseModel {
@@ -192,9 +228,15 @@ fn build_base_union(ir: &ConfigIr, item: &sora_ir::model::UnionIr) -> Result<Bas
     imports.dedup_by(|a, b| a.module == b.module && a.name == b.name);
 
     Ok(BaseUnion {
-        name: item.name.clone(),
-        pascal_name: item.name.to_pascal_case(),
-        snake_name: item.name.to_snake_case(),
+        qualified_name: item.name.clone(),
+        namespace: schema_namespace(&item.name).to_owned(),
+        namespace_path: schema_namespace_path(&item.name),
+        module_path: schema_module_path(&item.name),
+        qualified_pascal_name: schema_flat_pascal_name(&item.name),
+        qualified_snake_name: schema_flat_snake_name(&item.name),
+        name: schema_local_name(&item.name).to_owned(),
+        pascal_name: schema_local_name(&item.name).to_pascal_case(),
+        snake_name: schema_local_name(&item.name).to_snake_case(),
         tag: item.tag.clone(),
         variants,
         imports,
@@ -202,20 +244,29 @@ fn build_base_union(ir: &ConfigIr, item: &sora_ir::model::UnionIr) -> Result<Bas
 }
 
 fn build_base_record(ir: &ConfigIr, item: &TableLike<'_>) -> Result<BaseRecord> {
+    let parts = SchemaNameParts::new(item.name);
     let fields = item.fields.iter().map(build_base_field).collect::<Vec<_>>();
     let imports = build_imports(ir, item);
 
     Ok(BaseRecord {
-        name: item.name.to_owned(),
-        pascal_name: item.name.to_pascal_case(),
-        snake_name: item.name.to_snake_case(),
-        camel_name: item.name.to_lower_camel_case(),
+        qualified_name: item.name.to_owned(),
+        namespace: parts.namespace,
+        namespace_path: parts.namespace_path,
+        module_path: parts.module_path,
+        qualified_pascal_name: schema_flat_pascal_name(item.name),
+        qualified_snake_name: schema_flat_snake_name(item.name),
+        qualified_camel_name: schema_flat_pascal_name(item.name).to_lower_camel_case(),
+        name: parts.local.clone(),
+        pascal_name: parts.local.to_pascal_case(),
+        snake_name: parts.local.to_snake_case(),
+        camel_name: parts.local.to_lower_camel_case(),
         imports,
         fields,
     })
 }
 
 fn build_base_table(table: &TableIr) -> BaseTable {
+    let parts = SchemaNameParts::new(&table.name);
     let key_field = table.key.as_ref().and_then(|key| {
         table
             .fields
@@ -238,9 +289,16 @@ fn build_base_table(table: &TableIr) -> BaseTable {
 
     BaseTable {
         name: table.name.clone(),
-        pascal_name: table.name.to_pascal_case(),
-        camel_name: table.name.to_lower_camel_case(),
-        snake_name: table.name.to_snake_case(),
+        local_name: parts.local.clone(),
+        namespace: parts.namespace,
+        namespace_path: parts.namespace_path,
+        module_path: parts.module_path,
+        qualified_pascal_name: schema_flat_pascal_name(&table.name),
+        qualified_snake_name: schema_flat_snake_name(&table.name),
+        qualified_camel_name: schema_flat_pascal_name(&table.name).to_lower_camel_case(),
+        pascal_name: parts.local.to_pascal_case(),
+        camel_name: parts.local.to_lower_camel_case(),
+        snake_name: parts.local.to_snake_case(),
         mode: table.mode,
         mode_name: table_mode_name(table.mode),
         key_name: table.key.clone(),
@@ -343,9 +401,86 @@ fn push_named_import(owner_name: &str, name: &str, imports: &mut Vec<BaseImport>
         return;
     }
     imports.push(BaseImport {
-        module: name.to_snake_case(),
-        name: name.to_pascal_case(),
+        module: relative_schema_module_path(owner_name, name),
+        absolute_module: schema_module_path(name),
+        name: schema_local_name(name).to_pascal_case(),
     });
+}
+
+pub fn schema_local_name(name: &str) -> &str {
+    name.rsplit('.').next().unwrap_or(name)
+}
+
+pub fn schema_namespace(name: &str) -> &str {
+    name.rsplit_once('.').map_or("", |(namespace, _)| namespace)
+}
+
+pub fn schema_namespace_path(name: &str) -> String {
+    schema_namespace(name)
+        .split('.')
+        .filter(|segment| !segment.is_empty())
+        .map(ToSnakeCase::to_snake_case)
+        .collect::<Vec<_>>()
+        .join("/")
+}
+
+pub fn schema_module_path(name: &str) -> String {
+    let namespace = schema_namespace_path(name);
+    let module = schema_local_name(name).to_snake_case();
+    if namespace.is_empty() {
+        module
+    } else {
+        format!("{namespace}/{module}")
+    }
+}
+
+pub fn schema_flat_pascal_name(name: &str) -> String {
+    name.split('.')
+        .map(ToPascalCase::to_pascal_case)
+        .collect::<String>()
+}
+
+pub fn schema_flat_snake_name(name: &str) -> String {
+    name.split('.')
+        .map(ToSnakeCase::to_snake_case)
+        .collect::<Vec<_>>()
+        .join("_")
+}
+
+fn relative_schema_module_path(owner: &str, target: &str) -> String {
+    let owner_namespace = schema_namespace_path(owner);
+    let target_module = schema_module_path(target);
+    let owner_segments = owner_namespace
+        .split('/')
+        .filter(|segment| !segment.is_empty())
+        .collect::<Vec<_>>();
+    let target_segments = target_module.split('/').collect::<Vec<_>>();
+    let shared = owner_segments
+        .iter()
+        .zip(&target_segments)
+        .take_while(|(left, right)| left == right)
+        .count();
+    let mut parts = vec![".."; owner_segments.len().saturating_sub(shared)];
+    parts.extend_from_slice(&target_segments[shared..]);
+    parts.join("/")
+}
+
+struct SchemaNameParts {
+    local: String,
+    namespace: String,
+    namespace_path: String,
+    module_path: String,
+}
+
+impl SchemaNameParts {
+    fn new(name: &str) -> Self {
+        Self {
+            local: schema_local_name(name).to_owned(),
+            namespace: schema_namespace(name).to_owned(),
+            namespace_path: schema_namespace_path(name),
+            module_path: schema_module_path(name),
+        }
+    }
 }
 
 struct TableLike<'a> {

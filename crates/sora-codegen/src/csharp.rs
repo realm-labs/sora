@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use heck::ToLowerCamelCase;
+use heck::{ToLowerCamelCase, ToPascalCase};
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::Result;
@@ -10,7 +10,7 @@ use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
     model::{
         BaseEnumValue, BaseField, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
-        BaseUnionVariant, build_base_model,
+        BaseUnionVariant, build_base_model, schema_local_name, schema_namespace,
     },
     options::{CSharpCodegenOptions, RuntimeFormat, required_binding},
     render::{ensure_dir, render_template, write_file},
@@ -25,39 +25,38 @@ impl CodeGenerator for CSharpCodeGenerator {
         let ir = context.ir;
         let options = context.options::<CSharpCodegenOptions>()?;
         ensure_dir(out_dir)?;
-        let mapper = CSharpTypeMapper::new(context.target, ir, context.type_mappings);
+        let root_namespace = required_binding("csharp", "namespace", options.namespace)?;
+        let mapper =
+            CSharpTypeMapper::new(context.target, ir, context.type_mappings, &root_namespace);
         let mut model = CSharpModel::from_base_model(ir, build_base_model(ir)?, &mapper);
-        model.package = required_binding("csharp", "namespace", options.namespace)?;
+        model.package = root_namespace.clone();
         let runtime_format = runtime_format_name(options.runtime_format);
 
         for item in &model.enums {
             let rendered = render_template(
                 "csharp",
                 "enum.cs.j2",
-                context! { namespace => &model.package, enum => item, runtime_format => runtime_format },
+                context! { namespace => &item.namespace, root_namespace => &root_namespace, enum => item, runtime_format => runtime_format },
             )?;
-            write_file(&out_dir.join(format!("{}.cs", item.name)), rendered)?;
+            write_file(&out_dir.join(&item.file_path), rendered)?;
         }
 
         for record in &model.records {
             let rendered = render_template(
                 "csharp",
                 "record.cs.j2",
-                context! { namespace => &model.package, record => record, runtime_format => runtime_format },
+                context! { namespace => &record.namespace, root_namespace => &root_namespace, record => record, runtime_format => runtime_format },
             )?;
-            write_file(
-                &out_dir.join(format!("{}.cs", record.pascal_name)),
-                rendered,
-            )?;
+            write_file(&out_dir.join(&record.file_path), rendered)?;
         }
 
         for union in &model.unions {
             let rendered = render_template(
                 "csharp",
                 "union.cs.j2",
-                context! { namespace => &model.package, union => union, runtime_format => runtime_format },
+                context! { namespace => &union.namespace, root_namespace => &root_namespace, union => union, runtime_format => runtime_format },
             )?;
-            write_file(&out_dir.join(format!("{}.cs", union.pascal_name)), rendered)?;
+            write_file(&out_dir.join(&union.file_path), rendered)?;
         }
 
         let rendered = render_template(
@@ -99,6 +98,8 @@ struct CSharpModel {
 #[derive(Debug, Clone, Serialize)]
 struct CSharpEnum {
     name: String,
+    namespace: String,
+    file_path: String,
     comment: Option<String>,
     values: Vec<BaseEnumValue>,
 }
@@ -106,6 +107,8 @@ struct CSharpEnum {
 #[derive(Debug, Clone, Serialize)]
 struct CSharpUnion {
     pascal_name: String,
+    namespace: String,
+    file_path: String,
     tag: String,
     variants: Vec<CSharpUnionVariant>,
     imports: Vec<String>,
@@ -121,6 +124,8 @@ struct CSharpUnionVariant {
 #[derive(Debug, Clone, Serialize)]
 struct CSharpRecord {
     pascal_name: String,
+    namespace: String,
+    file_path: String,
     imports: Vec<String>,
     fields: Vec<CSharpField>,
     has_text_keys: bool,
@@ -130,7 +135,10 @@ struct CSharpRecord {
 #[derive(Debug, Clone, Serialize)]
 struct CSharpTable {
     name: String,
+    module_path: String,
     pascal_name: String,
+    accessor_name: String,
+    table_type: String,
     mode: String,
     container_type: String,
     row_type: String,
@@ -177,6 +185,8 @@ impl CSharpModel {
                 .into_iter()
                 .map(|item| CSharpEnum {
                     name: item.pascal_name,
+                    namespace: csharp_namespace(&mapper.root_namespace, &item.namespace),
+                    file_path: namespaced_output_path(&item.namespace_path, &item.name, "cs"),
                     comment: item.comment,
                     values: item.values,
                 })
@@ -192,7 +202,7 @@ impl CSharpModel {
                 .map(|item| {
                     let table = tables
                         .iter()
-                        .find(|table| table.row_type == item.pascal_name)
+                        .find(|table| table.module_path == item.module_path)
                         .cloned();
                     csharp_record(ir, item, table, mapper)
                 })
@@ -218,6 +228,8 @@ impl CSharpModel {
 }
 
 fn csharp_union(ir: &ConfigIr, union: BaseUnion, mapper: &CSharpTypeMapper<'_>) -> CSharpUnion {
+    let namespace = csharp_namespace(&mapper.root_namespace, &union.namespace);
+    let file_path = namespaced_output_path(&union.namespace_path, &union.pascal_name, "cs");
     let variants = union
         .variants
         .into_iter()
@@ -226,6 +238,8 @@ fn csharp_union(ir: &ConfigIr, union: BaseUnion, mapper: &CSharpTypeMapper<'_>) 
     let imports = collect_csharp_imports(variants.iter().flat_map(|variant| &variant.fields));
     CSharpUnion {
         pascal_name: union.pascal_name,
+        namespace,
+        file_path,
         tag: union.tag,
         variants,
         imports,
@@ -258,6 +272,8 @@ fn csharp_record(
     table: Option<CSharpTable>,
     mapper: &CSharpTypeMapper<'_>,
 ) -> CSharpRecord {
+    let namespace = csharp_namespace(&mapper.root_namespace, &record.namespace);
+    let file_path = namespaced_output_path(&record.namespace_path, &record.pascal_name, "cs");
     let fields = record
         .fields
         .into_iter()
@@ -269,6 +285,8 @@ fn csharp_record(
     let imports = collect_csharp_imports(fields.iter());
     CSharpRecord {
         pascal_name: record.pascal_name,
+        namespace,
+        file_path,
         imports,
         fields,
         has_text_keys,
@@ -278,6 +296,8 @@ fn csharp_record(
 
 fn csharp_table(ir: &ConfigIr, table: BaseTable, mapper: &CSharpTypeMapper<'_>) -> CSharpTable {
     let row_type = table.pascal_name.clone();
+    let table_type = format!("{}Table", mapper.named_type(&table.name));
+    let accessor_name = table.name.replace('.', "_").to_pascal_case();
     let key_type = table
         .key_field
         .as_ref()
@@ -290,7 +310,10 @@ fn csharp_table(ir: &ConfigIr, table: BaseTable, mapper: &CSharpTypeMapper<'_>) 
 
     CSharpTable {
         name: table.name,
+        module_path: table.module_path,
         pascal_name: table.pascal_name,
+        accessor_name,
+        table_type,
         mode: table.mode_name,
         container_type,
         row_type,
@@ -350,6 +373,26 @@ fn collect_csharp_imports<'a>(fields: impl Iterator<Item = &'a CSharpField>) -> 
     imports
 }
 
+fn csharp_namespace(root: &str, namespace: &str) -> String {
+    if namespace.is_empty() {
+        return root.to_owned();
+    }
+    let suffix = namespace
+        .split('.')
+        .map(ToPascalCase::to_pascal_case)
+        .collect::<Vec<_>>()
+        .join(".");
+    format!("{root}.{suffix}")
+}
+
+fn namespaced_output_path(namespace_path: &str, name: &str, extension: &str) -> String {
+    if namespace_path.is_empty() {
+        format!("{name}.{extension}")
+    } else {
+        format!("{namespace_path}/{name}.{extension}")
+    }
+}
+
 fn csharp_container_type(mode: TableModeIr, row_type: &str, key_type: Option<&str>) -> String {
     match mode {
         TableModeIr::List => format!("List<{row_type}>"),
@@ -365,15 +408,33 @@ struct CSharpTypeMapper<'a> {
     target: &'a str,
     ir: &'a ConfigIr,
     mappings: &'a TypeMappingRegistry,
+    root_namespace: String,
 }
 
 impl<'a> CSharpTypeMapper<'a> {
-    fn new(target: &'a str, ir: &'a ConfigIr, mappings: &'a TypeMappingRegistry) -> Self {
+    fn new(
+        target: &'a str,
+        ir: &'a ConfigIr,
+        mappings: &'a TypeMappingRegistry,
+        root_namespace: &str,
+    ) -> Self {
         Self {
             target,
             ir,
             mappings,
+            root_namespace: root_namespace.to_owned(),
         }
+    }
+
+    fn named_type(&self, name: &str) -> String {
+        if schema_namespace(name).is_empty() {
+            return schema_local_name(name).to_owned();
+        }
+        format!(
+            "global::{}.{}",
+            csharp_namespace(&self.root_namespace, schema_namespace(name)),
+            schema_local_name(name)
+        )
     }
 
     fn type_name(&self, ty: &TypeIr) -> String {
@@ -396,7 +457,9 @@ impl<'a> CSharpTypeMapper<'a> {
             TypeIr::F64 => "double".to_owned(),
             TypeIr::String => "string".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
-            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => name.clone(),
+            TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
+                self.named_type(name)
+            }
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
                 format!("IReadOnlyList<{}>", self.type_name(element))
             }
@@ -490,9 +553,12 @@ fn csharp_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &CSharpTypeMapper<'_>)
         TypeIr::F64 => "reader.ReadDouble()".to_owned(),
         TypeIr::String => "reader.ReadString()".to_owned(),
         TypeIr::Text => "new TextKey(reader.ReadString())".to_owned(),
-        TypeIr::Enum(name) => mapper.wrap_decode(ty, format!("{name}Codec.Decode(reader)")),
+        TypeIr::Enum(name) => mapper.wrap_decode(
+            ty,
+            format!("{}Codec.Decode(reader)", mapper.named_type(name)),
+        ),
         TypeIr::Struct(name) | TypeIr::Union(name) => {
-            mapper.wrap_decode(ty, format!("{name}.Decode(reader)"))
+            mapper.wrap_decode(ty, format!("{}.Decode(reader)", mapper.named_type(name)))
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
@@ -551,9 +617,12 @@ fn csharp_value_decode_expr(
         TypeIr::F64 => format!("{value}.AsDouble()"),
         TypeIr::String => format!("{value}.AsString()"),
         TypeIr::Text => format!("new TextKey({value}.AsString())"),
-        TypeIr::Enum(name) => mapper.wrap_value_decode(ty, format!("{name}Codec.Decode({value})")),
+        TypeIr::Enum(name) => mapper.wrap_value_decode(
+            ty,
+            format!("{}Codec.Decode({value})", mapper.named_type(name)),
+        ),
         TypeIr::Struct(name) | TypeIr::Union(name) => {
-            mapper.wrap_value_decode(ty, format!("{name}.Decode({value})"))
+            mapper.wrap_value_decode(ty, format!("{}.Decode({value})", mapper.named_type(name)))
         }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
@@ -638,7 +707,10 @@ fn csharp_collect_text_keys(
             }
         }
         TypeIr::Struct(_) => format!("{pad}{value}.CollectTextKeys(keys);"),
-        TypeIr::Union(name) => format!("{pad}{name}.CollectTextKeys({value}, keys);"),
+        TypeIr::Union(name) => format!(
+            "{pad}{}.CollectTextKeys({value}, keys);",
+            mapper.named_type(name)
+        ),
         TypeIr::Ref { table, field } => ir
             .tables
             .iter()
@@ -679,4 +751,60 @@ fn ref_target_type<'a>(ir: &'a ConfigIr, table: &str, field: &str) -> Option<&'a
                 .find(|candidate| candidate.name == *field)
         })
         .map(|field| &field.ty)
+}
+
+#[cfg(test)]
+mod namespace_tests {
+    use super::*;
+    use sora_ir::normalize::normalize_schema;
+    use sora_schema::model::ProjectSchema;
+
+    #[test]
+    fn generates_native_csharp_namespaces() {
+        let schema: ProjectSchema = toml::from_str(
+            r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+[[structs]]
+name = "common.Reward"
+[[structs.fields]]
+name = "amount"
+type = "i32"
+[[tables]]
+id = "items.item"
+name = "items.Item"
+mode = "map"
+key = "id"
+[[tables.fields]]
+name = "id"
+type = "string"
+[[tables.fields]]
+name = "reward"
+type = "struct<common.Reward>"
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        let out = std::env::temp_dir().join("sora-codegen-csharp-namespace-test");
+        let _ = std::fs::remove_dir_all(&out);
+        CSharpCodeGenerator
+            .generate_with_options(
+                &ir,
+                CSharpCodegenOptions {
+                    namespace: Some("Game.Config".to_owned()),
+                    ..Default::default()
+                },
+                &out,
+            )
+            .unwrap();
+
+        let item = std::fs::read_to_string(out.join("items/Item.cs")).unwrap();
+        let config = std::fs::read_to_string(out.join("SoraConfig.cs")).unwrap();
+        assert!(item.contains("namespace Game.Config.Items;"));
+        assert!(item.contains("global::Game.Config.Common.Reward Reward"));
+        assert!(config.contains("global::Game.Config.Items.ItemTable"));
+        assert!(config.contains("ItemsItem =>"));
+        let _ = std::fs::remove_dir_all(out);
+    }
 }

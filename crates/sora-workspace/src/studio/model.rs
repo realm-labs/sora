@@ -29,6 +29,10 @@ pub struct StudioSchema {
     pub groups: BTreeMap<String, bool>,
     pub views: BTreeMap<String, serde_json::Value>,
     pub sources: Vec<String>,
+    #[serde(default)]
+    pub module_namespaces: BTreeMap<String, String>,
+    #[serde(default)]
+    pub module_imports: BTreeMap<String, BTreeMap<String, String>>,
     pub summary: StudioSummary,
     pub nodes: Vec<StudioNode>,
     pub edges: Vec<StudioEdge>,
