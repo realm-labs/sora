@@ -4,9 +4,15 @@
 
 namespace {{ namespace }};
 
+{%- if enum.comment %}
+/// {{ enum.comment }}
+{%- endif %}
 public enum {{ enum.name }}
 {
 {%- for value in enum.values %}
+{%- if value.comment %}
+    /// {{ value.comment }}
+{%- endif %}
     {{ value.name }} = {{ value.id }},
 {%- endfor %}
 }

@@ -19,6 +19,45 @@ use crate::mutation::commit_text_transaction;
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 #[test]
+fn studio_preserves_enum_and_value_comments() {
+    let base = temp_dir();
+    let project = write_project(
+        &base,
+        r#"
+[enums.ItemType]
+comment = "Item category"
+values = [
+  { id = 0, name = "Weapon", comment = "Weapon item" },
+  { id = 1, name = "Armor", comment = "Armor item" },
+]
+"#,
+    );
+
+    let response = load_studio_schema(&project);
+    assert!(response.ok, "{:?}", response.diagnostics);
+    let schema = response.schema.unwrap();
+    let item_type = schema
+        .nodes
+        .iter()
+        .find(|node| node.id == "enum:ItemType")
+        .unwrap();
+    assert_eq!(
+        item_type.metadata.get("comment").map(String::as_str),
+        Some("Item category")
+    );
+    assert_eq!(item_type.fields[0].comment.as_deref(), Some("Weapon item"));
+
+    let rendered = render_schema_module(&schema);
+    assert!(
+        rendered.contains("comment = \"Item category\""),
+        "{rendered}"
+    );
+    assert!(rendered.contains("comment = \"Weapon item\""), "{rendered}");
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
 fn returns_partial_graph_for_validation_error() {
     let base = temp_dir();
     let project = write_project(

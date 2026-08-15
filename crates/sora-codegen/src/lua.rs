@@ -124,6 +124,7 @@ struct LuaModel {
 #[derive(Debug, Clone, Serialize)]
 struct LuaEnum {
     name: String,
+    comment: Option<String>,
     values: Vec<BaseEnumValue>,
 }
 
@@ -203,6 +204,7 @@ impl LuaModel {
             .into_iter()
             .map(|item| LuaEnum {
                 name: item.pascal_name,
+                comment: item.comment,
                 values: item.values,
             })
             .collect();

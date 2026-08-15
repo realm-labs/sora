@@ -92,6 +92,7 @@ struct GodotModel {
 struct GodotEnum {
     class_name: String,
     file_name: String,
+    comment: Option<String>,
     values: Vec<GodotEnumValue>,
 }
 
@@ -99,6 +100,7 @@ struct GodotEnum {
 struct GodotEnumValue {
     raw_name: String,
     const_name: String,
+    comment: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -179,12 +181,14 @@ impl GodotModel {
             .map(|item| GodotEnum {
                 class_name: godot_type_identifier(&item.pascal_name),
                 file_name: godot_file_name(&item.snake_name),
+                comment: item.comment,
                 values: item
                     .values
                     .into_iter()
                     .map(|value| GodotEnumValue {
                         const_name: godot_const_identifier(&value.name),
                         raw_name: value.name,
+                        comment: value.comment,
                     })
                     .collect(),
             })

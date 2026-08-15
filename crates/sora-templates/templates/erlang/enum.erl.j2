@@ -5,9 +5,15 @@
 -export([decode/1, decode_value/1]).
 -export_type([t/0]).
 
+{%- if enum.comment %}
+%% {{ enum.comment }}
+{%- endif %}
 {%- if options.enum_is_integer %}
 -type t() ::
 {%- for value in enum.values %}
+{%- if value.comment %}
+    %% {{ value.comment }}
+{%- endif %}
     {{ value.id }}{% if not loop.last %} |{% else %}.{% endif %}
 {%- else %}
     none().
@@ -15,6 +21,9 @@
 {%- else %}
 -type t() ::
 {%- for value in enum.values %}
+{%- if value.comment %}
+    %% {{ value.comment }}
+{%- endif %}
     {{ value.atom_name }}{% if not loop.last %} |{% else %}.{% endif %}
 {%- else %}
     none().

@@ -510,6 +510,14 @@ macro_rules! impl_test_codegen_generate {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sora_ir::normalize::normalize_schema;
+    use sora_schema::model::ProjectSchema;
+    use std::{
+        fs,
+        sync::atomic::{AtomicU64, Ordering},
+    };
+
+    static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
     struct NoopGenerator;
 
@@ -517,6 +525,78 @@ mod tests {
         fn generate(&self, _context: CodegenContext<'_>, _out_dir: &Path) -> Result<()> {
             Ok(())
         }
+    }
+
+    #[test]
+    fn all_builtin_generators_emit_enum_comments() {
+        let schema: ProjectSchema = toml::from_str(
+            r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[enums]]
+name = "ItemType"
+comment = "Item category"
+values = [
+  { id = 0, name = "Weapon", comment = "Weapon item" },
+  { id = 1, name = "Armor", comment = "Armor item" },
+]
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        let registry = CodegenRegistry::with_builtin_generators();
+        let mappings = TypeMappingRegistry::new();
+        let base = std::env::temp_dir().join(format!(
+            "sora-enum-comments-{}-{}",
+            std::process::id(),
+            TEMP_COUNTER.fetch_add(1, Ordering::Relaxed)
+        ));
+
+        for target in registry.supported_targets() {
+            let out_dir = base.join(target);
+            let options = default_test_options(target);
+            registry
+                .get(target)
+                .unwrap()
+                .generator
+                .generate(
+                    CodegenContext {
+                        target,
+                        ir: &ir,
+                        options: &options,
+                        type_mappings: &mappings,
+                    },
+                    &out_dir,
+                )
+                .unwrap_or_else(|error| panic!("{target}: {error}"));
+
+            let generated = generated_text(&out_dir);
+            assert!(
+                generated.contains("Item category"),
+                "{target} omitted the enum comment"
+            );
+            assert!(
+                generated.contains("Weapon item"),
+                "{target} omitted the enum value comment"
+            );
+        }
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    fn generated_text(path: &Path) -> String {
+        let mut generated = String::new();
+        for entry in fs::read_dir(path).unwrap() {
+            let path = entry.unwrap().path();
+            if path.is_dir() {
+                generated.push_str(&generated_text(&path));
+            } else if let Ok(content) = fs::read_to_string(path) {
+                generated.push_str(&content);
+            }
+        }
+        generated
     }
 
     fn registration(id: &'static str, aliases: &'static [&'static str]) -> CodegenRegistration {

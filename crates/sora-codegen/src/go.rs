@@ -93,6 +93,7 @@ struct GoModel {
 struct GoEnum {
     name: String,
     snake_name: String,
+    comment: Option<String>,
     values: Vec<BaseEnumValue>,
 }
 
@@ -175,6 +176,7 @@ impl GoModel {
                 .map(|item| GoEnum {
                     name: go_exported_identifier(&item.name),
                     snake_name: item.snake_name,
+                    comment: item.comment,
                     values: item.values,
                 })
                 .collect(),

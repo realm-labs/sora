@@ -4,10 +4,16 @@ package {{ package }}
 
 import "fmt"
 
+{%- if enum.comment %}
+// {{ enum.name }}: {{ enum.comment }}
+{%- endif %}
 type {{ enum.name }} int32
 
 const (
 {%- for value in enum.values %}
+{%- if value.comment %}
+    // {{ enum.name }}{{ value.name }}: {{ value.comment }}
+{%- endif %}
     {{ enum.name }}{{ value.name }} {{ enum.name }} = {{ value.id }}
 {%- endfor %}
 )

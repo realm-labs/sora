@@ -9,8 +9,14 @@
 
 {{ options.namespace_open }}
 
+{%- if enum.comment %}
+/// {{ enum.comment }}
+{%- endif %}
 enum class {{ enum.name }} : std::int32_t {
 {%- for value in enum.values %}
+{%- if value.comment %}
+    /// {{ value.comment }}
+{%- endif %}
     {{ value.name }} = {{ value.id }},
 {%- endfor %}
 };

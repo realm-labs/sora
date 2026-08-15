@@ -49,7 +49,7 @@ export function Inspector({
   node: StudioNode;
   edges: StudioEdge[];
   language: Language;
-  onAddEnumValue: (ownerId: string, id: number, name: string) => void;
+  onAddEnumValue: (ownerId: string, id: number, name: string, comment: string) => void;
   onAddField: (ownerId: string, draft: EditableFieldDraft) => void;
   onAddUnionVariant: (ownerId: string, name: string) => void;
   onAddUnionVariantField: (ownerId: string, variantName: string, draft: EditableFieldDraft) => void;
@@ -65,7 +65,7 @@ export function Inspector({
     direction: -1 | 1
   ) => void;
   onRenameNode: (nodeId: string, name: string) => void;
-  onUpdateEnumValue: (ownerId: string, fieldIndex: number, id: number, name: string) => void;
+  onUpdateEnumValue: (ownerId: string, fieldIndex: number, id: number, name: string, comment: string) => void;
   onUpdateNodeSettings: (nodeId: string, draft: EditableNodeSettingsDraft) => void;
   onUpdateField: (ownerId: string, fieldIndex: number, draft: EditableFieldDraft) => void;
   onUpdateUnionVariant: (ownerId: string, fieldIndex: number, name: string) => void;
@@ -82,7 +82,12 @@ export function Inspector({
   const [addingEnumValue, setAddingEnumValue] = useState(false);
   const [addingVariant, setAddingVariant] = useState(false);
   const [addingVariantField, setAddingVariantField] = useState<string | null>(null);
-  const [editingEnumValue, setEditingEnumValue] = useState<{ index: number; id: number; name: string } | null>(null);
+  const [editingEnumValue, setEditingEnumValue] = useState<{
+    index: number;
+    id: number;
+    name: string;
+    comment: string;
+  } | null>(null);
   const [editingVariant, setEditingVariant] = useState<{ index: number; name: string } | null>(null);
   const [settingsDraft, setSettingsDraft] = useState(makeNodeSettingsDraft(node));
   const [editingField, setEditingField] = useState<{ index: number; draft: EditableFieldDraft } | null>(
@@ -115,13 +120,13 @@ export function Inspector({
     onAddField(node.id, draft);
     setAddingField(false);
   };
-  const submitAddEnumValue = (id: number, name: string) => {
-    onAddEnumValue(node.id, id, name);
+  const submitAddEnumValue = (id: number, name: string, comment: string) => {
+    onAddEnumValue(node.id, id, name, comment);
     setAddingEnumValue(false);
   };
-  const submitEditEnumValue = (id: number, name: string) => {
+  const submitEditEnumValue = (id: number, name: string, comment: string) => {
     if (!editingEnumValue) return;
-    onUpdateEnumValue(node.id, editingEnumValue.index, id, name);
+    onUpdateEnumValue(node.id, editingEnumValue.index, id, name, comment);
     setEditingEnumValue(null);
   };
   const submitAddVariant = (name: string) => {
@@ -235,6 +240,7 @@ export function Inspector({
         <div className="field-list">
           {node.kind === "enum" && addingEnumValue && (
             <EnumValueEditor
+              initialComment=""
               initialId={nextEnumValueId(node)}
               initialName=""
               language={language}
@@ -248,6 +254,7 @@ export function Inspector({
               editingEnumValue?.index === index ? (
                 <EnumValueEditor
                   key={`${field.name}:${index}:editor`}
+                  initialComment={editingEnumValue.comment}
                   initialId={editingEnumValue.id}
                   initialName={editingEnumValue.name}
                   language={language}
@@ -263,10 +270,16 @@ export function Inspector({
                   moveDownDisabled={index === node.fields.length - 1}
                   moveUpDisabled={index === 0}
                   name={field.name}
+                  comment={field.comment ?? undefined}
                   valueLabel={`ID ${field.enumValueId ?? "?"}`}
                   onDelete={() => onDeleteField(node.id, index)}
                   onEdit={() =>
-                    setEditingEnumValue({ index, id: field.enumValueId ?? 0, name: field.name })
+                    setEditingEnumValue({
+                      index,
+                      id: field.enumValueId ?? 0,
+                      name: field.name,
+                      comment: field.comment ?? ""
+                    })
                   }
                   onMoveDown={() => onMoveField(node.id, index, 1)}
                   onMoveUp={() => onMoveField(node.id, index, -1)}
@@ -533,14 +546,25 @@ function NodeSettingsEditor({
           />
         </label>
       )}
+      {node.kind === "enum" && (
+        <label>
+          <span>{t.comment}</span>
+          <textarea
+            value={draft.comment}
+            onChange={(event) => onChange({ ...draft, comment: event.target.value })}
+          />
+        </label>
+      )}
       {node.kind !== "table" && node.kind !== "union" && (
         <dl>
-          {Object.entries(node.metadata).map(([key, value]) => (
-            <div key={key}>
-              <dt>{key}</dt>
-              <dd>{value}</dd>
-            </div>
-          ))}
+          {Object.entries(node.metadata)
+            .filter(([key]) => key !== "comment")
+            .map(([key, value]) => (
+              <div key={key}>
+                <dt>{key}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
         </dl>
       )}
       <div className="editor-actions">
@@ -671,6 +695,7 @@ function FieldCard({
 }
 
 function ValueCard({
+  comment,
   issues,
   language,
   moveDownDisabled = false,
@@ -682,6 +707,7 @@ function ValueCard({
   onMoveDown,
   onMoveUp
 }: {
+  comment?: string;
   issues: StudioValidationIssue[];
   language: Language;
   moveDownDisabled?: boolean;
@@ -714,6 +740,7 @@ function ValueCard({
           </button>
         </span>
       </div>
+      {comment && <p>{comment}</p>}
       {issues.map((issue) => (
         <p key={issue.id} className="inline-issue">
           {issue.message}
@@ -724,6 +751,7 @@ function ValueCard({
 }
 
 function EnumValueEditor({
+  initialComment,
   initialId,
   initialName,
   language,
@@ -731,16 +759,18 @@ function EnumValueEditor({
   onSubmit,
   placeholder
 }: {
+  initialComment: string;
   initialId: number;
   initialName: string;
   language: Language;
   onCancel: () => void;
-  onSubmit: (id: number, name: string) => void;
+  onSubmit: (id: number, name: string, comment: string) => void;
   placeholder: string;
 }) {
   const t = translations[language];
   const [id, setId] = useState(initialId.toString());
   const [name, setName] = useState(initialName);
+  const [comment, setComment] = useState(initialComment);
   const [submitted, setSubmitted] = useState(false);
   const parsedId = Number(id);
   const invalidId =
@@ -752,7 +782,7 @@ function EnumValueEditor({
     if (invalidName || !name.trim() || !Number.isInteger(parsedId) || parsedId < 0 || parsedId > 2_147_483_647) {
       return;
     }
-    onSubmit(parsedId, name);
+    onSubmit(parsedId, name, comment);
   };
   return (
     <article className="field-editor">
@@ -786,6 +816,10 @@ function EnumValueEditor({
           {invalidName && <em>{t.required}</em>}
         </label>
       </div>
+      <label>
+        <span>{t.comment}</span>
+        <textarea value={comment} onChange={(event) => setComment(event.target.value)} />
+      </label>
       <div className="editor-actions">
         <button className="icon-button" onClick={submit}>
           <Save size={14} />

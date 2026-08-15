@@ -88,6 +88,7 @@ struct DartModel {
 struct DartEnum {
     pascal_name: String,
     snake_name: String,
+    comment: Option<String>,
     values: Vec<DartEnumValue>,
 }
 
@@ -96,6 +97,7 @@ struct DartEnumValue {
     id: u32,
     raw_name: String,
     name: String,
+    comment: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -176,6 +178,7 @@ impl DartModel {
             .map(|item| DartEnum {
                 pascal_name: dart_type_identifier(&item.pascal_name),
                 snake_name: dart_module_name(&item.snake_name),
+                comment: item.comment,
                 values: item
                     .values
                     .into_iter()
@@ -183,6 +186,7 @@ impl DartModel {
                         id: value.id,
                         name: dart_enum_value_identifier(&value.name),
                         raw_name: value.name,
+                        comment: value.comment,
                     })
                     .collect(),
             })

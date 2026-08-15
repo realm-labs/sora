@@ -12,6 +12,20 @@ enums {
 
 枚举让源数据保持可读，同时让生成代码获得受约束的类型。
 
+需要为枚举及枚举项添加说明时，可以使用详细形式。Sora 会把注释保留在 schema lock 中，并在生成代码中输出目标语言对应的文档注释：
+
+```scon
+enums {
+  Rarity {
+    comment = "物品稀有度"
+    values = [
+      { id = 0, name = "Common", comment = "常见物品" },
+      { id = 1, name = "Rare", comment = "稀有物品" },
+    ]
+  }
+}
+```
+
 alias 可以保留导入数据或旧数据里的名称：
 
 ```scon

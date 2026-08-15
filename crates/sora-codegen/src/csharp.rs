@@ -99,6 +99,7 @@ struct CSharpModel {
 #[derive(Debug, Clone, Serialize)]
 struct CSharpEnum {
     name: String,
+    comment: Option<String>,
     values: Vec<BaseEnumValue>,
 }
 
@@ -176,6 +177,7 @@ impl CSharpModel {
                 .into_iter()
                 .map(|item| CSharpEnum {
                     name: item.pascal_name,
+                    comment: item.comment,
                     values: item.values,
                 })
                 .collect(),

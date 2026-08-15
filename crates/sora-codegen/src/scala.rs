@@ -93,6 +93,7 @@ struct ScalaModel {
 #[derive(Debug, Clone, Serialize)]
 struct ScalaEnum {
     name: String,
+    comment: Option<String>,
     values: Vec<BaseEnumValue>,
     is_scala3: bool,
 }
@@ -178,6 +179,7 @@ impl ScalaModel {
                 .into_iter()
                 .map(|item| ScalaEnum {
                     name: item.pascal_name,
+                    comment: item.comment,
                     values: item.values,
                     is_scala3,
                 })

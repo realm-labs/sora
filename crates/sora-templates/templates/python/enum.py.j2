@@ -7,8 +7,14 @@ from enum import Enum
 from .sora_runtime import SoraReadError, SoraReader{% if runtime_format != "sora" %}, SoraValue{% endif %}
 
 
+{%- if enum.comment %}
+# {{ enum.comment }}
+{%- endif %}
 class {{ enum.name }}(Enum):
 {%- for value in enum.values %}
+{%- if value.comment %}
+    # {{ value.comment }}
+{%- endif %}
     {{ value.identifier }} = {{ value.id }}
 {%- else %}
     pass

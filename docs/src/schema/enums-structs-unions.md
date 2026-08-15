@@ -12,6 +12,20 @@ enums {
 
 Enums keep source data readable while generated code receives a constrained type.
 
+Use the detailed form to document the enum and individual values. Sora preserves these comments in the schema lock and emits the target language's documentation comments in generated code:
+
+```scon
+enums {
+  Rarity {
+    comment = "Item rarity"
+    values = [
+      { id = 0, name = "Common", comment = "A commonly found item" },
+      { id = 1, name = "Rare", comment = "A hard-to-find item" },
+    ]
+  }
+}
+```
+
 Aliases can keep imported or legacy names readable:
 
 ```scon

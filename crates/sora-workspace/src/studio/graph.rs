@@ -39,7 +39,7 @@ pub(crate) fn build_schema(
                     enum_value_id: Some(value.id),
                     groups: item.groups.values.clone(),
                     parser: None,
-                    comment: None,
+                    comment: value.comment.clone(),
                     default: None,
                     range: None,
                     length: None,
@@ -55,7 +55,7 @@ pub(crate) fn build_schema(
                 })
                 .collect(),
             indexes: Vec::new(),
-            metadata: BTreeMap::from([("values".to_owned(), item.values.len().to_string())]),
+            metadata: enum_metadata(item.comment.as_deref(), item.values.len()),
         });
     }
 
@@ -258,7 +258,7 @@ pub(crate) fn build_schema_from_raw(
                     enum_value_id: Some(value.id),
                     groups: raw_groups(&item.groups),
                     parser: None,
-                    comment: None,
+                    comment: value.comment.clone(),
                     default: None,
                     range: None,
                     length: None,
@@ -274,7 +274,7 @@ pub(crate) fn build_schema_from_raw(
                 })
                 .collect(),
             indexes: Vec::new(),
-            metadata: BTreeMap::from([("values".to_owned(), item.values.len().to_string())]),
+            metadata: enum_metadata(item.comment.as_deref(), item.values.len()),
         });
     }
 
@@ -462,6 +462,14 @@ pub(crate) fn refresh_schema_graph(schema: &mut StudioSchema) {
             .insert(item_name.to_owned(), count.to_string());
         node.subtitle = format!("{count} {item_name}");
     }
+}
+
+fn enum_metadata(comment: Option<&str>, value_count: usize) -> BTreeMap<String, String> {
+    let mut metadata = BTreeMap::from([("values".to_owned(), value_count.to_string())]);
+    if let Some(comment) = comment {
+        metadata.insert("comment".to_owned(), comment.to_owned());
+    }
+    metadata
 }
 
 fn raw_field(field: &FieldSchema) -> StudioField {

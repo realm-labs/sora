@@ -122,18 +122,25 @@ pub(super) fn schema_module_value(schema: &StudioSchema) -> Value {
 
 fn enum_node_value(node: &StudioNode) -> Value {
     let mut object = node_object(node);
+    if let Some(comment) = node.metadata.get("comment") {
+        object.insert("comment".to_owned(), Value::String(comment.clone()));
+    }
     let values = node
         .fields
         .iter()
         .filter(|field| field.ty == "enum value")
         .map(|field| {
-            Value::Object(Map::from_iter([
+            let mut value = Map::from_iter([
                 (
                     "id".to_owned(),
                     Value::Number(field.enum_value_id.unwrap_or_default().into()),
                 ),
                 ("name".to_owned(), Value::String(field.name.clone())),
-            ]))
+            ]);
+            if let Some(comment) = &field.comment {
+                value.insert("comment".to_owned(), Value::String(comment.clone()));
+            }
+            Value::Object(value)
         })
         .collect::<Vec<_>>();
     object.insert("values".to_owned(), Value::Array(values));

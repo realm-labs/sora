@@ -182,6 +182,7 @@ struct RustModel {
 struct RustEnum {
     name: String,
     snake_name: String,
+    comment: Option<String>,
     values: Vec<BaseEnumValue>,
 }
 
@@ -277,6 +278,7 @@ impl RustModel {
                 .map(|item| RustEnum {
                     name: item.pascal_name,
                     snake_name: item.snake_name,
+                    comment: item.comment,
                     values: item.values,
                 })
                 .collect(),

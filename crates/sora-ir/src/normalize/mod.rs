@@ -40,6 +40,7 @@ pub fn normalize_schema_with_parsers(
             .map(|item| {
                 Ok(EnumIr {
                     name: item.name,
+                    comment: item.comment,
                     groups: GroupSetIr::try_from(item.groups)?,
                     values: item
                         .values
@@ -47,6 +48,7 @@ pub fn normalize_schema_with_parsers(
                         .map(|value| EnumValueIr {
                             id: value.id,
                             name: value.name,
+                            comment: value.comment,
                         })
                         .collect(),
                     aliases: convert_enum_aliases(item.aliases),

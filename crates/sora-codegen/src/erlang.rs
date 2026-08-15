@@ -104,6 +104,7 @@ struct ErlangModel {
 struct ErlangEnum {
     name: String,
     snake_name: String,
+    comment: Option<String>,
     values: Vec<ErlangEnumValue>,
 }
 
@@ -112,6 +113,7 @@ struct ErlangEnumValue {
     id: u32,
     name: String,
     atom_name: String,
+    comment: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -186,6 +188,7 @@ impl ErlangModel {
             .map(|item| ErlangEnum {
                 name: item.pascal_name,
                 snake_name: item.snake_name,
+                comment: item.comment,
                 values: item
                     .values
                     .into_iter()
@@ -193,6 +196,7 @@ impl ErlangModel {
                         id: value.id,
                         atom_name: erlang_atom_literal(&value.name.to_snake_case()),
                         name: value.name,
+                        comment: value.comment,
                     })
                     .collect(),
             })

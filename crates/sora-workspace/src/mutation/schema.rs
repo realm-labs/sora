@@ -209,6 +209,8 @@ pub enum SchemaOperation {
         name: String,
         source: String,
         #[serde(default)]
+        comment: Option<String>,
+        #[serde(default)]
         groups: Vec<String>,
         #[serde(default)]
         values: Vec<EnumValueDefinition>,
@@ -224,6 +226,8 @@ pub enum SchemaOperation {
         enum_name: String,
         id: u32,
         name: String,
+        #[serde(default)]
+        comment: Option<String>,
     },
     RenameEnumValue {
         enum_name: String,
@@ -292,6 +296,8 @@ pub enum SchemaOperation {
 pub struct EnumValueDefinition {
     pub id: u32,
     pub name: String,
+    #[serde(default)]
+    pub comment: Option<String>,
 }
 
 /// Schema entity kinds accepted by source-move operations.
@@ -629,6 +635,7 @@ fn apply_operation(
         SchemaOperation::AddEnum {
             name,
             source,
+            comment,
             groups,
             values,
         } => {
@@ -649,7 +656,7 @@ fn apply_operation(
                         enum_value_id: Some(value.id),
                         groups: normalize_groups(groups),
                         parser: None,
-                        comment: None,
+                        comment: value.comment.clone(),
                         default: None,
                         range: None,
                         length: None,
@@ -658,7 +665,10 @@ fn apply_operation(
                     .collect(),
                 aliases: Vec::new(),
                 indexes: Vec::new(),
-                metadata: BTreeMap::new(),
+                metadata: comment
+                    .as_ref()
+                    .map(|comment| BTreeMap::from([("comment".to_owned(), comment.clone())]))
+                    .unwrap_or_default(),
             });
             affect_entity(execution, "enum", name);
         }
@@ -673,6 +683,7 @@ fn apply_operation(
             enum_name,
             id,
             name,
+            comment,
         } => {
             validate_name(name)?;
             let node = node_mut(&mut execution.schema, StudioNodeKind::Enum, enum_name)?;
@@ -698,7 +709,7 @@ fn apply_operation(
                 enum_value_id: Some(*id),
                 groups: node.groups.clone(),
                 parser: None,
-                comment: None,
+                comment: comment.clone(),
                 default: None,
                 range: None,
                 length: None,
@@ -1553,10 +1564,12 @@ mod tests {
             &[SchemaOperation::AddEnum {
                 name: "Kind".to_owned(),
                 source: "schema.toml".to_owned(),
+                comment: Some("Kind documentation".to_owned()),
                 groups: Vec::new(),
                 values: vec![EnumValueDefinition {
                     id: 7,
                     name: "Old".to_owned(),
+                    comment: Some("Value documentation".to_owned()),
                 }],
             }],
         )
@@ -1580,6 +1593,18 @@ mod tests {
             .fields[0];
         assert_eq!(value.name, "New");
         assert_eq!(value.enum_value_id, Some(7));
+        assert_eq!(value.comment.as_deref(), Some("Value documentation"));
+        assert_eq!(
+            next.schema
+                .nodes
+                .iter()
+                .find(|node| node.name == "Kind")
+                .unwrap()
+                .metadata
+                .get("comment")
+                .map(String::as_str),
+            Some("Kind documentation")
+        );
     }
 
     #[test]
@@ -1716,16 +1741,19 @@ mod tests {
             SchemaOperation::AddEnum {
                 name: "Kind".to_owned(),
                 source: "schema.toml".to_owned(),
+                comment: None,
                 groups: Vec::new(),
                 values: vec![EnumValueDefinition {
                     id: 1,
                     name: "One".to_owned(),
+                    comment: None,
                 }],
             },
             SchemaOperation::AddEnumValue {
                 enum_name: "Kind".to_owned(),
                 id: 2,
                 name: "Two".to_owned(),
+                comment: None,
             },
             SchemaOperation::RenameEnumValue {
                 enum_name: "Kind".to_owned(),

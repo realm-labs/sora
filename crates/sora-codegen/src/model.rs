@@ -19,6 +19,7 @@ pub struct BaseEnum {
     pub name: String,
     pub pascal_name: String,
     pub snake_name: String,
+    pub comment: Option<String>,
     pub values: Vec<BaseEnumValue>,
 }
 
@@ -26,6 +27,7 @@ pub struct BaseEnum {
 pub struct BaseEnumValue {
     pub id: u32,
     pub name: String,
+    pub comment: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -104,12 +106,14 @@ pub fn build_base_model(ir: &ConfigIr) -> Result<BaseModel> {
             name: item.name.clone(),
             pascal_name: item.name.to_pascal_case(),
             snake_name: item.name.to_snake_case(),
+            comment: item.comment.clone(),
             values: item
                 .values
                 .iter()
                 .map(|value| BaseEnumValue {
                     id: value.id,
                     name: value.name.clone(),
+                    comment: value.comment.clone(),
                 })
                 .collect(),
         })

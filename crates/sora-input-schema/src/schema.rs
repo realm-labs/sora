@@ -328,12 +328,19 @@ enum EnumRepr {
 #[serde(untagged)]
 enum EnumValueRepr {
     Name(String),
-    Detailed { id: u32, name: String },
+    Detailed {
+        id: u32,
+        name: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        comment: Option<String>,
+    },
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct EnumBodyRepr {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    comment: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     groups: Option<GroupSetRepr>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -696,9 +703,10 @@ fn groups_repr(value: &GroupSetSchema) -> Option<GroupSetRepr> {
 }
 
 fn lower_enum(name: String, value: EnumRepr) -> EnumSchema {
-    let (groups, values, mut aliases) = match value {
-        EnumRepr::Values(values) => (GroupSetSchema::default(), values, Vec::new()),
+    let (comment, groups, values, mut aliases) = match value {
+        EnumRepr::Values(values) => (None, GroupSetSchema::default(), values, Vec::new()),
         EnumRepr::Detailed(value) => (
+            value.comment,
             lower_groups(value.groups),
             value.values,
             value
@@ -716,12 +724,14 @@ fn lower_enum(name: String, value: EnumRepr) -> EnumSchema {
             EnumValueRepr::Name(name) => EnumValueSchema {
                 id: index as u32,
                 name,
+                comment: None,
             },
-            EnumValueRepr::Detailed { id, name } => EnumValueSchema { id, name },
+            EnumValueRepr::Detailed { id, name, comment } => EnumValueSchema { id, name, comment },
         })
         .collect();
     EnumSchema {
         name,
+        comment,
         groups,
         values,
         aliases,
@@ -926,7 +936,12 @@ fn enum_repr(value: &EnumSchema) -> EnumRepr {
         .iter()
         .enumerate()
         .all(|(index, value)| value.id == index as u32);
-    if groups_repr(&value.groups).is_none() && value.aliases.is_empty() && sequential {
+    if value.comment.is_none()
+        && groups_repr(&value.groups).is_none()
+        && value.aliases.is_empty()
+        && sequential
+        && value.values.iter().all(|value| value.comment.is_none())
+    {
         return EnumRepr::Values(
             value
                 .values
@@ -936,6 +951,7 @@ fn enum_repr(value: &EnumSchema) -> EnumRepr {
         );
     }
     EnumRepr::Detailed(EnumBodyRepr {
+        comment: value.comment.clone(),
         groups: groups_repr(&value.groups),
         values: value
             .values
@@ -943,6 +959,7 @@ fn enum_repr(value: &EnumSchema) -> EnumRepr {
             .map(|value| EnumValueRepr::Detailed {
                 id: value.id,
                 name: value.name.clone(),
+                comment: value.comment.clone(),
             })
             .collect(),
         aliases: value
@@ -1461,8 +1478,12 @@ tables {
   },
   "enums": {
     "Rarity": {
+      "comment": "Item rarity",
       "groups": ["client", "server"],
-      "values": ["Common", "Epic"],
+      "values": [
+        { "id": 0, "name": "Common", "comment": "Common item" },
+        { "id": 1, "name": "Epic", "comment": "Epic item" }
+      ],
       "aliases": { "Purple": "Epic" }
     }
   },
@@ -1511,6 +1532,19 @@ tables {
         let expected_module = load_schema_module(&source).unwrap();
         let expected_schema = load_project_schema(&source).unwrap();
         let expected_ir = sora_ir::normalize::normalize_schema(expected_schema.clone()).unwrap();
+        assert_eq!(
+            expected_schema.enums[0].comment.as_deref(),
+            Some("Item rarity")
+        );
+        assert_eq!(
+            expected_schema.enums[0].values[0].comment.as_deref(),
+            Some("Common item")
+        );
+        assert_eq!(expected_ir.enums[0].comment.as_deref(), Some("Item rarity"));
+        assert_eq!(
+            expected_ir.enums[0].values[0].comment.as_deref(),
+            Some("Common item")
+        );
 
         for extension in ["scon", "toml", "yaml", "json", "lua"] {
             let path = base.join(format!("project.{extension}"));

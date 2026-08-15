@@ -95,6 +95,7 @@ struct PythonModel {
 struct PythonEnum {
     name: String,
     snake_name: String,
+    comment: Option<String>,
     values: Vec<PythonEnumValue>,
 }
 
@@ -103,6 +104,7 @@ struct PythonEnumValue {
     id: u32,
     name: String,
     identifier: String,
+    comment: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -186,6 +188,7 @@ impl PythonModel {
             .map(|item| PythonEnum {
                 name: python_type_identifier(&item.pascal_name),
                 snake_name: python_module_name(&item.snake_name),
+                comment: item.comment,
                 values: item
                     .values
                     .into_iter()
@@ -193,6 +196,7 @@ impl PythonModel {
                         id: value.id,
                         identifier: python_enum_value_name(&value.name),
                         name: value.name,
+                        comment: value.comment,
                     })
                     .collect(),
             })

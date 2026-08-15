@@ -143,6 +143,9 @@ pub struct EnumSchema {
     pub name: String,
 
     #[serde(default)]
+    pub comment: Option<String>,
+
+    #[serde(default)]
     pub groups: GroupSetSchema,
 
     #[serde(default)]
@@ -157,6 +160,9 @@ pub struct EnumValueSchema {
     pub id: u32,
 
     pub name: String,
+
+    #[serde(default)]
+    pub comment: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]

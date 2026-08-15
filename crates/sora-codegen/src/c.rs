@@ -153,6 +153,7 @@ struct CEnum {
     snake_name: String,
     type_name: String,
     decode_fn: String,
+    comment: Option<String>,
     values: Vec<CEnumValue>,
 }
 
@@ -160,6 +161,7 @@ struct CEnum {
 struct CEnumValue {
     name: String,
     id: u32,
+    comment: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -267,6 +269,7 @@ impl CModel {
                 decode_fn: c_decode_fn(options, &item.snake_name),
                 name: item.pascal_name,
                 snake_name: item.snake_name.clone(),
+                comment: item.comment,
                 values: item
                     .values
                     .into_iter()
@@ -278,6 +281,7 @@ impl CModel {
                             value.name.to_shouty_snake_case()
                         ),
                         id: value.id,
+                        comment: value.comment,
                     })
                     .collect(),
             })

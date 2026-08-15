@@ -99,6 +99,7 @@ struct KotlinModel {
 #[derive(Debug, Clone, Serialize)]
 struct KotlinEnum {
     name: String,
+    comment: Option<String>,
     values: Vec<KotlinEnumValue>,
 }
 
@@ -107,6 +108,7 @@ struct KotlinEnumValue {
     raw_name: String,
     const_name: String,
     id: u32,
+    comment: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -184,6 +186,7 @@ impl KotlinModel {
                 .into_iter()
                 .map(|item| KotlinEnum {
                     name: item.pascal_name,
+                    comment: item.comment,
                     values: item
                         .values
                         .into_iter()
@@ -191,6 +194,7 @@ impl KotlinModel {
                             const_name: value.name.to_shouty_snake_case(),
                             raw_name: value.name,
                             id: value.id,
+                            comment: value.comment,
                         })
                         .collect(),
                 })

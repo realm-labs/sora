@@ -52,6 +52,7 @@ pub struct EcmaScriptModel {
 pub struct EcmaScriptEnum {
     pub name: String,
     pub snake_name: String,
+    pub comment: Option<String>,
     pub values: Vec<BaseEnumValue>,
 }
 
@@ -150,6 +151,7 @@ impl EcmaScriptModel {
                 .map(|item| EcmaScriptEnum {
                     name: item.pascal_name,
                     snake_name: item.snake_name,
+                    comment: item.comment,
                     values: item.values,
                 })
                 .collect(),

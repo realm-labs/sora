@@ -1089,10 +1089,12 @@ mod tests {
             localization: None,
             enums: vec![EnumIr {
                 name: "ResourceType".to_owned(),
+                comment: None,
                 groups: GroupSetIr::default(),
                 values: vec![sora_ir::model::EnumValueIr {
                     id: 0,
                     name: "Item".to_owned(),
+                    comment: None,
                 }],
                 aliases: Vec::new(),
             }],

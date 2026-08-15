@@ -9,8 +9,14 @@
 extern "C" {
 #endif
 
+{%- if enum.comment %}
+/* {{ enum.comment }} */
+{%- endif %}
 typedef enum {{ enum.type_name }} {
 {%- for value in enum.values %}
+{%- if value.comment %}
+    /* {{ value.comment }} */
+{%- endif %}
     {{ value.name }} = {{ value.id }},
 {%- endfor %}
 } {{ enum.type_name }};

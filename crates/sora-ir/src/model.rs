@@ -51,6 +51,8 @@ pub struct LocalizationSourceIr {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EnumIr {
     pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub comment: Option<String>,
     pub groups: GroupSetIr,
     pub values: Vec<EnumValueIr>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -61,6 +63,8 @@ pub struct EnumIr {
 pub struct EnumValueIr {
     pub id: u32,
     pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub comment: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

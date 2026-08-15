@@ -48,6 +48,9 @@ fn render_proto(ir: &ConfigIr, package: &str) -> String {
     output.push_str("}\n\n");
 
     for item in &ir.enums {
+        if let Some(comment) = &item.comment {
+            output.push_str(&format!("// {comment}\n"));
+        }
         output.push_str(&format!("enum {} {{\n", item.name));
         let prefix = item.name.to_shouty_snake_case();
         if !item.values.iter().any(|value| value.id == 0) {
@@ -59,6 +62,9 @@ fn render_proto(ir: &ConfigIr, package: &str) -> String {
             .filter(|value| value.id == 0)
             .chain(item.values.iter().filter(|value| value.id != 0))
         {
+            if let Some(comment) = &value.comment {
+                output.push_str(&format!("  // {comment}\n"));
+            }
             output.push_str(&format!(
                 "  {prefix}_{} = {};\n",
                 value.name.to_shouty_snake_case(),

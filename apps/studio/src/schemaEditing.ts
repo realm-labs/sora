@@ -38,6 +38,7 @@ export type EditableFieldDraft = {
 export type EditableNodeSettingsDraft = {
   schemaSource: string;
   groups: string;
+  comment: string;
   mode: string;
   key: string;
   source: string;
@@ -84,6 +85,7 @@ export function makeNodeSettingsDraft(node: StudioNode): EditableNodeSettingsDra
   return {
     schemaSource: node.source,
     groups: formatGroups(node.groups),
+    comment: node.metadata.comment ?? "",
     mode: node.metadata.mode ?? "map",
     key: node.metadata.key === "<none>" ? "" : (node.metadata.key ?? ""),
     source: node.metadata.source ?? "",
@@ -111,6 +113,9 @@ export function updateNodeSettings(
       }
       if (node.kind === "union") {
         metadata.tag = draft.tag.trim() || "type";
+      }
+      if (node.kind === "enum") {
+        setOptionalMetadata(metadata, "comment", draft.comment);
       }
       return {
         ...node,
@@ -200,14 +205,20 @@ export function addField(schema: StudioSchema, ownerId: string, draft: EditableF
   });
 }
 
-export function addEnumValue(schema: StudioSchema, ownerId: string, id: number, name: string): StudioSchema {
+export function addEnumValue(
+  schema: StudioSchema,
+  ownerId: string,
+  id: number,
+  name: string,
+  comment: string
+): StudioSchema {
   const cleanName = name.trim();
   if (!cleanName || !Number.isInteger(id) || id < 0 || id > 2_147_483_647) return schema;
   return rebuildSchema({
     ...schema,
     nodes: schema.nodes.map((node) =>
       node.id === ownerId && node.kind === "enum"
-        ? { ...node, fields: [...node.fields, enumValueField(id, cleanName, node.groups)] }
+        ? { ...node, fields: [...node.fields, enumValueField(id, cleanName, node.groups, comment)] }
         : node
     )
   });
@@ -218,7 +229,8 @@ export function updateEnumValue(
   ownerId: string,
   fieldIndex: number,
   id: number,
-  name: string
+  name: string,
+  comment: string
 ): StudioSchema {
   const cleanName = name.trim();
   if (!cleanName || !Number.isInteger(id) || id < 0 || id > 2_147_483_647) return schema;
@@ -229,7 +241,15 @@ export function updateEnumValue(
       return {
         ...node,
         fields: node.fields.map((field, index) =>
-          index === fieldIndex ? { ...field, name: cleanName, ty: "enum value", enumValueId: id } : field
+          index === fieldIndex
+            ? {
+                ...field,
+                name: cleanName,
+                ty: "enum value",
+                enumValueId: id,
+                comment: cleanOptional(comment)
+              }
+            : field
         )
       };
     })
@@ -902,14 +922,14 @@ function defaultMetadata(kind: NodeKind, name: string): Record<string, string> {
   return { fields: "0" };
 }
 
-function enumValueField(id: number, name: string, groups: string[]): StudioField {
+function enumValueField(id: number, name: string, groups: string[], comment = ""): StudioField {
   return {
     name,
     ty: "enum value",
     enumValueId: id,
     groups: [...groups],
     parser: null,
-    comment: null,
+    comment: cleanOptional(comment),
     default: null,
     range: null,
     length: null,

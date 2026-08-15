@@ -142,6 +142,7 @@ struct JavaModel {
 #[derive(Debug, Clone, Serialize)]
 struct JavaEnum {
     name: String,
+    comment: Option<String>,
     values: Vec<JavaEnumValue>,
 }
 
@@ -150,6 +151,7 @@ struct JavaEnumValue {
     raw_name: String,
     const_name: String,
     id: u32,
+    comment: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -239,6 +241,7 @@ impl JavaModel {
                 .into_iter()
                 .map(|item| JavaEnum {
                     name: item.pascal_name,
+                    comment: item.comment,
                     values: item
                         .values
                         .into_iter()
@@ -246,6 +249,7 @@ impl JavaModel {
                             const_name: value.name.to_shouty_snake_case(),
                             raw_name: value.name,
                             id: value.id,
+                            comment: value.comment,
                         })
                         .collect(),
                 })

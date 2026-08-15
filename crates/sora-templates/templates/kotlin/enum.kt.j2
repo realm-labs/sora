@@ -2,8 +2,14 @@
 
 package {{ package }}
 
+{%- if enum.comment %}
+/** {{ enum.comment }} */
+{%- endif %}
 enum class {{ enum.name }}(val id: Int) {
 {%- for value in enum.values %}
+{%- if value.comment %}
+    /** {{ value.comment }} */
+{%- endif %}
     {{ value.const_name }}({{ value.id }}){% if loop.last %};{% else %},{% endif %}
 {%- endfor %}
 
