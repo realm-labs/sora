@@ -453,16 +453,6 @@ impl From<IndexSchema> for IndexIr {
     }
 }
 
-impl From<TableSourceSchema> for TableSourceIr {
-    fn from(source: TableSourceSchema) -> Self {
-        Self {
-            format: source.format,
-            file: source.file,
-            sheet: source.sheet,
-        }
-    }
-}
-
 fn convert_fields(fields: Vec<FieldSchema>) -> Result<Vec<FieldIr>> {
     convert_fields_with_parsers(fields, &ParserRegistry::builtin())
 }
@@ -650,6 +640,10 @@ fn convert_table_with_parsers(
 ) -> Result<TableIr> {
     let key = table.key;
     let fields = convert_table_fields_with_parsers(table.fields, key.as_deref(), parser_registry)?;
+    let source = table
+        .source
+        .map(|source| convert_table_source(&table.name, source))
+        .transpose()?;
     Ok(TableIr {
         id: table.id,
         canonical_name: table.name.clone(),
@@ -657,9 +651,51 @@ fn convert_table_with_parsers(
         groups: GroupSetIr::try_from(table.groups)?,
         mode: table.mode.into(),
         key,
-        source: table.source.map(Into::into),
+        source,
         fields,
         indexes: table.indexes.into_iter().map(IndexIr::from).collect(),
+    })
+}
+
+fn convert_table_source(table: &str, source: TableSourceSchema) -> Result<TableSourceIr> {
+    if source.sheet.is_some() && source.sheets.is_some() {
+        return Err(SoraError::InvalidSchema(format!(
+            "table `{table}` source cannot declare both `sheet` and `sheets`"
+        )));
+    }
+    if source
+        .sheet
+        .as_ref()
+        .is_some_and(|sheet| sheet.trim().is_empty())
+    {
+        return Err(SoraError::InvalidSchema(format!(
+            "table `{table}` source `sheet` must not be empty"
+        )));
+    }
+    if source.sheets.as_ref().is_some_and(Vec::is_empty) {
+        return Err(SoraError::InvalidSchema(format!(
+            "table `{table}` source `sheets` must contain at least one selector"
+        )));
+    }
+    let sheets = source.sheets.unwrap_or_default();
+    let mut seen = std::collections::BTreeSet::new();
+    for selector in &sheets {
+        if selector.trim().is_empty() {
+            return Err(SoraError::InvalidSchema(format!(
+                "table `{table}` source `sheets` must not contain an empty selector"
+            )));
+        }
+        if !seen.insert(selector) {
+            return Err(SoraError::InvalidSchema(format!(
+                "table `{table}` source contains duplicate sheet selector `{selector}`"
+            )));
+        }
+    }
+    Ok(TableSourceIr {
+        format: source.format,
+        file: source.file,
+        sheet: source.sheet,
+        sheets,
     })
 }
 

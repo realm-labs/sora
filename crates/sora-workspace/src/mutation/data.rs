@@ -324,6 +324,12 @@ pub(crate) fn render_data_writes(
         if path.is_dir() {
             writes.extend(render_directory_source(format, &path, &table_data.rows)?);
         } else if format == SourceFormat::Xlsx {
+            if !source.sheets.is_empty() {
+                return Err(DataMutationError::Render(format!(
+                    "table `{}` uses multiple worksheets; data mutation cannot preserve row-to-sheet ownership",
+                    table.name
+                )));
+            }
             xlsx_tables
                 .entry(path.clone())
                 .or_default()

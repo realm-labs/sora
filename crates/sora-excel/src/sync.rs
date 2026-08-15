@@ -15,6 +15,7 @@ use crate::{
     projection::{
         DATA_START_ROW, FIELD_ROW, FIELD_START_COLUMN, table_template_columns, table_template_rows,
     },
+    sheets::resolve_table_sheet_names,
     writer::{LegacyColumn, PreservedSheet, SyncedTableSheet, write_synced_workbook},
 };
 
@@ -71,12 +72,19 @@ impl ExcelTemplateSync {
             let mut handled_sheets = BTreeSet::new();
 
             for table in tables {
-                let sheet_name = table_sheet_name(table);
-                handled_sheets.insert(sheet_name.clone());
-                let existing_sheet = existing.sheets.get(&sheet_name).map(Vec::as_slice);
-                let synced = sync_table_sheet(ir, table, &sheet_name, existing_sheet);
-                sheet_reports.push(synced.report);
-                table_sheets.push(synced.sheet);
+                let sheet_names = resolve_table_sheet_names(table, &existing.sheet_order)?;
+                for sheet_name in sheet_names {
+                    if !handled_sheets.insert(sheet_name.clone()) {
+                        return Err(SoraError::InvalidSchema(format!(
+                            "worksheet `{sheet_name}` in `{}` is selected by more than one table",
+                            path.display()
+                        )));
+                    }
+                    let existing_sheet = existing.sheets.get(&sheet_name).map(Vec::as_slice);
+                    let synced = sync_table_sheet(ir, table, &sheet_name, existing_sheet);
+                    sheet_reports.push(synced.report);
+                    table_sheets.push(synced.sheet);
+                }
             }
 
             let preserved_sheets = existing
@@ -618,14 +626,6 @@ fn group_xlsx_tables(ir: &ConfigIr) -> Result<BTreeMap<String, Vec<&TableIr>>> {
     Ok(workbooks)
 }
 
-fn table_sheet_name(table: &TableIr) -> String {
-    table
-        .source
-        .as_ref()
-        .and_then(|source| source.sheet.clone())
-        .unwrap_or_else(|| table.name.clone())
-}
-
 #[cfg(test)]
 mod tests {
     use std::sync::atomic::{AtomicU64, Ordering};
@@ -828,6 +828,56 @@ mod tests {
     }
 
     #[test]
+    fn syncs_each_selected_sheet_without_merging_their_rows() {
+        let mut ir = example_ir();
+        let source = ir.tables[0].source.as_mut().unwrap();
+        source.sheet = None;
+        source.sheets = vec!["2026-01".to_owned(), "2026-02".to_owned()];
+        let base = temp_dir();
+        fs::create_dir_all(&base).unwrap();
+        write_existing_workbook_sheets(
+            &base.join("Item.xlsx"),
+            &[
+                ("2026-01", ["1001", "January"]),
+                ("2026-02", ["2001", "February"]),
+            ],
+        );
+
+        let report = ExcelTemplateSync.write(&ir, &base).unwrap();
+
+        assert_eq!(
+            report.workbooks[0]
+                .sheets
+                .iter()
+                .map(|sheet| sheet.sheet.as_str())
+                .collect::<Vec<_>>(),
+            ["2026-01", "2026-02"]
+        );
+        let mut workbook: calamine::Xlsx<_> =
+            calamine::open_workbook(base.join("Item.xlsx")).unwrap();
+        let january = workbook.worksheet_range("2026-01").unwrap();
+        let february = workbook.worksheet_range("2026-02").unwrap();
+        assert_eq!(
+            cell_to_string(&january[(DATA_START_ROW as usize, 1)]),
+            "1001"
+        );
+        assert_eq!(
+            cell_to_string(&january[(DATA_START_ROW as usize, 2)]),
+            "January"
+        );
+        assert_eq!(
+            cell_to_string(&february[(DATA_START_ROW as usize, 1)]),
+            "2001"
+        );
+        assert_eq!(
+            cell_to_string(&february[(DATA_START_ROW as usize, 2)]),
+            "February"
+        );
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
     fn workbook_backups_are_unique_ignored_and_bounded() {
         let base = temp_dir();
         fs::create_dir_all(&base).unwrap();
@@ -879,6 +929,30 @@ mod tests {
                     *value,
                     &Format::new(),
                 )
+                .unwrap();
+        }
+        workbook.save(path).unwrap();
+    }
+
+    fn write_existing_workbook_sheets(path: &Path, sheets: &[(&str, [&str; 2])]) {
+        let mut workbook = Workbook::new();
+        for (sheet, values) in sheets {
+            let worksheet = workbook.add_worksheet();
+            worksheet.set_name(*sheet).unwrap();
+            worksheet.write_string(0, 0, "@table").unwrap();
+            worksheet.write_string(1, 0, "#name").unwrap();
+            worksheet.write_string(FIELD_ROW, 0, "#field").unwrap();
+            worksheet.write_string(3, 0, "#type").unwrap();
+            worksheet.write_string(4, 0, "#groups").unwrap();
+            worksheet.write_string(5, 0, "#input").unwrap();
+            worksheet.write_string(6, 0, "#desc").unwrap();
+            worksheet.write_string(FIELD_ROW, 1, "id").unwrap();
+            worksheet.write_string(FIELD_ROW, 2, "name").unwrap();
+            worksheet
+                .write_string(DATA_START_ROW, 1, values[0])
+                .unwrap();
+            worksheet
+                .write_string(DATA_START_ROW, 2, values[1])
                 .unwrap();
         }
         workbook.save(path).unwrap();

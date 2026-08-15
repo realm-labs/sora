@@ -8,7 +8,10 @@ use sora_data::model::{
     ConfigData, LocalizationRowData, LocalizationSourceData, RowData, TableData, Value,
 };
 use sora_diagnostics::{Result, SoraError};
-use sora_excel::projection::{DATA_START_ROW, FIELD_ROW, FIELD_START_COLUMN};
+use sora_excel::{
+    projection::{DATA_START_ROW, FIELD_ROW, FIELD_START_COLUMN},
+    sheets::resolve_table_sheet_names,
+};
 use sora_execution::ExecutionContext;
 use sora_input::{
     cell::{CellContext, CellLocation},
@@ -61,11 +64,60 @@ pub fn load_xlsx_config_data_with_context_and_parsers(
     execution: &ExecutionContext,
     parser_registry: &ParserRegistry,
 ) -> Result<ConfigData> {
-    let grouped_tables = group_xlsx_tables(ir, data_root)?;
-    let tables = load_grouped_ranges(&grouped_tables, execution, |table, path, sheet, range| {
-        load_xlsx_table_data_from_range(ir, table, path, sheet, range, parser_registry)
-    })?;
+    let tables = load_grouped_ranges(
+        &group_xlsx_tables(ir, data_root)?,
+        execution,
+        |table, path, ranges| {
+            let mut rows = Vec::new();
+            for (sheet, range) in ranges {
+                rows.extend(
+                    load_xlsx_table_data_from_range(
+                        ir,
+                        table,
+                        path,
+                        &sheet,
+                        range,
+                        parser_registry,
+                    )?
+                    .rows,
+                );
+            }
+            Ok(TableData {
+                name: table.name.clone(),
+                rows,
+            })
+        },
+    )?;
     Ok(ConfigData { tables })
+}
+
+pub fn load_xlsx_table_source_data_with_ir_and_parsers(
+    ir: &ConfigIr,
+    table: &TableIr,
+    path: &Path,
+    parser_registry: &ParserRegistry,
+) -> Result<TableData> {
+    let mut workbook = open_workbook_auto(path).map_err(|source| SoraError::ParseData {
+        path: path.to_path_buf(),
+        message: source.to_string(),
+    })?;
+    let sheets = resolve_table_sheet_names(table, &workbook.sheet_names())?;
+    let mut rows = Vec::new();
+    for sheet in sheets {
+        let range = workbook
+            .worksheet_range(&sheet)
+            .map_err(|source| SoraError::ParseData {
+                path: path.to_path_buf(),
+                message: format!("failed to read worksheet `{sheet}`: {source}"),
+            })?;
+        rows.extend(
+            load_xlsx_table_data_from_range(ir, table, path, &sheet, range, parser_registry)?.rows,
+        );
+    }
+    Ok(TableData {
+        name: table.name.clone(),
+        rows,
+    })
 }
 
 pub fn load_xlsx_table_data(table: &TableIr, path: &Path, sheet: &str) -> Result<TableData> {
@@ -644,6 +696,88 @@ mod tests {
     };
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+    #[test]
+    fn merges_explicit_sheets_in_declared_order() {
+        let mut ir = example_ir();
+        let source = ir.tables[0].source.as_mut().unwrap();
+        source.file = "Activity.xlsx".to_owned();
+        source.sheet = None;
+        source.sheets = vec!["2026-02".to_owned(), "2026-01".to_owned()];
+        let base = temp_dir();
+        write_workbook_sheets(
+            &ir,
+            &ir.tables[0],
+            &base.join("Activity.xlsx"),
+            &[
+                ("2026-01", vec![vec!["1001", "January", "Material", "1"]]),
+                ("2026-02", vec![vec!["1002", "February", "Material", "1"]]),
+            ],
+        );
+
+        let data = load_xlsx_config_data(&ir, &base).unwrap();
+
+        assert_eq!(data.tables[0].rows.len(), 2);
+        assert_eq!(data.tables[0].rows[0].values["id"], Value::Integer(1002));
+        assert_eq!(data.tables[0].rows[1].values["id"], Value::Integer(1001));
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn merges_wildcard_sheets_by_name_and_validates_globally() {
+        let mut ir = example_ir();
+        let source = ir.tables[0].source.as_mut().unwrap();
+        source.file = "Activity.xlsx".to_owned();
+        source.sheet = None;
+        source.sheets = vec!["2026-*".to_owned()];
+        let base = temp_dir();
+        write_workbook_sheets(
+            &ir,
+            &ir.tables[0],
+            &base.join("Activity.xlsx"),
+            &[
+                ("2026-02", vec![vec!["1001", "February", "Material", "1"]]),
+                ("Template", vec![vec!["9999", "Template", "Material", "1"]]),
+                ("2026-01", vec![vec!["1001", "January", "Material", "1"]]),
+            ],
+        );
+
+        let data = load_xlsx_config_data(&ir, &base).unwrap();
+
+        assert_eq!(data.tables[0].rows.len(), 2);
+        assert_eq!(
+            data.tables[0].rows[0].values["name"],
+            Value::String("January".to_owned())
+        );
+        assert!(
+            sora_data::validate::validate_config_data(&ir, &data)
+                .unwrap_err()
+                .to_string()
+                .contains("duplicate key `1001`")
+        );
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn rejects_sheet_selector_without_matches() {
+        let mut ir = example_ir();
+        let source = ir.tables[0].source.as_mut().unwrap();
+        source.file = "Activity.xlsx".to_owned();
+        source.sheet = None;
+        source.sheets = vec!["2027-*".to_owned()];
+        let base = temp_dir();
+        write_workbook_sheets(
+            &ir,
+            &ir.tables[0],
+            &base.join("Activity.xlsx"),
+            &[("2026-01", vec![vec!["1001", "January", "Material", "1"]])],
+        );
+
+        let error = load_xlsx_config_data(&ir, &base).unwrap_err();
+
+        assert!(error.to_string().contains("matched no worksheets"));
+        let _ = std::fs::remove_dir_all(base);
+    }
 
     #[test]
     fn loads_xlsx_rows_from_generated_projection() {
@@ -1360,6 +1494,39 @@ parser = { kind = "columns", prefix = "cost_" }
             }
         }
 
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        workbook.save(path).unwrap();
+    }
+
+    fn write_workbook_sheets(
+        ir: &ConfigIr,
+        table: &TableIr,
+        path: &Path,
+        sheets: &[(&str, Vec<Vec<&str>>)],
+    ) {
+        let mut workbook = Workbook::new();
+        for (sheet_name, data_rows) in sheets {
+            let worksheet = workbook.add_worksheet();
+            worksheet.set_name(*sheet_name).unwrap();
+            for (row_index, row) in table_template_rows(ir, table).iter().enumerate() {
+                for (column_index, value) in row.iter().enumerate() {
+                    worksheet
+                        .write_string(row_index as u32, column_index as u16, value)
+                        .unwrap();
+                }
+            }
+            for (offset, row) in data_rows.iter().enumerate() {
+                for (column, value) in row.iter().enumerate() {
+                    worksheet
+                        .write_string(
+                            DATA_START_ROW + offset as u32,
+                            FIELD_START_COLUMN + column as u16,
+                            *value,
+                        )
+                        .unwrap();
+                }
+            }
+        }
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         workbook.save(path).unwrap();
     }

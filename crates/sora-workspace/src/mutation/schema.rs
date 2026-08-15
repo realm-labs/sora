@@ -65,6 +65,8 @@ pub struct TableSourceDefinition {
     pub file: String,
     pub format: Option<String>,
     pub sheet: Option<String>,
+    #[serde(default)]
+    pub sheets: Vec<String>,
 }
 
 /// A table index declaration.
@@ -1249,6 +1251,7 @@ fn set_table_source_metadata(
     metadata.remove("source");
     metadata.remove("format");
     metadata.remove("sheet");
+    metadata.remove("sheets");
     if let Some(source) = source {
         metadata.insert("source".to_owned(), source.file.clone());
         if let Some(format) = &source.format {
@@ -1256,6 +1259,12 @@ fn set_table_source_metadata(
         }
         if let Some(sheet) = &source.sheet {
             metadata.insert("sheet".to_owned(), sheet.clone());
+        }
+        if !source.sheets.is_empty() {
+            metadata.insert(
+                "sheets".to_owned(),
+                serde_json::to_string(&source.sheets).expect("string list serializes"),
+            );
         }
     }
 }
@@ -1659,6 +1668,7 @@ mod tests {
                     file: "Temp.csv".to_owned(),
                     format: Some("csv".to_owned()),
                     sheet: None,
+                    sheets: Vec::new(),
                 }),
             },
             SchemaOperation::SetTableGroups {

@@ -270,6 +270,14 @@ fn table_node_value(node: &StudioNode) -> Value {
         if let Some(sheet) = node.metadata.get("sheet") {
             source_object.insert("sheet".to_owned(), Value::String(sheet.clone()));
         }
+        if let Some(sheets) = node.metadata.get("sheets")
+            && let Ok(sheets) = serde_json::from_str::<Vec<String>>(sheets)
+        {
+            source_object.insert(
+                "sheets".to_owned(),
+                Value::Array(sheets.into_iter().map(Value::String).collect()),
+            );
+        }
         object.insert("source".to_owned(), Value::Object(source_object));
     }
     let fields = node

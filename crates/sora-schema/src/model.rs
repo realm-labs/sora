@@ -236,6 +236,7 @@ pub struct TableSourceSchema {
     pub format: Option<String>,
     pub file: String,
     pub sheet: Option<String>,
+    pub sheets: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]

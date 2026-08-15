@@ -56,6 +56,61 @@ length = [1, 3]
 }
 
 #[test]
+fn normalizes_multiple_sheet_selectors() {
+    let schema: ProjectSchema = toml::from_str(
+        r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[tables]]
+id = "activity"
+name = "Activity"
+mode = "list"
+source = { format = "xlsx", file = "Activity.xlsx", sheets = ["2026-01", "2026-*"] }
+"#,
+    )
+    .unwrap();
+
+    let ir = normalize_schema(schema).unwrap();
+
+    assert_eq!(ir.tables[0].source.as_ref().unwrap().sheet, None);
+    assert_eq!(
+        ir.tables[0].source.as_ref().unwrap().sheets,
+        ["2026-01", "2026-*"]
+    );
+}
+
+#[test]
+fn rejects_conflicting_or_empty_sheet_selectors() {
+    for source in [
+        r#"source = { file = "Activity.xlsx", sheet = "Activity", sheets = ["2026-*"] }"#,
+        r#"source = { file = "Activity.xlsx", sheets = [] }"#,
+        r#"source = { file = "Activity.xlsx", sheets = [""] }"#,
+    ] {
+        let schema: ProjectSchema = toml::from_str(&format!(
+            r#"
+project = {{ id = "game_config" }}
+groups = {{ common = {{ default = true }} }}
+views = {{ default = {{ contract = "game_config/default", groups = ["common"] }} }}
+
+[[tables]]
+id = "activity"
+name = "Activity"
+mode = "list"
+{source}
+"#
+        ))
+        .unwrap();
+
+        assert!(
+            normalize_schema(schema).is_err(),
+            "source should fail: {source}"
+        );
+    }
+}
+
+#[test]
 fn normalizes_localization_sources_and_text_type() {
     let schema: ProjectSchema = toml::from_str(
         r#"

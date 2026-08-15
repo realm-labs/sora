@@ -115,6 +115,8 @@ pub struct TableSourceIr {
     pub file: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sheet: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sheets: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

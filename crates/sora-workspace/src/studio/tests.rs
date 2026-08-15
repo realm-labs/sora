@@ -102,6 +102,46 @@ id = "string"
 }
 
 #[test]
+fn studio_preserves_multi_sheet_source_selectors() {
+    let base = temp_dir();
+    let project = write_project(
+        &base,
+        r#"
+[tables.Activity]
+id = "activity"
+mode = "map"
+key = "id"
+source = { format = "xlsx", file = "Activity.xlsx", sheets = ["2026-01", "2026-*"] }
+
+[tables.Activity.fields]
+id = "i32"
+"#,
+    );
+
+    let schema = load_studio_schema(&project).schema.unwrap();
+    let activity = schema
+        .nodes
+        .iter()
+        .find(|node| node.id == "table:Activity")
+        .unwrap();
+    assert_eq!(
+        activity.metadata.get("sheets").map(String::as_str),
+        Some(r#"["2026-01","2026-*"]"#)
+    );
+
+    let rendered = render_schema_module(&schema);
+    assert!(rendered.contains("sheets = ["), "{rendered}");
+    assert!(rendered.contains("\"2026-01\""), "{rendered}");
+    assert!(rendered.contains("\"2026-*\""), "{rendered}");
+
+    write_studio_schema(&project, &schema).unwrap();
+    let reloaded = load_studio_schema(&project);
+    assert!(reloaded.ok, "{:?}", reloaded.diagnostics);
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
 fn studio_shows_reverse_derived_map_usage_and_preserves_key() {
     let base = temp_dir();
     let project = write_project(

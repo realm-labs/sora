@@ -29,6 +29,7 @@ pub struct ProjectDataSource {
     pub file: String,
     pub format: Option<String>,
     pub sheet: Option<String>,
+    pub sheets: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
@@ -111,6 +112,7 @@ impl ProjectSession {
                     file: source.file.clone(),
                     format: source.format.clone(),
                     sheet: source.sheet.clone(),
+                    sheets: source.sheets.clone(),
                 })
             })
             .collect();

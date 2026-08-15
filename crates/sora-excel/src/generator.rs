@@ -134,6 +134,46 @@ mod tests {
         let _ = fs::remove_dir_all(out_dir);
     }
 
+    #[test]
+    fn writes_one_template_sheet_for_each_explicit_selector() {
+        let ir = multi_sheet_ir(&["2026-02", "2026-01"]);
+        let out_dir = temp_dir();
+
+        ExcelTemplateGenerator.generate(&ir, &out_dir).unwrap();
+
+        let workbook: calamine::Xlsx<_> =
+            calamine::open_workbook(out_dir.join("Activity.xlsx")).unwrap();
+        assert_eq!(workbook.sheet_names(), ["2026-02", "2026-01"]);
+
+        let _ = fs::remove_dir_all(out_dir);
+    }
+
+    #[test]
+    fn rejects_wildcard_selector_when_creating_a_new_template() {
+        let ir = multi_sheet_ir(&["2026-*"]);
+        let out_dir = temp_dir();
+
+        let error = ExcelTemplateGenerator
+            .generate(&ir, &out_dir)
+            .expect_err("a new workbook has no sheet names for a wildcard to match");
+
+        assert!(error.to_string().contains("matched no worksheets"));
+        let _ = fs::remove_dir_all(out_dir);
+    }
+
+    #[test]
+    fn rejects_rows_without_multi_sheet_ownership() {
+        let ir = multi_sheet_ir(&["2026-01", "2026-02"]);
+        let out_dir = temp_dir();
+
+        let error = ExcelTemplateGenerator
+            .generate_with_rows(&ir, &out_dir, |_| vec![vec!["1".to_owned()]])
+            .expect_err("rows cannot be duplicated across sheets");
+
+        assert!(error.to_string().contains("row-to-sheet ownership"));
+        let _ = fs::remove_dir_all(out_dir);
+    }
+
     fn example_ir() -> ConfigIr {
         let schema: ProjectSchema = toml::from_str(
             r#"
@@ -176,6 +216,34 @@ type = "i32"
 comment = "Max stack count"
 "#,
         )
+        .unwrap();
+        normalize_schema(schema).unwrap()
+    }
+
+    fn multi_sheet_ir(sheets: &[&str]) -> ConfigIr {
+        let sheet_values = sheets
+            .iter()
+            .map(|sheet| format!("\"{sheet}\""))
+            .collect::<Vec<_>>()
+            .join(", ");
+        let schema: ProjectSchema = toml::from_str(&format!(
+            r#"
+project = {{ id = "game_config" }}
+groups = {{ common = {{ default = true }} }}
+views = {{ default = {{ contract = "game_config/default", groups = ["common"] }} }}
+
+[[tables]]
+id = "activity"
+name = "Activity"
+mode = "map"
+key = "id"
+source = {{ format = "xlsx", file = "Activity.xlsx", sheets = [{sheet_values}] }}
+
+[[tables.fields]]
+name = "id"
+type = "i32"
+"#
+        ))
         .unwrap();
         normalize_schema(schema).unwrap()
     }

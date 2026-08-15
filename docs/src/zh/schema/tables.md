@@ -45,6 +45,34 @@ source {
 
 对 JSON 和 YAML，`file` 也可以指向目录。这种情况下，Sora 会递归读取每个匹配的 `.json`、`.yaml` 或 `.yml` 文件，每个文件作为一条 row object，并按路径排序。
 
+### 将一张 XLSX 表拆到多个 Sheet
+
+一个使用 XLSX source 的逻辑表可以合并多个工作表。这适合按编辑维度自然分区的数据，例如活动配置按月份拆分：
+
+```scon
+source {
+  format = "xlsx"
+  file = "Activity.xlsx"
+  sheets = ["2026-01", "2026-02", "2026-03"]
+}
+```
+
+每个选中的 Sheet 都使用该表 schema 声明的同一套列和 parser。Sora 会依次合并所有行，再把结果作为一张表统一校验和导出。因此主键、unique index、reference 和 `singleton` 校验都跨 Sheet 生效，而不是每个 Sheet 单独校验。
+
+选择器可以包含 `*`（任意长度字符）和 `?`（单个字符）：
+
+```scon
+source {
+  format = "xlsx"
+  file = "Activity.xlsx"
+  sheets = ["2026-*", "special"]
+}
+```
+
+显式 Sheet 名按声明顺序合并；每个通配选择器匹配到的 Sheet 按名称排序。多个选择器重复命中同一个 Sheet 时只会合并一次。读取数据时，显式 Sheet 不存在，或通配选择器一个 Sheet 都没有匹配到，都会报错。
+
+`sheets` 只支持 XLSX source，不能与 `sheet` 同时使用。创建全新模板时必须写明 Sheet 名，因为通配符无法凭空决定要创建哪些 Sheet；已有工作簿可以使用通配选择器。Excel 模板生成和同步会创建缺失的显式命名 Sheet，同步时会分别保留每个 Sheet 中的行。Studio 的行级数据修改目前会拒绝多 Sheet 表，因为合并后的行尚未保留来源 Sheet 信息；schema 编辑、读取、校验和导出不受影响。
+
 ## Indexes
 
 索引是表上的额外查询入口。它和 `mode = "map"` 的 `key` 不一样：

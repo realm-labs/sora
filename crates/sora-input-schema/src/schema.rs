@@ -703,6 +703,8 @@ struct TableSourceRepr {
     file: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     sheet: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    sheets: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -1025,6 +1027,7 @@ fn lower_table(name: String, value: TableRepr) -> Result<TableSchema> {
             format: value.format,
             file: value.file,
             sheet: value.sheet,
+            sheets: value.sheets,
         }),
         fields: value
             .fields
@@ -1249,6 +1252,7 @@ fn table_repr(value: &TableSchema, lua_ordered: bool, explicit_fields: bool) -> 
             format: value.format.clone(),
             file: value.file.clone(),
             sheet: value.sheet.clone(),
+            sheets: value.sheets.clone(),
         }),
         fields: ordered_named(
             value
@@ -1732,7 +1736,7 @@ tables {
     "Item": {
       "mode": "map",
       "key": "id",
-      "source": { "format": "xlsx", "file": "Item.xlsx", "sheet": "Item" },
+      "source": { "format": "xlsx", "file": "Item.xlsx", "sheets": ["2026-01", "2026-*"] },
       "fields": {
         "id": "i32",
         "name": { "type": "string", "length": [2, 32] },
@@ -1786,6 +1790,10 @@ tables {
         assert_eq!(
             expected_ir.enums[0].values[0].comment.as_deref(),
             Some("Common item")
+        );
+        assert_eq!(
+            expected_ir.tables[0].source.as_ref().unwrap().sheets,
+            ["2026-01", "2026-*"]
         );
         assert_eq!(
             expected_ir

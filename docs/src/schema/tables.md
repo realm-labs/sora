@@ -45,6 +45,34 @@ Built-in source formats are `xlsx`, `csv`, `toml`, `json`, and `yaml`. JSON and 
 
 For JSON and YAML, `file` can also point to a directory. In that case Sora recursively reads every matching `.json`, `.yaml`, or `.yml` file as one row object, sorted by path.
 
+### Split one XLSX table across sheets
+
+An XLSX-backed table can combine several worksheets into one logical table. This is useful for data that is naturally partitioned for editing, such as one activity sheet per month:
+
+```scon
+source {
+  format = "xlsx"
+  file = "Activity.xlsx"
+  sheets = ["2026-01", "2026-02", "2026-03"]
+}
+```
+
+Every selected worksheet uses the same columns and parsers declared by the table schema. Sora concatenates their rows, then validates and exports the combined result as one table. Primary-key, unique-index, reference, and `singleton` checks therefore apply across all selected sheets, not separately per sheet.
+
+Selectors may contain `*` (any sequence) and `?` (one character):
+
+```scon
+source {
+  format = "xlsx"
+  file = "Activity.xlsx"
+  sheets = ["2026-*", "special"]
+}
+```
+
+Explicit sheet names keep declaration order. Matches from each wildcard selector are sorted by sheet name. Overlapping selectors include a worksheet only once. Loading fails when an explicit worksheet is missing or a wildcard matches nothing.
+
+`sheets` is supported only for XLSX sources and cannot be combined with `sheet`. New template generation requires explicit sheet names because a wildcard cannot invent worksheets; wildcard selectors can be used with an existing workbook. Excel template generation and sync create missing explicitly named worksheets, and sync preserves rows in each selected worksheet. Row-level Studio data mutation currently rejects multi-sheet tables because merged rows do not retain worksheet ownership; schema editing, loading, validation, and export remain supported.
+
 ## Indexes
 
 Indexes are extra lookup paths on a table. They are different from the `key` of a `mode = "map"` table:

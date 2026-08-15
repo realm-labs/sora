@@ -15,6 +15,7 @@ use crate::projection::{
     DATA_START_ROW, DESC_ROW, FIELD_ROW, FIELD_START_COLUMN, NAME_ROW, TYPE_ROW, TemplateColumn,
     TemplateColumnGroupRole, table_template_columns, table_template_rows, tuple_shape,
 };
+use crate::sheets::resolve_table_sheet_names;
 
 const DATA_VALIDATION_ROWS: u32 = 1000;
 
@@ -29,50 +30,55 @@ pub(crate) fn write_workbook_with_rows(
     let formats = TemplateFormats::new();
 
     for table in tables {
-        let worksheet = workbook.add_worksheet();
-        let sheet_name = table
-            .source
-            .as_ref()
-            .and_then(|source| source.sheet.as_deref())
-            .unwrap_or(&table.name);
-        worksheet
-            .set_name(sheet_name)
-            .map_err(|source| excel_error(path, source))?;
+        let sheet_names = resolve_table_sheet_names(table, &[])?;
+        let data_rows = rows_for_table(table);
+        if sheet_names.len() > 1 && !data_rows.is_empty() {
+            return Err(SoraError::InvalidSchema(format!(
+                "cannot generate rows for multi-sheet table `{}` because row-to-sheet ownership is unknown",
+                table.name
+            )));
+        }
+        for sheet_name in sheet_names {
+            let worksheet = workbook.add_worksheet();
+            worksheet
+                .set_name(&sheet_name)
+                .map_err(|source| excel_error(path, source))?;
 
-        let columns = table_template_columns(ir, table);
-        for (row_index, row) in table_template_rows(ir, table).iter().enumerate() {
-            for (column_index, value) in row.iter().enumerate() {
-                let column_info = column_index
-                    .checked_sub(FIELD_START_COLUMN as usize)
-                    .and_then(|index| columns.get(index));
-                if value.is_empty() {
-                    worksheet
-                        .write_blank(
-                            row_index as u32,
-                            column_index as u16,
-                            formats.for_cell(row_index, column_index, column_info),
-                        )
-                        .map_err(|source| excel_error(path, source))?;
-                } else {
-                    worksheet
-                        .write_with_format(
-                            row_index as u32,
-                            column_index as u16,
-                            value,
-                            formats.for_cell(row_index, column_index, column_info),
-                        )
-                        .map_err(|source| excel_error(path, source))?;
+            let columns = table_template_columns(ir, table);
+            for (row_index, row) in table_template_rows(ir, table).iter().enumerate() {
+                for (column_index, value) in row.iter().enumerate() {
+                    let column_info = column_index
+                        .checked_sub(FIELD_START_COLUMN as usize)
+                        .and_then(|index| columns.get(index));
+                    if value.is_empty() {
+                        worksheet
+                            .write_blank(
+                                row_index as u32,
+                                column_index as u16,
+                                formats.for_cell(row_index, column_index, column_info),
+                            )
+                            .map_err(|source| excel_error(path, source))?;
+                    } else {
+                        worksheet
+                            .write_with_format(
+                                row_index as u32,
+                                column_index as u16,
+                                value,
+                                formats.for_cell(row_index, column_index, column_info),
+                            )
+                            .map_err(|source| excel_error(path, source))?;
+                    }
                 }
             }
-        }
 
-        apply_sheet_layout(ir, table, worksheet, &formats, path)?;
-        apply_field_notes(ir, table, worksheet, path)?;
-        apply_data_validations(ir, table, worksheet, path)?;
-        write_data_rows(worksheet, &formats, path, &columns, rows_for_table(table))?;
-        worksheet
-            .set_freeze_panes(DATA_START_ROW, 1)
-            .map_err(|source| excel_error(path, source))?;
+            apply_sheet_layout(ir, table, worksheet, &formats, path)?;
+            apply_field_notes(ir, table, worksheet, path)?;
+            apply_data_validations(ir, table, worksheet, path)?;
+            write_data_rows(worksheet, &formats, path, &columns, data_rows.clone())?;
+            worksheet
+                .set_freeze_panes(DATA_START_ROW, 1)
+                .map_err(|source| excel_error(path, source))?;
+        }
     }
 
     for sheet in additional_sheets {

@@ -167,6 +167,12 @@ pub(crate) fn build_schema(
             if let Some(sheet) = &source.sheet {
                 metadata.insert("sheet".to_owned(), sheet.clone());
             }
+            if !source.sheets.is_empty() {
+                metadata.insert(
+                    "sheets".to_owned(),
+                    serde_json::to_string(&source.sheets).expect("string list serializes"),
+                );
+            }
         }
         if let Some(usages) = derived_usages.get(&item.name) {
             metadata.insert("derived_usage_count".to_owned(), usages.len().to_string());
@@ -388,6 +394,12 @@ pub(crate) fn build_schema_from_raw(
             }
             if let Some(sheet) = &source.sheet {
                 metadata.insert("sheet".to_owned(), sheet.clone());
+            }
+            if let Some(sheets) = &source.sheets {
+                metadata.insert(
+                    "sheets".to_owned(),
+                    serde_json::to_string(sheets).expect("string list serializes"),
+                );
             }
         }
         nodes.push(StudioNode {

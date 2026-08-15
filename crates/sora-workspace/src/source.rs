@@ -20,7 +20,7 @@ use sora_input_csv::reader::{load_csv_localization_source_data, load_csv_table_d
 use sora_input_structured::reader::{load_json_table_data, load_yaml_table_data};
 use sora_input_toml::data::load_table_data_file;
 use sora_input_xlsx::reader::{
-    load_xlsx_localization_source_data, load_xlsx_table_data_with_ir_and_parsers,
+    load_xlsx_localization_source_data, load_xlsx_table_source_data_with_ir_and_parsers,
 };
 use sora_ir::model::{ConfigIr, TableIr};
 use sora_schema::model::ProjectSchema;
@@ -386,17 +386,11 @@ impl DataSourceLoader for XlsxSourceLoader {
     }
 
     fn load_table(&self, request: DataSourceRequest<'_>) -> Result<TableData> {
-        let sheet = request
-            .source
-            .sheet
-            .as_deref()
-            .unwrap_or(&request.table.name);
         let _ = request.execution;
-        load_xlsx_table_data_with_ir_and_parsers(
+        load_xlsx_table_source_data_with_ir_and_parsers(
             request.ir,
             request.table,
             request.path,
-            sheet,
             request.parser_registry,
         )
     }
@@ -494,6 +488,7 @@ mod tests {
                     format: None,
                     file: "items.fake".to_owned(),
                     sheet: None,
+                    sheets: Vec::new(),
                 }),
                 fields: vec![FieldIr {
                     name: "id".to_owned(),
@@ -605,6 +600,7 @@ mod tests {
                     format: format.map(str::to_owned),
                     file: file.to_owned(),
                     sheet: None,
+                    sheets: Vec::new(),
                 }),
                 fields: vec![
                     FieldIr {

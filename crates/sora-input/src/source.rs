@@ -184,7 +184,10 @@ pub fn resolve_table_source_format_with_registry<'a>(
         .ok_or_else(|| SoraError::MissingTableSource {
             table: table.name.clone(),
         })?;
-    resolve_source_format_with_registry(&table.name, source, default_source_format, registry)
+    let format =
+        resolve_source_format_with_registry(&table.name, source, default_source_format, registry)?;
+    validate_multi_sheet_format(table, format)?;
+    Ok(format)
 }
 
 pub fn resolve_localization_source_format_with_registry<'a>(
@@ -263,7 +266,24 @@ pub fn resolve_table_source_format(
         .ok_or_else(|| SoraError::MissingTableSource {
             table: table.name.clone(),
         })?;
-    resolve_source_format(&table.name, source, default_source_format)
+    let format = resolve_source_format(&table.name, source, default_source_format)?;
+    validate_multi_sheet_format(table, format.as_str())?;
+    Ok(format)
+}
+
+fn validate_multi_sheet_format(table: &TableIr, format: &str) -> Result<()> {
+    if table
+        .source
+        .as_ref()
+        .is_some_and(|source| !source.sheets.is_empty())
+        && format != "xlsx"
+    {
+        return Err(SoraError::InvalidSchema(format!(
+            "table `{}` declares `source.sheets`, but source format `{format}` is not xlsx",
+            table.name
+        )));
+    }
+    Ok(())
 }
 
 pub fn resolve_source_format(
@@ -299,6 +319,7 @@ mod tests {
             format: Some("toml".to_owned()),
             file: "items.data".to_owned(),
             sheet: None,
+            sheets: Vec::new(),
         };
 
         assert_eq!(
@@ -308,11 +329,40 @@ mod tests {
     }
 
     #[test]
+    fn rejects_multi_sheet_selectors_for_non_xlsx_sources() {
+        let table = TableIr {
+            id: "item".to_owned(),
+            name: "Item".to_owned(),
+            canonical_name: "Item".to_owned(),
+            groups: Default::default(),
+            mode: sora_ir::model::TableModeIr::List,
+            key: None,
+            source: Some(TableSourceIr {
+                format: Some("csv".to_owned()),
+                file: "Item.csv".to_owned(),
+                sheet: None,
+                sheets: vec!["2026-*".to_owned()],
+            }),
+            fields: Vec::new(),
+            indexes: Vec::new(),
+        };
+
+        let error = resolve_table_source_format(&table, None)
+            .expect_err("sheet selectors only apply to xlsx sources");
+        assert!(
+            error
+                .to_string()
+                .contains("source format `csv` is not xlsx")
+        );
+    }
+
+    #[test]
     fn resolves_format_from_file_extension() {
         let source = TableSourceIr {
             format: None,
             file: "items.csv".to_owned(),
             sheet: None,
+            sheets: Vec::new(),
         };
 
         assert_eq!(
@@ -327,11 +377,13 @@ mod tests {
             format: None,
             file: "items.json".to_owned(),
             sheet: None,
+            sheets: Vec::new(),
         };
         let yaml = TableSourceIr {
             format: None,
             file: "items.yml".to_owned(),
             sheet: None,
+            sheets: Vec::new(),
         };
 
         assert_eq!(
@@ -350,6 +402,7 @@ mod tests {
             format: None,
             file: "items.data".to_owned(),
             sheet: None,
+            sheets: Vec::new(),
         };
 
         assert_eq!(
@@ -366,6 +419,7 @@ mod tests {
             format: None,
             file: "items.data".to_owned(),
             sheet: None,
+            sheets: Vec::new(),
         };
 
         assert_eq!(
@@ -381,6 +435,7 @@ mod tests {
             format: Some("json".to_owned()),
             file: "items.json".to_owned(),
             sheet: None,
+            sheets: Vec::new(),
         };
 
         let error =
