@@ -3,9 +3,7 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DropGroup {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "name")]
     pub name: std::sync::Arc<str>,
 }
 

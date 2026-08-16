@@ -3,20 +3,14 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ComplexRule {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "name")]
     pub name: std::sync::Arc<str>,
     /// Single union value derived from a tagged_columns child row
-    #[serde(rename = "root_condition")]
     pub root_condition: super::event_condition::EventCondition,
-    #[serde(rename = "root_action_group")]
     pub root_action_group: i32,
     /// Non-JSON list<union<RewardAction>> assembled from child rows
-    #[serde(rename = "actions")]
     pub actions: Vec<super::reward_action::RewardAction>,
     /// Nested tuple, tuple_list, split, and map parsers in one cell
-    #[serde(rename = "budget")]
     pub budget: super::complex_budget::ComplexBudget,
 }
 

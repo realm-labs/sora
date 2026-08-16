@@ -3,12 +3,9 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ComplexConditionGroup {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "name")]
     pub name: std::sync::Arc<str>,
     /// A derived list of union values; each child row is edited without JSON
-    #[serde(rename = "conditions")]
     pub conditions: Vec<super::event_condition::EventCondition>,
 }
 

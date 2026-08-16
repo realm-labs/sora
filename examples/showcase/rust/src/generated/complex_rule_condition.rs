@@ -3,11 +3,8 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ComplexRuleCondition {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "rule_id")]
     pub rule_id: i32,
-    #[serde(rename = "value")]
     pub value: super::event_condition::EventCondition,
 }
 

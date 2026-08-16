@@ -2,11 +2,8 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SkillEffect {
-    #[serde(rename = "element")]
     pub element: super::element_type::ElementType,
-    #[serde(rename = "power")]
     pub power: i32,
-    #[serde(rename = "radius")]
     pub radius: f32,
 }
 

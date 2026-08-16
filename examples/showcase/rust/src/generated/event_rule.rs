@@ -3,13 +3,9 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct EventRule {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "name")]
     pub name: std::sync::Arc<str>,
-    #[serde(rename = "condition")]
     pub condition: super::event_condition::EventCondition,
-    #[serde(rename = "actions")]
     pub actions: Vec<super::reward_action::RewardAction>,
 }
 

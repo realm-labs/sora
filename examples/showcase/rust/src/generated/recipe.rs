@@ -3,11 +3,8 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Recipe {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "result_item")]
     pub result_item: i32,
-    #[serde(rename = "materials")]
     pub materials: Vec<super::resource_cost::ResourceCost>,
 }
 

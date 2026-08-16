@@ -13,7 +13,9 @@ pub enum {{ union.pascal_name }} {
 {%- for variant in union.variants %}
     {{ variant.name }} {
 {%- for field in variant.fields %}
+{%- if field.raw_name != field.name %}
         #[serde(rename = "{{ field.raw_name }}")]
+{%- endif %}
 {%- if field.serde_with %}
         #[serde(with = "{{ field.serde_with }}")]
 {%- endif %}

@@ -4,25 +4,18 @@ use super::SoraMap;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Item {
     /// Item id
-    #[serde(rename = "id")]
     pub id: i32,
     /// Display name
-    #[serde(rename = "name")]
     pub name: std::sync::Arc<str>,
     /// Item category
-    #[serde(rename = "item_type")]
     pub item_type: super::item_type::ItemType,
     /// Stack limit; blank cells use the default
-    #[serde(rename = "max_stack")]
     pub max_stack: i32,
     /// Struct columns: price_kind, price_id, price_count
-    #[serde(rename = "price")]
     pub price: super::resource_cost::ResourceCost,
     /// JSON string set
-    #[serde(rename = "tags")]
     pub tags: std::collections::HashSet<std::sync::Arc<str>>,
     /// Map pairs: key,value|key,value
-    #[serde(rename = "attributes")]
     #[serde(with = "super::runtime::serde_map_pairs")]
     pub attributes: std::collections::HashMap<std::sync::Arc<str>, i32>,
 }

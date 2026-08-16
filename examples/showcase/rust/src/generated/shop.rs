@@ -3,11 +3,8 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Shop {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "name")]
     pub name: std::sync::Arc<str>,
-    #[serde(rename = "currency")]
     pub currency: super::resource_kind::ResourceKind,
 }
 

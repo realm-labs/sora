@@ -3,13 +3,9 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ComplexActionEntry {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "group_id")]
     pub group_id: i32,
-    #[serde(rename = "seq")]
     pub seq: i32,
-    #[serde(rename = "value")]
     pub value: super::reward_action::RewardAction,
 }
 

@@ -3,11 +3,8 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct GachaPool {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "name")]
     pub name: std::sync::Arc<str>,
-    #[serde(rename = "cost")]
     pub cost: super::resource_cost::ResourceCost,
 }
 

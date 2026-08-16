@@ -3,11 +3,8 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ComplexActionGroup {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "name")]
     pub name: std::sync::Arc<str>,
-    #[serde(rename = "actions")]
     pub actions: Vec<super::reward_action::RewardAction>,
 }
 

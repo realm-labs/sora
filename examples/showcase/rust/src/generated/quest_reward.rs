@@ -2,13 +2,9 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct QuestReward {
-    #[serde(rename = "quest_id")]
     pub quest_id: i32,
-    #[serde(rename = "seq")]
     pub seq: i32,
-    #[serde(rename = "item_id")]
     pub item_id: i32,
-    #[serde(rename = "count")]
     pub count: i32,
 }
 

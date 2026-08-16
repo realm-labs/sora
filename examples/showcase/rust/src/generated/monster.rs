@@ -3,17 +3,11 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Monster {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "name")]
     pub name: std::sync::Arc<str>,
-    #[serde(rename = "level")]
     pub level: i32,
-    #[serde(rename = "element")]
     pub element: super::element_type::ElementType,
-    #[serde(rename = "drop_group")]
     pub drop_group: i32,
-    #[serde(rename = "spawn_pos")]
     pub spawn_pos: super::vec3::Vec3,
 }
 

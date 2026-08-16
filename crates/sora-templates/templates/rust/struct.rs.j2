@@ -16,7 +16,9 @@ pub struct {{ record.pascal_name }} {
 {%- if field.comment %}
     /// {{ field.comment }}
 {%- endif %}
+{%- if field.raw_name != field.name %}
     #[serde(rename = "{{ field.raw_name }}")]
+{%- endif %}
 {%- if field.serde_with %}
     #[serde(with = "{{ field.serde_with }}")]
 {%- endif %}

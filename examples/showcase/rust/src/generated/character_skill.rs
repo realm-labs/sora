@@ -2,11 +2,8 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CharacterSkill {
-    #[serde(rename = "character_id")]
     pub character_id: i32,
-    #[serde(rename = "skill_id")]
     pub skill_id: i32,
-    #[serde(rename = "unlock_level")]
     pub unlock_level: i32,
 }
 

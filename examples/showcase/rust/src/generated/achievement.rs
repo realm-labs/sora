@@ -3,13 +3,9 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Achievement {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "title_key")]
     pub title_key: super::runtime::TextKey,
-    #[serde(rename = "target_count")]
     pub target_count: i64,
-    #[serde(rename = "reward")]
     pub reward: super::resource_cost::ResourceCost,
 }
 

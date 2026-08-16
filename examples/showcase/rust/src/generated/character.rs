@@ -3,19 +3,12 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Character {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "name")]
     pub name: std::sync::Arc<str>,
-    #[serde(rename = "rarity")]
     pub rarity: super::rarity::Rarity,
-    #[serde(rename = "base_level")]
     pub base_level: i32,
-    #[serde(rename = "base_skill")]
     pub base_skill: i32,
-    #[serde(rename = "starter_items")]
     pub starter_items: Vec<i32>,
-    #[serde(rename = "spawn_pos")]
     pub spawn_pos: super::vec3::Vec3,
 }
 

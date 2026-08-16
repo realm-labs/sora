@@ -3,11 +3,8 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Dialogue {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "speaker_key")]
     pub speaker_key: super::runtime::TextKey,
-    #[serde(rename = "lines")]
     pub lines: Vec<std::sync::Arc<str>>,
 }
 

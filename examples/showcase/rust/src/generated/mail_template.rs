@@ -3,15 +3,10 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct MailTemplate {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "mail_type")]
     pub mail_type: super::mail_type::MailType,
-    #[serde(rename = "title_key")]
     pub title_key: super::runtime::TextKey,
-    #[serde(rename = "body_key")]
     pub body_key: super::runtime::TextKey,
-    #[serde(rename = "rewards")]
     pub rewards: Vec<super::reward::Reward>,
 }
 

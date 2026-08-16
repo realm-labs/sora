@@ -2,11 +2,8 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ResourceCost {
-    #[serde(rename = "kind")]
     pub kind: super::resource_kind::ResourceKind,
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "count")]
     pub count: i32,
 }
 

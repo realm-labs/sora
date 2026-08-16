@@ -2,11 +2,8 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RewardBundle {
-    #[serde(rename = "cost")]
     pub cost: super::resource_cost::ResourceCost,
-    #[serde(rename = "weight")]
     pub weight: i32,
-    #[serde(rename = "labels")]
     pub labels: Vec<std::sync::Arc<str>>,
 }
 

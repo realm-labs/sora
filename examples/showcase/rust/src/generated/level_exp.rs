@@ -3,11 +3,8 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LevelExp {
-    #[serde(rename = "level")]
     pub level: i32,
-    #[serde(rename = "exp")]
     pub exp: i64,
-    #[serde(rename = "unlock_feature")]
     pub unlock_feature: Option<std::sync::Arc<str>>,
 }
 

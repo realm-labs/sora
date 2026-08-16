@@ -2,11 +2,8 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Vec3 {
-    #[serde(rename = "x")]
     pub x: f32,
-    #[serde(rename = "y")]
     pub y: f32,
-    #[serde(rename = "z")]
     pub z: f32,
 }
 

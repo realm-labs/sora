@@ -2,15 +2,10 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ShopItem {
-    #[serde(rename = "shop_id")]
     pub shop_id: i32,
-    #[serde(rename = "seq")]
     pub seq: i32,
-    #[serde(rename = "item_id")]
     pub item_id: i32,
-    #[serde(rename = "price")]
     pub price: super::resource_cost::ResourceCost,
-    #[serde(rename = "daily_limit")]
     pub daily_limit: Option<i32>,
 }
 

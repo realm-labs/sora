@@ -2,15 +2,10 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DropEntry {
-    #[serde(rename = "group_id")]
     pub group_id: i32,
-    #[serde(rename = "seq")]
     pub seq: i32,
-    #[serde(rename = "item_id")]
     pub item_id: i32,
-    #[serde(rename = "count")]
     pub count: i32,
-    #[serde(rename = "weight")]
     pub weight: f32,
 }
 

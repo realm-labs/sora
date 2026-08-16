@@ -2,13 +2,9 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct GachaItem {
-    #[serde(rename = "pool_id")]
     pub pool_id: i32,
-    #[serde(rename = "item_id")]
     pub item_id: i32,
-    #[serde(rename = "rarity")]
     pub rarity: super::rarity::Rarity,
-    #[serde(rename = "weight")]
     pub weight: f32,
 }
 

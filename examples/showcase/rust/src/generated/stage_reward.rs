@@ -2,13 +2,9 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct StageReward {
-    #[serde(rename = "stage_id")]
     pub stage_id: i32,
-    #[serde(rename = "seq")]
     pub seq: i32,
-    #[serde(rename = "item_id")]
     pub item_id: i32,
-    #[serde(rename = "count")]
     pub count: i32,
 }
 

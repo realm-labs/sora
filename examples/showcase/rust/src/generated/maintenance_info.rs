@@ -2,11 +2,8 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct MaintenanceInfo {
-    #[serde(rename = "starts_at")]
     pub starts_at: std::sync::Arc<str>,
-    #[serde(rename = "duration_minutes")]
     pub duration_minutes: i32,
-    #[serde(rename = "reason")]
     pub reason: Option<std::sync::Arc<str>>,
 }
 

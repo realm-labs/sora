@@ -3,13 +3,9 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct EquipmentSet {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "name")]
     pub name: std::sync::Arc<str>,
-    #[serde(rename = "item_ids")]
     pub item_ids: Vec<i32>,
-    #[serde(rename = "bonus_effect")]
     pub bonus_effect: super::skill_effect::SkillEffect,
 }
 

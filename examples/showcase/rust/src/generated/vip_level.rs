@@ -3,11 +3,8 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct VipLevel {
-    #[serde(rename = "level")]
     pub level: i32,
-    #[serde(rename = "cost")]
     pub cost: super::resource_cost::ResourceCost,
-    #[serde(rename = "perks")]
     pub perks: Vec<std::sync::Arc<str>>,
 }
 

@@ -3,20 +3,13 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Quest {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "quest_type")]
     pub quest_type: super::quest_type::QuestType,
-    #[serde(rename = "title")]
     pub title: std::sync::Arc<str>,
-    #[serde(rename = "required_item")]
     pub required_item: i32,
-    #[serde(rename = "unlock_skills")]
     pub unlock_skills: Vec<i32>,
-    #[serde(rename = "start_pos")]
     pub start_pos: super::vec3::Vec3,
     /// Materialized from QuestReward child rows
-    #[serde(rename = "rewards")]
     pub rewards: Vec<super::reward::Reward>,
 }
 

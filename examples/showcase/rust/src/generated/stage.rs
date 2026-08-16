@@ -3,15 +3,10 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Stage {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "name")]
     pub name: std::sync::Arc<str>,
-    #[serde(rename = "monster_ids")]
     pub monster_ids: Vec<i32>,
-    #[serde(rename = "recommended_power")]
     pub recommended_power: i32,
-    #[serde(rename = "first_clear_rewards")]
     pub first_clear_rewards: Vec<super::reward::Reward>,
 }
 

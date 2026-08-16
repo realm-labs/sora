@@ -2,11 +2,8 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct StatModifier {
-    #[serde(rename = "stat")]
     pub stat: super::stat_type::StatType,
-    #[serde(rename = "value")]
     pub value: f32,
-    #[serde(rename = "is_percent")]
     pub is_percent: bool,
 }
 

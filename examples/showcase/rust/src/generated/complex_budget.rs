@@ -2,11 +2,8 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ComplexBudget {
-    #[serde(rename = "fixed")]
     pub fixed: super::resource_cost::ResourceCost,
-    #[serde(rename = "random")]
     pub random: Vec<super::reward_bundle::RewardBundle>,
-    #[serde(rename = "limits")]
     #[serde(with = "super::runtime::serde_map_pairs")]
     pub limits: std::collections::HashMap<std::sync::Arc<str>, i32>,
 }

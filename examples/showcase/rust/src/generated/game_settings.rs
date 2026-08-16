@@ -2,27 +2,18 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct GameSettings {
-    #[serde(rename = "version")]
     pub version: std::sync::Arc<str>,
-    #[serde(rename = "daily_reset_hour")]
     pub daily_reset_hour: i32,
-    #[serde(rename = "starting_gold")]
     pub starting_gold: i32,
-    #[serde(rename = "spawn_pos")]
     pub spawn_pos: super::vec3::Vec3,
-    #[serde(rename = "starter_items")]
     pub starter_items: Vec<i32>,
     /// Double precision tuning value
-    #[serde(rename = "gravity")]
     pub gravity: f64,
     /// Fixed-length array parsed from one cell
-    #[serde(rename = "daily_bonus_items")]
     pub daily_bonus_items: [i32; 3],
     /// Fixed-length array of structs
-    #[serde(rename = "spawn_points")]
     pub spawn_points: [super::vec3::Vec3; 2],
     /// Optional derived struct copied from a child row
-    #[serde(rename = "maintenance")]
     pub maintenance: Option<super::maintenance_info::MaintenanceInfo>,
 }
 

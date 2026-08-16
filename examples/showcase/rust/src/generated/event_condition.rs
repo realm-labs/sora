@@ -3,28 +3,11 @@
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type")]
 pub enum EventCondition {
-    LevelAtLeast {
-        #[serde(rename = "level")]
-        level: i32,
-    },
-    QuestCompleted {
-        #[serde(rename = "quest_id")]
-        quest_id: i32,
-    },
-    HasItem {
-        #[serde(rename = "item_id")]
-        item_id: i32,
-        #[serde(rename = "count")]
-        count: i32,
-    },
-    AllConditions {
-        #[serde(rename = "condition_group_id")]
-        condition_group_id: i32,
-    },
-    AnyCondition {
-        #[serde(rename = "condition_group_id")]
-        condition_group_id: i32,
-    },
+    LevelAtLeast { level: i32 },
+    QuestCompleted { quest_id: i32 },
+    HasItem { item_id: i32, count: i32 },
+    AllConditions { condition_group_id: i32 },
+    AnyCondition { condition_group_id: i32 },
 }
 
 impl super::runtime::SoraDecode for EventCondition {

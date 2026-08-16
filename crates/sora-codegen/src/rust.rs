@@ -1007,4 +1007,63 @@ type = "enum<Status>"
         assert!(items_mod.contains("pub use item::{Item, ItemTable};"));
         let _ = std::fs::remove_dir_all(out);
     }
+
+    #[test]
+    fn only_renames_fields_when_the_schema_and_rust_names_differ() {
+        let schema: ProjectSchema = toml::from_str(
+            r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[structs]]
+name = "Cost"
+
+[[structs.fields]]
+name = "entry_cost"
+type = "i32"
+
+[[structs.fields]]
+name = "displayName"
+type = "string"
+
+[[unions]]
+name = "Action"
+tag = "type"
+
+[[unions.variants]]
+name = "Charge"
+
+[[unions.variants.fields]]
+name = "resource_id"
+type = "i32"
+
+[[unions.variants.fields]]
+name = "resourceCount"
+type = "i32"
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        let out = std::env::temp_dir().join("sora-codegen-rust-serde-rename-test");
+        let _ = std::fs::remove_dir_all(&out);
+
+        RustCodeGenerator
+            .generate_with_options(&ir, RustCodegenOptions::default(), &out)
+            .unwrap();
+
+        let cost = std::fs::read_to_string(out.join("cost.rs")).unwrap();
+        assert!(cost.contains("pub entry_cost: i32"));
+        assert!(!cost.contains("#[serde(rename = \"entry_cost\")]"));
+        assert!(cost.contains("#[serde(rename = \"displayName\")]\n    pub display_name: String"));
+
+        let action = std::fs::read_to_string(out.join("action.rs")).unwrap();
+        assert!(action.contains("resource_id: i32"));
+        assert!(!action.contains("#[serde(rename = \"resource_id\")]"));
+        assert!(
+            action.contains("#[serde(rename = \"resourceCount\")]\n        resource_count: i32")
+        );
+
+        let _ = std::fs::remove_dir_all(out);
+    }
 }

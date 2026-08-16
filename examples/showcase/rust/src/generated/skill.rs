@@ -3,24 +3,16 @@ use super::SoraMap;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Skill {
-    #[serde(rename = "id")]
     pub id: i32,
-    #[serde(rename = "name")]
     pub name: std::sync::Arc<str>,
-    #[serde(rename = "element")]
     pub element: super::element_type::ElementType,
     /// Tuple cost, e.g. Gold,0,150
-    #[serde(rename = "cost")]
     pub cost: super::resource_cost::ResourceCost,
     /// JSON object with element/power/radius
-    #[serde(rename = "effect")]
     pub effect: super::skill_effect::SkillEffect,
-    #[serde(rename = "required_level")]
     pub required_level: i32,
     /// Optional item requirement
-    #[serde(rename = "required_item")]
     pub required_item: Option<i32>,
-    #[serde(rename = "cast_origin")]
     pub cast_origin: super::vec3::Vec3,
 }
 
