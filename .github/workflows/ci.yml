@@ -28,6 +28,10 @@ jobs:
         with:
           components: rustfmt,clippy
 
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.os }}
+
       - name: Check formatting
         run: cargo fmt --check
 
@@ -81,6 +85,10 @@ jobs:
       - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: showcase
 
       - uses: actions/setup-java@v5
         with:
@@ -138,6 +146,10 @@ jobs:
       - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: runtime-matrix
 
       - uses: actions/setup-python@v7
         with:
