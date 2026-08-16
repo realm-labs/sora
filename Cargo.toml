@@ -105,7 +105,7 @@ tower-http = { version = "0.7", features = ["cors", "sensitive-headers", "trace"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt", "json"] }
 url = "2"
-umya-spreadsheet = "2.3.3"
+umya-spreadsheet = "3.0.1"
 uuid = { version = "1", features = ["serde", "v4"] }
 windows-sys = "0.61"
 zstd = "0.13"
