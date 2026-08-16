@@ -3,9 +3,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use heck::ToPascalCase;
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
+use sora_ir::key::{TableKeyIdentity, resolve_ref_key_identity, resolve_table_key_identity};
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
 use crate::{
@@ -32,7 +34,7 @@ impl CodeGenerator for RustCodeGenerator {
         let source_dir = rust_source_dir(out_dir, &options)?;
         ensure_dir(&source_dir)?;
         let mapper = RustTypeMapper::new(context.target, ir, context.type_mappings, &options);
-        let model = RustModel::from_base_model(ir, build_base_model(ir)?, &mapper);
+        let model = RustModel::from_base_model(ir, build_base_model(ir)?, &mapper)?;
         let runtime_format = runtime_format_name(options.runtime_format);
 
         for item in &model.enums {
@@ -261,6 +263,17 @@ struct RustRecord {
 }
 
 #[derive(Debug, Clone, Serialize)]
+struct RustStrongKey {
+    name: String,
+    raw_type: String,
+    copy: bool,
+    const_raw: bool,
+    string_like: bool,
+    text: bool,
+    serde_with: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
 struct RustImport {
     module: String,
     name: String,
@@ -280,8 +293,9 @@ struct RustTable {
     key_name: Option<String>,
     key_field_name: Option<String>,
     key_type: Option<String>,
-    key_param_type: Option<String>,
     key_is_copy: bool,
+    key_string_like: bool,
+    strong_key: Option<RustStrongKey>,
     unique_indexes: Vec<RustIndex>,
     non_unique_indexes: Vec<RustIndex>,
 }
@@ -311,7 +325,11 @@ struct RustField {
 }
 
 impl RustModel {
-    fn from_base_model(ir: &ConfigIr, model: BaseModel, mapper: &RustTypeMapper<'_>) -> Self {
+    fn from_base_model(
+        ir: &ConfigIr,
+        model: BaseModel,
+        mapper: &RustTypeMapper<'_>,
+    ) -> Result<Self> {
         let root_modules = model
             .modules
             .iter()
@@ -324,8 +342,8 @@ impl RustModel {
             .tables
             .into_iter()
             .map(|item| rust_table(ir, item, mapper))
-            .collect::<Vec<_>>();
-        Self {
+            .collect::<Result<Vec<_>>>()?;
+        Ok(Self {
             package: model.package,
             schema_fingerprint: model.schema_fingerprint,
             enums: model
@@ -380,7 +398,7 @@ impl RustModel {
                 .unwrap_or_default(),
             tables,
             modules: root_modules,
-        }
+        })
     }
 }
 
@@ -413,7 +431,7 @@ fn rust_variant(
     let mut fields = variant
         .fields
         .into_iter()
-        .map(|field| rust_field(ir, field, mapper, root_path))
+        .map(|field| rust_field(ir, field, mapper, root_path, None, false, false))
         .collect::<Vec<_>>();
     for (index, field) in fields.iter_mut().enumerate() {
         field.text_key_binding = format!("__sora_text_field_{index}");
@@ -438,10 +456,30 @@ fn rust_record(
     mapper: &RustTypeMapper<'_>,
 ) -> RustRecord {
     let root_path = rust_module_root(&record.module_path);
+    let primary_key_name = table.as_ref().and_then(|table| table.key_name.as_deref());
+    let primary_key_type = table.as_ref().and_then(|table| table.key_type.as_deref());
+    let primary_key_is_text = table
+        .as_ref()
+        .and_then(|table| table.strong_key.as_ref())
+        .is_some_and(|key| key.text);
+    let primary_key_is_strong = table
+        .as_ref()
+        .is_some_and(|table| table.strong_key.is_some());
     let fields = record
         .fields
         .into_iter()
-        .map(|field| rust_field(ir, field, mapper, &root_path))
+        .map(|field| {
+            let is_primary_key = primary_key_name == Some(field.raw_name.as_str());
+            rust_field(
+                ir,
+                field,
+                mapper,
+                &root_path,
+                is_primary_key.then_some(primary_key_type).flatten(),
+                is_primary_key && primary_key_is_strong,
+                is_primary_key && primary_key_is_text,
+            )
+        })
         .collect::<Vec<_>>();
     let custom_imports = collect_rust_imports(fields.iter());
     RustRecord {
@@ -456,31 +494,76 @@ fn rust_record(
     }
 }
 
-fn rust_table(ir: &ConfigIr, table: BaseTable, mapper: &RustTypeMapper<'_>) -> RustTable {
+fn rust_table(ir: &ConfigIr, table: BaseTable, mapper: &RustTypeMapper<'_>) -> Result<RustTable> {
     let root_path = rust_module_root(&table.module_path);
     let row_type = table.pascal_name.clone();
     let rust_module_path = table.module_path.replace('/', "::");
     let row_path = format!("{rust_module_path}::{}", table.pascal_name);
     let table_path = format!("{rust_module_path}::{}Table", table.pascal_name);
-    let key_type = table
-        .key_field
-        .as_ref()
-        .map(|field| mapper.local_table_key_type(&field.ty, &root_path));
-    let key_param_type = table
-        .key_field
-        .as_ref()
-        .map(|field| mapper.key_param_type(&field.ty, &root_path));
+    let key_identity = if table.mode == TableModeIr::Map {
+        let table_ir = ir
+            .tables
+            .iter()
+            .find(|candidate| candidate.name == table.name)
+            .ok_or_else(|| {
+                SoraError::InvalidSchema(format!(
+                    "Rust codegen could not resolve map table `{}` in schema IR",
+                    table.name
+                ))
+            })?;
+        Some(resolve_table_key_identity(&ir.tables, table_ir)?)
+    } else {
+        None
+    };
+    let key_type = key_identity.as_ref().map(|identity| match identity {
+        TableKeyIdentity::Primitive {
+            table: owner,
+            field,
+            ..
+        } if owner.name == table.name => strong_key_name(owner, field),
+        _ => mapper.key_identity_type_name(*identity, &root_path),
+    });
     let container_type = rust_container_type(table.mode, &row_type, key_type.as_deref());
     let key_field_name = table
         .key_field
         .as_ref()
         .map(|field| field.snake_name.clone());
-    let key_is_copy = table
-        .key_field
+    let key_name = table.key_name.clone();
+    let key_is_copy = key_identity
         .as_ref()
-        .is_some_and(|field| mapper.key_type_is_copy(&field.ty));
+        .is_some_and(|identity| mapper.key_identity_is_copy(*identity));
+    let key_string_like = key_identity
+        .as_ref()
+        .is_some_and(|identity| mapper.key_identity_is_string_like(*identity));
+    let strong_key = key_identity.and_then(|identity| match identity {
+        TableKeyIdentity::Primitive {
+            table: owner,
+            field,
+            raw_type,
+        } if owner.name == table.name => {
+            let name = strong_key_name(owner, field);
+            Some(RustStrongKey {
+                name,
+                raw_type: mapper.type_name(raw_type, &root_path),
+                copy: mapper.key_identity_is_copy(identity),
+                const_raw: is_const_raw_type(raw_type),
+                string_like: matches!(raw_type, TypeIr::String),
+                text: matches!(raw_type, TypeIr::Text),
+                serde_with: rust_serde_with(raw_type, mapper.options, &root_path),
+            })
+        }
+        _ => None,
+    });
+    if let Some(key) = &strong_key
+        && (key.name == row_type || key.name == format!("{row_type}Table"))
+    {
+        return Err(SoraError::InvalidSchema(format!(
+            "Rust strong key type `{}` for table `{}` conflicts with a generated type in module `{}`",
+            key.name, table.name, table.module_path
+        )));
+    }
 
-    RustTable {
+    Ok(RustTable {
         name: table.name,
         module_path: table.module_path,
         pascal_name: table.pascal_name,
@@ -490,38 +573,82 @@ fn rust_table(ir: &ConfigIr, table: BaseTable, mapper: &RustTypeMapper<'_>) -> R
         row_type,
         row_path,
         table_path,
-        key_name: table.key_name,
+        key_name: key_name.clone(),
         key_field_name,
-        key_type,
-        key_param_type,
+        key_type: key_type.clone(),
         key_is_copy,
+        key_string_like,
+        strong_key,
         unique_indexes: table
             .unique_indexes
             .into_iter()
-            .map(|index| rust_index(ir, index, mapper, &root_path))
+            .map(|index| {
+                rust_index(
+                    index,
+                    mapper,
+                    &root_path,
+                    key_name.as_deref(),
+                    key_type.as_deref(),
+                    key_is_copy,
+                    key_string_like,
+                )
+            })
             .collect(),
         non_unique_indexes: table
             .non_unique_indexes
             .into_iter()
-            .map(|index| rust_index(ir, index, mapper, &root_path))
+            .map(|index| {
+                rust_index(
+                    index,
+                    mapper,
+                    &root_path,
+                    key_name.as_deref(),
+                    key_type.as_deref(),
+                    key_is_copy,
+                    key_string_like,
+                )
+            })
             .collect(),
-    }
+    })
 }
 
 fn rust_index(
-    _ir: &ConfigIr,
     index: BaseIndex,
     mapper: &RustTypeMapper<'_>,
     root_path: &str,
+    primary_key_name: Option<&str>,
+    primary_key_type: Option<&str>,
+    primary_key_is_copy: bool,
+    primary_key_string_like: bool,
 ) -> RustIndex {
+    let is_primary_key = primary_key_name == Some(index.field.raw_name.as_str());
+    let key_type = if is_primary_key {
+        primary_key_type
+            .expect("map primary key type should be resolved")
+            .to_owned()
+    } else {
+        mapper.local_table_key_type(&index.field.ty, root_path)
+    };
+    let key_is_copy = if is_primary_key {
+        primary_key_is_copy
+    } else {
+        mapper.key_type_is_copy(&index.field.ty)
+    };
+    let param_type = if is_primary_key && primary_key_string_like {
+        "str".to_owned()
+    } else if is_primary_key {
+        key_type.clone()
+    } else {
+        mapper.key_param_type(&index.field.ty, root_path)
+    };
     RustIndex {
         name: index.snake_name,
         method_name: index.method_name,
         field_name: index.field.snake_name.clone(),
         param_name: index.field.snake_name.clone(),
-        param_type: mapper.key_param_type(&index.field.ty, root_path),
-        key_type: mapper.local_table_key_type(&index.field.ty, root_path),
-        key_is_copy: mapper.key_type_is_copy(&index.field.ty),
+        param_type,
+        key_type,
+        key_is_copy,
     }
 }
 
@@ -530,15 +657,31 @@ fn rust_field(
     field: BaseField,
     mapper: &RustTypeMapper<'_>,
     root_path: &str,
+    primary_key_type: Option<&str>,
+    primary_key_is_strong: bool,
+    primary_key_is_text: bool,
 ) -> RustField {
-    let collect_text_keys =
-        rust_collect_text_keys(ir, &field.ty, &format!("self.{}", field.snake_name), mapper);
+    let type_name = primary_key_type
+        .map(str::to_owned)
+        .unwrap_or_else(|| mapper.type_name(&field.ty, root_path));
+    let collect_text_keys = if primary_key_is_text {
+        format!("out.push(self.{}.as_text_key());", field.snake_name)
+    } else {
+        rust_collect_text_keys(ir, &field.ty, &format!("self.{}", field.snake_name), mapper)
+    };
+    let decode = if primary_key_is_strong {
+        format!("<{type_name} as {root_path}::runtime::SoraDecode>::decode(reader)?")
+    } else {
+        rust_decode_expr(ir, &field.ty, mapper, root_path)
+    };
     RustField {
         raw_name: field.raw_name,
         name: field.snake_name,
-        type_name: mapper.type_name(&field.ty, root_path),
-        serde_with: rust_serde_with(&field.ty, mapper.options, root_path),
-        decode: rust_decode_expr(ir, &field.ty, mapper, root_path),
+        type_name,
+        serde_with: (!primary_key_is_strong)
+            .then(|| rust_serde_with(&field.ty, mapper.options, root_path))
+            .flatten(),
+        decode,
         collect_text_keys,
         text_key_binding: String::new(),
         imports: mapper.imports(&field.ty),
@@ -595,18 +738,13 @@ fn rust_collect_text_keys(
             }
         }
         TypeIr::Struct(_) | TypeIr::Union(_) => format!("{value}.collect_text_keys(out);"),
-        TypeIr::Ref { table, field } => ir
-            .tables
-            .iter()
-            .find(|candidate| candidate.name == *table)
-            .and_then(|table| {
-                table
-                    .fields
-                    .iter()
-                    .find(|candidate| candidate.name == *field)
-            })
-            .map(|field| rust_collect_text_keys(ir, &field.ty, value, mapper))
-            .unwrap_or_default(),
+        TypeIr::Ref { table, field } => match resolve_ref_key_identity(&ir.tables, table, field) {
+            Ok(TableKeyIdentity::Primitive {
+                raw_type: TypeIr::Text,
+                ..
+            }) => format!("out.push({value}.as_text_key());"),
+            _ => String::new(),
+        },
         TypeIr::Bool
         | TypeIr::I8
         | TypeIr::U8
@@ -692,9 +830,13 @@ impl<'a> RustTypeMapper<'a> {
             TypeIr::Array { element, len } => {
                 format!("[{}; {len}]", self.type_name(element, root_path))
             }
-            TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
-                .map(|ty| self.type_name(ty, root_path))
-                .unwrap_or_else(|| "i32".to_owned()),
+            TypeIr::Ref { table, field } => {
+                let identity = resolve_ref_key_identity(&self.ir.tables, table, field)
+                    .unwrap_or_else(|error| {
+                        panic!("validated ref key `{table}.{field}` should resolve: {error}")
+                    });
+                self.key_identity_type_name(identity, root_path)
+            }
             TypeIr::Optional(element) => self
                 .mapping(element)
                 .and_then(|mapping| mapping.nullable_type_name)
@@ -703,6 +845,11 @@ impl<'a> RustTypeMapper<'a> {
     }
 
     fn key_param_type(&self, ty: &TypeIr, root_path: &str) -> String {
+        if let TypeIr::Ref { table, field } = ty {
+            let identity = resolve_ref_key_identity(&self.ir.tables, table, field)
+                .expect("validated ref key should resolve");
+            return self.key_identity_param_type(identity, root_path);
+        }
         let type_name = self.local_table_key_type(ty, root_path);
         if type_name == "String" || type_name == "std::sync::Arc<str>" {
             "str".to_owned()
@@ -713,9 +860,13 @@ impl<'a> RustTypeMapper<'a> {
 
     fn local_table_key_type(&self, ty: &TypeIr, root_path: &str) -> String {
         match ty {
-            TypeIr::Ref { table, field } => ref_target_type(self.ir, table, field)
-                .map(|ty| self.local_table_key_type(ty, root_path))
-                .unwrap_or_else(|| self.type_name(ty, root_path)),
+            TypeIr::Ref { table, field } => {
+                let identity = resolve_ref_key_identity(&self.ir.tables, table, field)
+                    .unwrap_or_else(|error| {
+                        panic!("validated ref key `{table}.{field}` should resolve: {error}")
+                    });
+                self.key_identity_type_name(identity, root_path)
+            }
             _ => self.type_name(ty, root_path),
         }
     }
@@ -735,9 +886,8 @@ impl<'a> RustTypeMapper<'a> {
             | TypeIr::F32
             | TypeIr::F64
             | TypeIr::Enum(_) => self.mapping(ty).is_none(),
-            TypeIr::Ref { table, field } => {
-                ref_target_type(self.ir, table, field).is_some_and(|ty| self.key_type_is_copy(ty))
-            }
+            TypeIr::Ref { table, field } => resolve_ref_key_identity(&self.ir.tables, table, field)
+                .is_ok_and(|identity| self.key_identity_is_copy(identity)),
             TypeIr::Optional(element) => self.key_type_is_copy(element),
             TypeIr::String
             | TypeIr::Text
@@ -766,6 +916,46 @@ impl<'a> RustTypeMapper<'a> {
         self.mapping(ty)
             .map(|mapping| mapping.wrap_decode(&base_expr))
             .unwrap_or(base_expr)
+    }
+
+    fn key_identity_type_name(&self, identity: TableKeyIdentity<'_>, root_path: &str) -> String {
+        match identity {
+            TableKeyIdentity::Primitive { table, field, .. } => format!(
+                "{root_path}::{}::{}",
+                schema_module_path(&table.name).replace('/', "::"),
+                strong_key_name(table, field)
+            ),
+            TableKeyIdentity::Enum { name } => {
+                self.type_name(&TypeIr::Enum(name.to_owned()), root_path)
+            }
+        }
+    }
+
+    fn key_identity_param_type(&self, identity: TableKeyIdentity<'_>, root_path: &str) -> String {
+        if self.key_identity_is_string_like(identity) {
+            "str".to_owned()
+        } else {
+            self.key_identity_type_name(identity, root_path)
+        }
+    }
+
+    fn key_identity_is_copy(&self, identity: TableKeyIdentity<'_>) -> bool {
+        match identity {
+            TableKeyIdentity::Primitive { raw_type, .. } => self.key_type_is_copy(raw_type),
+            TableKeyIdentity::Enum { name } => {
+                self.mapping(&TypeIr::Enum(name.to_owned())).is_none()
+            }
+        }
+    }
+
+    fn key_identity_is_string_like(&self, identity: TableKeyIdentity<'_>) -> bool {
+        matches!(
+            identity,
+            TableKeyIdentity::Primitive {
+                raw_type: TypeIr::String | TypeIr::Text,
+                ..
+            }
+        )
     }
 }
 
@@ -803,11 +993,28 @@ fn rust_decode_expr(
                 rust_decode_expr(ir, element, mapper, root_path)
             )
         }
-        TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
-            .map(|ty| rust_decode_expr(ir, ty, mapper, root_path))
-            .unwrap_or_else(|| {
-                format!("<i32 as {root_path}::runtime::SoraDecode>::decode(reader)?")
-            }),
+        TypeIr::Ref { table, field } => {
+            let identity =
+                resolve_ref_key_identity(&ir.tables, table, field).unwrap_or_else(|error| {
+                    panic!("validated ref key `{table}.{field}` should resolve: {error}")
+                });
+            match identity {
+                TableKeyIdentity::Primitive { .. } => {
+                    let type_name = mapper.key_identity_type_name(identity, root_path);
+                    format!("<{type_name} as {root_path}::runtime::SoraDecode>::decode(reader)?")
+                }
+                TableKeyIdentity::Enum { name } => {
+                    let enum_ty = TypeIr::Enum(name.to_owned());
+                    mapper.wrap_decode(
+                        &enum_ty,
+                        format!(
+                            "<{} as {root_path}::runtime::SoraDecode>::decode(reader)?",
+                            rust_named_type_path(name, root_path)
+                        ),
+                    )
+                }
+            }
+        }
         TypeIr::Optional(element) => {
             format!(
                 "match reader.read_u8()? {{ 0 => None, 1 => Some({}), value => return Err({root_path}::runtime::SoraReadError::new(format!(\"invalid option presence {{}}\", value))), }}",
@@ -826,6 +1033,29 @@ fn rust_named_type_path(name: &str, root_path: &str) -> String {
         "{root_path}::{}::{}",
         schema_module_path(name).replace('/', "::"),
         schema_local_name(name)
+    )
+}
+
+fn strong_key_name(table: &sora_ir::model::TableIr, field: &sora_ir::model::FieldIr) -> String {
+    format!(
+        "{}{}",
+        schema_local_name(&table.name).to_pascal_case(),
+        field.name.to_pascal_case()
+    )
+}
+
+fn is_const_raw_type(ty: &TypeIr) -> bool {
+    matches!(
+        ty,
+        TypeIr::Bool
+            | TypeIr::I8
+            | TypeIr::U8
+            | TypeIr::I16
+            | TypeIr::U16
+            | TypeIr::I32
+            | TypeIr::U32
+            | TypeIr::I64
+            | TypeIr::Duration
     )
 }
 
@@ -877,24 +1107,12 @@ fn rust_serde_with(ty: &TypeIr, options: &RustCodegenOptions, root_path: &str) -
     }
 }
 
-fn ref_target_type<'a>(ir: &'a ConfigIr, table: &str, field: &str) -> Option<&'a TypeIr> {
-    ir.tables
-        .iter()
-        .find(|candidate| candidate.name == table)
-        .and_then(|table| {
-            table
-                .fields
-                .iter()
-                .find(|candidate| candidate.name == field)
-        })
-        .map(|field| &field.ty)
-}
-
 #[cfg(test)]
 mod namespace_tests {
     use super::*;
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::ProjectSchema;
+    use std::process::Command;
 
     #[test]
     fn generates_nested_rust_modules() {
@@ -1021,5 +1239,291 @@ type = "i32"
         );
 
         let _ = std::fs::remove_dir_all(out);
+    }
+
+    #[test]
+    fn strong_table_keys_propagate_through_refs_and_compile() {
+        let schema: ProjectSchema = toml::from_str(
+            r#"
+project = { id = "strong_keys" }
+groups = { common = { default = true } }
+views = { default = { contract = "strong_keys/default", groups = ["common"] } }
+
+[[enums]]
+name = "Kind"
+values = [{ id = 0, name = "Default" }]
+
+[[structs]]
+name = "RefHolder"
+
+[[structs.fields]]
+name = "biome"
+type = "ref<world.Biome.id>"
+
+[[unions]]
+name = "RefChoice"
+tag = "type"
+
+[[unions.variants]]
+name = "Biome"
+
+[[unions.variants.fields]]
+name = "id"
+type = "ref<world.Biome.id>"
+
+[[tables]]
+id = "world.biome"
+name = "world.Biome"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "u32"
+
+[[tables]]
+id = "world.terrain"
+name = "world.Terrain"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "u32"
+
+[[tables]]
+id = "asset"
+name = "Asset"
+mode = "map"
+key = "code"
+
+[[tables.fields]]
+name = "code"
+type = "string"
+
+[[tables]]
+id = "time_point"
+name = "TimePoint"
+mode = "map"
+key = "at"
+
+[[tables.fields]]
+name = "at"
+type = "datetime"
+
+[[tables]]
+id = "localized"
+name = "Localized"
+mode = "map"
+key = "key"
+
+[[tables.fields]]
+name = "key"
+type = "text"
+
+[[tables]]
+id = "timeout"
+name = "Timeout"
+mode = "map"
+key = "duration"
+
+[[tables.fields]]
+name = "duration"
+type = "duration"
+
+[[tables]]
+id = "biome_alias"
+name = "BiomeAlias"
+mode = "map"
+key = "id"
+
+[[tables.fields]]
+name = "id"
+type = "ref<world.Biome.id>"
+
+[[tables]]
+id = "kind_lookup"
+name = "KindLookup"
+mode = "map"
+key = "kind"
+
+[[tables.fields]]
+name = "kind"
+type = "enum<Kind>"
+
+[[tables]]
+id = "consumer"
+name = "Consumer"
+mode = "list"
+
+[[tables.fields]]
+name = "biome"
+type = "ref<world.Biome.id>"
+
+[[tables.fields]]
+name = "maybe_biome"
+type = "optional<ref<world.Biome.id>>"
+
+[[tables.fields]]
+name = "biomes"
+type = "list<ref<world.Biome.id>>"
+
+[[tables.fields]]
+name = "biome_set"
+type = "set<ref<world.Biome.id>>"
+
+[[tables.fields]]
+name = "biome_pair"
+type = "array<ref<world.Biome.id>,2>"
+
+[[tables.fields]]
+name = "biome_map"
+type = "map<string,ref<world.Biome.id>>"
+
+[[tables.fields]]
+name = "holder"
+type = "struct<RefHolder>"
+
+[[tables.fields]]
+name = "choice"
+type = "union<RefChoice>"
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        let out = std::env::temp_dir().join(format!(
+            "sora-codegen-rust-strong-key-test-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&out);
+
+        RustCodeGenerator
+            .generate_with_options(
+                &ir,
+                RustCodegenOptions {
+                    runtime_format: RuntimeFormat::Json,
+                    string_storage: RustStringStorage::Arc,
+                    crate_options: Some(RustCrateOptions {
+                        name: "strong-keys".to_owned(),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                },
+                &out,
+            )
+            .unwrap();
+
+        let biome = std::fs::read_to_string(out.join("src/world/biome.rs")).unwrap();
+        let terrain = std::fs::read_to_string(out.join("src/world/terrain.rs")).unwrap();
+        let asset = std::fs::read_to_string(out.join("src/asset.rs")).unwrap();
+        let time_point = std::fs::read_to_string(out.join("src/time_point.rs")).unwrap();
+        let localized = std::fs::read_to_string(out.join("src/localized.rs")).unwrap();
+        let alias = std::fs::read_to_string(out.join("src/biome_alias.rs")).unwrap();
+        let kind_lookup = std::fs::read_to_string(out.join("src/kind_lookup.rs")).unwrap();
+        let consumer = std::fs::read_to_string(out.join("src/consumer.rs")).unwrap();
+        let holder = std::fs::read_to_string(out.join("src/ref_holder.rs")).unwrap();
+        let choice = std::fs::read_to_string(out.join("src/ref_choice.rs")).unwrap();
+
+        assert!(biome.contains("pub struct BiomeId("));
+        assert!(biome.contains("pub id: BiomeId"));
+        assert!(biome.contains("rows: SoraMap<BiomeId, Biome>"));
+        assert!(biome.contains("type Key = BiomeId"));
+        assert!(terrain.contains("pub struct TerrainId("));
+        assert!(asset.contains("pub struct AssetCode("));
+        assert!(asset.contains("impl std::borrow::Borrow<str> for AssetCode"));
+        assert!(asset.contains("pub fn get_str(&self, key: &str)"));
+        assert!(time_point.contains("pub struct TimePointAt("));
+        assert!(time_point.contains("serde_system_time_millis"));
+        assert!(localized.contains("pub struct LocalizedKey("));
+        assert!(localized.contains("pub fn as_text_key(&self)"));
+        assert!(!alias.contains("pub struct BiomeAliasId("));
+        assert!(alias.contains("pub id: super::world::biome::BiomeId"));
+        assert!(kind_lookup.contains("pub kind: super::kind::Kind"));
+        assert!(!kind_lookup.contains("pub struct KindLookupKind("));
+        assert!(consumer.contains("pub biome: super::world::biome::BiomeId"));
+        assert!(consumer.contains("Option<super::world::biome::BiomeId>"));
+        assert!(consumer.contains("Vec<super::world::biome::BiomeId>"));
+        assert!(consumer.contains("HashSet<super::world::biome::BiomeId>"));
+        assert!(consumer.contains("[super::world::biome::BiomeId; 2]"));
+        assert!(consumer.contains("HashMap<std::sync::Arc<str>, super::world::biome::BiomeId>"));
+        assert!(holder.contains("pub biome: super::world::biome::BiomeId"));
+        assert!(choice.contains("id: super::world::biome::BiomeId"));
+
+        std::fs::create_dir_all(out.join("tests")).unwrap();
+        std::fs::write(
+            out.join("tests/strong_keys.rs"),
+            r#"
+use std::{any::TypeId, collections::HashMap};
+use strong_keys::{
+    asset::AssetCode,
+    localized::LocalizedKey,
+    runtime::{SoraDecode, SoraReader, TextKey},
+    time_point::TimePointAt,
+    world::{biome::BiomeId, terrain::TerrainId},
+};
+
+#[test]
+fn keys_are_nominal_transparent_and_decodable() {
+    assert_ne!(TypeId::of::<BiomeId>(), TypeId::of::<TerrainId>());
+    assert_eq!(serde_json::to_string(&BiomeId::from_raw(7)).unwrap(), "7");
+    assert_eq!(serde_json::from_str::<BiomeId>("7").unwrap().raw(), 7);
+
+    let mut reader = SoraReader::new(&[7], &[]);
+    assert_eq!(BiomeId::decode(&mut reader).unwrap().raw(), 7);
+    assert!(reader.is_finished());
+
+    let code = AssetCode::from_raw(std::sync::Arc::from("sword"));
+    let mut values = HashMap::new();
+    values.insert(code, 1);
+    assert_eq!(values.get("sword"), Some(&1));
+
+    let at = TimePointAt::from_raw(std::time::UNIX_EPOCH + std::time::Duration::from_millis(42));
+    assert_eq!(serde_json::to_string(&at).unwrap(), "42");
+
+    let text = LocalizedKey::from_raw(TextKey(std::sync::Arc::from("ui.title")));
+    assert_eq!(text.as_str(), "ui.title");
+    assert_eq!(serde_json::to_string(&text).unwrap(), "\"ui.title\"");
+}
+"#,
+        )
+        .unwrap();
+        let status = Command::new(env!("CARGO"))
+            .args(["test", "--offline", "--quiet"])
+            .env("CARGO_TARGET_DIR", out.join("target"))
+            .current_dir(&out)
+            .status()
+            .unwrap();
+        assert!(status.success());
+
+        let _ = std::fs::remove_dir_all(out);
+    }
+
+    #[test]
+    fn rejects_strong_key_name_collisions() {
+        let schema: ProjectSchema = toml::from_str(
+            r#"
+project = { id = "collision" }
+groups = { common = { default = true } }
+views = { default = { contract = "collision/default", groups = ["common"] } }
+
+[[tables]]
+id = "item"
+name = "Item"
+mode = "map"
+key = "table"
+
+[[tables.fields]]
+name = "table"
+type = "u32"
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        let out = std::env::temp_dir().join("sora-codegen-rust-key-collision-test");
+        let error = RustCodeGenerator
+            .generate_with_options(&ir, RustCodegenOptions::default(), &out)
+            .unwrap_err();
+        assert!(error.to_string().contains("ItemTable"));
+        assert!(error.to_string().contains("conflicts"));
     }
 }

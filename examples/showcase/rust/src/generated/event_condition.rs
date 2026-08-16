@@ -3,11 +3,22 @@
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type")]
 pub enum EventCondition {
-    LevelAtLeast { level: i32 },
-    QuestCompleted { quest_id: i32 },
-    HasItem { item_id: i32, count: i32 },
-    AllConditions { condition_group_id: i32 },
-    AnyCondition { condition_group_id: i32 },
+    LevelAtLeast {
+        level: super::level_exp::LevelExpLevel,
+    },
+    QuestCompleted {
+        quest_id: super::quest::QuestId,
+    },
+    HasItem {
+        item_id: super::item::ItemId,
+        count: i32,
+    },
+    AllConditions {
+        condition_group_id: super::complex_condition_group::ComplexConditionGroupId,
+    },
+    AnyCondition {
+        condition_group_id: super::complex_condition_group::ComplexConditionGroupId,
+    },
 }
 
 impl super::runtime::SoraDecode for EventCondition {
@@ -16,25 +27,22 @@ impl super::runtime::SoraDecode for EventCondition {
     ) -> Result<Self, super::runtime::SoraReadError> {
         match reader.read_var_u32()? {
             0 => Ok(Self::LevelAtLeast {
-                level: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+                level: <super::level_exp::LevelExpLevel as super::runtime::SoraDecode>::decode(reader)?,
             }),
             1 => Ok(Self::QuestCompleted {
-                quest_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+                quest_id: <super::quest::QuestId as super::runtime::SoraDecode>::decode(reader)?,
             }),
             2 => Ok(Self::HasItem {
-                item_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+                item_id: <super::item::ItemId as super::runtime::SoraDecode>::decode(reader)?,
                 count: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             }),
             3 => Ok(Self::AllConditions {
-                condition_group_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+                condition_group_id: <super::complex_condition_group::ComplexConditionGroupId as super::runtime::SoraDecode>::decode(reader)?,
             }),
             4 => Ok(Self::AnyCondition {
-                condition_group_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+                condition_group_id: <super::complex_condition_group::ComplexConditionGroupId as super::runtime::SoraDecode>::decode(reader)?,
             }),
-            value => Err(super::runtime::SoraReadError::new(format!(
-                "invalid union ordinal {} for EventCondition",
-                value
-            ))),
+            value => Err(super::runtime::SoraReadError::new(format!("invalid union ordinal {} for EventCondition", value))),
         }
     }
 }

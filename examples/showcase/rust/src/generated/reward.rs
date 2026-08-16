@@ -2,7 +2,7 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Reward {
-    pub item_id: i32,
+    pub item_id: super::item::ItemId,
     pub count: i32,
 }
 
@@ -11,7 +11,7 @@ impl super::runtime::SoraDecode for Reward {
         reader: &mut super::runtime::SoraReader<'_>,
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
-            item_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+            item_id: <super::item::ItemId as super::runtime::SoraDecode>::decode(reader)?,
             count: <i32 as super::runtime::SoraDecode>::decode(reader)?,
         })
     }

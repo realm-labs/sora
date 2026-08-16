@@ -231,6 +231,7 @@ fn write_generated_crate_test(crate_dir: &Path, runtime_format: &str, file_name:
         crate_dir.join("tests/runtime.rs"),
         r#"
 use generated_sora_config_test::{
+    item::ItemId,
     item_type::ItemType,
     runtime::{__BUNDLE_TYPE__, SoraDecode, SoraReadError, SoraTableSource},
     SoraConfig,
@@ -240,7 +241,7 @@ use generated_sora_config_test::{
 fn loads_sora_bundle() {
     let bundle = __BUNDLE_TYPE__::parse(include_bytes!("../__CONFIG_FILE__")).unwrap();
     let config = SoraConfig::from_source(&bundle).unwrap();
-    let item = config.item().get(&1002).unwrap();
+    let item = config.item().get(&ItemId::from_raw(1002)).unwrap();
 
     assert_eq!(item.name, "Magic Stone");
     assert_eq!(item.item_type, ItemType::Material);
@@ -259,8 +260,9 @@ fn loads_sora_bundle() {
     assert_eq!(config.item().values().count(), 2);
     assert_eq!(config.item_reward().len(), 2);
     assert_eq!(config.item_rate().len(), 2);
+    assert_eq!(config.item_rate()[0].item_id.raw(), 1002);
 
-    let boundary_item = config.item().get(&1001).unwrap();
+    let boundary_item = config.item().get(&ItemId::from_raw(1001)).unwrap();
     assert_eq!(boundary_item.signed_byte, -128);
     assert_eq!(boundary_item.unsigned_byte, 255);
     assert_eq!(boundary_item.signed_short, -32768);

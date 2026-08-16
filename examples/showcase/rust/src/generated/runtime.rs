@@ -35,7 +35,9 @@ pub trait SoraDecode: Sized {
     fn decode(reader: &mut SoraReader<'_>) -> Result<Self, SoraReadError>;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize,
+)]
 pub struct TextKey(pub std::sync::Arc<str>);
 
 impl TextKey {

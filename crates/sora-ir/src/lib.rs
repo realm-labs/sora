@@ -1,5 +1,6 @@
 pub mod fingerprint;
 pub mod input_projection;
+pub mod key;
 pub mod model;
 pub mod normalize;
 pub mod parse;

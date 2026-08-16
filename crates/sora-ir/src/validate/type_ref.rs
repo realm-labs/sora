@@ -2,6 +2,7 @@ use std::collections::BTreeSet;
 
 use sora_diagnostics::{Result, SoraError};
 
+use crate::key::validate_key_type;
 use crate::model::{FieldIr, TableIr, TableModeIr, TypeIr};
 pub(super) struct TypeReferenceContext<'a> {
     pub(super) enum_names: &'a BTreeSet<&'a str>,
@@ -102,14 +103,14 @@ pub(super) fn validate_map_key_type(
     field: &FieldIr,
     tables: &[TableIr],
 ) -> Result<()> {
-    if is_valid_map_key_type(&field.ty, tables) {
-        return Ok(());
-    }
-
-    Err(SoraError::InvalidSchema(format!(
-        "map table `{}` key field `{}` has unsupported key type `{}`",
-        table.name, field.name, field.ty
-    )))
+    validate_key_type(&field.ty, tables).map_err(|error| {
+        SoraError::InvalidSchema(format!(
+            "map table `{}` key field `{}` is invalid: {}",
+            table.name,
+            field.name,
+            key_error_message(error)
+        ))
+    })
 }
 
 pub(super) fn validate_index_field_type(
@@ -118,49 +119,19 @@ pub(super) fn validate_index_field_type(
     field: &FieldIr,
     tables: &[TableIr],
 ) -> Result<()> {
-    if is_valid_map_key_type(&field.ty, tables) {
-        return Ok(());
-    }
-
-    Err(SoraError::InvalidSchema(format!(
-        "index `{}` in table `{}` field `{}` has unsupported key type `{}`",
-        index_name, table.name, field.name, field.ty
-    )))
+    validate_key_type(&field.ty, tables).map_err(|error| {
+        SoraError::InvalidSchema(format!(
+            "index `{index_name}` in table `{}` field `{}` is invalid: {}",
+            table.name,
+            field.name,
+            key_error_message(error)
+        ))
+    })
 }
 
-fn is_valid_map_key_type(ty: &TypeIr, tables: &[TableIr]) -> bool {
-    match ty {
-        TypeIr::Bool
-        | TypeIr::I8
-        | TypeIr::U8
-        | TypeIr::I16
-        | TypeIr::U16
-        | TypeIr::I32
-        | TypeIr::U32
-        | TypeIr::I64
-        | TypeIr::Duration
-        | TypeIr::DateTime
-        | TypeIr::String
-        | TypeIr::Text
-        | TypeIr::Enum(_) => true,
-        TypeIr::Ref { table, field } => tables
-            .iter()
-            .find(|candidate| candidate.name == *table)
-            .and_then(|table| {
-                table
-                    .fields
-                    .iter()
-                    .find(|candidate| candidate.name == *field)
-            })
-            .is_some_and(|field| is_valid_map_key_type(&field.ty, tables)),
-        TypeIr::F32
-        | TypeIr::F64
-        | TypeIr::Struct(_)
-        | TypeIr::Union(_)
-        | TypeIr::List(_)
-        | TypeIr::Set(_)
-        | TypeIr::Map { .. }
-        | TypeIr::Array { .. }
-        | TypeIr::Optional(_) => false,
+fn key_error_message(error: SoraError) -> String {
+    match error {
+        SoraError::InvalidSchema(message) => message,
+        error => error.to_string(),
     }
 }

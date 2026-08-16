@@ -25,6 +25,16 @@ Sora 会校验每个值都指向被引用表中存在的行。
 
 引用可以放在容器里，例如 `list<ref<Item.id>>`、`set<ref<Item.id>>` 或 `optional<ref<Item.id>>`。内部的 `ref` 仍然必须指向主键。
 
+### Rust 强类型表主键
+
+Rust codegen 会为每个 primitive `map` 表主键生成由目标表拥有的 nominal newtype。若 `Item` 的主键是 `id: u32`，生成类型为 `ItemId`；`Item.id` 和所有 `ref<Item.id>` 都使用同一个类型，包括容器、struct 和 union 内部的引用。另一张同样以 `u32` 为主键的表会得到不同的 Rust 类型，因此两种 id 不能误传。
+
+包装类型使用 `#[repr(transparent)]` 和透明 Serde，所以 bundle、JSON、schema lock 等数据格式仍存储原始标量。生成 API 通过 `from_raw` 和 `raw`/`as_str` 显式转换，不公开 tuple 字段，也不会通过 `Deref` 暴露底层 primitive。string/text 主键表还会生成明确的 `get_str(&str)` 查询方法。
+
+enum 主键直接复用生成的 enum。若某张表的主键本身是 `ref<Other.id>`，它会复用 `Other` 的最终 key type，不会再嵌套一层包装。带命名空间的表会把 key type 放在所属表的模块内，不建立根级 re-export。
+
+这是 Rust 的标准生成语义，没有兼容开关。其他语言生成器目前仍保持各自现有的 key 表示。
+
 ## 派生字段
 
 派生字段不是从当前表的单元格读取，而是从另一张表中按 key 匹配行后生成。

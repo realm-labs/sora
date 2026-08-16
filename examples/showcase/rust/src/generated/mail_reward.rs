@@ -2,9 +2,9 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct MailReward {
-    pub mail_id: i32,
+    pub mail_id: super::mail_template::MailTemplateId,
     pub seq: i32,
-    pub item_id: i32,
+    pub item_id: super::item::ItemId,
     pub count: i32,
 }
 
@@ -13,9 +13,11 @@ impl super::runtime::SoraDecode for MailReward {
         reader: &mut super::runtime::SoraReader<'_>,
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
-            mail_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+            mail_id: <super::mail_template::MailTemplateId as super::runtime::SoraDecode>::decode(
+                reader,
+            )?,
             seq: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            item_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+            item_id: <super::item::ItemId as super::runtime::SoraDecode>::decode(reader)?,
             count: <i32 as super::runtime::SoraDecode>::decode(reader)?,
         })
     }

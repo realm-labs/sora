@@ -2,9 +2,9 @@
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CharacterSkill {
-    pub character_id: i32,
-    pub skill_id: i32,
-    pub unlock_level: i32,
+    pub character_id: super::character::CharacterId,
+    pub skill_id: super::skill::SkillId,
+    pub unlock_level: super::level_exp::LevelExpLevel,
 }
 
 impl super::runtime::SoraDecode for CharacterSkill {
@@ -12,9 +12,13 @@ impl super::runtime::SoraDecode for CharacterSkill {
         reader: &mut super::runtime::SoraReader<'_>,
     ) -> Result<Self, super::runtime::SoraReadError> {
         Ok(Self {
-            character_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            skill_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
-            unlock_level: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+            character_id: <super::character::CharacterId as super::runtime::SoraDecode>::decode(
+                reader,
+            )?,
+            skill_id: <super::skill::SkillId as super::runtime::SoraDecode>::decode(reader)?,
+            unlock_level: <super::level_exp::LevelExpLevel as super::runtime::SoraDecode>::decode(
+                reader,
+            )?,
         })
     }
 }

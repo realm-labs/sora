@@ -25,6 +25,16 @@ References are still stored as values in source data. The generated runtime can 
 
 References can be nested in containers such as `list<ref<Item.id>>`, `set<ref<Item.id>>`, or `optional<ref<Item.id>>`. The same primary-key rule applies to the inner `ref`.
 
+### Rust strong table keys
+
+Rust code generation gives every primitive `map` table key a table-owned nominal newtype. A table `Item` keyed by `id: u32` generates `ItemId`; both `Item.id` and every `ref<Item.id>` use that exact type, including references nested inside containers, structs, and unions. Another `u32`-keyed table receives a different Rust type, so its id cannot be passed accidentally.
+
+The wrapper is `#[repr(transparent)]` and uses transparent Serde, so bundles, JSON, schema locks, and other data formats still store the original scalar. It exposes explicit `from_raw` and `raw`/`as_str` accessors without exposing the tuple field or implementing `Deref` to the primitive. String and text key tables also provide an explicit `get_str(&str)` lookup helper.
+
+Enum primary keys use the generated enum directly. If a table key is itself `ref<Other.id>`, it reuses `Other`'s final key type rather than adding another wrapper. Qualified table names keep the key type in the owning table module; Sora does not create a root re-export.
+
+This is the standard Rust representation and has no compatibility switch. Other language generators currently retain their existing key representation.
+
 ## Derived Fields
 
 A derived field is not read from the current table's cell. It is built from matching rows in another table.

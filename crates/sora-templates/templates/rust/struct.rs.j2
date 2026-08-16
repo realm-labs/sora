@@ -10,6 +10,101 @@ use {{ record.root_path }}::{{ import.module }}::{{ import.name }};
 use {{ record.root_path }}::SoraMap;
 {%- endif %}
 
+{%- if record.table and record.table.strong_key %}
+{%- set key = record.table.strong_key %}
+
+#[repr(transparent)]
+#[derive(Debug, Clone,{% if key.copy %} Copy,{% endif %} PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(transparent)]
+pub struct {{ key.name }}(
+{%- if key.serde_with %}
+    #[serde(with = "{{ key.serde_with }}")]
+{%- endif %}
+    {{ key.raw_type }},
+);
+
+impl {{ key.name }} {
+{%- if key.const_raw %}
+    pub const fn from_raw(raw: {{ key.raw_type }}) -> Self {
+        Self(raw)
+    }
+
+    pub const fn raw(self) -> {{ key.raw_type }} {
+        self.0
+    }
+{%- elif key.string_like %}
+    pub fn from_raw(raw: {{ key.raw_type }}) -> Self {
+        Self(raw)
+    }
+
+    pub fn as_str(&self) -> &str {
+        self.0.as_ref()
+    }
+
+    pub fn into_raw(self) -> {{ key.raw_type }} {
+        self.0
+    }
+{%- elif key.text %}
+    pub fn from_raw(raw: {{ key.raw_type }}) -> Self {
+        Self(raw)
+    }
+
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+
+    pub fn as_text_key(&self) -> &{{ key.raw_type }} {
+        &self.0
+    }
+
+    pub fn into_raw(self) -> {{ key.raw_type }} {
+        self.0
+    }
+{%- elif key.copy %}
+    pub fn from_raw(raw: {{ key.raw_type }}) -> Self {
+        Self(raw)
+    }
+
+    pub fn raw(self) -> {{ key.raw_type }} {
+        self.0
+    }
+{%- else %}
+    pub fn from_raw(raw: {{ key.raw_type }}) -> Self {
+        Self(raw)
+    }
+
+    pub fn as_raw(&self) -> &{{ key.raw_type }} {
+        &self.0
+    }
+
+    pub fn into_raw(self) -> {{ key.raw_type }} {
+        self.0
+    }
+{%- endif %}
+}
+
+impl From<{{ key.raw_type }}> for {{ key.name }} {
+    fn from(raw: {{ key.raw_type }}) -> Self {
+        Self::from_raw(raw)
+    }
+}
+
+{%- if key.string_like or key.text %}
+
+impl std::borrow::Borrow<str> for {{ key.name }} {
+    fn borrow(&self) -> &str {
+        self.as_str()
+    }
+}
+{%- endif %}
+
+impl {{ record.root_path }}::runtime::SoraDecode for {{ key.name }} {
+    fn decode(reader: &mut {{ record.root_path }}::runtime::SoraReader<'_>) -> Result<Self, {{ record.root_path }}::runtime::SoraReadError> {
+        Ok(Self::from_raw(<{{ key.raw_type }} as {{ record.root_path }}::runtime::SoraDecode>::decode(reader)?))
+    }
+}
+{%- endif %}
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct {{ record.pascal_name }} {
 {%- for field in record.fields %}
@@ -203,9 +298,16 @@ impl {{ table.pascal_name }}Table {
 
 {%- if table.mode == "map" and table.key_field_name %}
 
-    pub fn get(&self, key: &{{ table.key_param_type }}) -> Option<&{{ table.row_type }}> {
+    pub fn get(&self, key: &{{ table.key_type }}) -> Option<&{{ table.row_type }}> {
         self.rows.get(key)
     }
+
+{%- if table.key_string_like %}
+
+    pub fn get_str(&self, key: &str) -> Option<&{{ table.row_type }}> {
+        self.rows.get(key)
+    }
+{%- endif %}
 
     pub fn keys(&self) -> &[{{ table.key_type }}] {
         &self.keys

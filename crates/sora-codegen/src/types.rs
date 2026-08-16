@@ -1,7 +1,11 @@
-use sora_ir::model::{ConfigIr, TypeIr};
+use heck::ToPascalCase;
+use sora_ir::{
+    key::{TableKeyIdentity, resolve_ref_key_identity},
+    model::{ConfigIr, TypeIr},
+};
 
 use crate::{
-    model::{schema_flat_pascal_name, schema_local_name},
+    model::{schema_flat_pascal_name, schema_local_name, schema_module_path},
     options::{RustCodegenOptions, RustDateTimeType, RustStringStorage},
 };
 
@@ -84,7 +88,23 @@ fn rust_type_name_inner(ir: &ConfigIr, ty: &TypeIr, options: &RustCodegenOptions
             format!("[{}; {len}]", rust_type_name_inner(ir, element, options))
         }
         TypeIr::Ref { table, field } => {
-            ref_type_with_options(ir, table, field, options, rust_type_name_inner, "i32")
+            let identity =
+                resolve_ref_key_identity(&ir.tables, table, field).unwrap_or_else(|error| {
+                    panic!("validated ref key `{table}.{field}` should resolve: {error}")
+                });
+            match identity {
+                TableKeyIdentity::Primitive { table, field, .. } => format!(
+                    "crate::{}::{}{}",
+                    schema_module_path(&table.name).replace('/', "::"),
+                    schema_local_name(&table.name).to_pascal_case(),
+                    field.name.to_pascal_case()
+                ),
+                TableKeyIdentity::Enum { name } => format!(
+                    "crate::{}::{}",
+                    schema_module_path(name).replace('/', "::"),
+                    schema_local_name(name)
+                ),
+            }
         }
         TypeIr::Optional(element) => {
             format!("Option<{}>", rust_type_name_inner(ir, element, options))
@@ -358,22 +378,6 @@ fn ref_type(
         .unwrap_or_else(|| fallback.to_owned())
 }
 
-fn ref_type_with_options<T>(
-    ir: &ConfigIr,
-    table_name: &str,
-    field_name: &str,
-    options: &T,
-    mapper: fn(&ConfigIr, &TypeIr, &T) -> String,
-    fallback: &str,
-) -> String {
-    ir.tables
-        .iter()
-        .find(|table| table.name == table_name)
-        .and_then(|table| table.fields.iter().find(|field| field.name == field_name))
-        .map(|field| mapper(ir, &field.ty, options))
-        .unwrap_or_else(|| fallback.to_owned())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -400,7 +404,7 @@ mod tests {
             ("map<string,i32>", "std::collections::HashMap<String, i32>"),
             ("array<i32,3>", "[i32; 3]"),
             ("optional<string>", "Option<String>"),
-            ("ref<Item.id>", "i32"),
+            ("ref<Item.id>", "crate::item::ItemId"),
         ];
 
         for (source, expected) in cases {

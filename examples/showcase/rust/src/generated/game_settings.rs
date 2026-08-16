@@ -6,11 +6,11 @@ pub struct GameSettings {
     pub daily_reset_hour: i32,
     pub starting_gold: i32,
     pub spawn_pos: super::vec3::Vec3,
-    pub starter_items: Vec<i32>,
+    pub starter_items: Vec<super::item::ItemId>,
     /// Double precision tuning value
     pub gravity: f64,
     /// Fixed-length array parsed from one cell
-    pub daily_bonus_items: [i32; 3],
+    pub daily_bonus_items: [super::item::ItemId; 3],
     /// Fixed-length array of structs
     pub spawn_points: [super::vec3::Vec3; 2],
     /// Optional derived struct copied from a child row
@@ -26,9 +26,9 @@ impl super::runtime::SoraDecode for GameSettings {
             daily_reset_hour: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             starting_gold: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             spawn_pos: <super::vec3::Vec3 as super::runtime::SoraDecode>::decode(reader)?,
-            starter_items: { let len = reader.read_var_u32()? as usize; let mut values = Vec::with_capacity(len); for _ in 0..len { values.push(<i32 as super::runtime::SoraDecode>::decode(reader)?); } values },
+            starter_items: { let len = reader.read_var_u32()? as usize; let mut values = Vec::with_capacity(len); for _ in 0..len { values.push(<super::item::ItemId as super::runtime::SoraDecode>::decode(reader)?); } values },
             gravity: <f64 as super::runtime::SoraDecode>::decode(reader)?,
-            daily_bonus_items: { let mut values = Vec::with_capacity(3); let actual_len = reader.read_var_u32()? as usize; if actual_len != 3 { return Err(super::runtime::SoraReadError::new(format!("expected array length 3, got {}", actual_len))); } for _ in 0..3 { values.push(<i32 as super::runtime::SoraDecode>::decode(reader)?); } values.try_into().map_err(|values: Vec<i32>| super::runtime::SoraReadError::new(format!("expected array length 3, got {}", values.len())))? },
+            daily_bonus_items: { let mut values = Vec::with_capacity(3); let actual_len = reader.read_var_u32()? as usize; if actual_len != 3 { return Err(super::runtime::SoraReadError::new(format!("expected array length 3, got {}", actual_len))); } for _ in 0..3 { values.push(<super::item::ItemId as super::runtime::SoraDecode>::decode(reader)?); } values.try_into().map_err(|values: Vec<super::item::ItemId>| super::runtime::SoraReadError::new(format!("expected array length 3, got {}", values.len())))? },
             spawn_points: { let mut values = Vec::with_capacity(2); let actual_len = reader.read_var_u32()? as usize; if actual_len != 2 { return Err(super::runtime::SoraReadError::new(format!("expected array length 2, got {}", actual_len))); } for _ in 0..2 { values.push(<super::vec3::Vec3 as super::runtime::SoraDecode>::decode(reader)?); } values.try_into().map_err(|values: Vec<super::vec3::Vec3>| super::runtime::SoraReadError::new(format!("expected array length 2, got {}", values.len())))? },
             maintenance: match reader.read_u8()? { 0 => None, 1 => Some(<super::maintenance_info::MaintenanceInfo as super::runtime::SoraDecode>::decode(reader)?), value => return Err(super::runtime::SoraReadError::new(format!("invalid option presence {}", value))), },
         })

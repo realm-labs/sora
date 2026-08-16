@@ -3,11 +3,23 @@
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type")]
 pub enum RewardAction {
-    AddItem { item_id: i32, count: i32 },
-    AddBuff { buff_id: i32, duration: f32 },
-    UnlockStage { stage_id: i32 },
-    SendMail { mail_id: i32 },
-    RunActionGroup { action_group_id: i32 },
+    AddItem {
+        item_id: super::item::ItemId,
+        count: i32,
+    },
+    AddBuff {
+        buff_id: super::buff::BuffId,
+        duration: f32,
+    },
+    UnlockStage {
+        stage_id: super::stage::StageId,
+    },
+    SendMail {
+        mail_id: super::mail_template::MailTemplateId,
+    },
+    RunActionGroup {
+        action_group_id: super::complex_action_group::ComplexActionGroupId,
+    },
 }
 
 impl super::runtime::SoraDecode for RewardAction {
@@ -16,26 +28,23 @@ impl super::runtime::SoraDecode for RewardAction {
     ) -> Result<Self, super::runtime::SoraReadError> {
         match reader.read_var_u32()? {
             0 => Ok(Self::AddItem {
-                item_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+                item_id: <super::item::ItemId as super::runtime::SoraDecode>::decode(reader)?,
                 count: <i32 as super::runtime::SoraDecode>::decode(reader)?,
             }),
             1 => Ok(Self::AddBuff {
-                buff_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+                buff_id: <super::buff::BuffId as super::runtime::SoraDecode>::decode(reader)?,
                 duration: <f32 as super::runtime::SoraDecode>::decode(reader)?,
             }),
             2 => Ok(Self::UnlockStage {
-                stage_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+                stage_id: <super::stage::StageId as super::runtime::SoraDecode>::decode(reader)?,
             }),
             3 => Ok(Self::SendMail {
-                mail_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+                mail_id: <super::mail_template::MailTemplateId as super::runtime::SoraDecode>::decode(reader)?,
             }),
             4 => Ok(Self::RunActionGroup {
-                action_group_id: <i32 as super::runtime::SoraDecode>::decode(reader)?,
+                action_group_id: <super::complex_action_group::ComplexActionGroupId as super::runtime::SoraDecode>::decode(reader)?,
             }),
-            value => Err(super::runtime::SoraReadError::new(format!(
-                "invalid union ordinal {} for RewardAction",
-                value
-            ))),
+            value => Err(super::runtime::SoraReadError::new(format!("invalid union ordinal {} for RewardAction", value))),
         }
     }
 }
