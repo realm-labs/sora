@@ -100,32 +100,15 @@ impl CodeGenerator for RustCodeGenerator {
 
 fn write_rust_namespace_modules(source_dir: &Path, model: &RustModel) -> Result<()> {
     let mut children = BTreeMap::<String, BTreeSet<String>>::new();
-    let mut exports = BTreeMap::<String, BTreeMap<String, BTreeSet<String>>>::new();
 
     for item in &model.enums {
-        register_rust_module(
-            &item.module_path,
-            [item.name.as_str()],
-            &mut children,
-            &mut exports,
-        );
+        register_rust_module(&item.module_path, &mut children);
     }
     for item in &model.unions {
-        register_rust_module(
-            &item.module_path,
-            [item.pascal_name.as_str()],
-            &mut children,
-            &mut exports,
-        );
+        register_rust_module(&item.module_path, &mut children);
     }
     for item in &model.records {
-        let mut names = vec![item.pascal_name.as_str()];
-        let table_name;
-        if item.table.is_some() {
-            table_name = format!("{}Table", item.pascal_name);
-            names.push(&table_name);
-        }
-        register_rust_module(&item.module_path, names, &mut children, &mut exports);
+        register_rust_module(&item.module_path, &mut children);
     }
 
     for (namespace, modules) in children {
@@ -137,26 +120,12 @@ fn write_rust_namespace_modules(source_dir: &Path, model: &RustModel) -> Result<
         for module in modules {
             rendered.push_str(&format!("pub mod {module};\n"));
         }
-        if let Some(namespace_exports) = exports.get(&namespace) {
-            rendered.push('\n');
-            for (module, names) in namespace_exports {
-                rendered.push_str(&format!(
-                    "pub use {module}::{{{}}};\n",
-                    names.iter().cloned().collect::<Vec<_>>().join(", ")
-                ));
-            }
-        }
         write_file(&source_dir.join(namespace).join("mod.rs"), rendered)?;
     }
     Ok(())
 }
 
-fn register_rust_module<'a>(
-    module_path: &str,
-    names: impl IntoIterator<Item = &'a str>,
-    children: &mut BTreeMap<String, BTreeSet<String>>,
-    exports: &mut BTreeMap<String, BTreeMap<String, BTreeSet<String>>>,
-) {
+fn register_rust_module(module_path: &str, children: &mut BTreeMap<String, BTreeSet<String>>) {
     let segments = module_path.split('/').collect::<Vec<_>>();
     for index in 0..segments.len() {
         let parent = segments[..index].join("/");
@@ -165,20 +134,6 @@ fn register_rust_module<'a>(
             .or_default()
             .insert(segments[index].to_owned());
     }
-    let namespace = segments[..segments.len().saturating_sub(1)].join("/");
-    if namespace.is_empty() {
-        return;
-    }
-    let module = segments
-        .last()
-        .expect("module path is non-empty")
-        .to_string();
-    exports
-        .entry(namespace)
-        .or_default()
-        .entry(module)
-        .or_default()
-        .extend(names.into_iter().map(str::to_owned));
 }
 
 fn rust_source_dir(out_dir: &Path, options: &RustCodegenOptions) -> Result<PathBuf> {
@@ -1004,7 +959,8 @@ type = "enum<Status>"
         assert!(status.contains("impl super::runtime::SoraDecode for Status"));
         assert!(!items.contains("crate::"));
         assert!(!status.contains("crate::"));
-        assert!(items_mod.contains("pub use item::{Item, ItemTable};"));
+        assert!(items_mod.contains("pub mod item;"));
+        assert!(!items_mod.contains("pub use"));
         let _ = std::fs::remove_dir_all(out);
     }
 
