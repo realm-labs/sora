@@ -347,6 +347,62 @@ fn build_command_generates_configured_outputs() {
 }
 
 #[test]
+fn build_command_generates_excel_template_in_nested_source_directory() {
+    let base = temp_dir();
+    let schema_dir = base.join("schema");
+    fs::create_dir_all(&schema_dir).unwrap();
+    let project = base.join("project.toml");
+    fs::write(
+        &project,
+        r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+includes = ["schema/inventory.toml"]
+
+[build]
+excel_templates = "generated/excel"
+"#,
+    )
+    .unwrap();
+    fs::write(
+        schema_dir.join("inventory.toml"),
+        r#"
+[tables.InventoryProfile]
+id = "inventory_profile"
+mode = "map"
+key = "id"
+source = { format = "xlsx", file = "core/InventoryProfile.xlsx" }
+
+[tables.InventoryProfile.fields]
+id = "i32"
+name = "string"
+"#,
+    )
+    .unwrap();
+
+    run(
+        BuildArgs {
+            project,
+            default_source_format: None,
+            data_root: None,
+            view: None,
+            target: Vec::new(),
+            clean: false,
+        },
+        &test_context(),
+    )
+    .unwrap();
+
+    assert!(
+        base.join("generated/excel/core/InventoryProfile.xlsx")
+            .exists()
+    );
+
+    let _ = fs::remove_dir_all(base);
+}
+
+#[test]
 fn build_command_generates_a_standalone_rust_crate() {
     let base = temp_dir();
     let project = write_project(&base);

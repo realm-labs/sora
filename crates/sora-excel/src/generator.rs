@@ -4,7 +4,10 @@ use sora_diagnostics::{Result, SoraError};
 use sora_input::source::{SourceFormat, resolve_table_source_format};
 use sora_ir::model::{ConfigIr, TableIr};
 
-use crate::{sheets::ensure_single_table_definition, writer::write_workbook_with_rows};
+use crate::{
+    path::create_workbook_parent, sheets::ensure_single_table_definition,
+    writer::write_workbook_with_rows,
+};
 
 pub struct ExcelTemplateGenerator;
 
@@ -63,6 +66,7 @@ impl ExcelTemplateGenerator {
         for (file_name, tables) in workbooks {
             ensure_single_table_definition(&tables, &file_name)?;
             let path = out_dir.join(file_name);
+            create_workbook_parent(out_dir, &path)?;
             let sheets = additional_sheets
                 .iter()
                 .filter(|sheet| path.ends_with(&sheet.file))
@@ -97,6 +101,38 @@ mod tests {
         assert!(bytes.len() > 1024);
 
         let _ = fs::remove_dir_all(out_dir);
+    }
+
+    #[test]
+    fn writes_xlsx_template_file_in_nested_source_directory() {
+        let mut ir = example_ir();
+        ir.tables[0].source.as_mut().expect("table source").file =
+            "core/InventoryProfile.xlsx".to_owned();
+        let out_dir = temp_dir();
+
+        ExcelTemplateGenerator.generate(&ir, &out_dir).unwrap();
+
+        let bytes = fs::read(out_dir.join("core/InventoryProfile.xlsx")).unwrap();
+        assert_eq!(&bytes[0..2], b"PK");
+
+        let _ = fs::remove_dir_all(out_dir);
+    }
+
+    #[test]
+    fn rejects_template_source_parent_directory_traversal() {
+        let mut ir = example_ir();
+        ir.tables[0].source.as_mut().expect("table source").file = "../escaped.xlsx".to_owned();
+        let base = temp_dir();
+        let out_dir = base.join("generated");
+
+        let error = ExcelTemplateGenerator
+            .generate(&ir, &out_dir)
+            .expect_err("traversal must be rejected");
+
+        assert!(error.to_string().contains("unsafe traversal"));
+        assert!(!base.join("escaped.xlsx").exists());
+
+        let _ = fs::remove_dir_all(base);
     }
 
     #[test]
