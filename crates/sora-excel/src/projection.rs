@@ -97,7 +97,10 @@ pub fn table_template_columns(ir: &ConfigIr, table: &TableIr) -> Vec<TemplateCol
                             type_hint: format!("{} tag", field.ty),
                             groups: field.groups.display(),
                             input: "parser=tagged_columns;tag".to_owned(),
-                            comment: format!("Tag for union field `{}`.", field.name),
+                            comment: projected_comment(
+                                field,
+                                Some(&format!("Tag for union field `{}`.", field.name)),
+                            ),
                             derived: false,
                             group: Some(TemplateColumnGroup {
                                 index,
@@ -109,7 +112,7 @@ pub fn table_template_columns(ir: &ConfigIr, table: &TableIr) -> Vec<TemplateCol
                             type_hint: field_type_hint(ir, variant_field),
                             groups: field.groups.display(),
                             input: field_input(variant_field),
-                            comment: variant_field.comment.clone().unwrap_or_default(),
+                            comment: projected_comment(field, variant_field.comment.as_deref()),
                             derived: false,
                             group: Some(TemplateColumnGroup {
                                 index,
@@ -128,7 +131,7 @@ pub fn table_template_columns(ir: &ConfigIr, table: &TableIr) -> Vec<TemplateCol
                         type_hint: field_type_hint(ir, column.field),
                         groups: field.groups.display(),
                         input: field_input(column.field),
-                        comment: column.field.comment.clone().unwrap_or_default(),
+                        comment: projected_comment(field, column.field.comment.as_deref()),
                         derived: false,
                         group: Some(TemplateColumnGroup {
                             index,
@@ -346,6 +349,23 @@ fn field_comment(field: &FieldIr) -> String {
     }
 }
 
+pub(crate) fn projected_comment(root_field: &FieldIr, child_comment: Option<&str>) -> String {
+    let root_comment = root_field
+        .comment
+        .as_deref()
+        .map(str::trim)
+        .unwrap_or_default();
+    let child_comment = child_comment.map(str::trim).unwrap_or_default();
+
+    match (root_comment.is_empty(), child_comment.is_empty()) {
+        (true, true) => String::new(),
+        (false, true) => root_comment.to_owned(),
+        (true, false) => child_comment.to_owned(),
+        (false, false) if root_comment == child_comment => root_comment.to_owned(),
+        (false, false) => format!("{root_comment}\n{child_comment}"),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -483,6 +503,27 @@ mod tests {
     }
 
     #[test]
+    fn tagged_union_columns_preserve_root_and_variant_comments() {
+        let mut ir = tagged_union_ir();
+        ir.tables[0].fields[1].comment = Some("Event condition".to_owned());
+        ir.unions[0].variants[0].fields[0].comment = Some("Completed quest id".to_owned());
+
+        let rows = table_template_rows(&ir, &ir.tables[0]);
+
+        assert_eq!(
+            rows[DESC_ROW as usize],
+            [
+                "#desc",
+                "",
+                "Event condition\nTag for union field `value`.",
+                "Event condition\nCompleted quest id",
+                "Event condition",
+                "Event condition"
+            ]
+        );
+    }
+
+    #[test]
     fn expands_struct_columns() {
         let ir = struct_columns_ir();
         let rows = table_template_rows(&ir, &ir.tables[0]);
@@ -501,6 +542,37 @@ mod tests {
         assert_eq!(
             columns[1].group.unwrap().index,
             columns[3].group.unwrap().index
+        );
+    }
+
+    #[test]
+    fn struct_columns_preserve_root_and_child_comments() {
+        let mut ir = struct_columns_ir();
+        ir.tables[0].fields[1].comment = Some("Resource cost".to_owned());
+        ir.structs[0].fields[0].comment = Some("Resource kind".to_owned());
+
+        let rows = table_template_rows(&ir, &ir.tables[0]);
+
+        assert_eq!(
+            rows[DESC_ROW as usize],
+            [
+                "#desc",
+                "",
+                "Resource cost\nResource kind",
+                "Resource cost",
+                "Resource cost"
+            ]
+        );
+    }
+
+    #[test]
+    fn projected_comments_do_not_duplicate_identical_text() {
+        let mut root_field = struct_columns_ir().tables.remove(0).fields.remove(1);
+        root_field.comment = Some("Shared description".to_owned());
+
+        assert_eq!(
+            projected_comment(&root_field, Some(" Shared description ")),
+            "Shared description"
         );
     }
 

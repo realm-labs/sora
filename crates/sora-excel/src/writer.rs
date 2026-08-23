@@ -13,7 +13,8 @@ use sora_ir::{
 use crate::generator::ExcelAdditionalSheet;
 use crate::projection::{
     DATA_START_ROW, DESC_ROW, FIELD_ROW, FIELD_START_COLUMN, NAME_ROW, TYPE_ROW, TemplateColumn,
-    TemplateColumnGroupRole, table_template_columns, table_template_rows, tuple_shape,
+    TemplateColumnGroupRole, projected_comment, table_template_columns, table_template_rows,
+    tuple_shape,
 };
 use crate::sheets::{ensure_single_table_definition, resolve_table_sheet_names};
 
@@ -522,7 +523,9 @@ fn struct_column_note_text(
     struct_field: &FieldIr,
     column: &str,
 ) -> String {
-    let mut note_text = field_note_text(ir, struct_field).unwrap_or_default();
+    let comment = projected_comment(root_field, struct_field.comment.as_deref());
+    let mut note_text =
+        field_note_text_with_comment(ir, struct_field, &comment).unwrap_or_default();
     append_section(
         &mut note_text,
         &format!(
@@ -544,12 +547,28 @@ fn tagged_column_note_text(
     tagged_column: &sora_ir::input_projection::TaggedColumn<'_>,
 ) -> String {
     match tagged_column.kind {
-        TaggedColumnKind::Tag => format!(
-            "Field: {}\nType: {} tag\nRoot field: {}\nRoot type: {}\nParser: tagged_columns\nColumn: {}",
-            root_field.name, root_field.ty, root_field.name, root_field.ty, tagged_column.name
-        ),
+        TaggedColumnKind::Tag => {
+            let mut note_text = projected_comment(
+                root_field,
+                Some(&format!("Tag for union field `{}`.", root_field.name)),
+            );
+            append_section(
+                &mut note_text,
+                &format!(
+                    "Field: {}\nType: {} tag\nRoot field: {}\nRoot type: {}\nParser: tagged_columns\nColumn: {}",
+                    root_field.name,
+                    root_field.ty,
+                    root_field.name,
+                    root_field.ty,
+                    tagged_column.name
+                ),
+            );
+            note_text
+        }
         TaggedColumnKind::VariantField(variant_field) => {
-            let mut note_text = field_note_text(ir, variant_field).unwrap_or_default();
+            let comment = projected_comment(root_field, variant_field.comment.as_deref());
+            let mut note_text =
+                field_note_text_with_comment(ir, variant_field, &comment).unwrap_or_default();
             append_section(
                 &mut note_text,
                 &format!(
@@ -583,6 +602,10 @@ fn append_section(text: &mut String, section: &str) {
 
 fn field_note_text(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
     let comment = field.comment.as_deref().map(str::trim).unwrap_or_default();
+    field_note_text_with_comment(ir, field, comment)
+}
+
+fn field_note_text_with_comment(ir: &ConfigIr, field: &FieldIr, comment: &str) -> Option<String> {
     let tuple_shape = tuple_shape(ir, field);
     if comment.is_empty() && tuple_shape.is_none() {
         return None;
@@ -1216,13 +1239,13 @@ mod tests {
     }
 
     #[test]
-    fn expanded_struct_column_note_includes_root_type() {
+    fn expanded_struct_column_note_includes_root_and_child_comments() {
         let root_field = FieldIr {
             name: "cost".to_owned(),
             ty: TypeIr::Struct("ResourceCost".to_owned()),
             groups: GroupSetIr::default(),
             key: false,
-            comment: None,
+            comment: Some("Resource cost".to_owned()),
             default: None,
             range: None,
             length: None,
@@ -1248,6 +1271,7 @@ mod tests {
         let note_text =
             struct_column_note_text(&empty_ir(), &root_field, &struct_field, "cost_kind");
 
+        assert!(note_text.starts_with("Resource cost\nResource kind"));
         assert!(note_text.contains("Resource kind"));
         assert!(note_text.contains("Field: cost.kind"));
         assert!(note_text.contains("Type: enum<ResourceType>"));
@@ -1257,13 +1281,13 @@ mod tests {
     }
 
     #[test]
-    fn expanded_tagged_column_note_includes_root_type_without_variant_comment() {
+    fn expanded_tagged_column_note_includes_root_comment_without_variant_comment() {
         let root_field = FieldIr {
             name: "value".to_owned(),
             ty: TypeIr::Union("EventCondition".to_owned()),
             groups: GroupSetIr::default(),
             key: false,
-            comment: None,
+            comment: Some("Event condition".to_owned()),
             default: None,
             range: None,
             length: None,
@@ -1292,9 +1316,39 @@ mod tests {
 
         let note_text = tagged_column_note_text(&empty_ir(), &root_field, &tagged_column);
 
+        assert!(note_text.starts_with("Event condition"));
         assert!(note_text.contains("Field: value.quest_id"));
         assert!(note_text.contains("Type: i32"));
         assert!(note_text.contains("Root field: value"));
+        assert!(note_text.contains("Root type: union<EventCondition>"));
+        assert!(note_text.contains("Parser: tagged_columns"));
+    }
+
+    #[test]
+    fn expanded_tag_note_includes_root_comment() {
+        let root_field = FieldIr {
+            name: "value".to_owned(),
+            ty: TypeIr::Union("EventCondition".to_owned()),
+            groups: GroupSetIr::default(),
+            key: false,
+            comment: Some("Event condition".to_owned()),
+            default: None,
+            range: None,
+            length: None,
+            parser: Some(sora_ir::model::ParserIr {
+                kind: "tagged_columns".to_owned(),
+                options: BTreeMap::new(),
+            }),
+            derived_from: None,
+        };
+        let tagged_column = sora_ir::input_projection::TaggedColumn {
+            name: "type".to_owned(),
+            kind: sora_ir::input_projection::TaggedColumnKind::Tag,
+        };
+
+        let note_text = tagged_column_note_text(&empty_ir(), &root_field, &tagged_column);
+
+        assert!(note_text.starts_with("Event condition\nTag for union field `value`."));
         assert!(note_text.contains("Root type: union<EventCondition>"));
         assert!(note_text.contains("Parser: tagged_columns"));
     }
