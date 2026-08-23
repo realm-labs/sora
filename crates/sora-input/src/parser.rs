@@ -7,7 +7,13 @@ use std::{
 use serde_json::Value as JsonValue;
 use sora_data::model::Value;
 use sora_diagnostics::Result;
-use sora_ir::model::TypeIr;
+use sora_ir::{
+    interval::{
+        INTERVAL_END_FIELD, INTERVAL_END_INCLUSIVE_FIELD, INTERVAL_START_FIELD,
+        INTERVAL_START_INCLUSIVE_FIELD, interval_element_type,
+    },
+    model::TypeIr,
+};
 
 use crate::cell::{CellContext, CellValue};
 
@@ -213,6 +219,9 @@ fn default_cell_value(
         TypeIr::DateTime => datetime_cell(cell, context)?,
         TypeIr::F32 | TypeIr::F64 => float_cell(cell, context)?,
         TypeIr::String | TypeIr::Text | TypeIr::Enum(_) => Value::String(cell.display_text()),
+        TypeIr::Struct(name) if interval_element_type(name).is_some() => {
+            interval_cell_value(&cell.display_text(), name, context)?
+        }
         TypeIr::Struct(_) | TypeIr::Union(_) => json_object_value(&cell.display_text(), context)?,
         TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Array { .. } => {
             parse_collection_with_separator(&cell.display_text(), ty, context)?
@@ -361,6 +370,55 @@ fn float_cell(cell: &CellValue<'_>, context: &CellContext<'_>) -> Result<Value> 
             .map_err(|_| context.error(format!("expected float, got `{value}`"))),
         _ => Err(context.error(format!("expected float, got `{}`", cell.display_text()))),
     }
+}
+
+fn interval_cell_value(
+    source: &str,
+    struct_name: &str,
+    context: &CellContext<'_>,
+) -> Result<Value> {
+    let source = source.trim();
+    let Some(open) = source.chars().next() else {
+        return Err(context.error("expected interval such as `[1,10)`"));
+    };
+    let Some(close) = source.chars().last() else {
+        return Err(context.error("expected interval such as `[1,10)`"));
+    };
+    if !matches!(open, '[' | '(') || !matches!(close, ']' | ')') || source.len() < 3 {
+        return Err(context.error(format!(
+            "expected interval with `[` or `(` and `]` or `)`, got `{source}`"
+        )));
+    }
+    let bounds = &source[1..source.len() - 1];
+    let mut parts = bounds.split(',');
+    let start = parts.next().unwrap_or_default().trim();
+    let end = parts.next().unwrap_or_default().trim();
+    if start.is_empty() || end.is_empty() || parts.next().is_some() {
+        return Err(context.error(format!(
+            "interval `{source}` must contain exactly two non-empty bounds separated by `,`"
+        )));
+    }
+    let element = interval_element_type(struct_name)
+        .expect("interval struct names should have an element type");
+
+    Ok(Value::Object(BTreeMap::from([
+        (
+            INTERVAL_START_FIELD.to_owned(),
+            source_to_default_value(start, &element, context)?,
+        ),
+        (
+            INTERVAL_END_FIELD.to_owned(),
+            source_to_default_value(end, &element, context)?,
+        ),
+        (
+            INTERVAL_START_INCLUSIVE_FIELD.to_owned(),
+            Value::Bool(open == '['),
+        ),
+        (
+            INTERVAL_END_INCLUSIVE_FIELD.to_owned(),
+            Value::Bool(close == ']'),
+        ),
+    ])))
 }
 
 fn parse_collection_with_separator(
@@ -1016,6 +1074,90 @@ mod tests {
             .unwrap();
 
         assert_eq!(value, Value::Integer(5_405_250));
+    }
+
+    #[test]
+    fn parses_open_and_closed_interval_bounds() {
+        let registry = ParserRegistry::builtin();
+        let ir = string_ref_ir();
+        let context = CellContext {
+            path: Path::new("<test>"),
+            ir: &ir,
+            location: CellLocation::Default,
+            field: "level_range",
+            parser: None,
+        };
+
+        let value = registry
+            .parse_cell(
+                &CellValue::Text("(1, 100]".into()),
+                &parse_type("interval<i32>").unwrap(),
+                &context,
+            )
+            .unwrap();
+
+        assert_eq!(
+            value,
+            Value::Object(BTreeMap::from([
+                (INTERVAL_START_FIELD.to_owned(), Value::Integer(1)),
+                (INTERVAL_END_FIELD.to_owned(), Value::Integer(100)),
+                (
+                    INTERVAL_START_INCLUSIVE_FIELD.to_owned(),
+                    Value::Bool(false)
+                ),
+                (INTERVAL_END_INCLUSIVE_FIELD.to_owned(), Value::Bool(true)),
+            ]))
+        );
+    }
+
+    #[test]
+    fn parses_duration_interval_bounds() {
+        let registry = ParserRegistry::builtin();
+        let ir = string_ref_ir();
+        let context = CellContext {
+            path: Path::new("<test>"),
+            ir: &ir,
+            location: CellLocation::Default,
+            field: "cooldown_range",
+            parser: None,
+        };
+
+        let value = registry
+            .parse_cell(
+                &CellValue::Text("[500ms,2s)".into()),
+                &parse_type("interval<duration>").unwrap(),
+                &context,
+            )
+            .unwrap();
+
+        let Value::Object(values) = value else {
+            panic!("interval should parse as an object");
+        };
+        assert_eq!(values[INTERVAL_START_FIELD], Value::Integer(500));
+        assert_eq!(values[INTERVAL_END_FIELD], Value::Integer(2_000));
+    }
+
+    #[test]
+    fn rejects_malformed_interval_cells() {
+        let registry = ParserRegistry::builtin();
+        let ir = string_ref_ir();
+        let context = CellContext {
+            path: Path::new("<test>"),
+            ir: &ir,
+            location: CellLocation::Default,
+            field: "level_range",
+            parser: None,
+        };
+        let ty = parse_type("interval<i32>").unwrap();
+
+        for source in ["1,10", "[1,10", "[1]", "[,10]", "[1,10,20]"] {
+            assert!(
+                registry
+                    .parse_cell(&CellValue::Text(source.into()), &ty, &context)
+                    .is_err(),
+                "{source} should fail"
+            );
+        }
     }
 
     #[test]

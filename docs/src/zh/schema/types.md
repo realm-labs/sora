@@ -74,6 +74,36 @@ type = "map<string,i32>"
 parser = { kind = "map" }
 ```
 
+## 区间
+
+`interval<T>` 表示一个带上下界开闭信息的非空有界区间。`T` 可以是任意整数或浮点原始类型、`duration` 或 `datetime`。
+
+```toml
+[[tables.fields]]
+name = "recommended_level"
+type = "interval<i32>"
+default = "[1,10]"
+```
+
+Excel、CSV 和字符串 default 使用标准数学区间写法。`[`、`]` 表示包含边界，`(`、`)` 表示不包含边界：
+
+| 值 | 含义 |
+| --- | --- |
+| `[1,10]` | `1 <= x <= 10` |
+| `(1,10]` | `1 < x <= 10` |
+| `[1,10)` | `1 <= x < 10` |
+| `(1,10)` | `1 < x < 10` |
+
+上下界都必须填写。起点大于终点时构建失败；起点等于终点时只有两端均闭合的 `[x,x]` 合法，因为其它组合都是空区间。
+
+TOML、JSON、YAML 这类结构化数据使用统一的 object 表示：
+
+```toml
+recommended_level = { start = 1, end = 10, start_inclusive = false, end_inclusive = true }
+```
+
+代码生成会产生 `SoraIntervalI32` 这样的具体强类型，包含相同的四个字段。运行时导出也使用这套 object 结构，因此所有目标语言具有一致的区间语义。区间可以放进集合；集合在单元格中应使用 JSON 输入。
+
 ## 单元格示例
 
 这些例子展示策划在 Excel 或 CSV cell 里会填写什么：
@@ -84,6 +114,8 @@ parser = { kind = "map" }
 | `enum<ItemType>` | 无 | `Weapon` |
 | `list<i32>` | 无或 `split` | `1,2,3` |
 | `duration` | 无 | `1h 30m` |
+| `interval<i32>` | 无 | `(1,100]` |
+| `interval<duration>` | 无 | `[500ms,2s)` |
 | `text` | 无 | `quest.1001.title` |
 | `set<string>` | `json` | `["starter","melee"]` |
 | `struct<ResourceCost>` | `tuple` | `Gold,0,100` |

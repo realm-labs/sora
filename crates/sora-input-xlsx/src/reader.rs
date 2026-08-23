@@ -1101,6 +1101,28 @@ mod tests {
     }
 
     #[test]
+    fn loads_interval_cell_values() {
+        let ir = interval_ir();
+        let base = temp_dir();
+        let xlsx_path = base.join("Settings.xlsx");
+        write_workbook_rows(&ir, &ir.tables[0], &xlsx_path, &[vec!["[1,100)"]]);
+
+        let data = load_xlsx_config_data(&ir, &base).unwrap();
+
+        assert_eq!(
+            data.tables[0].rows[0].values["level_range"],
+            Value::Object(BTreeMap::from([
+                ("start".to_owned(), Value::Integer(1)),
+                ("end".to_owned(), Value::Integer(100)),
+                ("start_inclusive".to_owned(), Value::Bool(true)),
+                ("end_inclusive".to_owned(), Value::Bool(false)),
+            ]))
+        );
+
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
     fn loads_struct_columns() {
         let ir = struct_columns_ir();
         let base = temp_dir();
@@ -1465,6 +1487,34 @@ type = "i32"
 name = "materials"
 type = "list<ResourceCost>"
 parser = { kind = "tuple_list" }
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        validate_config_ir(&ir).unwrap();
+        ir
+    }
+
+    fn interval_ir() -> ConfigIr {
+        let schema = toml::from_str(
+            r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[tables]]
+id = "settings"
+name = "Settings"
+mode = "singleton"
+
+[tables.source]
+format = "xlsx"
+file = "Settings.xlsx"
+sheet = "Settings"
+
+[[tables.fields]]
+name = "level_range"
+type = "interval<i32>"
 "#,
         )
         .unwrap();

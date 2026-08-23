@@ -477,6 +477,37 @@ mod tests {
     }
 
     #[test]
+    fn renders_interval_type_and_comment_in_template_rows() {
+        let schema: ProjectSchema = toml::from_str(
+            r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[tables]]
+id = "settings"
+name = "Settings"
+mode = "singleton"
+
+[[tables.fields]]
+name = "level_range"
+type = "interval<i32>"
+comment = "Recommended level interval"
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        let rows = table_template_rows(&ir, &ir.tables[0]);
+
+        assert_eq!(rows[TYPE_ROW as usize], ["#type", "interval<i32>"]);
+        assert_eq!(rows[INPUT_ROW as usize], ["#input", ""]);
+        assert_eq!(
+            rows[DESC_ROW as usize],
+            ["#desc", "Recommended level interval"]
+        );
+    }
+
+    #[test]
     fn expands_tagged_union_columns() {
         let ir = tagged_union_ir();
         let rows = table_template_rows(&ir, &ir.tables[0]);

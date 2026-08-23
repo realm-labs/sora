@@ -1,7 +1,16 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::{
+    cmp::Ordering,
+    collections::{BTreeMap, BTreeSet},
+};
 
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{ConfigIr, FieldIr, StructIr, TableModeIr, TypeIr, UnionIr};
+use sora_ir::{
+    interval::{
+        INTERVAL_END_FIELD, INTERVAL_END_INCLUSIVE_FIELD, INTERVAL_START_FIELD,
+        INTERVAL_START_INCLUSIVE_FIELD, interval_element_type,
+    },
+    model::{ConfigIr, FieldIr, StructIr, TableModeIr, TypeIr, UnionIr},
+};
 
 use crate::model::{ConfigData, Value};
 pub(super) fn validate_field_value(
@@ -206,7 +215,68 @@ fn validate_struct(
         return type_mismatch(table, path, ty, value);
     };
 
-    validate_object_fields(ir, config_data, table, path, struct_ir, values)
+    validate_object_fields(ir, config_data, table, path, struct_ir, values)?;
+    if interval_element_type(struct_name).is_some() {
+        validate_interval(table, path, values)?;
+    }
+    Ok(())
+}
+
+fn validate_interval(table: &str, path: &str, values: &BTreeMap<String, Value>) -> Result<()> {
+    let start = &values[INTERVAL_START_FIELD];
+    let end = &values[INTERVAL_END_FIELD];
+    let Value::Bool(start_inclusive) = values[INTERVAL_START_INCLUSIVE_FIELD] else {
+        unreachable!("interval flag type should be validated before interval semantics");
+    };
+    let Value::Bool(end_inclusive) = values[INTERVAL_END_INCLUSIVE_FIELD] else {
+        unreachable!("interval flag type should be validated before interval semantics");
+    };
+    let Some(ordering) = compare_interval_bounds(start, end) else {
+        return Err(SoraError::InvalidInterval {
+            table: table.to_owned(),
+            field: path.to_owned(),
+            message: "bounds must be comparable finite values".to_owned(),
+        });
+    };
+
+    if ordering == Ordering::Greater {
+        return Err(SoraError::InvalidInterval {
+            table: table.to_owned(),
+            field: path.to_owned(),
+            message: format!(
+                "start bound {} exceeds end bound {}",
+                interval_bound_display(start),
+                interval_bound_display(end)
+            ),
+        });
+    }
+    if ordering == Ordering::Equal && (!start_inclusive || !end_inclusive) {
+        return Err(SoraError::InvalidInterval {
+            table: table.to_owned(),
+            field: path.to_owned(),
+            message: "equal bounds must both be inclusive; otherwise the interval is empty"
+                .to_owned(),
+        });
+    }
+    Ok(())
+}
+
+fn compare_interval_bounds(start: &Value, end: &Value) -> Option<Ordering> {
+    match (start, end) {
+        (Value::Integer(start), Value::Integer(end)) => Some(start.cmp(end)),
+        (Value::Integer(start), Value::Float(end)) => (*start as f64).partial_cmp(end),
+        (Value::Float(start), Value::Integer(end)) => start.partial_cmp(&(*end as f64)),
+        (Value::Float(start), Value::Float(end)) => start.partial_cmp(end),
+        _ => None,
+    }
+}
+
+fn interval_bound_display(value: &Value) -> String {
+    match value {
+        Value::Integer(value) => value.to_string(),
+        Value::Float(value) => value.to_string(),
+        _ => unreachable!("interval bounds should be numeric after type validation"),
+    }
 }
 
 fn validate_object_fields(

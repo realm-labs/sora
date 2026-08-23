@@ -237,7 +237,7 @@ fn qualify_type_expression(input: &str, module: &SchemaModule) -> Result<String>
             return Ok(format!("{kind}<{}>", resolve_schema_name(inner, module)?));
         }
     }
-    for kind in ["list", "set", "optional"] {
+    for kind in ["list", "set", "optional", "interval"] {
         if let Some(inner) = schema_generic_inner(input, kind) {
             return Ok(format!(
                 "{kind}<{}>",
@@ -1987,6 +1987,7 @@ tables {
       id = "string"
       reward = "struct<Reward>"
       parent = "optional<ref<items.Item.id>>"
+      level_range = "interval<i32>"
     }
   }
 }
@@ -2005,6 +2006,7 @@ tables {
             schema.tables[0].fields[2].ty,
             "optional<ref<items.Item.id>>"
         );
+        assert_eq!(schema.tables[0].fields[3].ty, "interval<i32>");
         let _ = fs::remove_dir_all(base);
     }
 

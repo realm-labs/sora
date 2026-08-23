@@ -226,6 +226,28 @@ fn validates_ranges_and_struct_fields() {
 }
 
 #[test]
+fn validates_non_empty_intervals() {
+    let ir = interval_ir();
+    let valid = interval_data(1, 10, false, true);
+
+    validate_config_data(&ir, &valid).unwrap();
+
+    let reversed = validate_config_data(&ir, &interval_data(10, 1, true, true)).unwrap_err();
+    assert!(matches!(
+        reversed,
+        SoraError::InvalidInterval { field, .. } if field == "level_range"
+    ));
+
+    let empty = validate_config_data(&ir, &interval_data(5, 5, true, false)).unwrap_err();
+    assert!(matches!(
+        empty,
+        SoraError::InvalidInterval { message, .. } if message.contains("empty")
+    ));
+
+    validate_config_data(&ir, &interval_data(5, 5, true, true)).unwrap();
+}
+
+#[test]
 fn validates_string_and_collection_lengths() {
     let ir = length_ir();
     let valid = ConfigData {
@@ -619,6 +641,47 @@ type = "i32"
     .unwrap();
 
     normalize_schema(schema).unwrap()
+}
+
+fn interval_ir() -> ConfigIr {
+    let schema: ProjectSchema = toml::from_str(
+        r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[tables]]
+id = "settings"
+name = "Settings"
+mode = "singleton"
+
+[[tables.fields]]
+name = "level_range"
+type = "interval<i32>"
+"#,
+    )
+    .unwrap();
+
+    normalize_schema(schema).unwrap()
+}
+
+fn interval_data(start: i64, end: i64, start_inclusive: bool, end_inclusive: bool) -> ConfigData {
+    ConfigData {
+        tables: vec![TableData {
+            name: "Settings".to_owned(),
+            rows: vec![RowData {
+                values: BTreeMap::from([(
+                    "level_range".to_owned(),
+                    Value::Object(BTreeMap::from([
+                        ("start".to_owned(), Value::Integer(start)),
+                        ("end".to_owned(), Value::Integer(end)),
+                        ("start_inclusive".to_owned(), Value::Bool(start_inclusive)),
+                        ("end_inclusive".to_owned(), Value::Bool(end_inclusive)),
+                    ])),
+                )]),
+            }],
+        }],
+    }
 }
 
 fn index_ir() -> ConfigIr {

@@ -246,6 +246,13 @@ pub enum SoraError {
         field: Option<String>,
         message: String,
     },
+
+    #[error("invalid interval for field `{field}` in table `{table}`: {message}")]
+    InvalidInterval {
+        table: String,
+        field: String,
+        message: String,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, SoraError>;
@@ -297,6 +304,7 @@ impl SoraError {
             Self::ValidationErrors { .. } => "SORA0035",
             Self::OperationCancelled { .. } => "SORA0036",
             Self::SourceLoaderDiagnostic { .. } => "SORA0037",
+            Self::InvalidInterval { .. } => "SORA0038",
         }
     }
 

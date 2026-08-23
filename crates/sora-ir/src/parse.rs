@@ -1,6 +1,6 @@
 use sora_diagnostics::{Result, SoraError};
 
-use crate::model::TypeIr;
+use crate::{interval::interval_struct_name, model::TypeIr};
 
 pub fn parse_type(input: &str) -> Result<TypeIr> {
     parse_type_inner(input.trim())
@@ -48,6 +48,12 @@ fn parse_type_inner(input: &str) -> Result<TypeIr> {
                 parse_array_type(input, inner)?
             } else if let Some(inner) = generic_inner(input, "ref") {
                 parse_ref_type(input, inner)?
+            } else if let Some(inner) = generic_inner(input, "interval") {
+                let element = parse_nested_type(inner)?;
+                let Some(name) = interval_struct_name(&element) else {
+                    return Err(SoraError::InvalidType(input.to_owned()));
+                };
+                TypeIr::Struct(name.to_owned())
             } else if input.split('.').all(is_identifier) {
                 TypeIr::Struct(input.to_owned())
             } else {
@@ -205,6 +211,10 @@ mod tests {
                 "optional<string>",
                 TypeIr::Optional(Box::new(TypeIr::String)),
             ),
+            (
+                "interval<i32>",
+                TypeIr::Struct("SoraIntervalI32".to_owned()),
+            ),
         ];
 
         for (source, expected) in cases {
@@ -220,6 +230,8 @@ mod tests {
             "array<i32,nope>",
             "ref<Item>",
             "enum<1Bad>",
+            "interval<string>",
+            "interval<list<i32>>",
         ] {
             assert!(parse_type(source).is_err(), "{source} should fail");
         }

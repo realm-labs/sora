@@ -117,6 +117,7 @@ unsigned_byte = "u8"
 signed_short = "i16"
 unsigned_short = "u16"
 unsigned_int = "u32"
+level_range = "interval<i32>"
 
 [tables.Item.fields.rewards]
 type = "list<Reward>"
@@ -168,6 +169,7 @@ unsigned_byte = 255
 signed_short = -32768
 unsigned_short = 65535
 unsigned_int = 4294967295
+level_range = { start = 1, end = 100, start_inclusive = false, end_inclusive = true }
 
 [[rows]]
 id = 1002
@@ -179,6 +181,7 @@ unsigned_byte = 0
 signed_short = 32767
 unsigned_short = 0
 unsigned_int = 0
+level_range = { start = 10, end = 20, start_inclusive = true, end_inclusive = false }
 "#,
     )
     .unwrap();
@@ -251,6 +254,10 @@ fn loads_sora_bundle() {
     assert_eq!(item.signed_short, 32767);
     assert_eq!(item.unsigned_short, 0);
     assert_eq!(item.unsigned_int, 0);
+    assert_eq!(item.level_range.start, 10);
+    assert_eq!(item.level_range.end, 20);
+    assert!(item.level_range.start_inclusive);
+    assert!(!item.level_range.end_inclusive);
     assert_eq!(item.rewards.len(), 2);
     assert_eq!(item.rewards[0].reward_item_id, 3001);
     assert_eq!(item.rewards[0].count, 2);

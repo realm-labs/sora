@@ -20,6 +20,10 @@ use sora_input::{
 use sora_input_schema::input::ProjectSchemaInput;
 use sora_ir::{
     input_projection::{TaggedColumnKind, struct_columns, tagged_columns, tagged_columns_union},
+    interval::{
+        INTERVAL_END_FIELD, INTERVAL_END_INCLUSIVE_FIELD, INTERVAL_START_FIELD,
+        INTERVAL_START_INCLUSIVE_FIELD, interval_element,
+    },
     model::{ConfigIr, FieldIr, TableIr, TableModeIr, TypeIr},
 };
 
@@ -1127,6 +1131,11 @@ fn cell_text(ir: &ConfigIr, field: &FieldIr, value: &Value) -> String {
     if matches!(value, Value::Null) {
         return String::new();
     }
+    if let Some(element) = interval_element(&field.ty)
+        && let Some(text) = interval_cell_text(&element, value)
+    {
+        return text;
+    }
     let parser = field.parser.as_ref();
     if parser.is_some_and(|parser| parser.kind == "json") {
         return serde_json::to_string(&natural_value(value)).unwrap_or_default();
@@ -1209,6 +1218,40 @@ fn cell_text(ir: &ConfigIr, field: &FieldIr, value: &Value) -> String {
                 .join(item_separator)
         }
         _ => scalar_text(value),
+    }
+}
+
+fn interval_cell_text(element: &TypeIr, value: &Value) -> Option<String> {
+    let Value::Object(values) = value else {
+        return None;
+    };
+    let start = values.get(INTERVAL_START_FIELD)?;
+    let end = values.get(INTERVAL_END_FIELD)?;
+    let Value::Bool(start_inclusive) = values.get(INTERVAL_START_INCLUSIVE_FIELD)? else {
+        return None;
+    };
+    let Value::Bool(end_inclusive) = values.get(INTERVAL_END_INCLUSIVE_FIELD)? else {
+        return None;
+    };
+    let open = if *start_inclusive { '[' } else { '(' };
+    let close = if *end_inclusive { ']' } else { ')' };
+    Some(format!(
+        "{open}{},{}{close}",
+        interval_bound_text(element, start)?,
+        interval_bound_text(element, end)?
+    ))
+}
+
+fn interval_bound_text(element: &TypeIr, value: &Value) -> Option<String> {
+    match (element, value) {
+        (TypeIr::Duration, Value::Integer(value)) => Some(format!("{value}ms")),
+        (TypeIr::DateTime, Value::Integer(value)) => {
+            chrono::DateTime::<chrono::Utc>::from_timestamp_millis(*value)
+                .map(|value| value.to_rfc3339())
+        }
+        (_, Value::Integer(value)) => Some(value.to_string()),
+        (_, Value::Float(value)) => Some(value.to_string()),
+        _ => None,
     }
 }
 
@@ -1448,5 +1491,43 @@ fn source_data_start_row(format: SourceFormat) -> usize {
     match format {
         SourceFormat::Csv | SourceFormat::Json | SourceFormat::Toml | SourceFormat::Yaml => 1,
         SourceFormat::Xlsx => 8,
+    }
+}
+
+#[cfg(test)]
+mod interval_tests {
+    use super::*;
+
+    #[test]
+    fn renders_interval_cells_with_open_and_closed_bounds() {
+        let value = Value::Object(BTreeMap::from([
+            (INTERVAL_START_FIELD.to_owned(), Value::Integer(1)),
+            (INTERVAL_END_FIELD.to_owned(), Value::Integer(10)),
+            (
+                INTERVAL_START_INCLUSIVE_FIELD.to_owned(),
+                Value::Bool(false),
+            ),
+            (INTERVAL_END_INCLUSIVE_FIELD.to_owned(), Value::Bool(true)),
+        ]));
+
+        assert_eq!(
+            interval_cell_text(&TypeIr::I32, &value),
+            Some("(1,10]".to_owned())
+        );
+    }
+
+    #[test]
+    fn renders_duration_interval_cells_as_duration_literals() {
+        let value = Value::Object(BTreeMap::from([
+            (INTERVAL_START_FIELD.to_owned(), Value::Integer(500)),
+            (INTERVAL_END_FIELD.to_owned(), Value::Integer(2_000)),
+            (INTERVAL_START_INCLUSIVE_FIELD.to_owned(), Value::Bool(true)),
+            (INTERVAL_END_INCLUSIVE_FIELD.to_owned(), Value::Bool(false)),
+        ]));
+
+        assert_eq!(
+            interval_cell_text(&TypeIr::Duration, &value),
+            Some("[500ms,2000ms)".to_owned())
+        );
     }
 }

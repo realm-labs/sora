@@ -74,6 +74,36 @@ type = "map<string,i32>"
 parser = { kind = "map" }
 ```
 
+## Intervals
+
+`interval<T>` stores one non-empty bounded interval together with the inclusivity of each bound. `T` can be any integer or floating-point primitive, `duration`, or `datetime`.
+
+```toml
+[[tables.fields]]
+name = "recommended_level"
+type = "interval<i32>"
+default = "[1,10]"
+```
+
+Excel, CSV, and string defaults use standard mathematical interval notation. `[` and `]` include a bound; `(` and `)` exclude it:
+
+| Value | Meaning |
+| --- | --- |
+| `[1,10]` | `1 <= x <= 10` |
+| `(1,10]` | `1 < x <= 10` |
+| `[1,10)` | `1 <= x < 10` |
+| `(1,10)` | `1 < x < 10` |
+
+Both bounds are required. Sora rejects a start greater than the end. Equal bounds are valid only when both are inclusive, because every other equal-bound combination is empty.
+
+Structured TOML, JSON, and YAML data uses the canonical object representation:
+
+```toml
+recommended_level = { start = 1, end = 10, start_inclusive = false, end_inclusive = true }
+```
+
+Code generators emit a concrete strong interval record such as `SoraIntervalI32`, with the same four fields. Runtime exports use the canonical object shape, so every target language preserves the same interval semantics. Collections of intervals are supported; use JSON cell input for those collections.
+
 ## Cell Examples
 
 These examples show what a designer would put in an Excel or CSV cell:
@@ -84,6 +114,8 @@ These examples show what a designer would put in an Excel or CSV cell:
 | `enum<ItemType>` | none | `Weapon` |
 | `list<i32>` | none or `split` | `1,2,3` |
 | `duration` | none | `1h 30m` |
+| `interval<i32>` | none | `(1,100]` |
+| `interval<duration>` | none | `[500ms,2s)` |
 | `text` | none | `quest.1001.title` |
 | `set<string>` | `json` | `["starter","melee"]` |
 | `struct<ResourceCost>` | `tuple` | `Gold,0,100` |

@@ -262,7 +262,10 @@ impl fmt::Display for TypeIr {
             TypeIr::DateTime => f.write_str("datetime"),
             TypeIr::Text => f.write_str("text"),
             TypeIr::Enum(name) => write!(f, "enum<{name}>"),
-            TypeIr::Struct(name) => write!(f, "struct<{name}>"),
+            TypeIr::Struct(name) => match crate::interval::interval_element_type(name) {
+                Some(element) => write!(f, "interval<{element}>"),
+                None => write!(f, "struct<{name}>"),
+            },
             TypeIr::Union(name) => write!(f, "union<{name}>"),
             TypeIr::List(element) => write!(f, "list<{element}>"),
             TypeIr::Set(element) => write!(f, "set<{element}>"),

@@ -660,6 +660,61 @@ type = "struct<quests.Entry>"
         let _ = fs::remove_dir_all(base);
     }
 
+    #[test]
+    fn all_builtin_generators_support_interval_types() {
+        let schema: ProjectSchema = toml::from_str(
+            r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[tables]]
+id = "settings"
+name = "Settings"
+mode = "singleton"
+
+[[tables.fields]]
+name = "level_range"
+type = "interval<i32>"
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        assert!(ir.structs.iter().any(|item| item.name == "SoraIntervalI32"));
+        let registry = CodegenRegistry::with_builtin_generators();
+        let mappings = TypeMappingRegistry::new();
+        let base = std::env::temp_dir().join(format!(
+            "sora-interval-codegen-{}-{}",
+            std::process::id(),
+            TEMP_COUNTER.fetch_add(1, Ordering::Relaxed)
+        ));
+
+        for target in registry.supported_targets() {
+            let out_dir = base.join(target);
+            let options = default_test_options(target);
+            registry
+                .get(target)
+                .unwrap()
+                .generator
+                .generate(
+                    CodegenContext {
+                        target,
+                        ir: &ir,
+                        options: &options,
+                        type_mappings: &mappings,
+                    },
+                    &out_dir,
+                )
+                .unwrap_or_else(|error| panic!("{target}: {error}"));
+            assert!(
+                !generated_text(&out_dir).is_empty(),
+                "{target} emitted no code"
+            );
+        }
+
+        let _ = fs::remove_dir_all(base);
+    }
+
     fn generated_text(path: &Path) -> String {
         let mut generated = String::new();
         for entry in fs::read_dir(path).unwrap() {
