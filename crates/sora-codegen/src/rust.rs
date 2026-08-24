@@ -277,6 +277,7 @@ struct RustRecord {
 struct RustInterval {
     helper_name: String,
     type_name: String,
+    copy: bool,
     decode: String,
     serde_with: Option<String>,
 }
@@ -356,6 +357,7 @@ impl RustModel {
             .map(|element| RustInterval {
                 helper_name: interval_record_name(element).unwrap().to_owned(),
                 type_name: mapper.type_name(element, "super"),
+                copy: mapper.type_is_copy(element),
                 decode: rust_decode_expr(ir, element, mapper, "super"),
                 serde_with: rust_serde_with(element, mapper.options, "super"),
             })
@@ -671,7 +673,7 @@ fn rust_index(
     let key_is_copy = if is_primary_key {
         primary_key_is_copy
     } else {
-        mapper.key_type_is_copy(&index.field.ty)
+        mapper.type_is_copy(&index.field.ty)
     };
     let param_type = if is_primary_key && primary_key_string_like {
         "str".to_owned()
@@ -915,7 +917,7 @@ impl<'a> RustTypeMapper<'a> {
         }
     }
 
-    fn key_type_is_copy(&self, ty: &TypeIr) -> bool {
+    fn type_is_copy(&self, ty: &TypeIr) -> bool {
         match ty {
             TypeIr::Bool
             | TypeIr::I8
@@ -932,7 +934,7 @@ impl<'a> RustTypeMapper<'a> {
             | TypeIr::Enum(_) => self.mapping(ty).is_none(),
             TypeIr::Ref { table, field } => resolve_ref_key_identity(&self.ir.tables, table, field)
                 .is_ok_and(|identity| self.key_identity_is_copy(identity)),
-            TypeIr::Optional(element) => self.key_type_is_copy(element),
+            TypeIr::Optional(element) => self.type_is_copy(element),
             TypeIr::String
             | TypeIr::Text
             | TypeIr::Struct(_)
@@ -986,7 +988,7 @@ impl<'a> RustTypeMapper<'a> {
 
     fn key_identity_is_copy(&self, identity: TableKeyIdentity<'_>) -> bool {
         match identity {
-            TableKeyIdentity::Primitive { raw_type, .. } => self.key_type_is_copy(raw_type),
+            TableKeyIdentity::Primitive { raw_type, .. } => self.type_is_copy(raw_type),
             TableKeyIdentity::Enum { name } => {
                 self.mapping(&TypeIr::Enum(name.to_owned())).is_none()
             }
@@ -1539,6 +1541,80 @@ fn keys_are_nominal_transparent_and_decodable() {
         .unwrap();
         let status = Command::new(env!("CARGO"))
             .args(["test", "--offline", "--quiet"])
+            .env("CARGO_TARGET_DIR", out.join("target"))
+            .current_dir(&out)
+            .status()
+            .unwrap();
+        assert!(status.success());
+
+        let _ = std::fs::remove_dir_all(out);
+    }
+
+    #[test]
+    fn copy_interval_serde_is_clippy_clean() {
+        let schema: ProjectSchema = toml::from_str(
+            r#"
+project = { id = "interval_clippy" }
+groups = { common = { default = true } }
+views = { default = { contract = "interval_clippy/default", groups = ["common"] } }
+
+[[tables]]
+id = "settings"
+name = "Settings"
+mode = "singleton"
+
+[[tables.fields]]
+name = "signed_range"
+type = "interval<i16>"
+
+[[tables.fields]]
+name = "unsigned_range"
+type = "interval<u16>"
+
+[[tables.fields]]
+name = "active_at"
+type = "interval<datetime>"
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        let out = std::env::temp_dir().join(format!(
+            "sora-codegen-rust-interval-clippy-test-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&out);
+
+        RustCodeGenerator
+            .generate_with_options(
+                &ir,
+                RustCodegenOptions {
+                    runtime_format: RuntimeFormat::Json,
+                    crate_options: Some(RustCrateOptions {
+                        name: "interval-clippy".to_owned(),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                },
+                &out,
+            )
+            .unwrap();
+
+        let interval = std::fs::read_to_string(out.join("src/interval.rs")).unwrap();
+        assert!(interval.contains("start: self.start,"));
+        assert!(interval.contains("end: self.end,"));
+        assert!(!interval.contains("self.start.clone()"));
+        assert!(!interval.contains("self.end.clone()"));
+
+        let status = Command::new(env!("CARGO"))
+            .args([
+                "clippy",
+                "--offline",
+                "--all-targets",
+                "--quiet",
+                "--",
+                "-D",
+                "warnings",
+            ])
             .env("CARGO_TARGET_DIR", out.join("target"))
             .current_dir(&out)
             .status()

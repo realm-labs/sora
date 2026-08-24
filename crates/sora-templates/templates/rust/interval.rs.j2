@@ -81,8 +81,13 @@ impl serde::Serialize for SoraInterval<{{ interval.type_name }}> {
         S: serde::Serializer,
     {
         let value = {{ interval.helper_name }}Serde {
+{%- if interval.copy %}
+            start: self.start,
+            end: self.end,
+{%- else %}
             start: self.start.clone(),
             end: self.end.clone(),
+{%- endif %}
             start_inclusive: self.start_inclusive,
             end_inclusive: self.end_inclusive,
         };
