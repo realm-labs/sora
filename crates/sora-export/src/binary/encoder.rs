@@ -3,7 +3,13 @@ use std::collections::BTreeMap;
 use sora_data::model::{ConfigData, TableData, Value};
 use sora_diagnostics::{Result, SoraError};
 use sora_execution::ExecutionContext;
-use sora_ir::model::{ConfigIr, FieldIr, StructIr, TableIr, TypeIr, UnionIr};
+use sora_ir::{
+    interval::{
+        INTERVAL_END_FIELD, INTERVAL_END_INCLUSIVE_FIELD, INTERVAL_START_FIELD,
+        INTERVAL_START_INCLUSIVE_FIELD,
+    },
+    model::{ConfigIr, FieldIr, StructIr, TableIr, TypeIr, UnionIr},
+};
 
 use crate::{
     bundle::{data_fingerprint, schema_fingerprint},
@@ -164,6 +170,15 @@ impl<'a> BinaryEncoder<'a> {
                     let null = Value::Null;
                     let value = values.get(&field.name).unwrap_or(&null);
                     self.collect_strings(&field.ty, value, strings)?;
+                }
+            }
+            TypeIr::Interval(element) => {
+                let Value::Object(values) = value else {
+                    return Err(type_error(ty, value));
+                };
+                for name in [INTERVAL_START_FIELD, INTERVAL_END_FIELD] {
+                    let child = values.get(name).ok_or_else(|| type_error(ty, value))?;
+                    self.collect_strings(element, child, strings)?;
                 }
             }
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
@@ -357,6 +372,19 @@ impl<'a> BinaryEncoder<'a> {
                     let null = Value::Null;
                     let value = values.get(&field.name).unwrap_or(&null);
                     self.encode_value(&field.ty, value, out, strings)?;
+                }
+            }
+            TypeIr::Interval(element) => {
+                let Value::Object(values) = value else {
+                    return Err(type_error(ty, value));
+                };
+                for name in [INTERVAL_START_FIELD, INTERVAL_END_FIELD] {
+                    let child = values.get(name).ok_or_else(|| type_error(ty, value))?;
+                    self.encode_value(element, child, out, strings)?;
+                }
+                for name in [INTERVAL_START_INCLUSIVE_FIELD, INTERVAL_END_INCLUSIVE_FIELD] {
+                    let child = values.get(name).ok_or_else(|| type_error(ty, value))?;
+                    self.encode_value(&TypeIr::Bool, child, out, strings)?;
                 }
             }
             TypeIr::List(element) | TypeIr::Set(element) => {

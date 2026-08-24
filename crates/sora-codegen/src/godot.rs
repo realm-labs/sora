@@ -4,7 +4,10 @@ use heck::{ToPascalCase, ToShoutySnakeCase, ToSnakeCase};
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{ConfigIr, TypeIr};
+use sora_ir::{
+    interval::interval_record_name,
+    model::{ConfigIr, TypeIr},
+};
 
 use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
@@ -110,6 +113,7 @@ struct GodotRecord {
     fields: Vec<GodotField>,
     table: Option<GodotTable>,
     custom_imports: Vec<String>,
+    interval: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -233,6 +237,7 @@ fn godot_record(
     table: Option<GodotTable>,
     mapper: &GodotTypeMapper<'_>,
 ) -> GodotRecord {
+    let interval = record.interval_element.is_some();
     let fields = record
         .fields
         .into_iter()
@@ -245,6 +250,7 @@ fn godot_record(
         fields,
         table,
         custom_imports,
+        interval,
     }
 }
 
@@ -432,6 +438,9 @@ impl<'a> GodotTypeMapper<'a> {
             TypeIr::String | TypeIr::Enum(_) => "String".to_owned(),
             TypeIr::Text => "SoraRuntime.TextKey".to_owned(),
             TypeIr::Struct(name) | TypeIr::Union(name) => godot_type_identifier(name),
+            TypeIr::Interval(element) => godot_type_identifier(
+                interval_record_name(element).expect("validated interval element"),
+            ),
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
                 typed_array_type(&self.nested_collection_type_name(element))
             }
@@ -534,6 +543,12 @@ fn godot_value_decode_expr(
             ty,
             format!("{}Codec.decode({value})", godot_type_identifier(name)),
         ),
+        TypeIr::Interval(element) => format!(
+            "{}.decode({value})",
+            godot_type_identifier(
+                interval_record_name(element).expect("validated interval element")
+            )
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => format!(
             "SoraRuntime.decode_array({value}, func(item): return {})",
             godot_value_decode_expr(ir, element, "item", mapper)
@@ -584,7 +599,9 @@ fn godot_default_value(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Text => "null".to_owned(),
         TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Array { .. } => "[]".to_owned(),
         TypeIr::Map { .. } => "{}".to_owned(),
-        TypeIr::Optional(_) | TypeIr::Struct(_) | TypeIr::Union(_) => "null".to_owned(),
+        TypeIr::Optional(_) | TypeIr::Struct(_) | TypeIr::Union(_) | TypeIr::Interval(_) => {
+            "null".to_owned()
+        }
         TypeIr::Ref { table, field } => ir
             .tables
             .iter()

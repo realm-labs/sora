@@ -2,7 +2,13 @@ use std::collections::BTreeMap;
 
 use sora_data::model::{ConfigData, RowData, Value};
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{ConfigIr, FieldIr, TableModeIr, TypeIr, UnionIr};
+use sora_ir::{
+    interval::{
+        INTERVAL_END_FIELD, INTERVAL_END_INCLUSIVE_FIELD, INTERVAL_START_FIELD,
+        INTERVAL_START_INCLUSIVE_FIELD,
+    },
+    model::{ConfigIr, FieldIr, TableModeIr, TypeIr, UnionIr},
+};
 
 use crate::{
     exporter::{DataExporter, ExportOutput, ExportRequest, OutputKind},
@@ -215,6 +221,54 @@ fn encode_value(
                 encode_union(ir, writer, table, field, union, value)
             })?;
         }
+        TypeIr::Interval(element) => {
+            let object = expect_object(table, field, value)?;
+            writer.message(tag, |writer| {
+                encode_value(
+                    ir,
+                    writer,
+                    table,
+                    field,
+                    1,
+                    element,
+                    object.get(INTERVAL_START_FIELD).ok_or_else(|| {
+                        missing_interval_field(table, field, INTERVAL_START_FIELD)
+                    })?,
+                )?;
+                encode_value(
+                    ir,
+                    writer,
+                    table,
+                    field,
+                    2,
+                    element,
+                    object
+                        .get(INTERVAL_END_FIELD)
+                        .ok_or_else(|| missing_interval_field(table, field, INTERVAL_END_FIELD))?,
+                )?;
+                writer.bool(
+                    3,
+                    expect_bool(
+                        table,
+                        field,
+                        object.get(INTERVAL_START_INCLUSIVE_FIELD).ok_or_else(|| {
+                            missing_interval_field(table, field, INTERVAL_START_INCLUSIVE_FIELD)
+                        })?,
+                    )?,
+                );
+                writer.bool(
+                    4,
+                    expect_bool(
+                        table,
+                        field,
+                        object.get(INTERVAL_END_INCLUSIVE_FIELD).ok_or_else(|| {
+                            missing_interval_field(table, field, INTERVAL_END_INCLUSIVE_FIELD)
+                        })?,
+                    )?,
+                );
+                Ok(())
+            })?;
+        }
         TypeIr::List(_)
         | TypeIr::Set(_)
         | TypeIr::Map { .. }
@@ -360,6 +414,13 @@ fn type_mismatch(table: &str, field: &FieldIr, expected: &str, actual: &Value) -
         expected: expected.to_owned(),
         actual: kind_name(actual).to_owned(),
     }
+}
+
+fn missing_interval_field(table: &str, field: &FieldIr, name: &str) -> SoraError {
+    SoraError::InvalidSchema(format!(
+        "table `{table}` field `{}` interval value is missing `{name}`",
+        field.name
+    ))
 }
 
 fn kind_name(value: &Value) -> &'static str {

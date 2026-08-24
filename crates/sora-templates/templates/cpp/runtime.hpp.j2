@@ -27,6 +27,38 @@ class SoraReader;
 
 class TextKey;
 
+template <typename T>
+struct SoraInterval {
+    SoraInterval()
+        : start(), end(), start_inclusive(false), end_inclusive(false) {}
+
+    SoraInterval(
+        const T& start_value,
+        const T& end_value,
+        bool start_is_inclusive,
+        bool end_is_inclusive
+    )
+        : start(start_value),
+          end(end_value),
+          start_inclusive(start_is_inclusive),
+          end_inclusive(end_is_inclusive) {}
+
+    bool contains(const T& value) const {
+        const bool after_start = start_inclusive ? value >= start : value > start;
+        const bool before_end = end_inclusive ? value <= end : value < end;
+        return after_start && before_end;
+    }
+
+    bool is_singleton() const {
+        return start_inclusive && end_inclusive && start == end;
+    }
+
+    T start;
+    T end;
+    bool start_inclusive;
+    bool end_inclusive;
+};
+
 class SoraTextResolver {
 public:
     virtual ~SoraTextResolver() {}

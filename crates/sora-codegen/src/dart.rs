@@ -4,7 +4,10 @@ use heck::{ToLowerCamelCase, ToPascalCase, ToSnakeCase};
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, TypeIr};
+use sora_ir::{
+    interval::interval_record_name,
+    model::{ConfigIr, TypeIr},
+};
 
 use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
@@ -127,6 +130,7 @@ struct DartRecord {
     fields: Vec<DartField>,
     has_text_keys: bool,
     table: Option<DartTable>,
+    interval: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -250,6 +254,22 @@ fn dart_record(
     table: Option<DartTable>,
     mapper: &DartTypeMapper<'_>,
 ) -> DartRecord {
+    let interval = record.interval_element.is_some();
+    let mut imports = record
+        .imports
+        .into_iter()
+        .map(dart_import)
+        .collect::<Vec<_>>();
+    let mut interval_names = Vec::new();
+    for field in &record.fields {
+        collect_dart_interval_names(&field.ty, &mut interval_names);
+    }
+    imports.extend(interval_names.into_iter().map(|name| DartImport {
+        module: dart_module_name(&name.to_snake_case()),
+        name,
+    }));
+    imports.sort_by(|left, right| left.module.cmp(&right.module));
+    imports.dedup_by(|left, right| left.module == right.module);
     let fields = record
         .fields
         .into_iter()
@@ -261,11 +281,31 @@ fn dart_record(
     DartRecord {
         pascal_name: dart_type_identifier(&record.qualified_pascal_name),
         snake_name: dart_module_name(&record.qualified_snake_name),
-        imports: record.imports.into_iter().map(dart_import).collect(),
+        imports,
         custom_imports: collect_dart_imports(fields.iter()),
         fields,
         has_text_keys,
         table,
+        interval,
+    }
+}
+
+fn collect_dart_interval_names(ty: &TypeIr, out: &mut Vec<String>) {
+    match ty {
+        TypeIr::Interval(element) => out.push(
+            interval_record_name(element)
+                .expect("validated interval element")
+                .to_owned(),
+        ),
+        TypeIr::List(element)
+        | TypeIr::Set(element)
+        | TypeIr::Array { element, .. }
+        | TypeIr::Optional(element) => collect_dart_interval_names(element, out),
+        TypeIr::Map { key, value } => {
+            collect_dart_interval_names(key, out);
+            collect_dart_interval_names(value, out);
+        }
+        _ => {}
     }
 }
 
@@ -423,6 +463,9 @@ impl<'a> DartTypeMapper<'a> {
             TypeIr::F32 | TypeIr::F64 => "double".to_owned(),
             TypeIr::String => "String".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
+            TypeIr::Interval(element) => {
+                dart_type_identifier(interval_record_name(element).unwrap())
+            }
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
                 dart_type_identifier(&schema_flat_pascal_name(name))
             }
@@ -491,6 +534,10 @@ fn dart_value_decode_expr(
                     dart_type_identifier(&schema_flat_pascal_name(name))
                 ),
             ),
+        TypeIr::Interval(element) => format!(
+            "{}.decode({value})",
+            dart_type_identifier(interval_record_name(element).unwrap())
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "{value}.asList((item) => {})",
@@ -573,6 +620,7 @@ fn dart_collect_text_keys(
             }
         }
         TypeIr::Struct(_) => format!("{pad}{value}.collectTextKeys(out);"),
+        TypeIr::Interval(_) => String::new(),
         TypeIr::Union(_) => format!("{pad}{value}.collectTextKeys(out);"),
         TypeIr::Ref { table, field } => ir
             .tables

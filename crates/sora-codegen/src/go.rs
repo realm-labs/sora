@@ -4,7 +4,10 @@ use heck::ToSnakeCase;
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
+use sora_ir::{
+    interval::interval_record_name,
+    model::{ConfigIr, TableModeIr, TypeIr},
+};
 
 use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
@@ -122,6 +125,8 @@ struct GoRecord {
     has_time: bool,
     table: Option<GoTable>,
     imports: Vec<String>,
+    interval: bool,
+    interval_datetime: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -265,6 +270,8 @@ fn go_record(
     table: Option<GoTable>,
     mapper: &GoTypeMapper<'_>,
 ) -> GoRecord {
+    let interval = record.interval_element.is_some();
+    let interval_datetime = matches!(record.interval_element, Some(TypeIr::DateTime));
     let fields = record
         .fields
         .into_iter()
@@ -279,6 +286,8 @@ fn go_record(
         has_time,
         table,
         imports,
+        interval,
+        interval_datetime,
     }
 }
 
@@ -400,6 +409,9 @@ impl<'a> GoTypeMapper<'a> {
             TypeIr::F64 => "float64".to_owned(),
             TypeIr::String => "string".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
+            TypeIr::Interval(element) => {
+                go_exported_identifier(interval_record_name(element).unwrap())
+            }
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
                 go_exported_identifier(&schema_flat_pascal_name(name))
             }
@@ -467,6 +479,10 @@ fn go_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &GoTypeMapper<'_>) -> Stri
                 go_exported_identifier(&schema_flat_pascal_name(name))
             ),
         ),
+        TypeIr::Interval(element) => format!(
+            "decode{}(reader)",
+            go_exported_identifier(interval_record_name(element).unwrap())
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "ReadList(reader, func(reader *SoraReader) ({}, error) {{ return {} }})",
@@ -532,6 +548,10 @@ fn go_value_decode_expr(
                     go_exported_identifier(&schema_flat_pascal_name(name))
                 ),
             ),
+        TypeIr::Interval(element) => format!(
+            "decode{}Value({value})",
+            go_exported_identifier(interval_record_name(element).unwrap())
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "DecodeSoraValueList({value}, func(item SoraValue) ({}, error) {{ return {} }})",
@@ -614,6 +634,7 @@ fn go_collect_text_keys(
             }
         }
         TypeIr::Struct(_) => format!("{value}.collectTextKeys(out)"),
+        TypeIr::Interval(_) => String::new(),
         TypeIr::Union(name) => format!(
             "collect{}TextKeys({value}, out)",
             go_exported_identifier(&schema_flat_pascal_name(name))

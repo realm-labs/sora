@@ -4,7 +4,10 @@ use heck::ToShoutySnakeCase;
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
+use sora_ir::{
+    interval::interval_record_name,
+    model::{ConfigIr, TableModeIr, TypeIr},
+};
 
 use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
@@ -133,6 +136,7 @@ struct KotlinRecord {
     has_text_keys: bool,
     table: Option<KotlinTable>,
     imports: Vec<String>,
+    interval: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -272,6 +276,7 @@ fn kotlin_record(
     table: Option<KotlinTable>,
     mapper: &KotlinTypeMapper<'_>,
 ) -> KotlinRecord {
+    let interval = record.interval_element.is_some();
     let fields = record
         .fields
         .into_iter()
@@ -287,6 +292,7 @@ fn kotlin_record(
         has_text_keys,
         table,
         imports,
+        interval,
     }
 }
 
@@ -411,6 +417,7 @@ impl<'a> KotlinTypeMapper<'a> {
             TypeIr::F64 => "Double".to_owned(),
             TypeIr::String => "String".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
+            TypeIr::Interval(element) => interval_record_name(element).unwrap().to_owned(),
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
                 schema_flat_pascal_name(name)
             }
@@ -475,6 +482,9 @@ fn kotlin_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &KotlinTypeMapper<'_>)
             ty,
             format!("{}.decode(reader)", schema_flat_pascal_name(name)),
         ),
+        TypeIr::Interval(element) => {
+            format!("{}.decode(reader)", interval_record_name(element).unwrap())
+        }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader.readList {{ {} }}",
@@ -532,6 +542,9 @@ fn kotlin_value_decode_expr(
                 ty,
                 format!("{}.decode({value})", schema_flat_pascal_name(name)),
             ),
+        TypeIr::Interval(element) => {
+            format!("{}.decode({value})", interval_record_name(element).unwrap())
+        }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "{value}.asList {{ item -> {} }}",
@@ -609,6 +622,7 @@ fn kotlin_collect_text_keys(
             }
         }
         TypeIr::Struct(_) => format!("{pad}{value}.collectTextKeys(out)"),
+        TypeIr::Interval(_) => String::new(),
         TypeIr::Union(name) => format!(
             "{pad}{}.collectTextKeys({value}, out)",
             schema_flat_pascal_name(name)

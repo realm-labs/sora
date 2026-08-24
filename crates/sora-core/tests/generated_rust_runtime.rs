@@ -258,6 +258,10 @@ fn loads_sora_bundle() {
     assert_eq!(item.level_range.end, 20);
     assert!(item.level_range.start_inclusive);
     assert!(!item.level_range.end_inclusive);
+    assert!(item.level_range.contains(&10));
+    assert!(item.level_range.contains(&19));
+    assert!(!item.level_range.contains(&20));
+    assert!(!item.level_range.is_singleton());
     assert_eq!(item.rewards.len(), 2);
     assert_eq!(item.rewards[0].reward_item_id, 3001);
     assert_eq!(item.rewards[0].count, 2);

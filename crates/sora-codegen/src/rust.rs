@@ -7,6 +7,7 @@ use heck::ToPascalCase;
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
+use sora_ir::interval::interval_record_name;
 use sora_ir::key::{TableKeyIdentity, resolve_ref_key_identity, resolve_table_key_identity};
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
 
@@ -51,6 +52,15 @@ impl CodeGenerator for RustCodeGenerator {
                 &source_dir.join(format!("{}.rs", record.module_path)),
                 rendered,
             )?;
+        }
+
+        if !model.intervals.is_empty() {
+            let rendered = render_template(
+                "rust",
+                "interval.rs.j2",
+                context! { intervals => &model.intervals },
+            )?;
+            write_file(&source_dir.join("interval.rs"), rendered)?;
         }
 
         for union in &model.unions {
@@ -209,6 +219,7 @@ struct RustModel {
     enums: Vec<RustEnum>,
     unions: Vec<RustUnion>,
     records: Vec<RustRecord>,
+    intervals: Vec<RustInterval>,
     tables: Vec<RustTable>,
     modules: Vec<String>,
     has_map_tables: bool,
@@ -260,6 +271,14 @@ struct RustRecord {
     custom_imports: Vec<String>,
     fields: Vec<RustField>,
     table: Option<RustTable>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct RustInterval {
+    helper_name: String,
+    type_name: String,
+    decode: String,
+    serde_with: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -330,9 +349,27 @@ impl RustModel {
         model: BaseModel,
         mapper: &RustTypeMapper<'_>,
     ) -> Result<Self> {
+        let intervals = model
+            .records
+            .iter()
+            .filter_map(|record| record.interval_element.as_ref())
+            .map(|element| RustInterval {
+                helper_name: interval_record_name(element).unwrap().to_owned(),
+                type_name: mapper.type_name(element, "super"),
+                decode: rust_decode_expr(ir, element, mapper, "super"),
+                serde_with: rust_serde_with(element, mapper.options, "super"),
+            })
+            .collect::<Vec<_>>();
+        let interval_modules = model
+            .records
+            .iter()
+            .filter(|record| record.interval_element.is_some())
+            .map(|record| record.module_path.clone())
+            .collect::<BTreeSet<_>>();
         let root_modules = model
             .modules
             .iter()
+            .filter(|module| !interval_modules.contains(*module))
             .filter_map(|module| module.split('/').next())
             .map(str::to_owned)
             .collect::<BTreeSet<_>>()
@@ -366,6 +403,7 @@ impl RustModel {
             records: model
                 .records
                 .into_iter()
+                .filter(|item| item.interval_element.is_none())
                 .map(|item| {
                     let table = tables
                         .iter()
@@ -374,6 +412,7 @@ impl RustModel {
                     rust_record(ir, item, table, mapper)
                 })
                 .collect(),
+            intervals,
             has_map_tables: tables
                 .iter()
                 .any(|table| table.mode == "map" && table.key_field_name.is_some()),
@@ -738,6 +777,7 @@ fn rust_collect_text_keys(
             }
         }
         TypeIr::Struct(_) | TypeIr::Union(_) => format!("{value}.collect_text_keys(out);"),
+        TypeIr::Interval(_) => String::new(),
         TypeIr::Ref { table, field } => match resolve_ref_key_identity(&ir.tables, table, field) {
             Ok(TableKeyIdentity::Primitive {
                 raw_type: TypeIr::Text,
@@ -810,6 +850,10 @@ impl<'a> RustTypeMapper<'a> {
                 RustStringStorage::Arc => "std::sync::Arc<str>".to_owned(),
             },
             TypeIr::Text => format!("{root_path}::runtime::TextKey"),
+            TypeIr::Interval(element) => format!(
+                "{root_path}::interval::SoraInterval<{}>",
+                self.type_name(element, root_path)
+            ),
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
                 rust_named_type_path(name, root_path)
             }
@@ -893,6 +937,7 @@ impl<'a> RustTypeMapper<'a> {
             | TypeIr::Text
             | TypeIr::Struct(_)
             | TypeIr::Union(_)
+            | TypeIr::Interval(_)
             | TypeIr::List(_)
             | TypeIr::Set(_)
             | TypeIr::Map { .. }
@@ -972,6 +1017,11 @@ fn rust_decode_expr(
                 "<{} as {root_path}::runtime::SoraDecode>::decode(reader)?",
                 rust_named_type_path(name, root_path)
             ),
+        ),
+        TypeIr::Interval(element) => format!(
+            "{root_path}::interval::SoraInterval {{ start: {}, end: {}, start_inclusive: <bool as {root_path}::runtime::SoraDecode>::decode(reader)?, end_inclusive: <bool as {root_path}::runtime::SoraDecode>::decode(reader)? }}",
+            rust_decode_expr(ir, element, mapper, root_path),
+            rust_decode_expr(ir, element, mapper, root_path),
         ),
         TypeIr::List(element) => format!(
             "{{ let len = reader.read_var_u32()? as usize; let mut values = Vec::with_capacity(len); for _ in 0..len {{ values.push({}); }} values }}",

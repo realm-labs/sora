@@ -102,6 +102,7 @@ fn project_value(ir: &ConfigIr, ty: &TypeIr, value: &Value) -> Option<Value> {
         | TypeIr::F64
         | TypeIr::String
         | TypeIr::Text
+        | TypeIr::Interval(_)
         | TypeIr::Enum(_)
         | TypeIr::Ref { .. } => Some(value.clone()),
     }

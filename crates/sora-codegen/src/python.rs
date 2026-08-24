@@ -210,6 +210,7 @@ impl PythonModel {
         let records = model
             .records
             .into_iter()
+            .filter(|item| item.interval_element.is_none())
             .map(|item| {
                 let row_type = python_type_identifier(&item.qualified_pascal_name);
                 let table = tables
@@ -513,6 +514,9 @@ impl<'a> PythonTypeMapper<'a> {
             TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
             TypeIr::String => "str".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
+            TypeIr::Interval(element) => {
+                format!("SoraInterval[{}]", self.type_name(element))
+            }
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
                 python_type_identifier(&schema_flat_pascal_name(name))
             }
@@ -579,6 +583,10 @@ fn python_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &PythonTypeMapper<'_>)
                 python_type_identifier(&schema_flat_pascal_name(name))
             ),
         ),
+        TypeIr::Interval(element) => format!(
+            "SoraInterval.decode(reader, lambda: {})",
+            python_decode_expr(ir, element, mapper)
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader.read_list(lambda: {})",
@@ -634,6 +642,10 @@ fn python_value_decode_expr(
                     python_type_identifier(&schema_flat_pascal_name(name))
                 ),
             ),
+        TypeIr::Interval(element) => format!(
+            "SoraInterval.decode_value({value}, lambda item: {})",
+            python_value_decode_expr(ir, element, "item", mapper)
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             let item_decode = python_value_decode_expr(ir, element, "item", mapper);
             format!("{value}.as_list(lambda item: {item_decode})")
@@ -699,6 +711,7 @@ fn python_collect_text_keys(
             }
         }
         TypeIr::Struct(_) | TypeIr::Union(_) => format!("{pad}{value}.collect_text_keys(out)"),
+        TypeIr::Interval(_) => String::new(),
         TypeIr::Ref { table, field } => ref_target_type(ir, table, field)
             .map(|ty| python_collect_text_keys(ir, ty, value, indent, mapper))
             .unwrap_or_default(),

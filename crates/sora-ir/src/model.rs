@@ -231,6 +231,7 @@ pub enum TypeIr {
         element: Box<TypeIr>,
         len: usize,
     },
+    Interval(Box<TypeIr>),
     Ref {
         table: String,
         field: String,
@@ -262,15 +263,13 @@ impl fmt::Display for TypeIr {
             TypeIr::DateTime => f.write_str("datetime"),
             TypeIr::Text => f.write_str("text"),
             TypeIr::Enum(name) => write!(f, "enum<{name}>"),
-            TypeIr::Struct(name) => match crate::interval::interval_element_type(name) {
-                Some(element) => write!(f, "interval<{element}>"),
-                None => write!(f, "struct<{name}>"),
-            },
+            TypeIr::Struct(name) => write!(f, "struct<{name}>"),
             TypeIr::Union(name) => write!(f, "union<{name}>"),
             TypeIr::List(element) => write!(f, "list<{element}>"),
             TypeIr::Set(element) => write!(f, "set<{element}>"),
             TypeIr::Map { key, value } => write!(f, "map<{key},{value}>"),
             TypeIr::Array { element, len } => write!(f, "array<{element},{len}>"),
+            TypeIr::Interval(element) => write!(f, "interval<{element}>"),
             TypeIr::Ref { table, field } => write!(f, "ref<{table}.{field}>"),
             TypeIr::Optional(element) => write!(f, "optional<{element}>"),
         }

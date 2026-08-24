@@ -150,6 +150,7 @@ pub struct EcmaScriptRecord {
     pub custom_imports: Vec<String>,
     pub fields: Vec<EcmaScriptField>,
     pub uses_text_key: bool,
+    pub uses_interval: bool,
     pub table: Option<EcmaScriptTable>,
 }
 
@@ -208,6 +209,12 @@ impl EcmaScriptModel {
         mappings: &TypeMappingRegistry,
     ) -> Self {
         let mapper = EcmaScriptTypeMapper::new(target, ir, mappings);
+        let interval_modules = model
+            .records
+            .iter()
+            .filter(|record| record.interval_element.is_some())
+            .map(|record| record.module_path.clone())
+            .collect::<BTreeSet<_>>();
         let tables = model
             .tables
             .into_iter()
@@ -236,6 +243,7 @@ impl EcmaScriptModel {
             records: model
                 .records
                 .into_iter()
+                .filter(|item| item.interval_element.is_none())
                 .map(|item| {
                     let table = tables
                         .iter()
@@ -245,7 +253,11 @@ impl EcmaScriptModel {
                 })
                 .collect(),
             tables,
-            modules: model.modules,
+            modules: model
+                .modules
+                .into_iter()
+                .filter(|module| !interval_modules.contains(module))
+                .collect(),
             has_localization: ir.localization.is_some(),
             locales: ir
                 .localization
@@ -325,6 +337,9 @@ fn ecmascript_record(
     let uses_text_key = fields
         .iter()
         .any(|field| field.type_name.contains("TextKey"));
+    let uses_interval = fields
+        .iter()
+        .any(|field| field.type_name.contains("SoraInterval<"));
     EcmaScriptRecord {
         pascal_name: record.pascal_name,
         snake_name: record.snake_name,
@@ -334,6 +349,7 @@ fn ecmascript_record(
         custom_imports: collect_ecmascript_imports(fields.iter()),
         fields,
         uses_text_key,
+        uses_interval,
         table,
     }
 }
@@ -474,6 +490,9 @@ pub fn ecmascript_type_name(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             schema_flat_pascal_name(name)
         }
+        TypeIr::Interval(element) => {
+            format!("SoraInterval<{}>", ecmascript_type_name(ir, element))
+        }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!("readonly {}[]", array_element_type(ir, element))
         }
@@ -521,6 +540,9 @@ impl<'a> EcmaScriptTypeMapper<'a> {
             TypeIr::Text => "TextKey".to_owned(),
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
                 ecmascript_named_name(owner, name)
+            }
+            TypeIr::Interval(element) => {
+                format!("SoraInterval<{}>", self.type_name(owner, element))
             }
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
                 format!("readonly {}[]", self.array_element_type(owner, element))
@@ -596,6 +618,10 @@ fn ecmascript_decode_expr(
             ty,
             format!("decode{}(reader)", ecmascript_named_name(owner, name)),
         ),
+        TypeIr::Interval(element) => format!(
+            "decodeInterval(reader, () => {})",
+            ecmascript_decode_expr(ir, owner, element, mapper)
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader.readList(() => {})",
@@ -641,6 +667,10 @@ fn ecmascript_value_decode_expr(
                 ty,
                 format!("decode{}Value({value})", ecmascript_named_name(owner, name)),
             ),
+        TypeIr::Interval(element) => format!(
+            "decodeIntervalValue({value}, (item) => {})",
+            ecmascript_value_decode_expr(ir, owner, element, "item", mapper)
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             let item_decode = ecmascript_value_decode_expr(ir, owner, element, "item", mapper);
             format!("{value}.asList((item) => {item_decode})")
@@ -675,6 +705,7 @@ fn ecmascript_collect_text_keys(
     }
     match ty {
         TypeIr::Text => format!("out.push({value});"),
+        TypeIr::Interval(_) => String::new(),
         TypeIr::Optional(element) => {
             let inner = ecmascript_collect_text_keys(ir, owner, element, "item", mapper);
             if inner.is_empty() {

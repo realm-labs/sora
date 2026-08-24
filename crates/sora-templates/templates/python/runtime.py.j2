@@ -15,7 +15,7 @@ try:
 except ImportError:
     zstandard = None
 from dataclasses import dataclass
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Generic, TypeVar
 
 SORA_BUNDLE_VERSION = 3
 SORA_HEADER_LENGTH = 24
@@ -42,6 +42,41 @@ class TextKey:
 
     def __str__(self) -> str:
         return self.value
+
+
+@dataclass(frozen=True, slots=True)
+class SoraInterval(Generic[T]):
+    start: T
+    end: T
+    start_inclusive: bool
+    end_inclusive: bool
+
+    def contains(self, value: T) -> bool:
+        after_start = value >= self.start if self.start_inclusive else value > self.start
+        before_end = value <= self.end if self.end_inclusive else value < self.end
+        return after_start and before_end
+
+    def __contains__(self, value: T) -> bool:
+        return self.contains(value)
+
+    def is_singleton(self) -> bool:
+        return self.start_inclusive and self.end_inclusive and self.start == self.end
+
+    @staticmethod
+    def decode(reader: SoraReader, decode_bound: Callable[[], T]) -> SoraInterval[T]:
+        start = decode_bound()
+        end = decode_bound()
+        return SoraInterval(start, end, reader.read_bool(), reader.read_bool())
+
+    @staticmethod
+    def decode_value(value: SoraValue, decode_bound: Callable[[SoraValue], T]) -> SoraInterval[T]:
+        obj = value.as_object()
+        return SoraInterval(
+            decode_bound(obj.get("start")),
+            decode_bound(obj.get("end")),
+            obj.get("start_inclusive").as_bool(),
+            obj.get("end_inclusive").as_bool(),
+        )
 
 
 class LocalePack:

@@ -378,6 +378,7 @@ fn rename_type_tables(names: &BTreeMap<String, String>, ty: &mut TypeIr) {
         TypeIr::List(element)
         | TypeIr::Set(element)
         | TypeIr::Optional(element)
+        | TypeIr::Interval(element)
         | TypeIr::Array { element, .. } => rename_type_tables(names, element),
         TypeIr::Map { key, value } => {
             rename_type_tables(names, key);
@@ -482,6 +483,7 @@ fn collect_type_names(
         TypeIr::List(element)
         | TypeIr::Set(element)
         | TypeIr::Optional(element)
+        | TypeIr::Interval(element)
         | TypeIr::Array { element, .. } => {
             collect_type_names(element, enum_names, struct_names, union_names);
         }

@@ -1,8 +1,11 @@
-use std::path::Path;
+use std::{collections::BTreeMap, path::Path};
 
 use heck::{ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, FieldIr, TypeIr};
+use sora_ir::{
+    interval::interval_record_name,
+    model::{ConfigIr, FieldIr, TypeIr},
+};
 
 use crate::{
     generator::{CodeGenerator, CodegenContext},
@@ -74,6 +77,15 @@ fn render_proto(ir: &ConfigIr, package: &str) -> String {
             ));
         }
         output.push_str("}\n\n");
+    }
+
+    for element in collect_interval_elements(ir).values() {
+        let name = interval_record_name(element).expect("validated interval element");
+        output.push_str(&format!(
+            "message {name} {{\n  {} start = 1;\n  {} end = 2;\n  bool start_inclusive = 3;\n  bool end_inclusive = 4;\n}}\n\n",
+            proto_type(ir, element),
+            proto_type(ir, element)
+        ));
     }
 
     for item in &ir.structs {
@@ -237,6 +249,9 @@ fn proto_type(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             schema_flat_pascal_name(name)
         }
+        TypeIr::Interval(element) => interval_record_name(element)
+            .expect("validated interval element")
+            .to_owned(),
         TypeIr::List(element)
         | TypeIr::Set(element)
         | TypeIr::Array { element, .. }
@@ -244,6 +259,44 @@ fn proto_type(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Map { .. } => unreachable!("map fields are rendered by render_field"),
         TypeIr::Ref { table, field } => proto_type(ir, ref_type(ir, table, field)),
     }
+}
+
+fn collect_interval_elements(ir: &ConfigIr) -> BTreeMap<String, TypeIr> {
+    fn collect(ty: &TypeIr, out: &mut BTreeMap<String, TypeIr>) {
+        match ty {
+            TypeIr::Interval(element) => {
+                let name = interval_record_name(element).expect("validated interval element");
+                out.entry(name.to_owned())
+                    .or_insert_with(|| (**element).clone());
+            }
+            TypeIr::List(element)
+            | TypeIr::Set(element)
+            | TypeIr::Array { element, .. }
+            | TypeIr::Optional(element) => collect(element, out),
+            TypeIr::Map { key, value } => {
+                collect(key, out);
+                collect(value, out);
+            }
+            _ => {}
+        }
+    }
+
+    let mut out = BTreeMap::new();
+    for field in ir
+        .structs
+        .iter()
+        .flat_map(|item| item.fields.iter())
+        .chain(
+            ir.unions
+                .iter()
+                .flat_map(|item| item.variants.iter())
+                .flat_map(|variant| variant.fields.iter()),
+        )
+        .chain(ir.tables.iter().flat_map(|item| item.fields.iter()))
+    {
+        collect(&field.ty, &mut out);
+    }
+    out
 }
 
 fn ref_type<'a>(ir: &'a ConfigIr, table_name: &str, field_name: &str) -> &'a TypeIr {

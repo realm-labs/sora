@@ -30,6 +30,16 @@ static func decode(value: Variant) -> {{ record.class_name }}:
 {%- endif %}
 {%- endfor %}
 	return out
+{%- if record.interval %}
+
+func contains(value: Variant) -> bool:
+	var above_start := value >= start if start_inclusive else value > start
+	var below_end := value <= end if end_inclusive else value < end
+	return above_start and below_end
+
+func is_singleton() -> bool:
+	return start_inclusive and end_inclusive and start == end
+{%- endif %}
 
 {%- if record.table %}
 {%- set table = record.table %}

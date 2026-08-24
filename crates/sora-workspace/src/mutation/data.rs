@@ -1132,7 +1132,7 @@ fn cell_text(ir: &ConfigIr, field: &FieldIr, value: &Value) -> String {
         return String::new();
     }
     if let Some(element) = interval_element(&field.ty)
-        && let Some(text) = interval_cell_text(&element, value)
+        && let Some(text) = interval_cell_text(element, value)
     {
         return text;
     }

@@ -43,6 +43,44 @@ public readonly record struct TextKey(string Value)
     }
 }
 
+public readonly record struct SoraInterval<T>(
+    T Start,
+    T End,
+    bool StartInclusive,
+    bool EndInclusive
+)
+{
+    public bool Contains(T value)
+    {
+        var comparer = Comparer<T>.Default;
+        var startComparison = comparer.Compare(value, Start);
+        var endComparison = comparer.Compare(value, End);
+        return (StartInclusive ? startComparison >= 0 : startComparison > 0)
+            && (EndInclusive ? endComparison <= 0 : endComparison < 0);
+    }
+
+    public bool IsSingleton =>
+        StartInclusive && EndInclusive && Comparer<T>.Default.Compare(Start, End) == 0;
+
+    internal static SoraInterval<T> Decode(SoraReader reader, Func<T> decodeBound)
+    {
+        var start = decodeBound();
+        var end = decodeBound();
+        return new SoraInterval<T>(start, end, reader.ReadBool(), reader.ReadBool());
+    }
+
+    internal static SoraInterval<T> Decode(SoraValue value, Func<SoraValue, T> decodeBound)
+    {
+        var obj = value.AsObject("SoraInterval");
+        return new SoraInterval<T>(
+            decodeBound(obj.Get("start")),
+            decodeBound(obj.Get("end")),
+            obj.Get("start_inclusive").AsBool(),
+            obj.Get("end_inclusive").AsBool()
+        );
+    }
+}
+
 internal static class SoraDuration
 {
     public static TimeSpan FromMilliseconds(long millis)

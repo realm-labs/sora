@@ -1,5 +1,6 @@
 use heck::ToPascalCase;
 use sora_ir::{
+    interval::interval_record_name,
     key::{TableKeyIdentity, resolve_ref_key_identity},
     model::{ConfigIr, TypeIr},
 };
@@ -87,6 +88,10 @@ fn rust_type_name_inner(ir: &ConfigIr, ty: &TypeIr, options: &RustCodegenOptions
         TypeIr::Array { element, len } => {
             format!("[{}; {len}]", rust_type_name_inner(ir, element, options))
         }
+        TypeIr::Interval(element) => format!(
+            "crate::interval::SoraInterval<{}>",
+            rust_type_name_inner(ir, element, options)
+        ),
         TypeIr::Ref { table, field } => {
             let identity =
                 resolve_ref_key_identity(&ir.tables, table, field).unwrap_or_else(|error| {
@@ -150,6 +155,7 @@ fn kotlin_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
             kotlin_type_name_inner(ir, key),
             kotlin_type_name_inner(ir, value)
         ),
+        TypeIr::Interval(element) => interval_record_name(element).unwrap().to_owned(),
         TypeIr::Ref { table, field } => ref_type(ir, table, field, kotlin_type_name_inner, "Int"),
         TypeIr::Optional(element) => format!("{}?", kotlin_type_name_inner(ir, element)),
     }
@@ -182,6 +188,9 @@ fn csharp_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
             csharp_type_name_inner(ir, key),
             csharp_type_name_inner(ir, value)
         ),
+        TypeIr::Interval(element) => {
+            format!("SoraInterval<{}>", csharp_type_name_inner(ir, element))
+        }
         TypeIr::Ref { table, field } => ref_type(ir, table, field, csharp_type_name_inner, "int"),
         TypeIr::Optional(element) => format!("{}?", csharp_type_name_inner(ir, element)),
     }
@@ -210,6 +219,7 @@ fn java_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
             java_type_name_inner(ir, key),
             java_type_name_inner(ir, value)
         ),
+        TypeIr::Interval(element) => interval_record_name(element).unwrap().to_owned(),
         TypeIr::Ref { table, field } => ref_type(ir, table, field, java_type_name_inner, "Integer"),
         TypeIr::Optional(element) => java_type_name_inner(ir, element),
     }
@@ -237,6 +247,9 @@ fn scala_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
             scala_type_name_inner(ir, key),
             scala_type_name_inner(ir, value)
         ),
+        TypeIr::Interval(element) => {
+            format!("SoraInterval[{}]", scala_type_name_inner(ir, element))
+        }
         TypeIr::Ref { table, field } => ref_type(ir, table, field, scala_type_name_inner, "Int"),
         TypeIr::Optional(element) => format!("Option[{}]", scala_type_name_inner(ir, element)),
     }
@@ -269,6 +282,7 @@ fn go_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
             go_type_name_inner(ir, key),
             go_type_name_inner(ir, value)
         ),
+        TypeIr::Interval(element) => interval_record_name(element).unwrap().to_owned(),
         TypeIr::Ref { table, field } => ref_type(ir, table, field, go_type_name_inner, "int32"),
         TypeIr::Optional(element) => format!("*{}", go_type_name_inner(ir, element)),
     }
@@ -300,6 +314,7 @@ fn dart_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
             dart_type_name_inner(ir, key),
             dart_type_name_inner(ir, value)
         ),
+        TypeIr::Interval(element) => interval_record_name(element).unwrap().to_owned(),
         TypeIr::Ref { table, field } => ref_type(ir, table, field, dart_type_name_inner, "int"),
         TypeIr::Optional(element) => format!("{}?", dart_type_name_inner(ir, element)),
     }
@@ -327,6 +342,7 @@ fn godot_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => {
             "Array".to_owned()
         }
+        TypeIr::Interval(element) => interval_record_name(element).unwrap().to_owned(),
         TypeIr::Ref { table, field } => ref_type(ir, table, field, godot_type_name_inner, "int"),
         TypeIr::Optional(_) => "Variant".to_owned(),
     }
@@ -358,6 +374,9 @@ fn python_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
             python_type_name_inner(ir, key),
             python_type_name_inner(ir, value)
         ),
+        TypeIr::Interval(element) => {
+            format!("SoraInterval[{}]", python_type_name_inner(ir, element))
+        }
         TypeIr::Ref { table, field } => ref_type(ir, table, field, python_type_name_inner, "int"),
         TypeIr::Optional(element) => format!("{} | None", python_type_name_inner(ir, element)),
     }

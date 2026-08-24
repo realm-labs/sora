@@ -1,10 +1,13 @@
 use std::{collections::BTreeMap, path::Path};
 
-use heck::ToShoutySnakeCase;
+use heck::{ToShoutySnakeCase, ToSnakeCase};
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{ConfigIr, TypeIr};
+use sora_ir::{
+    interval::interval_record_name,
+    model::{ConfigIr, TypeIr},
+};
 
 use crate::{
     generator::{CodeGenerator, CodegenContext, ensure_sora_runtime_format},
@@ -175,6 +178,7 @@ struct CRecord {
     custom_imports: Vec<String>,
     fields: Vec<CField>,
     table: Option<CTable>,
+    interval_type: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -335,6 +339,20 @@ fn c_record(
     helpers: &mut CHelperRegistry,
     table: Option<CTable>,
 ) -> CRecord {
+    let interval_type = record
+        .interval_element
+        .as_ref()
+        .map(|element| c_type_name(ir, element, mapper, helpers));
+    let mut imports = record.imports.into_iter().map(c_import).collect::<Vec<_>>();
+    let mut interval_names = Vec::new();
+    for field in &record.fields {
+        collect_interval_record_names(&field.ty, &mut interval_names);
+    }
+    imports.extend(interval_names.into_iter().map(|name| CImport {
+        module: name.to_snake_case(),
+    }));
+    imports.sort_by(|left, right| left.module.cmp(&right.module));
+    imports.dedup_by(|left, right| left.module == right.module);
     let snake_name = record.qualified_snake_name;
     let fields = record
         .fields
@@ -348,10 +366,30 @@ fn c_record(
         decode_fn: c_decode_fn(mapper.options, &snake_name),
         free_fn: c_free_fn(mapper.options, &snake_name),
         snake_name,
-        imports: record.imports.into_iter().map(c_import).collect(),
+        imports,
         custom_imports,
         fields,
         table,
+        interval_type,
+    }
+}
+
+fn collect_interval_record_names(ty: &TypeIr, out: &mut Vec<String>) {
+    match ty {
+        TypeIr::Interval(element) => out.push(
+            interval_record_name(element)
+                .expect("validated interval element")
+                .to_owned(),
+        ),
+        TypeIr::List(element)
+        | TypeIr::Set(element)
+        | TypeIr::Array { element, .. }
+        | TypeIr::Optional(element) => collect_interval_record_names(element, out),
+        TypeIr::Map { key, value } => {
+            collect_interval_record_names(key, out);
+            collect_interval_record_names(value, out);
+        }
+        _ => {}
     }
 }
 
@@ -891,6 +929,12 @@ fn c_type_name(
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             c_named_type(mapper.options, &schema_flat_snake_name(name))
         }
+        TypeIr::Interval(element) => c_named_type(
+            mapper.options,
+            &interval_record_name(element)
+                .expect("validated interval element")
+                .to_snake_case(),
+        ),
         TypeIr::List(element) | TypeIr::Set(element) => {
             helpers.ensure_collection(ir, element, None, mapper)
         }
@@ -922,6 +966,9 @@ fn c_type_suffix(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             schema_flat_snake_name(name)
         }
+        TypeIr::Interval(element) => interval_record_name(element)
+            .expect("validated interval element")
+            .to_snake_case(),
         TypeIr::List(element) | TypeIr::Set(element) => {
             format!("{}_array", c_type_suffix(ir, element))
         }
@@ -981,6 +1028,15 @@ fn c_decode_into(
                 c_decode_fn(mapper.options, &schema_flat_snake_name(name))
             )
         }
+        TypeIr::Interval(element) => format!(
+            "{}(reader, {target})",
+            c_decode_fn(
+                mapper.options,
+                &interval_record_name(element)
+                    .expect("validated interval element")
+                    .to_snake_case()
+            )
+        ),
         TypeIr::List(_)
         | TypeIr::Set(_)
         | TypeIr::Map { .. }
@@ -1012,6 +1068,15 @@ fn c_free_into(
         TypeIr::Struct(name) | TypeIr::Union(name) => Some(format!(
             "{}({target});",
             c_free_fn(mapper.options, &schema_flat_snake_name(name))
+        )),
+        TypeIr::Interval(element) => Some(format!(
+            "{}({target});",
+            c_free_fn(
+                mapper.options,
+                &interval_record_name(element)
+                    .expect("validated interval element")
+                    .to_snake_case()
+            )
         )),
         TypeIr::List(_)
         | TypeIr::Set(_)
@@ -1063,7 +1128,7 @@ fn c_type_is_pointer_param(ir: &ConfigIr, ty: &TypeIr) -> bool {
         | TypeIr::Map { .. }
         | TypeIr::Array { .. }
         | TypeIr::Optional(_) => true,
-        TypeIr::Struct(_) | TypeIr::Union(_) => true,
+        TypeIr::Struct(_) | TypeIr::Union(_) | TypeIr::Interval(_) => true,
         TypeIr::Ref { table, field } => ref_field_type(ir, table, field)
             .is_some_and(|field| c_type_is_pointer_param(ir, &field.ty)),
         TypeIr::Bool
@@ -1095,7 +1160,8 @@ fn c_key_match_expr(ir: &ConfigIr, ty: &TypeIr, row_value: &str, param_name: &st
         | TypeIr::Array { .. }
         | TypeIr::Optional(_)
         | TypeIr::Struct(_)
-        | TypeIr::Union(_) => {
+        | TypeIr::Union(_)
+        | TypeIr::Interval(_) => {
             format!("memcmp(&{row_value}, {param_name}, sizeof({row_value})) == 0")
         }
         _ => format!("{row_value} == {param_name}"),

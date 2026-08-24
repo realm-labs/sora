@@ -26,6 +26,10 @@ typedef struct {{ record.type_name }} {
 
 sora_result {{ record.decode_fn }}(sora_reader* reader, {{ record.type_name }}* out);
 void {{ record.free_fn }}({{ record.type_name }}* value);
+{%- if record.interval_type %}
+bool {{ record.type_name }}_contains(const {{ record.type_name }}* value, {{ record.interval_type }} item);
+bool {{ record.type_name }}_is_singleton(const {{ record.type_name }}* value);
+{%- endif %}
 
 {%- if record.table %}
 {%- set table = record.table %}

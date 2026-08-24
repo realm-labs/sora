@@ -21,6 +21,18 @@ final class {{ record.pascal_name }} {
     required this.{{ field.name }},
 {%- endfor %}
   });
+{%- if record.interval %}
+
+  bool contains({{ record.fields[0].type_name }} value) {
+    final startComparison = value.compareTo(start);
+    final endComparison = value.compareTo(end);
+    return (startInclusive ? startComparison >= 0 : startComparison > 0) &&
+        (endInclusive ? endComparison <= 0 : endComparison < 0);
+  }
+
+  bool get isSingleton =>
+      startInclusive && endInclusive && start.compareTo(end) == 0;
+{%- endif %}
 
   static {{ record.pascal_name }} decode(SoraValue value) {
     final obj = value.asObject();

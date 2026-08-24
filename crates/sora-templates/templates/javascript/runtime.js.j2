@@ -37,6 +37,48 @@ export class TextKey {
     }
 }
 
+export class SoraInterval {
+    constructor(start, end, startInclusive, endInclusive) {
+        this.start = start;
+        this.end = end;
+        this.startInclusive = startInclusive;
+        this.endInclusive = endInclusive;
+    }
+
+    contains(value) {
+        const startOrder = compareIntervalValue(value, this.start);
+        const endOrder = compareIntervalValue(value, this.end);
+        return (this.startInclusive ? startOrder >= 0 : startOrder > 0)
+            && (this.endInclusive ? endOrder <= 0 : endOrder < 0);
+    }
+
+    get isSingleton() {
+        return this.startInclusive && this.endInclusive
+            && compareIntervalValue(this.start, this.end) === 0;
+    }
+}
+
+export function decodeInterval(reader, decode) {
+    return new SoraInterval(decode(), decode(), reader.readBool(), reader.readBool());
+}
+
+export function decodeIntervalValue(value, decode) {
+    const object = value.asObject();
+    return new SoraInterval(
+        decode(object.get("start")),
+        decode(object.get("end")),
+        object.get("start_inclusive").asBool(),
+        object.get("end_inclusive").asBool(),
+    );
+}
+
+function compareIntervalValue(left, right) {
+    const leftValue = left instanceof Date ? left.getTime() : left;
+    const rightValue = right instanceof Date ? right.getTime() : right;
+    if (leftValue === rightValue) return 0;
+    return leftValue < rightValue ? -1 : 1;
+}
+
 export class LocalePack {
     constructor(schemaFingerprint, locale, translations) {
         this.schemaFingerprint = schemaFingerprint;

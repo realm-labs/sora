@@ -7,7 +7,7 @@ use sora_diagnostics::{Result, SoraError};
 use sora_ir::{
     interval::{
         INTERVAL_END_FIELD, INTERVAL_END_INCLUSIVE_FIELD, INTERVAL_START_FIELD,
-        INTERVAL_START_INCLUSIVE_FIELD, interval_element_type,
+        INTERVAL_START_INCLUSIVE_FIELD,
     },
     model::{ConfigIr, FieldIr, StructIr, TableModeIr, TypeIr, UnionIr},
 };
@@ -101,6 +101,9 @@ fn validate_typed_value(
         TypeIr::Enum(enum_name) => validate_enum(ir, table, path, ty, enum_name, value),
         TypeIr::Struct(struct_name) => {
             validate_struct(ir, config_data, table, path, ty, struct_name, value)
+        }
+        TypeIr::Interval(element) => {
+            validate_interval(ir, config_data, table, path, ty, element, value)
         }
         TypeIr::Union(union_name) => {
             validate_union(ir, config_data, table, path, ty, union_name, value)
@@ -215,16 +218,94 @@ fn validate_struct(
         return type_mismatch(table, path, ty, value);
     };
 
-    validate_object_fields(ir, config_data, table, path, struct_ir, values)?;
-    if interval_element_type(struct_name).is_some() {
-        validate_interval(table, path, values)?;
-    }
-    Ok(())
+    validate_object_fields(ir, config_data, table, path, struct_ir, values)
 }
 
-fn validate_interval(table: &str, path: &str, values: &BTreeMap<String, Value>) -> Result<()> {
+fn validate_interval(
+    ir: &ConfigIr,
+    config_data: &ConfigData,
+    table: &str,
+    path: &str,
+    ty: &TypeIr,
+    element: &TypeIr,
+    value: &Value,
+) -> Result<()> {
+    let Value::Object(values) = value else {
+        return type_mismatch(table, path, ty, value);
+    };
+    let expected = BTreeSet::from([
+        INTERVAL_START_FIELD,
+        INTERVAL_END_FIELD,
+        INTERVAL_START_INCLUSIVE_FIELD,
+        INTERVAL_END_INCLUSIVE_FIELD,
+    ]);
+    for field_name in values.keys() {
+        if !expected.contains(field_name.as_str()) {
+            return Err(SoraError::UnknownField {
+                table: table.to_owned(),
+                field: format!("{path}.{field_name}"),
+            });
+        }
+    }
+    for field_name in expected {
+        if !values.contains_key(field_name) {
+            return Err(SoraError::MissingRequiredField {
+                table: table.to_owned(),
+                field: format!("{path}.{field_name}"),
+            });
+        }
+    }
+
     let start = &values[INTERVAL_START_FIELD];
     let end = &values[INTERVAL_END_FIELD];
+    validate_typed_value(
+        ir,
+        config_data,
+        table,
+        &format!("{path}.{INTERVAL_START_FIELD}"),
+        element,
+        ValueConstraints {
+            range: None,
+            length: None,
+        },
+        start,
+    )?;
+    validate_typed_value(
+        ir,
+        config_data,
+        table,
+        &format!("{path}.{INTERVAL_END_FIELD}"),
+        element,
+        ValueConstraints {
+            range: None,
+            length: None,
+        },
+        end,
+    )?;
+    validate_typed_value(
+        ir,
+        config_data,
+        table,
+        &format!("{path}.{INTERVAL_START_INCLUSIVE_FIELD}"),
+        &TypeIr::Bool,
+        ValueConstraints {
+            range: None,
+            length: None,
+        },
+        &values[INTERVAL_START_INCLUSIVE_FIELD],
+    )?;
+    validate_typed_value(
+        ir,
+        config_data,
+        table,
+        &format!("{path}.{INTERVAL_END_INCLUSIVE_FIELD}"),
+        &TypeIr::Bool,
+        ValueConstraints {
+            range: None,
+            length: None,
+        },
+        &values[INTERVAL_END_INCLUSIVE_FIELD],
+    )?;
     let Value::Bool(start_inclusive) = values[INTERVAL_START_INCLUSIVE_FIELD] else {
         unreachable!("interval flag type should be validated before interval semantics");
     };

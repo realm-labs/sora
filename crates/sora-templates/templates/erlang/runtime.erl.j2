@@ -26,6 +26,9 @@
     text_key_value/1,
     decode_value_list/2,
     decode_value_map/3,
+    decode_value_interval/2,
+    interval_contains/2,
+    interval_is_singleton/1,
     read_bool/1,
     read_u32/1,
     read_i32/1,
@@ -35,11 +38,12 @@
     read_string/1,
     read_text_key/1,
     read_optional/2,
+    read_interval/2,
     read_list/2,
     read_map/3
 ]).
 
--export_type([reader/0, text_key/0]).
+-export_type([reader/0, text_key/0, interval/1]).
 
 -define(SORA_BUNDLE_VERSION, 3).
 -define(SORA_HEADER_LENGTH, 24).
@@ -53,6 +57,32 @@
 
 -type reader() :: {binary(), [binary()]}.
 -type text_key() :: {text_key, binary()}.
+-type interval(T) :: {{ "#{" }}
+    start := T,
+    'end' := T,
+    start_inclusive := boolean(),
+    end_inclusive := boolean()
+}.
+
+-spec interval_contains(T, interval(T)) -> boolean().
+interval_contains(Value, Interval) ->
+    Start = maps:get(start, Interval),
+    End = maps:get('end', Interval),
+    AboveStart = case maps:get(start_inclusive, Interval) of
+        true -> Value >= Start;
+        false -> Value > Start
+    end,
+    BelowEnd = case maps:get(end_inclusive, Interval) of
+        true -> Value =< End;
+        false -> Value < End
+    end,
+    AboveStart andalso BelowEnd.
+
+-spec interval_is_singleton(interval(term())) -> boolean().
+interval_is_singleton(Interval) ->
+    maps:get(start_inclusive, Interval)
+        andalso maps:get(end_inclusive, Interval)
+        andalso maps:get(start, Interval) =:= maps:get('end', Interval).
 -type decompressor() :: fun((integer(), binary(), integer()) -> binary()).
 -type section() :: {{ "#{" }}
     kind := integer(),
@@ -284,6 +314,19 @@ read_optional(Decode, Reader0) ->
         1 -> Decode(Reader1);
         _ -> error({invalid_option_presence, Presence})
     end.
+
+-spec read_interval(fun((reader()) -> {T, reader()}), reader()) -> {interval(T), reader()}.
+read_interval(Decode, Reader0) ->
+    {Start, Reader1} = Decode(Reader0),
+    {End, Reader2} = Decode(Reader1),
+    {StartInclusive, Reader3} = read_bool(Reader2),
+    {EndInclusive, Reader4} = read_bool(Reader3),
+    {{ "{" }}{{ "#{" }}
+        start => Start,
+        'end' => End,
+        start_inclusive => StartInclusive,
+        end_inclusive => EndInclusive
+    }, Reader4}.
 
 -spec read_list(fun((reader()) -> {T, reader()}), reader()) -> {[T], reader()}.
 read_list(Decode, Reader0) ->
@@ -600,6 +643,16 @@ decode_value_map(DecodeKey, DecodeValue, Value) ->
         end
         || Item <- expect_list(Value)
     ]).
+
+-spec decode_value_interval(fun((term()) -> T), term()) -> interval(T).
+decode_value_interval(Decode, Value) ->
+    Object = expect_map(Value),
+    {{ "#{" }}
+        start => Decode(value_get(<<"start">>, Object)),
+        'end' => Decode(value_get(<<"end">>, Object)),
+        start_inclusive => expect_boolean(value_get(<<"start_inclusive">>, Object)),
+        end_inclusive => expect_boolean(value_get(<<"end_inclusive">>, Object))
+    }.
 
 -spec read_list_items(integer(), fun((reader()) -> {T, reader()}), reader(), [T]) -> {[T], reader()}.
 read_list_items(0, _Decode, Reader, Values) ->

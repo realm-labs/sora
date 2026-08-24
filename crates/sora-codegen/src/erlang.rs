@@ -209,6 +209,7 @@ impl ErlangModel {
         let records = model
             .records
             .into_iter()
+            .filter(|item| item.interval_element.is_none())
             .map(|item| {
                 let table = tables
                     .iter()
@@ -418,6 +419,9 @@ impl<'a> ErlangTypeMapper<'a> {
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
                 format!("{}:t()", schema_flat_snake_name(name))
             }
+            TypeIr::Interval(element) => {
+                format!("sora_runtime:interval({})", self.type_name(element))
+            }
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
                 format!("[{}]", self.type_name(element))
             }
@@ -470,6 +474,10 @@ fn erlang_decode_fun(ir: &ConfigIr, ty: &TypeIr, mapper: &ErlangTypeMapper<'_>) 
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             mapper.wrap_decode(ty, format!("fun {}:decode/1", schema_flat_snake_name(name)))
         }
+        TypeIr::Interval(element) => format!(
+            "fun(Reader) -> sora_runtime:read_interval({}, Reader) end",
+            erlang_decode_fun(ir, element, mapper)
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "fun(Reader) -> sora_runtime:read_list({}, Reader) end",
@@ -518,6 +526,10 @@ fn erlang_value_decode_expr(
                 ty,
                 format!("{}:decode_value({value})", schema_flat_snake_name(name)),
             ),
+        TypeIr::Interval(element) => format!(
+            "sora_runtime:decode_value_interval(fun(Item) -> {} end, {value})",
+            erlang_value_decode_expr(ir, element, "Item", mapper)
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "sora_runtime:decode_value_list(fun(Item) -> {} end, {value})",

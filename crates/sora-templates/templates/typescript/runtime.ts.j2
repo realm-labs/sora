@@ -46,6 +46,48 @@ export class TextKey {
     }
 }
 
+export class SoraInterval<T> {
+    constructor(
+        readonly start: T,
+        readonly end: T,
+        readonly startInclusive: boolean,
+        readonly endInclusive: boolean,
+    ) {}
+
+    contains(value: T): boolean {
+        const startOrder = compareIntervalValue(value, this.start);
+        const endOrder = compareIntervalValue(value, this.end);
+        return (this.startInclusive ? startOrder >= 0 : startOrder > 0)
+            && (this.endInclusive ? endOrder <= 0 : endOrder < 0);
+    }
+
+    get isSingleton(): boolean {
+        return this.startInclusive && this.endInclusive
+            && compareIntervalValue(this.start, this.end) === 0;
+    }
+}
+
+export function decodeInterval<T>(reader: SoraReader, decode: () => T): SoraInterval<T> {
+    return new SoraInterval(decode(), decode(), reader.readBool(), reader.readBool());
+}
+
+export function decodeIntervalValue<T>(value: SoraValue, decode: (value: SoraValue) => T): SoraInterval<T> {
+    const object = value.asObject();
+    return new SoraInterval(
+        decode(object.get("start")),
+        decode(object.get("end")),
+        object.get("start_inclusive").asBool(),
+        object.get("end_inclusive").asBool(),
+    );
+}
+
+function compareIntervalValue(left: unknown, right: unknown): number {
+    const leftValue = left instanceof Date ? left.getTime() : left;
+    const rightValue = right instanceof Date ? right.getTime() : right;
+    if (leftValue === rightValue) return 0;
+    return (leftValue as number | bigint) < (rightValue as number | bigint) ? -1 : 1;
+}
+
 export class LocalePack {
     private constructor(
         readonly schemaFingerprint: string,

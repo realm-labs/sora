@@ -199,6 +199,7 @@ impl CSharpModel {
             records: model
                 .records
                 .into_iter()
+                .filter(|item| item.interval_element.is_none())
                 .map(|item| {
                     let table = tables
                         .iter()
@@ -457,6 +458,9 @@ impl<'a> CSharpTypeMapper<'a> {
             TypeIr::F64 => "double".to_owned(),
             TypeIr::String => "string".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
+            TypeIr::Interval(element) => {
+                format!("SoraInterval<{}>", self.type_name(element))
+            }
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
                 self.named_type(name)
             }
@@ -495,7 +499,10 @@ impl<'a> CSharpTypeMapper<'a> {
         }
 
         match ty {
-            TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Optional(element) => {
+            TypeIr::List(element)
+            | TypeIr::Set(element)
+            | TypeIr::Optional(element)
+            | TypeIr::Interval(element) => {
                 self.collect_imports(element, imports);
             }
             TypeIr::Map { key, value } => {
@@ -560,6 +567,11 @@ fn csharp_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &CSharpTypeMapper<'_>)
         TypeIr::Struct(name) | TypeIr::Union(name) => {
             mapper.wrap_decode(ty, format!("{}.Decode(reader)", mapper.named_type(name)))
         }
+        TypeIr::Interval(element) => format!(
+            "SoraInterval<{}>.Decode(reader, () => {})",
+            mapper.type_name(element),
+            csharp_decode_expr(ir, element, mapper)
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader.ReadList(() => {})",
@@ -624,6 +636,11 @@ fn csharp_value_decode_expr(
         TypeIr::Struct(name) | TypeIr::Union(name) => {
             mapper.wrap_value_decode(ty, format!("{}.Decode({value})", mapper.named_type(name)))
         }
+        TypeIr::Interval(element) => format!(
+            "SoraInterval<{}>.Decode({value}, item => {})",
+            mapper.type_name(element),
+            csharp_value_decode_expr(ir, element, "item", mapper)
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "{value}.AsList(item => {})",
@@ -707,6 +724,7 @@ fn csharp_collect_text_keys(
             }
         }
         TypeIr::Struct(_) => format!("{pad}{value}.CollectTextKeys(keys);"),
+        TypeIr::Interval(_) => String::new(),
         TypeIr::Union(name) => format!(
             "{pad}{}.CollectTextKeys({value}, keys);",
             mapper.named_type(name)

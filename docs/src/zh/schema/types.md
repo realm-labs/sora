@@ -102,7 +102,7 @@ TOML、JSON、YAML 这类结构化数据使用统一的 object 表示：
 recommended_level = { start = 1, end = 10, start_inclusive = false, end_inclusive = true }
 ```
 
-代码生成会产生 `SoraIntervalI32` 这样的具体强类型，包含相同的四个字段。运行时导出也使用这套 object 结构，因此所有目标语言具有一致的区间语义。区间可以放进集合；集合在单元格中应使用 JSON 输入。
+生成 API 会保留这四个字段，并提供理解开闭边界的 `contains` 和 `isSingleton`/`is_singleton`，业务侧不再需要重复判断边界。Rust、C++、C#、TypeScript、Python、Scala 使用符合语言习惯的泛型 `SoraInterval<T>`（或方括号泛型写法）；Java、Kotlin、Go、Dart、Godot、C 生成 `SoraIntervalI32` 这样的具体类型；JavaScript、Lua、Erlang 使用共享运行时 helper。二进制和结构化 wire shape 均保持不变。区间可以放进集合；集合在单元格中应使用 JSON 输入。
 
 ## 单元格示例
 

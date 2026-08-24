@@ -18,6 +18,64 @@ function TextKey:as_string()
     return self.value
 end
 
+---@class SoraInterval<T>
+---@field start T
+---@field end_value T
+---@field start_inclusive boolean
+---@field end_inclusive boolean
+local SoraInterval = {}
+SoraInterval.__index = SoraInterval
+
+---@generic T
+---@param start T
+---@param end_value T
+---@param start_inclusive boolean
+---@param end_inclusive boolean
+---@return SoraInterval<T>
+function SoraInterval.new(start, end_value, start_inclusive, end_inclusive)
+    return setmetatable({
+        start = start,
+        end_value = end_value,
+        start_inclusive = start_inclusive,
+        end_inclusive = end_inclusive,
+    }, SoraInterval)
+end
+
+---@param value any
+---@return boolean
+function SoraInterval:contains(value)
+    local above_start = self.start_inclusive and value >= self.start or value > self.start
+    local below_end = self.end_inclusive and value <= self.end_value or value < self.end_value
+    return above_start and below_end
+end
+
+---@return boolean
+function SoraInterval:is_singleton()
+    return self.start_inclusive and self.end_inclusive and self.start == self.end_value
+end
+
+---@generic T
+---@param reader SoraReader
+---@param decode fun(): T
+---@return SoraInterval<T>
+function Runtime.decode_interval(reader, decode)
+    return SoraInterval.new(decode(), decode(), reader:read_bool(), reader:read_bool())
+end
+
+---@generic T
+---@param value table
+---@param decode fun(value: any): T
+---@return SoraInterval<T>
+function Runtime.decode_interval_value(value, decode)
+    local object = Runtime.expect_table(value)
+    return SoraInterval.new(
+        decode(object.start),
+        decode(object["end"]),
+        Runtime.expect_boolean(object.start_inclusive),
+        Runtime.expect_boolean(object.end_inclusive)
+    )
+end
+
 local SORA_BUNDLE_VERSION = 3
 local SORA_HEADER_LENGTH = 24
 local SORA_SECTION_ENTRY_LENGTH = 28

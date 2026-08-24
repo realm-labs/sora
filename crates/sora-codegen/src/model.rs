@@ -1,7 +1,13 @@
 use heck::{ToLowerCamelCase, ToPascalCase, ToSnakeCase};
 use serde::Serialize;
 use sora_diagnostics::Result;
-use sora_ir::model::{ConfigIr, FieldIr, IndexIr, TableIr, TableModeIr, TypeIr};
+use sora_ir::{
+    interval::{
+        INTERVAL_END_FIELD, INTERVAL_END_INCLUSIVE_FIELD, INTERVAL_START_FIELD,
+        INTERVAL_START_INCLUSIVE_FIELD, interval_record_name,
+    },
+    model::{ConfigIr, FieldIr, IndexIr, TableIr, TableModeIr, TypeIr},
+};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BaseModel {
@@ -75,6 +81,7 @@ pub struct BaseRecord {
     pub camel_name: String,
     pub imports: Vec<BaseImport>,
     pub fields: Vec<BaseField>,
+    pub interval_element: Option<TypeIr>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -155,7 +162,7 @@ pub fn build_base_model(ir: &ConfigIr) -> Result<BaseModel> {
         })
         .collect::<Vec<_>>();
 
-    let records = ir
+    let mut records = ir
         .structs
         .iter()
         .map(|item| {
@@ -173,6 +180,9 @@ pub fn build_base_model(ir: &ConfigIr) -> Result<BaseModel> {
                 .map(|item| build_base_record(ir, &item.into())),
         )
         .collect::<Result<Vec<_>>>()?;
+    for element in collect_interval_elements(ir) {
+        records.push(build_interval_record(&element));
+    }
 
     let unions = ir
         .unions
@@ -262,7 +272,95 @@ fn build_base_record(ir: &ConfigIr, item: &TableLike<'_>) -> Result<BaseRecord> 
         camel_name: parts.local.to_lower_camel_case(),
         imports,
         fields,
+        interval_element: None,
     })
+}
+
+fn build_interval_record(element: &TypeIr) -> BaseRecord {
+    let name = interval_record_name(element).expect("validated interval element has a record name");
+    let parts = SchemaNameParts::new(name);
+    let field = |name: &str, ty: TypeIr, comment: &str| BaseField {
+        raw_name: name.to_owned(),
+        pascal_name: name.to_pascal_case(),
+        snake_name: name.to_snake_case(),
+        camel_name: name.to_lower_camel_case(),
+        ty,
+        comment: Some(comment.to_owned()),
+    };
+    BaseRecord {
+        qualified_name: name.to_owned(),
+        namespace: parts.namespace,
+        namespace_path: parts.namespace_path,
+        module_path: parts.module_path,
+        qualified_pascal_name: name.to_owned(),
+        qualified_snake_name: name.to_snake_case(),
+        qualified_camel_name: name.to_lower_camel_case(),
+        name: name.to_owned(),
+        pascal_name: name.to_owned(),
+        snake_name: name.to_snake_case(),
+        camel_name: name.to_lower_camel_case(),
+        imports: Vec::new(),
+        fields: vec![
+            field(
+                INTERVAL_START_FIELD,
+                element.clone(),
+                "Lower interval bound.",
+            ),
+            field(INTERVAL_END_FIELD, element.clone(), "Upper interval bound."),
+            field(
+                INTERVAL_START_INCLUSIVE_FIELD,
+                TypeIr::Bool,
+                "Whether the lower bound is included.",
+            ),
+            field(
+                INTERVAL_END_INCLUSIVE_FIELD,
+                TypeIr::Bool,
+                "Whether the upper bound is included.",
+            ),
+        ],
+        interval_element: Some(element.clone()),
+    }
+}
+
+fn collect_interval_elements(ir: &ConfigIr) -> Vec<TypeIr> {
+    let mut values = std::collections::BTreeMap::<String, TypeIr>::new();
+    for field in ir
+        .structs
+        .iter()
+        .flat_map(|item| item.fields.iter())
+        .chain(
+            ir.unions
+                .iter()
+                .flat_map(|item| item.variants.iter())
+                .flat_map(|item| item.fields.iter()),
+        )
+        .chain(ir.tables.iter().flat_map(|item| item.fields.iter()))
+    {
+        collect_interval_elements_from_type(&field.ty, &mut values);
+    }
+    values.into_values().collect()
+}
+
+fn collect_interval_elements_from_type(
+    ty: &TypeIr,
+    values: &mut std::collections::BTreeMap<String, TypeIr>,
+) {
+    match ty {
+        TypeIr::Interval(element) => {
+            let name = interval_record_name(element)
+                .expect("validated interval element has a record name");
+            values.insert(name.to_owned(), element.as_ref().clone());
+        }
+        TypeIr::List(element)
+        | TypeIr::Set(element)
+        | TypeIr::Optional(element)
+        | TypeIr::Array { element, .. } => collect_interval_elements_from_type(element, values),
+        TypeIr::Map { key, value } => {
+            collect_interval_elements_from_type(key, values);
+            collect_interval_elements_from_type(value, values);
+        }
+        _ => {}
+    }
 }
 
 fn build_base_table(table: &TableIr) -> BaseTable {
@@ -367,7 +465,10 @@ fn collect_type_imports(
         TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
             push_named_import(owner_name, name, imports)
         }
-        TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Optional(element) => {
+        TypeIr::List(element)
+        | TypeIr::Set(element)
+        | TypeIr::Optional(element)
+        | TypeIr::Interval(element) => {
             collect_type_imports(ir, owner_name, element, imports);
         }
         TypeIr::Map { key, value } => {

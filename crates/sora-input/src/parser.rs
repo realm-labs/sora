@@ -10,7 +10,7 @@ use sora_diagnostics::Result;
 use sora_ir::{
     interval::{
         INTERVAL_END_FIELD, INTERVAL_END_INCLUSIVE_FIELD, INTERVAL_START_FIELD,
-        INTERVAL_START_INCLUSIVE_FIELD, interval_element_type,
+        INTERVAL_START_INCLUSIVE_FIELD,
     },
     model::TypeIr,
 };
@@ -219,9 +219,7 @@ fn default_cell_value(
         TypeIr::DateTime => datetime_cell(cell, context)?,
         TypeIr::F32 | TypeIr::F64 => float_cell(cell, context)?,
         TypeIr::String | TypeIr::Text | TypeIr::Enum(_) => Value::String(cell.display_text()),
-        TypeIr::Struct(name) if interval_element_type(name).is_some() => {
-            interval_cell_value(&cell.display_text(), name, context)?
-        }
+        TypeIr::Interval(element) => interval_cell_value(&cell.display_text(), element, context)?,
         TypeIr::Struct(_) | TypeIr::Union(_) => json_object_value(&cell.display_text(), context)?,
         TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Array { .. } => {
             parse_collection_with_separator(&cell.display_text(), ty, context)?
@@ -372,11 +370,7 @@ fn float_cell(cell: &CellValue<'_>, context: &CellContext<'_>) -> Result<Value> 
     }
 }
 
-fn interval_cell_value(
-    source: &str,
-    struct_name: &str,
-    context: &CellContext<'_>,
-) -> Result<Value> {
+fn interval_cell_value(source: &str, element: &TypeIr, context: &CellContext<'_>) -> Result<Value> {
     let source = source.trim();
     let Some(open) = source.chars().next() else {
         return Err(context.error("expected interval such as `[1,10)`"));
@@ -398,17 +392,14 @@ fn interval_cell_value(
             "interval `{source}` must contain exactly two non-empty bounds separated by `,`"
         )));
     }
-    let element = interval_element_type(struct_name)
-        .expect("interval struct names should have an element type");
-
     Ok(Value::Object(BTreeMap::from([
         (
             INTERVAL_START_FIELD.to_owned(),
-            source_to_default_value(start, &element, context)?,
+            source_to_default_value(start, element, context)?,
         ),
         (
             INTERVAL_END_FIELD.to_owned(),
-            source_to_default_value(end, &element, context)?,
+            source_to_default_value(end, element, context)?,
         ),
         (
             INTERVAL_START_INCLUSIVE_FIELD.to_owned(),
@@ -683,6 +674,38 @@ fn json_to_cell_value(
             .map(|value| Value::String(value.to_owned()))
             .ok_or_else(|| context.error("expected JSON string"))?,
         TypeIr::Struct(_) | TypeIr::Union(_) => json_to_untyped_value(value, context)?,
+        TypeIr::Interval(element) => {
+            let JsonValue::Object(values) = value else {
+                return Err(context.error("expected JSON interval object"));
+            };
+            let get = |name: &str| {
+                values
+                    .get(name)
+                    .ok_or_else(|| context.error(format!("missing JSON interval field `{name}`")))
+            };
+            Value::Object(BTreeMap::from([
+                (
+                    INTERVAL_START_FIELD.to_owned(),
+                    json_to_cell_value(get(INTERVAL_START_FIELD)?, element, context)?,
+                ),
+                (
+                    INTERVAL_END_FIELD.to_owned(),
+                    json_to_cell_value(get(INTERVAL_END_FIELD)?, element, context)?,
+                ),
+                (
+                    INTERVAL_START_INCLUSIVE_FIELD.to_owned(),
+                    json_to_cell_value(
+                        get(INTERVAL_START_INCLUSIVE_FIELD)?,
+                        &TypeIr::Bool,
+                        context,
+                    )?,
+                ),
+                (
+                    INTERVAL_END_INCLUSIVE_FIELD.to_owned(),
+                    json_to_cell_value(get(INTERVAL_END_INCLUSIVE_FIELD)?, &TypeIr::Bool, context)?,
+                ),
+            ]))
+        }
         TypeIr::List(element) | TypeIr::Set(element) => {
             let JsonValue::Array(items) = value else {
                 return Err(context.error("expected JSON array"));
@@ -783,6 +806,7 @@ fn separated_item_to_value(
                     .collect::<Result<BTreeMap<_, _>>>()?,
             ))
         }
+        TypeIr::Interval(element) => interval_cell_value(item, element, context),
         TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => {
             Err(context.error(format!(
                 "nested collection item `{item}` cannot be parsed with a single separator"

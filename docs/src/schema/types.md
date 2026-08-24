@@ -102,7 +102,7 @@ Structured TOML, JSON, and YAML data uses the canonical object representation:
 recommended_level = { start = 1, end = 10, start_inclusive = false, end_inclusive = true }
 ```
 
-Code generators emit a concrete strong interval record such as `SoraIntervalI32`, with the same four fields. Runtime exports use the canonical object shape, so every target language preserves the same interval semantics. Collections of intervals are supported; use JSON cell input for those collections.
+Generated APIs preserve these four fields and add boundary-aware helpers, so business code can call `contains` and `isSingleton`/`is_singleton` instead of repeating open/closed-bound checks. Rust, C++, C#, TypeScript, Python, and Scala use an idiomatic generic `SoraInterval<T>` (or the language's bracket form). Java, Kotlin, Go, Dart, Godot, and C emit concrete types such as `SoraIntervalI32`; JavaScript, Lua, and Erlang provide a shared runtime interval helper. The binary and structured wire shapes remain unchanged. Collections of intervals are supported; use JSON cell input for those collections.
 
 ## Cell Examples
 

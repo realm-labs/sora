@@ -479,6 +479,11 @@ const EMBEDDED_TEMPLATES: &[EmbeddedTemplate] = &[
     },
     EmbeddedTemplate {
         target: "rust",
+        file_name: "interval.rs.j2",
+        source: include_str!("../templates/rust/interval.rs.j2"),
+    },
+    EmbeddedTemplate {
+        target: "rust",
         file_name: "mod.rs.j2",
         source: include_str!("../templates/rust/mod.rs.j2"),
     },
@@ -554,7 +559,7 @@ mod tests {
 
     #[test]
     fn embeds_all_templates() {
-        assert_eq!(EMBEDDED_TEMPLATES.len(), 104);
+        assert_eq!(EMBEDDED_TEMPLATES.len(), 105);
         for template in EMBEDDED_TEMPLATES {
             let source = template_source(template.target, template.file_name)
                 .expect("embedded template should be registered");

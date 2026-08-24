@@ -790,9 +790,10 @@ fn collect_type_edges(
                 target_label: Some(field.clone()),
             });
         }
-        TypeIr::List(inner) | TypeIr::Set(inner) | TypeIr::Optional(inner) => {
-            collect_type_edges(owner, field_name, inner, edges)
-        }
+        TypeIr::List(inner)
+        | TypeIr::Set(inner)
+        | TypeIr::Optional(inner)
+        | TypeIr::Interval(inner) => collect_type_edges(owner, field_name, inner, edges),
         TypeIr::Array { element, .. } => collect_type_edges(owner, field_name, element, edges),
         TypeIr::Map { key, value } => {
             collect_type_edges(owner, field_name, key, edges);

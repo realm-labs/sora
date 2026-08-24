@@ -9,6 +9,9 @@ import { collect{{ import.name }}TextKeys{% if import.alias != import.name %} as
 {%- if record.uses_text_key %}
 import { TextKey } from "{{ record.runtime_module }}{{ options.import_ext }}";
 {%- endif %}
+{%- if record.uses_interval %}
+import { decodeInterval, decodeIntervalValue } from "{{ record.runtime_module }}{{ options.import_ext }}";
+{%- endif %}
 {%- if record.table %}
 import {
     decodeIndex,

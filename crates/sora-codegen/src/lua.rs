@@ -216,6 +216,7 @@ impl LuaModel {
         let records = model
             .records
             .into_iter()
+            .filter(|item| item.interval_element.is_none())
             .map(|item| {
                 let table = tables
                     .iter()
@@ -426,6 +427,9 @@ impl<'a> LuaTypeMapper<'a> {
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
                 schema_flat_pascal_name(name)
             }
+            TypeIr::Interval(element) => {
+                format!("SoraInterval<{}>", self.type_name(element, options))
+            }
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
                 format!("{}[]", self.type_name(element, options))
             }
@@ -479,6 +483,10 @@ fn lua_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &LuaTypeMapper<'_>) -> St
             ty,
             format!("{}.decode(reader)", schema_flat_pascal_name(name)),
         ),
+        TypeIr::Interval(element) => format!(
+            "Runtime.decode_interval(reader, function() return {} end)",
+            lua_decode_expr(ir, element, mapper)
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader:read_list(function() return {} end)",
@@ -527,6 +535,10 @@ fn lua_value_decode_expr(
                 ty,
                 format!("{}.decode_value({value})", schema_flat_pascal_name(name)),
             ),
+        TypeIr::Interval(element) => format!(
+            "Runtime.decode_interval_value({value}, function(item) return {} end)",
+            lua_value_decode_expr(ir, element, "item", mapper)
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "Runtime.decode_value_list({value}, function(item) return {} end)",
@@ -565,6 +577,7 @@ fn lua_collect_text_keys(
 
     match ty {
         TypeIr::Text => format!("out[#out + 1] = {value}"),
+        TypeIr::Interval(_) => String::new(),
         TypeIr::Optional(element) => {
             let inner = lua_collect_text_keys(ir, element, "__sora_value", mapper);
             if inner.is_empty() {

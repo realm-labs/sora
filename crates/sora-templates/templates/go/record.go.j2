@@ -22,6 +22,27 @@ type {{ record.pascal_name }} struct {
     {{ field.name }} {{ field.type_name }}
 {%- endfor %}
 }
+{%- if record.interval %}
+
+func (interval {{ record.pascal_name }}) Contains(value {{ record.fields[0].type_name }}) bool {
+{%- if record.interval_datetime %}
+    afterStart := value.After(interval.Start) || (interval.StartInclusive && value.Equal(interval.Start))
+    beforeEnd := value.Before(interval.End) || (interval.EndInclusive && value.Equal(interval.End))
+{%- else %}
+    afterStart := value > interval.Start || (interval.StartInclusive && value == interval.Start)
+    beforeEnd := value < interval.End || (interval.EndInclusive && value == interval.End)
+{%- endif %}
+    return afterStart && beforeEnd
+}
+
+func (interval {{ record.pascal_name }}) IsSingleton() bool {
+{%- if record.interval_datetime %}
+    return interval.StartInclusive && interval.EndInclusive && interval.Start.Equal(interval.End)
+{%- else %}
+    return interval.StartInclusive && interval.EndInclusive && interval.Start == interval.End
+{%- endif %}
+}
+{%- endif %}
 
 func decode{{ record.pascal_name }}(reader *SoraReader) ({{ record.pascal_name }}, error) {
     var value {{ record.pascal_name }}

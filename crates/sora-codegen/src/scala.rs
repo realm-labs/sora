@@ -192,6 +192,7 @@ impl ScalaModel {
             records: model
                 .records
                 .into_iter()
+                .filter(|item| item.interval_element.is_none())
                 .map(|item| {
                     let table = tables
                         .iter()
@@ -392,6 +393,9 @@ impl<'a> ScalaTypeMapper<'a> {
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
                 schema_flat_pascal_name(name)
             }
+            TypeIr::Interval(element) => {
+                format!("SoraInterval[{}]", self.type_name(element))
+            }
             TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
                 format!("Vector[{}]", self.type_name(element))
             }
@@ -451,6 +455,10 @@ fn scala_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &ScalaTypeMapper<'_>) -
             ty,
             format!("{}.decode(reader)", schema_flat_pascal_name(name)),
         ),
+        TypeIr::Interval(element) => format!(
+            "SoraInterval.decode(reader, {})",
+            scala_decode_expr(ir, element, mapper)
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader.readList({})",
@@ -506,6 +514,10 @@ fn scala_value_decode_expr(
                 ty,
                 format!("{}.decode({value})", schema_flat_pascal_name(name)),
             ),
+        TypeIr::Interval(element) => format!(
+            "SoraInterval.decode({value}, item => {})",
+            scala_value_decode_expr(ir, element, "item", mapper)
+        ),
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "{value}.asList(item => {})",
@@ -554,6 +566,7 @@ fn scala_collect_text_keys(
     let pad = " ".repeat(indent);
     match ty {
         TypeIr::Text => format!("{pad}out += {value}"),
+        TypeIr::Interval(_) => String::new(),
         TypeIr::Optional(element) => {
             let inner = scala_collect_text_keys(ir, element, "item", indent + 2, mapper);
             if inner.is_empty() {

@@ -4,7 +4,10 @@ use heck::{ToLowerCamelCase, ToShoutySnakeCase};
 use minijinja::context;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
-use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
+use sora_ir::{
+    interval::interval_record_name,
+    model::{ConfigIr, TableModeIr, TypeIr},
+};
 
 use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
@@ -176,6 +179,8 @@ struct JavaRecord {
     has_text_keys: bool,
     table: Option<JavaTable>,
     imports: Vec<String>,
+    interval: bool,
+    interval_comparable: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -341,6 +346,11 @@ fn java_record(
     nullable_annotation: Option<&JavaNullableAnnotation>,
     mapper: &JavaTypeMapper<'_>,
 ) -> JavaRecord {
+    let interval = record.interval_element.is_some();
+    let interval_comparable = matches!(
+        record.interval_element,
+        Some(TypeIr::Duration | TypeIr::DateTime)
+    );
     let fields = record
         .fields
         .into_iter()
@@ -356,6 +366,8 @@ fn java_record(
         has_text_keys,
         table,
         imports,
+        interval,
+        interval_comparable,
     }
 }
 
@@ -543,6 +555,7 @@ impl<'a> JavaTypeMapper<'a> {
             TypeIr::F64 => "double".to_owned(),
             TypeIr::String => "String".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
+            TypeIr::Interval(element) => interval_record_name(element).unwrap().to_owned(),
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
                 schema_flat_pascal_name(name)
             }
@@ -631,6 +644,9 @@ fn java_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &JavaTypeMapper<'_>) -> 
             ty,
             format!("{}.decode(reader)", schema_flat_pascal_name(name)),
         ),
+        TypeIr::Interval(element) => {
+            format!("{}.decode(reader)", interval_record_name(element).unwrap())
+        }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "reader.readList(() -> {})",
@@ -686,6 +702,9 @@ fn java_value_decode_expr(
                 ty,
                 format!("{}.decode({value})", schema_flat_pascal_name(name)),
             ),
+        TypeIr::Interval(element) => {
+            format!("{}.decode({value})", interval_record_name(element).unwrap())
+        }
         TypeIr::List(element) | TypeIr::Set(element) | TypeIr::Array { element, .. } => {
             format!(
                 "{value}.asList(item -> {})",
@@ -767,6 +786,7 @@ fn java_collect_text_keys(
             }
         }
         TypeIr::Struct(_) => format!("{pad}{value}.collectTextKeys(out);"),
+        TypeIr::Interval(_) => String::new(),
         TypeIr::Union(name) => format!(
             "{pad}{}.collectTextKeys({value}, out);",
             schema_flat_pascal_name(name)

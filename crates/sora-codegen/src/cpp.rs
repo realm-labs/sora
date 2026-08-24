@@ -200,6 +200,12 @@ struct CppField {
 
 impl CppModel {
     fn from_base_model(ir: &ConfigIr, model: BaseModel, mapper: &CppTypeMapper<'_>) -> Self {
+        let interval_modules = model
+            .records
+            .iter()
+            .filter(|record| record.interval_element.is_some())
+            .map(|record| record.module_path.clone())
+            .collect::<std::collections::BTreeSet<_>>();
         let enums = model
             .enums
             .into_iter()
@@ -218,6 +224,7 @@ impl CppModel {
         let records = model
             .records
             .into_iter()
+            .filter(|item| item.interval_element.is_none())
             .map(|item| {
                 let table = tables
                     .iter()
@@ -241,6 +248,7 @@ impl CppModel {
             modules: model
                 .modules
                 .into_iter()
+                .filter(|module| !interval_modules.contains(module))
                 .map(|module| module.replace('/', "_"))
                 .collect(),
         }
@@ -426,6 +434,9 @@ impl<'a> CppTypeMapper<'a> {
             TypeIr::F64 => "double".to_owned(),
             TypeIr::String => "std::string".to_owned(),
             TypeIr::Text => "TextKey".to_owned(),
+            TypeIr::Interval(element) => {
+                format!("SoraInterval<{}>", self.type_name(element))
+            }
             TypeIr::Enum(name) | TypeIr::Struct(name) | TypeIr::Union(name) => {
                 schema_flat_pascal_name(name)
             }
@@ -498,6 +509,12 @@ fn cpp_decode_expr(ir: &ConfigIr, ty: &TypeIr, mapper: &CppTypeMapper<'_>) -> St
         TypeIr::Struct(name) | TypeIr::Union(name) => mapper.wrap_decode(
             ty,
             format!("{}::decode(reader)", schema_flat_pascal_name(name)),
+        ),
+        TypeIr::Interval(element) => format!(
+            "([&reader]() {{ auto start = {}; auto end = {}; bool start_inclusive = reader.read_bool(); bool end_inclusive = reader.read_bool(); return SoraInterval<{}>(start, end, start_inclusive, end_inclusive); }})()",
+            cpp_decode_expr(ir, element, mapper),
+            cpp_decode_expr(ir, element, mapper),
+            mapper.type_name(element)
         ),
         TypeIr::List(element) | TypeIr::Set(element) => {
             format!(

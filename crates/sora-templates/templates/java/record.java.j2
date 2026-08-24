@@ -15,6 +15,28 @@ public record {{ record.pascal_name }}(
     {% if field.nullable_annotation %}@{{ field.nullable_annotation }} {% endif %}{{ field.type_name }} {{ field.name }}{% if not loop.last %},{% endif %}
 {%- endfor %}
 ) {
+{%- if record.interval %}
+    public boolean contains({{ record.fields[0].type_name }} value) {
+{%- if record.interval_comparable %}
+        var startComparison = value.compareTo(start);
+        var endComparison = value.compareTo(end);
+        return (startInclusive ? startComparison >= 0 : startComparison > 0)
+            && (endInclusive ? endComparison <= 0 : endComparison < 0);
+{%- else %}
+        return (startInclusive ? value >= start : value > start)
+            && (endInclusive ? value <= end : value < end);
+{%- endif %}
+    }
+
+    public boolean isSingleton() {
+{%- if record.interval_comparable %}
+        return startInclusive && endInclusive && start.compareTo(end) == 0;
+{%- else %}
+        return startInclusive && endInclusive && start == end;
+{%- endif %}
+    }
+
+{%- endif %}
     static {{ record.pascal_name }} decode(SoraReader reader) {
         return new {{ record.pascal_name }}(
 {%- for field in record.fields %}

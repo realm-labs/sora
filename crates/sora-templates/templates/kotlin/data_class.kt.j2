@@ -13,6 +13,18 @@ data class {{ record.pascal_name }}(
     val {{ field.name }}: {{ field.type_name }},
 {%- endfor %}
 ) {
+{%- if record.interval %}
+    fun contains(value: {{ record.fields[0].type_name }}): Boolean {
+        val startComparison = value.compareTo(start)
+        val endComparison = value.compareTo(end)
+        return (if (startInclusive) startComparison >= 0 else startComparison > 0) &&
+            (if (endInclusive) endComparison <= 0 else endComparison < 0)
+    }
+
+    fun isSingleton(): Boolean =
+        startInclusive && endInclusive && start.compareTo(end) == 0
+
+{%- endif %}
     fun collectTextKeys(out: MutableList<TextKey>) {
 {%- if record.has_text_keys %}
 {%- for field in record.fields %}

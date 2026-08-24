@@ -3,6 +3,9 @@
 #![allow(dead_code)]
 
 pub mod runtime;
+{%- if model.intervals %}
+pub mod interval;
+{%- endif %}
 {%- for module in model.modules %}
 pub mod {{ module }};
 {%- endfor %}

@@ -34,6 +34,38 @@ final case class TextKey(value: String) {
   override def toString: String = value
 }
 
+final case class SoraInterval[T](
+  start: T,
+  end: T,
+  startInclusive: Boolean,
+  endInclusive: Boolean
+) {
+  def contains(value: T): Boolean = {
+    val startOrder = SoraRuntime.compareIntervalValues(value, start)
+    val endOrder = SoraRuntime.compareIntervalValues(value, end)
+    (if (startInclusive) startOrder >= 0 else startOrder > 0) &&
+      (if (endInclusive) endOrder <= 0 else endOrder < 0)
+  }
+
+  def isSingleton: Boolean =
+    startInclusive && endInclusive && SoraRuntime.compareIntervalValues(start, end) == 0
+}
+
+object SoraInterval {
+  def decode[T](reader: SoraReader, decode: => T): SoraInterval[T] =
+    SoraInterval(decode, decode, reader.readBool(), reader.readBool())
+
+  def decode[T](value: SoraValue, decode: SoraValue => T): SoraInterval[T] = {
+    val obj = value.asObject
+    SoraInterval(
+      decode(obj.get("start")),
+      decode(obj.get("end")),
+      obj.get("start_inclusive").asBool,
+      obj.get("end_inclusive").asBool
+    )
+  }
+}
+
 final class LocalePack private (
   val schemaFingerprint: String,
   val locale: String,
@@ -718,6 +750,12 @@ object SoraProtobufBundle {
 {%- endif %}
 
 object SoraRuntime {
+  def compareIntervalValues[T](left: T, right: T): Int = left match {
+    case value: java.lang.Comparable[Any @unchecked] => value.compareTo(right)
+    case value: scala.math.Ordered[Any @unchecked] => value.compare(right)
+    case _ => throw new SoraReadException("interval bound type is not comparable")
+  }
+
   def durationFromMillis(millis: Long): scala.concurrent.duration.FiniteDuration = {
     if (millis < 0) {
       throw new SoraReadException("duration must be non-negative")

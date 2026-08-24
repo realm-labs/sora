@@ -7,10 +7,6 @@ use sora_schema::model::{
 
 use crate::{
     input_projection::{COLUMNS_PARSER, TAGGED_COLUMNS_PARSER},
-    interval::{
-        INTERVAL_END_FIELD, INTERVAL_END_INCLUSIVE_FIELD, INTERVAL_START_FIELD,
-        INTERVAL_START_INCLUSIVE_FIELD, collect_interval_structs, interval_element_type,
-    },
     model::{
         ConfigIr, DerivedFieldIr, EnumAliasIr, EnumIr, EnumValueIr, FieldIr, GroupSetIr, IndexIr,
         ParserIr, StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
@@ -82,93 +78,8 @@ pub fn normalize_schema_with_parsers(
             .map(|table| convert_table_with_parsers(table, parser_registry))
             .collect::<Result<Vec<_>>>()?,
     };
-    inject_interval_structs(&mut ir)?;
     apply_and_validate_groups(&mut ir)?;
     Ok(ir)
-}
-
-fn inject_interval_structs(ir: &mut ConfigIr) -> Result<()> {
-    let mut names = std::collections::BTreeSet::new();
-    for field in ir
-        .structs
-        .iter()
-        .flat_map(|item| item.fields.iter())
-        .chain(
-            ir.unions
-                .iter()
-                .flat_map(|item| item.variants.iter())
-                .flat_map(|item| item.fields.iter()),
-        )
-        .chain(ir.tables.iter().flat_map(|item| item.fields.iter()))
-    {
-        collect_interval_structs(&field.ty, &mut names);
-    }
-
-    for name in names {
-        if ir.enums.iter().any(|item| item.name == name)
-            || ir.structs.iter().any(|item| item.name == name)
-            || ir.unions.iter().any(|item| item.name == name)
-            || ir
-                .tables
-                .iter()
-                .any(|item| item.name == name || item.canonical_name == name)
-        {
-            return Err(SoraError::InvalidSchema(format!(
-                "struct name `{name}` is reserved for the built-in interval type"
-            )));
-        }
-        let element = interval_element_type(&name)
-            .expect("collected interval struct names should have an element type");
-        let groups = GroupSetIr {
-            values: ir.group_defaults.keys().cloned().collect(),
-        };
-        ir.structs.push(StructIr {
-            name,
-            groups: groups.clone(),
-            fields: vec![
-                interval_field(
-                    INTERVAL_START_FIELD,
-                    element.clone(),
-                    "Lower interval bound.",
-                    &groups,
-                ),
-                interval_field(
-                    INTERVAL_END_FIELD,
-                    element,
-                    "Upper interval bound.",
-                    &groups,
-                ),
-                interval_field(
-                    INTERVAL_START_INCLUSIVE_FIELD,
-                    TypeIr::Bool,
-                    "Whether the lower bound is included.",
-                    &groups,
-                ),
-                interval_field(
-                    INTERVAL_END_INCLUSIVE_FIELD,
-                    TypeIr::Bool,
-                    "Whether the upper bound is included.",
-                    &groups,
-                ),
-            ],
-        });
-    }
-    Ok(())
-}
-
-fn interval_field(name: &str, ty: TypeIr, comment: &str, groups: &GroupSetIr) -> FieldIr {
-    FieldIr {
-        name: name.to_owned(),
-        ty,
-        groups: groups.clone(),
-        key: false,
-        comment: Some(comment.to_owned()),
-        default: None,
-        range: None,
-        length: None,
-        parser: None,
-        derived_from: None,
-    }
 }
 
 fn validate_project_id(project_id: &str) -> Result<()> {

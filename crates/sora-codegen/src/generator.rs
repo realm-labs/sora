@@ -510,7 +510,7 @@ macro_rules! impl_test_codegen_generate {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sora_ir::normalize::normalize_schema;
+    use sora_ir::{model::TypeIr, normalize::normalize_schema};
     use sora_schema::model::ProjectSchema;
     use std::{
         fs,
@@ -680,7 +680,10 @@ type = "interval<i32>"
         )
         .unwrap();
         let ir = normalize_schema(schema).unwrap();
-        assert!(ir.structs.iter().any(|item| item.name == "SoraIntervalI32"));
+        assert!(matches!(
+            ir.tables[0].fields[0].ty,
+            TypeIr::Interval(ref element) if **element == TypeIr::I32
+        ));
         let registry = CodegenRegistry::with_builtin_generators();
         let mappings = TypeMappingRegistry::new();
         let base = std::env::temp_dir().join(format!(
@@ -709,6 +712,29 @@ type = "interval<i32>"
             assert!(
                 !generated_text(&out_dir).is_empty(),
                 "{target} emitted no code"
+            );
+            let generated = generated_text(&out_dir);
+            let contains_api = match target {
+                "c" => "_contains(",
+                "cpp" => "bool contains(",
+                "csharp" => "bool Contains(",
+                "dart" => "bool contains(",
+                "erlang" => "interval_contains(",
+                "go" => "Contains(",
+                "godot" => "func contains(",
+                "java" => "boolean contains(",
+                "javascript" | "typescript" => "contains(value",
+                "kotlin" => "fun contains(",
+                "lua" => "function SoraInterval:contains(",
+                "python" => "def contains(",
+                "rust" => "pub fn contains(",
+                "scala" => "def contains(",
+                "proto-schema" => "message SoraIntervalI32",
+                _ => unreachable!("unexpected built-in target `{target}`"),
+            };
+            assert!(
+                generated.contains(contains_api),
+                "{target} did not emit the interval API marker `{contains_api}`"
             );
         }
 
