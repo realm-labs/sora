@@ -57,7 +57,7 @@ mlua = { version = "0.11.4", features = ["lua54", "vendored", "serialize", "erro
 prost = "0.14"
 rayon = "1"
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls"] }
-rmcp = { version = "2.2.0", default-features = false, features = [
+rmcp = { version = "3.1.2", default-features = false, features = [
     "elicitation",
     "macros",
     "schemars",
