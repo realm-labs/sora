@@ -1,5 +1,5 @@
 use std::{
-    env, fs,
+    fs,
     io::Read,
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
@@ -71,17 +71,6 @@ pub fn format_generated_code_with_cancellation(
         };
     };
 
-    if !command_exists(formatter.command) {
-        return match mode {
-            FormatMode::Never | FormatMode::Auto => Ok(()),
-            FormatMode::Required => Err(format_error(
-                formatter.language,
-                formatter.command,
-                "formatter command was not found in PATH",
-            )),
-        };
-    }
-
     let files = collect_files(out_dir, formatter.extensions)?;
     if files.is_empty() {
         return Ok(());
@@ -99,9 +88,26 @@ pub fn format_generated_code_with_cancellation(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     configure_formatter_process(&mut command);
-    let mut child = command.spawn().map_err(|source| {
-        format_error(formatter.language, formatter.command, source.to_string())
-    })?;
+    let mut child = match command.spawn() {
+        Ok(child) => child,
+        Err(source) if source.kind() == std::io::ErrorKind::NotFound => {
+            return match mode {
+                FormatMode::Never | FormatMode::Auto => Ok(()),
+                FormatMode::Required => Err(format_error(
+                    formatter.language,
+                    formatter.command,
+                    "formatter command was not found in PATH",
+                )),
+            };
+        }
+        Err(source) => {
+            return Err(format_error(
+                formatter.language,
+                formatter.command,
+                source.to_string(),
+            ));
+        }
+    };
     let stdout = drain_pipe(child.stdout.take());
     let stderr = drain_pipe(child.stderr.take());
     let status = loop {
@@ -205,13 +211,6 @@ fn has_any_extension(path: &Path, extensions: &[&str]) -> bool {
         .is_some_and(|value| extensions.contains(&value))
 }
 
-fn command_exists(command: &str) -> bool {
-    let Some(paths) = env::var_os("PATH") else {
-        return false;
-    };
-    env::split_paths(&paths).any(|path| path.join(command).is_file())
-}
-
 fn command_output_message(stdout: &[u8], stderr: &[u8]) -> String {
     let stderr = String::from_utf8_lossy(stderr).trim().to_owned();
     if !stderr.is_empty() {
@@ -241,6 +240,7 @@ fn format_error(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::env;
     #[cfg(unix)]
     use std::sync::{
         Arc,
@@ -251,9 +251,52 @@ mod tests {
 
     #[test]
     fn auto_skips_missing_formatter() {
-        let base = env::temp_dir().join("sora-codegen-format-missing");
-        let formatter = FormatterConfig::new("Erlang", "erlfmt", &["-w"], &["erl"]);
-        format_generated_code("Erlang", Some(formatter), &base, FormatMode::Auto).unwrap();
+        let base = env::temp_dir().join(format!(
+            "sora-codegen-format-missing-auto-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&base).unwrap();
+        fs::write(base.join("generated.test"), "content").unwrap();
+        let formatter =
+            FormatterConfig::new("test", "sora-formatter-that-does-not-exist", &[], &["test"]);
+
+        format_generated_code("test", Some(formatter), &base, FormatMode::Auto).unwrap();
+
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn required_rejects_missing_formatter() {
+        let base = env::temp_dir().join(format!(
+            "sora-codegen-format-missing-required-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&base).unwrap();
+        fs::write(base.join("generated.test"), "content").unwrap();
+        let formatter =
+            FormatterConfig::new("test", "sora-formatter-that-does-not-exist", &[], &["test"]);
+
+        let error = format_generated_code("test", Some(formatter), &base, FormatMode::Required)
+            .unwrap_err();
+
+        assert!(error.to_string().contains("not found in PATH"));
+        let _ = fs::remove_dir_all(base);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn required_resolves_windows_executable_suffix() {
+        let base = env::temp_dir().join(format!(
+            "sora-codegen-format-windows-exe-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&base).unwrap();
+        fs::write(base.join("generated.test"), "content").unwrap();
+        let formatter = FormatterConfig::new("test", "cmd", &["/D", "/C", "rem"], &["test"]);
+
+        format_generated_code("test", Some(formatter), &base, FormatMode::Required).unwrap();
+
+        let _ = fs::remove_dir_all(base);
     }
 
     #[test]
