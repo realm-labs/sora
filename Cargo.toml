@@ -40,20 +40,20 @@ readme = "README.md"
 [workspace.dependencies]
 anyhow = "1"
 axum = "0.8"
-base64 = "0.22"
+base64 = "0.23"
 calamine = "0.36"
 chrono = { version = "0.4", default-features = false, features = ["clock", "serde", "std"] }
 clap = { version = "4", features = ["derive"] }
 csv = "1"
 futures-util = "0.3"
 heck = "0.5"
-hmac = "0.12"
+hmac = "0.13"
 include_dir = "0.7"
 indexmap = { version = "2", features = ["serde"] }
 jsonwebtoken = { version = "11.0", default-features = false, features = ["rust_crypto"] }
 libc = "0.2"
 minijinja = "2"
-mlua = { version = "0.11.4", features = ["lua54", "vendored", "serialize", "error-send"] }
+mlua = { version = "0.12.2", features = ["lua54", "vendored", "serde", "error-send"] }
 prost = "0.14"
 rayon = "1"
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls"] }
@@ -65,14 +65,14 @@ rmcp = { version = "2.2.0", default-features = false, features = [
     "transport-io",
     "transport-streamable-http-server",
 ] }
-rust_xlsxwriter = "0.96"
+rust_xlsxwriter = "0.100"
 rustc-hash = "2"
 schemars = { version = "1.2", features = ["chrono04"] }
 semver = "1"
 serde = { version = "1", features = ["derive", "rc"] }
 serde_cbor = "0.11"
 serde_json = "1"
-sha2 = "0.10"
+sha2 = "0.11"
 serde_yaml = "0.9"
 scon = { package = "scon-core", version = "0.1" }
 sora-cli = { path = "crates/sora-cli", version = "0.1.0" }
@@ -105,10 +105,10 @@ tower-http = { version = "0.7", features = ["cors", "sensitive-headers", "trace"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt", "json"] }
 url = "2"
-umya-spreadsheet = "2.3.3"
+umya-spreadsheet = "3.1"
 uuid = { version = "1", features = ["serde", "v4"] }
 windows-sys = "0.61"
-zstd = "0.13"
+zstd = "0.14"
 
 [profile.release]
 codegen-units = 1

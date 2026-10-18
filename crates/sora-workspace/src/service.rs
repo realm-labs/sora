@@ -424,7 +424,13 @@ fn inspect_project_scripts(
             Ok(ProjectScript {
                 kind,
                 path: normalized_relative_path(relative),
-                digest: format!("sha256:{:x}", Sha256::digest(bytes)),
+                digest: format!(
+                    "sha256:{}",
+                    Sha256::digest(bytes)
+                        .iter()
+                        .map(|byte| format!("{byte:02x}"))
+                        .collect::<String>()
+                ),
             })
         })
         .collect::<Result<Vec<_>, WorkspaceError>>()?;

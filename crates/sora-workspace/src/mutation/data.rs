@@ -1287,14 +1287,14 @@ fn render_xlsx(
             .as_ref()
             .ok_or_else(|| DataMutationError::MissingSource(table.name.clone()))?;
         let sheet_name = source.sheet.as_deref().unwrap_or(&table.name);
-        let sheet = workbook.get_sheet_by_name_mut(sheet_name).ok_or_else(|| {
-            DataMutationError::Render(format!("missing worksheet `{sheet_name}`"))
-        })?;
+        let sheet = workbook
+            .sheet_by_name_mut(sheet_name)
+            .map_err(|_| DataMutationError::Render(format!("missing worksheet `{sheet_name}`")))?;
         let columns = projected_columns(ir, table);
         let mut by_name = BTreeMap::new();
-        let highest_column = sheet.get_highest_column();
+        let highest_column = sheet.highest_column();
         for column in 2..=highest_column {
-            let name = sheet.get_value((column, 3));
+            let name = sheet.value((column, 3));
             if !name.trim().is_empty() {
                 by_name.insert(name.trim().to_owned(), column);
             }
@@ -1308,7 +1308,7 @@ fn render_xlsx(
             }
         }
         let data_start = 8_u32;
-        let old_last = sheet.get_highest_row();
+        let old_last = sheet.highest_row();
         let last = old_last.max(data_start.saturating_add(rows.len() as u32));
         for row_number in data_start..=last {
             let row = rows.get((row_number - data_start) as usize);
@@ -1317,21 +1317,19 @@ fn render_xlsx(
                 let value = row
                     .map(|row| projected_cell(ir, row, column))
                     .unwrap_or_default();
-                sheet
-                    .get_cell_mut((column_number, row_number))
-                    .set_value(value);
+                sheet.cell_mut((column_number, row_number)).set_value(value);
             }
         }
     }
     for (source, rows) in localization_sources {
         let sheet_name = source.sheet.as_deref().unwrap_or(&source.name);
-        let sheet = workbook.get_sheet_by_name_mut(sheet_name).ok_or_else(|| {
-            DataMutationError::Render(format!("missing worksheet `{sheet_name}`"))
-        })?;
-        let highest_column = sheet.get_highest_column();
+        let sheet = workbook
+            .sheet_by_name_mut(sheet_name)
+            .map_err(|_| DataMutationError::Render(format!("missing worksheet `{sheet_name}`")))?;
+        let highest_column = sheet.highest_column();
         let mut columns = BTreeMap::new();
         for column in 2..=highest_column {
-            let name = sheet.get_value((column, 3));
+            let name = sheet.value((column, 3));
             if !name.trim().is_empty() {
                 columns.insert(name.trim().to_owned(), column);
             }
@@ -1348,7 +1346,7 @@ fn render_xlsx(
             }
         }
         let data_start = 8_u32;
-        let old_last = sheet.get_highest_row();
+        let old_last = sheet.highest_row();
         let last = old_last.max(data_start.saturating_add(rows.len() as u32));
         for row_number in data_start..=last {
             let row = rows.get((row_number - data_start) as usize);
@@ -1357,7 +1355,7 @@ fn render_xlsx(
                     .and_then(|row| row.values.get(field))
                     .cloned()
                     .unwrap_or_default();
-                sheet.get_cell_mut((*column, row_number)).set_value(value);
+                sheet.cell_mut((*column, row_number)).set_value(value);
             }
         }
     }

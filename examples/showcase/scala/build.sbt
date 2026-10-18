@@ -1,4 +1,4 @@
-ThisBuild / scalaVersion := "3.3.3"
+ThisBuild / scalaVersion := "3.3.8"
 
 lazy val root = (project in file("."))
   .settings(
@@ -7,6 +7,6 @@ lazy val root = (project in file("."))
       baseDirectory.value / "src" / "generated" / "scala",
       baseDirectory.value / "src" / "main" / "scala",
     ),
-    libraryDependencies += "com.github.luben" % "zstd-jni" % "1.5.7-5",
+    libraryDependencies += "com.github.luben" % "zstd-jni" % "1.5.7-23",
     run / fork := true,
   )

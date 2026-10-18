@@ -2,3 +2,7 @@
 *.pb binary
 *.sora binary
 *.xlsx binary
+
+# Keep embedded Studio assets reproducible across platforms.
+/apps/studio/index.html text eol=lf
+/crates/sora-studio/dist/** text eol=lf

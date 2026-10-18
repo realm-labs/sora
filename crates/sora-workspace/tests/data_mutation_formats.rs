@@ -166,17 +166,17 @@ fn xlsx_mutation_preserves_styles_legacy_columns_and_other_sheets() {
     let root = project("xlsx");
     let path = source_path(&root, "xlsx");
     let mut workbook = read_xlsx(&path).unwrap();
-    let sheet = workbook.get_sheet_by_name_mut("Item").unwrap();
-    sheet.get_style_mut((3, 8)).set_background_color("FF00FF00");
-    sheet.get_cell_mut((4, 3)).set_value("legacy");
-    sheet.get_cell_mut((4, 8)).set_value("keep-me");
+    let sheet = workbook.sheet_by_name_mut("Item").unwrap();
+    sheet.style_mut((3, 8)).set_background_color("FF00FF00");
+    sheet.cell_mut((4, 3)).set_value("legacy");
+    sheet.cell_mut((4, 8)).set_value("keep-me");
     let other = workbook.new_sheet("Notes").unwrap();
-    other.get_cell_mut("A1").set_value("untouched");
+    other.cell_mut("A1").set_value("untouched");
     write_xlsx(&workbook, &path).unwrap();
     let before_style = workbook
-        .get_sheet_by_name("Item")
+        .sheet_by_name("Item")
         .unwrap()
-        .get_style((3, 8))
+        .style((3, 8))
         .clone();
     let workspace = WorkspaceService::new();
     let id = ProjectId::new("xlsx-preserve").unwrap();
@@ -207,21 +207,15 @@ fn xlsx_mutation_preserves_styles_legacy_columns_and_other_sheets() {
 
     let workbook = read_xlsx(&path).unwrap();
     assert_eq!(
-        workbook
-            .get_sheet_by_name("Item")
-            .unwrap()
-            .get_style((3, 8)),
+        workbook.sheet_by_name("Item").unwrap().style((3, 8)),
         &before_style
     );
     assert_eq!(
-        workbook
-            .get_sheet_by_name("Item")
-            .unwrap()
-            .get_value((4, 8)),
+        workbook.sheet_by_name("Item").unwrap().value((4, 8)),
         "keep-me"
     );
     assert_eq!(
-        workbook.get_sheet_by_name("Notes").unwrap().get_value("A1"),
+        workbook.sheet_by_name("Notes").unwrap().value("A1"),
         "untouched"
     );
     fs::remove_dir_all(root).unwrap();

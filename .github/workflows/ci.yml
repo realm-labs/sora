@@ -117,7 +117,7 @@ jobs:
           node-version: "24"
 
       - name: Install TypeScript
-        run: npm install -g typescript@5.9.3
+        run: npm install -g typescript@7.0.2
 
       - uses: dart-lang/setup-dart@v1
 

@@ -31,10 +31,10 @@ arrays, and an optional struct derived from a child table.
 - debug JSON: `generated/debug-json`
 - schema lock: `generated/schema.lock`
 
-The Kotlin project uses Gradle Wrapper 9.5.1, Kotlin JVM plugin 2.3.20, and a
+The Kotlin project uses Gradle Wrapper 9.5.1, Kotlin JVM plugin 2.3.21, and a
 JDK 21 toolchain.
 
-The Scala project uses sbt and Scala 3.3.3.
+The Scala project uses sbt and Scala 3.3.8.
 
 Regenerate everything:
 

@@ -8,7 +8,7 @@ publish = {% if package.publish %}true{% else %}false{% endif %}
 
 [dependencies]
 serde = { version = "1", features = ["derive", "rc"] }
-zstd = "0.13"
+zstd = "0.14"
 {%- if package.uses_rustc_hash %}
 rustc-hash = "2"
 {%- endif %}

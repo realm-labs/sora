@@ -22,7 +22,7 @@ use axum::{
     routing::{any, get},
     serve,
 };
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use rmcp::transport::streamable_http_server::{StreamableHttpServerConfig, StreamableHttpService};
 use sha2::Sha256;
 use sora_workspace::WorkspaceService;
