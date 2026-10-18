@@ -1,6 +1,5 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
-    fs,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -19,19 +18,34 @@ use sora_ir::{
 };
 use sora_schema::model::ParserSchema;
 
+use crate::scripts::ScriptSource;
+
 pub struct ParserRegistries {
     pub schema: SchemaParserRegistry,
     pub cell: CellParserRegistry,
 }
 
 pub fn load_parser_registries(paths: &[PathBuf]) -> Result<ParserRegistries> {
+    let scripts = paths
+        .iter()
+        .map(|path| {
+            ScriptSource::read(path)
+                .with_context(|| format!("failed to read Lua parser script `{}`", path.display()))
+        })
+        .collect::<Result<Vec<_>>>()?;
+    load_parser_registries_from_sources(&scripts)
+}
+
+pub(crate) fn load_parser_registries_from_sources(
+    scripts: &[ScriptSource],
+) -> Result<ParserRegistries> {
     let mut schema = SchemaParserRegistry::builtin();
     let mut cell = CellParserRegistry::builtin();
-    if paths.is_empty() {
+    if scripts.is_empty() {
         return Ok(ParserRegistries { schema, cell });
     }
 
-    let parsers = Arc::new(LuaParserSet::load(paths)?);
+    let parsers = Arc::new(LuaParserSet::load(scripts)?);
     for kind in parsers.kinds() {
         if schema.contains(kind) || cell.contains(kind) {
             bail!("Lua parser `{kind}` cannot override a built-in parser");
@@ -58,18 +72,15 @@ struct LuaParserSet {
 }
 
 impl LuaParserSet {
-    fn load(paths: &[PathBuf]) -> Result<Self> {
+    fn load(sources: &[ScriptSource]) -> Result<Self> {
         let mut scripts = Vec::new();
         let mut definitions = BTreeMap::new();
-        for path in paths {
-            let source = fs::read_to_string(path).with_context(|| {
-                format!("failed to read Lua parser script `{}`", path.display())
-            })?;
+        for source in sources {
             let script_index = scripts.len();
-            let discovered = discover_script_parsers(path, &source)?;
+            let discovered = discover_script_parsers(source.path(), source.source())?;
             scripts.push(LuaParserScript {
-                path: path.clone(),
-                source,
+                path: source.path().to_path_buf(),
+                source: source.source().to_owned(),
             });
             for mut definition in discovered {
                 if definitions.contains_key(&definition.kind) {
@@ -406,4 +417,113 @@ fn lua_table_to_data_value(table: Table) -> Result<Value> {
         values.insert(key, lua_value_to_data_value(value)?);
     }
     Ok(Value::Object(values))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{env::temp_dir as system_temp_dir, fs};
+
+    use sora_ir::model::{ConfigIr, ParserIr};
+    use uuid::Uuid;
+
+    use super::*;
+
+    #[test]
+    fn parser_sources_ignore_replaced_or_missing_files_during_registration_and_calls() {
+        let source = r#"
+return { parsers = { snapshot = {
+  options = { "prefix" },
+  validate = function(field)
+    assert(field.options.prefix == "memory", "expected snapshot options")
+  end,
+  parse = function(cell, ctx) return ctx.options.prefix .. ":" .. cell.text end,
+} } }
+"#;
+        let ir = ConfigIr {
+            project_id: "snapshot".to_owned(),
+            contract_id: "snapshot".to_owned(),
+            view: None,
+            group_defaults: BTreeMap::new(),
+            views: BTreeMap::new(),
+            localization: None,
+            enums: Vec::new(),
+            structs: Vec::new(),
+            unions: Vec::new(),
+            tables: Vec::new(),
+        };
+        let parser = ParserSchema {
+            kind: "snapshot".to_owned(),
+            options: BTreeMap::from([("prefix".to_owned(), "memory".to_owned())]),
+        };
+        let parser_ir = ParserIr::from(parser.clone());
+        for missing in [false, true] {
+            let path =
+                system_temp_dir().join(format!("sora-parser-snapshot-{}.lua", Uuid::new_v4()));
+            fs::write(&path, source).unwrap();
+            let script = ScriptSource::new(path.clone(), source.to_owned());
+            if missing {
+                fs::remove_file(&path).unwrap();
+            } else {
+                fs::write(
+                    &path,
+                    "return { parsers = { replaced = { parse = function() return 'disk' end } } }",
+                )
+                .unwrap();
+            }
+
+            let registries = load_parser_registries_from_sources(&[script]).unwrap();
+            assert!(registries.schema.contains("snapshot"));
+            assert!(registries.cell.contains("snapshot"));
+            assert!(!registries.schema.contains("replaced"));
+            assert!(!registries.cell.contains("replaced"));
+            if !missing {
+                fs::remove_file(&path).unwrap();
+            }
+            registries
+                .schema
+                .validate_field_parser("value", &TypeIr::String, Some(&parser))
+                .unwrap();
+            let context = CellContext {
+                path: Path::new("input.csv"),
+                ir: &ir,
+                location: CellLocation::Default,
+                field: "value",
+                parser: Some(&parser_ir),
+            };
+            assert_eq!(
+                registries
+                    .cell
+                    .parse_cell(&CellValue::Text("value".into()), &TypeIr::String, &context)
+                    .unwrap(),
+                Value::String("memory:value".to_owned())
+            );
+        }
+    }
+
+    #[test]
+    fn parser_sources_reject_duplicates_and_builtin_overrides() {
+        let source = "return { parsers = { snapshot = { parse = function() end } } }";
+        let script = ScriptSource::new(PathBuf::from("missing.lua"), source.to_owned());
+        let error = load_parser_registries_from_sources(&[script.clone(), script])
+            .err()
+            .expect("duplicate parsers must fail");
+        assert!(
+            error
+                .to_string()
+                .contains("duplicate Lua parser `snapshot`")
+        );
+
+        let builtin = ScriptSource::new(
+            PathBuf::from("missing.lua"),
+            source.replace("snapshot", "json"),
+        );
+        let error = load_parser_registries_from_sources(&[builtin])
+            .err()
+            .expect("built-in overrides must fail");
+        assert!(
+            error
+                .to_string()
+                .contains("cannot override a built-in parser")
+        );
+    }
 }

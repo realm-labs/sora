@@ -12,8 +12,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::{from_value, json, to_string_pretty};
 use sora_workspace::{
-    DiscoveredProjectInspection, ProjectCandidate, ProjectId, ProjectInitApplyReport,
-    ProjectInitPlan, ProjectInspection, RuntimeOptions,
+    DiscoveredProjectInspection, PreparedProject, ProjectCandidate, ProjectId,
+    ProjectInitApplyReport, ProjectInitPlan, ProjectInspection, RuntimeOptions,
 };
 use std::sync::Arc;
 use tokio::task::spawn_blocking;
@@ -92,21 +92,24 @@ impl SoraMcpServer {
                 "provide both `root_id` and `relative_manifest`",
             ));
         };
-        let roots = request_roots(&context);
-        let workspace = if roots.contains(&root_id) {
-            roots.workspace.clone()
-        } else {
-            self.workspace.clone()
-        };
-        let inspect_root = root_id.clone();
-        let inspect_manifest = relative_manifest.clone();
-        let inspection = spawn_blocking(move || {
-            workspace.inspect_discovered_project(&inspect_root, &inspect_manifest)
-        })
-        .await
-        .map_err(|error| project_open_error("project inspection worker failed", error))?
-        .map_err(|error| project_open_error("failed to inspect Sora project", error))?;
-        let trust_key = project_script_trust_key(&root_id, &relative_manifest, &inspection);
+        let prepared = context
+            .extensions
+            .get::<PreparedProject>()
+            .cloned()
+            .ok_or_else(|| {
+                project_open_error(
+                    "project snapshot is missing",
+                    "prepare and authorize the project before opening it",
+                )
+            })?;
+        let inspection = prepared.inspection();
+        if inspection.root_id != root_id || inspection.relative_manifest != relative_manifest {
+            return Err(project_open_error(
+                "project snapshot does not match selection",
+                "start a new project open call",
+            ));
+        }
+        let trust_key = project_script_trust_key(&root_id, &relative_manifest, inspection);
         let scripts_trusted = inspection.scripts.is_empty() || self.has_script_trust(&trust_key);
         if !scripts_trusted {
             return Err(project_open_error(
@@ -115,24 +118,8 @@ impl SoraMcpServer {
             ));
         }
         let workspace = self.workspace.clone();
-        let open_root = root_id.clone();
-        let open_manifest = relative_manifest.clone();
         let opened = spawn_blocking(move || {
-            if let Some(root) = roots.authority(&open_root) {
-                workspace.open_discovered_project_in_root(
-                    &root,
-                    &open_manifest,
-                    RuntimeOptions::default(),
-                    true,
-                )
-            } else {
-                workspace.open_discovered_project(
-                    &open_root,
-                    &open_manifest,
-                    RuntimeOptions::default(),
-                    true,
-                )
-            }
+            workspace.open_prepared_project(prepared, RuntimeOptions::default())
         })
         .await
         .map_err(|error| project_open_error("project open worker failed", error))?;
@@ -163,7 +150,7 @@ impl SoraMcpServer {
     pub(crate) async fn prepare_project_open(
         &self,
         request: &mut CallToolRequestParams,
-        context: &RequestContext<RoleServer>,
+        context: &mut RequestContext<RoleServer>,
         session: &InputSession,
     ) -> Result<Option<CallToolResponse>, ErrorData> {
         let input: ProjectOpenInput =
@@ -182,7 +169,7 @@ impl SoraMcpServer {
     async fn project_open_input(
         &self,
         request: &mut CallToolRequestParams,
-        context: &RequestContext<RoleServer>,
+        context: &mut RequestContext<RoleServer>,
         session: &InputSession,
         input: ProjectOpenInput,
     ) -> Result<Option<CallToolResponse>, CallToolResult> {
@@ -244,13 +231,16 @@ impl SoraMcpServer {
         };
         let inspect_root = root_id.clone();
         let inspect_manifest = relative_manifest.clone();
-        let inspection = spawn_blocking(move || {
-            workspace.inspect_discovered_project(&inspect_root, &inspect_manifest)
+        let prepared = spawn_blocking(move || {
+            workspace.prepare_discovered_project(&inspect_root, &inspect_manifest)
         })
         .await
-        .map_err(|error| project_open_error("project inspection worker failed", error))?
-        .map_err(|error| project_open_error("failed to inspect Sora project", error))?;
-        let trust_key = project_script_trust_key(&root_id, &relative_manifest, &inspection);
+        .map_err(|error| project_open_error("project snapshot worker failed", error))?
+        .map_err(|error| project_open_error("failed to prepare Sora project", error))?;
+        let inspection = prepared.inspection();
+        let root_id = inspection.root_id.clone();
+        let relative_manifest = inspection.relative_manifest.clone();
+        let trust_key = project_script_trust_key(&root_id, &relative_manifest, inspection);
         if session.has_response("script_trust")
             || (!inspection.scripts.is_empty() && !self.has_script_trust(&trust_key))
         {
@@ -282,6 +272,7 @@ impl SoraMcpServer {
                     "Sora project script trusted");
             }
         }
+        context.extensions.insert(prepared);
         request.arguments = json!({"root_id": root_id, "relative_manifest": relative_manifest})
             .as_object()
             .cloned();
@@ -609,4 +600,120 @@ fn project_script_trust_key(
         .collect::<Vec<_>>()
         .join("|");
     format!("{root_id}:{relative_manifest}:{scripts}")
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{env::temp_dir, fs, path::PathBuf};
+
+    use rmcp::{model::NumberOrString, service::serve_directly};
+    use sora_workspace::WorkspaceService;
+    use tokio::io::duplex;
+    use uuid::Uuid;
+
+    use super::*;
+
+    const PARSER: &str =
+        "return { parsers = { approved = { parse = function(cell) return cell.text end } } }";
+    const MAPPING: &str = "return { type_mappings = { { target = 'csharp', schema_type = 'Snapshot', type_name = 'Approved' } } }";
+    const LOADER: &str = "return { source_loaders = { approved_format = { load = function() return { rows = {} } end } } }";
+    const MANIFEST: &str = "project = { id = 'snapshot' }\ngroups = { common = { default = true } }\nviews = { default = { contract = 'snapshot/default', groups = ['common'] } }\nincludes = ['schema.toml']\n[parsers]\nscripts = ['parser.lua']\n[type_mappings]\nscripts = ['mapping.lua']\n[source_loaders]\nscripts = ['loader.lua']\n";
+
+    struct Fixture(PathBuf);
+
+    impl Fixture {
+        fn new() -> Self {
+            let root = temp_dir().join(format!("sora-mcp-script-snapshot-{}", Uuid::new_v4()));
+            fs::create_dir_all(&root).unwrap();
+            fs::write(root.join("project.toml"), MANIFEST).unwrap();
+            fs::write(root.join("schema.toml"), "[tables.Settings]\nid = 'settings'\nmode = 'singleton'\n[tables.Settings.fields]\nname = 'string'\n").unwrap();
+            fs::write(root.join("parser.lua"), PARSER).unwrap();
+            fs::write(root.join("mapping.lua"), MAPPING).unwrap();
+            fs::write(root.join("loader.lua"), LOADER).unwrap();
+            Self(root)
+        }
+    }
+
+    impl Drop for Fixture {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[tokio::test]
+    async fn project_open_executes_the_authorized_snapshot_after_files_and_manifest_change() {
+        let fixture = Fixture::new();
+        let workspace = Arc::new(WorkspaceService::new());
+        let root = workspace.add_root("snapshot", &fixture.0).unwrap();
+        let server = SoraMcpServer::new(workspace.clone());
+        let approved = workspace
+            .prepare_discovered_project(root.id(), "project.toml")
+            .unwrap();
+        server
+            .remember_script_trust(project_script_trust_key(
+                root.id(),
+                "project.toml",
+                approved.inspection(),
+            ))
+            .unwrap();
+
+        let (transport, _client) = duplex(16 * 1024);
+        let running = serve_directly(server.clone(), transport, None);
+        let mut context = RequestContext::new(NumberOrString::Number(1), running.peer().clone());
+        let mut request = CallToolRequestParams::new("sora_project_open").with_arguments(
+            json!({"root_id": root.id(), "relative_manifest": "project.toml"})
+                .as_object()
+                .unwrap()
+                .clone(),
+        );
+        let input = server.inputs.resume(&request, None).unwrap();
+        assert!(
+            server
+                .prepare_project_open(&mut request, &mut context, &input)
+                .await
+                .unwrap()
+                .is_none()
+        );
+
+        // This is the exact boundary between successful authorization and the
+        // tool handler. No timing race or production-only test hook is needed.
+        for path in ["parser.lua", "mapping.lua", "loader.lua", "injected.lua"] {
+            fs::write(
+                fixture.0.join(path),
+                "error('unapproved replacement executed')",
+            )
+            .unwrap();
+        }
+        fs::write(
+            fixture.0.join("project.toml"),
+            MANIFEST.replace("['parser.lua']", "['parser.lua', 'injected.lua']"),
+        )
+        .unwrap();
+        let result = server
+            .project_open(
+                Parameters(ProjectOpenInput {
+                    root_id: Some(root.id().to_owned()),
+                    relative_manifest: Some("project.toml".to_owned()),
+                }),
+                context,
+            )
+            .await;
+        result.expect("opening an authorized snapshot must not evaluate replacement scripts");
+        let ids = workspace.project_ids().unwrap();
+        assert_eq!(ids.len(), 1);
+        let session = workspace.project(&ids[0]).unwrap();
+        assert!(session.runtime().schema_parsers().contains("approved"));
+        assert!(
+            session
+                .runtime()
+                .source_registry()
+                .get("approved_format")
+                .is_some()
+        );
+        assert_eq!(
+            session.manifest().parsers.scripts,
+            [PathBuf::from("parser.lua")]
+        );
+        running.cancel().await.unwrap();
+    }
 }

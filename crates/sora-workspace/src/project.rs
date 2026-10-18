@@ -1,16 +1,20 @@
 use std::{
     fmt::{Debug, Formatter, Result as FmtResult},
+    fs,
     path::{Path, PathBuf},
-    sync::{Mutex, RwLock},
+    sync::{Arc, Mutex, RwLock},
 };
 
-use anyhow::{Result as AnyhowResult, anyhow};
+use anyhow::{Context, Result as AnyhowResult, anyhow};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use sora_config_format::parse_document;
 
 use crate::{
-    ProjectManifest, ProjectRuntime, RuntimeOptions, mutation::recover_transactions,
-    revision::calculate_revision,
+    ProjectManifest, ProjectRuntime, RuntimeOptions,
+    mutation::recover_transactions,
+    revision::{calculate_revision, calculate_revision_with_snapshot},
+    scripts::capture_project_scripts,
 };
 
 /// Opaque identifier for an opened project within one workspace service.
@@ -80,13 +84,27 @@ impl ProjectSession {
         if let Some(project_root) = manifest_path.parent() {
             recover_transactions(project_root)?;
         }
-        let manifest = ProjectManifest::load(&manifest_path)?;
-        let runtime = ProjectRuntime::load_with_manifest(
-            Some(&manifest_path),
-            Some(manifest.clone()),
-            options,
+        let (manifest, manifest_source) = capture_manifest(&manifest_path)?;
+        let scripts = capture_project_scripts(&manifest_path, &manifest, None)?
+            .0
+            .with_extras(&options.parser_scripts, &options.type_mapping_scripts)?;
+        let runtime = ProjectRuntime::load_from_sources(Some(manifest.clone()), scripts, options)?;
+        Self::open_snapshot(id, manifest_path, manifest, &manifest_source, runtime)
+    }
+
+    pub(crate) fn open_snapshot(
+        id: ProjectId,
+        manifest_path: PathBuf,
+        manifest: ProjectManifest,
+        manifest_source: &str,
+        runtime: ProjectRuntime,
+    ) -> AnyhowResult<Self> {
+        let revision = calculate_revision_with_snapshot(
+            &manifest_path,
+            &manifest,
+            manifest_source,
+            runtime.scripts(),
         )?;
-        let revision = calculate_revision(&manifest_path, &manifest)?;
         Ok(Self {
             id,
             manifest_path,
@@ -129,6 +147,14 @@ impl ProjectSession {
             .map_err(|_| anyhow!("project revision lock is poisoned"))? = revision.clone();
         Ok(revision)
     }
+}
+
+pub(crate) fn capture_manifest(path: &Path) -> AnyhowResult<(ProjectManifest, Arc<str>)> {
+    let source = fs::read_to_string(path)
+        .with_context(|| format!("failed to read project manifest `{}`", path.display()))?;
+    let manifest = parse_document(path, &source)
+        .with_context(|| format!("failed to load build config from `{}`", path.display()))?;
+    Ok((manifest, source.into()))
 }
 
 impl Debug for ProjectSession {

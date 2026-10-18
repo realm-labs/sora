@@ -301,7 +301,7 @@ impl ServerHandler for SoraMcpServer {
         context.extensions.insert(roots);
         if request.name == "sora_project_open"
             && let Some(response) = self
-                .prepare_project_open(&mut request, &context, &session)
+                .prepare_project_open(&mut request, &mut context, &session)
                 .await?
         {
             return Ok(self.input_response(&request, response));

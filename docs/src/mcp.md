@@ -31,9 +31,16 @@ For a local client, prefer stdio and use absolute paths:
 ```
 
 The server writes only JSON-RPC to stdout. Audit logs go to stderr. A project
-that declares Lua parser or type-mapping scripts remains untrusted unless the
-client completes the form Elicitation flow or the local command explicitly
+that declares Lua parser, type-mapping, or source-loader scripts remains untrusted
+unless the client completes the form Elicitation flow or the local command explicitly
 includes `--trust-project-scripts`.
+
+Script digests and execution use the same immutable source snapshot. The manifest's
+script declarations are captured with it; opening an authorized snapshot never
+reloads executable scripts from disk. Changes before approval require a new trust
+round, and changes after authorization cannot replace the code being opened.
+An existing session is reused only when its loaded manifest, scripts, and runtime
+options match the authorized snapshot; otherwise opening fails explicitly.
 
 Clients that provide MCP Roots can omit `--project`. Use `sora_project_list`
 and `sora_project_open`; clients without form Elicitation must pass both

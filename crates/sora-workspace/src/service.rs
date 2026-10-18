@@ -1,6 +1,6 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
-    fmt::{Display, Formatter, Result as FmtResult},
+    fmt::{Debug, Display, Formatter, Result as FmtResult},
     fs,
     io::Error as IoError,
     path::{Component, Path, PathBuf},
@@ -16,10 +16,13 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 
 use crate::{
-    ProjectId, ProjectManifest, ProjectSession, RuntimeOptions,
+    ProjectId, ProjectManifest, ProjectRuntime, ProjectSession, RuntimeOptions,
     mutation::{
         DataMutationCoordinator, ExcelSyncCoordinator, MutationCoordinator, ProjectInitCoordinator,
+        recover_transactions,
     },
+    project::capture_manifest,
+    scripts::{ScriptSources, capture_project_scripts},
 };
 
 /// Registry and coordination point for opened Sora projects.
@@ -148,33 +151,11 @@ impl WorkspaceService {
         options: RuntimeOptions,
         trust_project_scripts: bool,
     ) -> Result<Arc<ProjectSession>, WorkspaceError> {
-        let canonical = root.resolve_manifest(relative_manifest)?;
-        let manifest =
-            ProjectManifest::load(&canonical).map_err(|source| WorkspaceError::OpenProject {
-                path: canonical.clone(),
-                source,
-            })?;
-        if let Some(existing) = self
-            .sessions
-            .read()
-            .map_err(|_| WorkspaceError::StatePoisoned)?
-            .values()
-            .find(|session| session.manifest_path() == canonical)
-            .cloned()
-        {
-            return Ok(existing);
-        }
-        if !trust_project_scripts
-            && (!manifest.parsers.scripts.is_empty()
-                || !manifest.type_mappings.scripts.is_empty()
-                || !manifest.source_loaders.scripts.is_empty())
-        {
+        let prepared = self.prepare_discovered_project_in_root(root, relative_manifest)?;
+        if prepared.inspection().requires_trust && !trust_project_scripts {
             return Err(WorkspaceError::UntrustedProjectScripts);
         }
-        inspect_project_scripts(&root.path, &canonical, &manifest)?;
-        let sequence = self.next_project_id.fetch_add(1, Ordering::Relaxed) + 1;
-        let id = ProjectId::generated(sequence);
-        self.open_project(id, canonical, options)
+        self.open_prepared_project(prepared, options)
     }
 
     /// Inspects a discovered manifest without loading or executing project scripts.
@@ -183,32 +164,130 @@ impl WorkspaceService {
         root_id: &str,
         relative_manifest: &str,
     ) -> Result<DiscoveredProjectInspection, WorkspaceError> {
-        let (root, canonical) = self.resolve_discovered_manifest(root_id, relative_manifest)?;
-        let manifest =
-            ProjectManifest::load(&canonical).map_err(|source| WorkspaceError::OpenProject {
-                path: canonical.clone(),
-                source,
-            })?;
-        let scripts = inspect_project_scripts(&root.path, &canonical, &manifest)?;
-        Ok(DiscoveredProjectInspection {
-            root_id: root.id,
-            relative_manifest: normalized_relative_path(&validate_relative_manifest(
-                relative_manifest,
-            )?),
-            schema_id: manifest.project.id,
-            requires_trust: !scripts.is_empty(),
-            scripts,
-        })
+        Ok(self
+            .prepare_discovered_project(root_id, relative_manifest)?
+            .inspection)
     }
 
-    fn resolve_discovered_manifest(
+    /// Captures a manifest and all declared Lua sources without evaluating extensions.
+    pub fn prepare_discovered_project(
         &self,
         root_id: &str,
         relative_manifest: &str,
-    ) -> Result<(WorkspaceRoot, PathBuf), WorkspaceError> {
+    ) -> Result<PreparedProject, WorkspaceError> {
         let root = self.root(root_id)?;
-        let canonical = root.resolve_manifest(relative_manifest)?;
-        Ok((root, canonical))
+        self.prepare_discovered_project_in_root(&root, relative_manifest)
+    }
+
+    /// Captures a project using an explicit root authority, without registering it.
+    pub fn prepare_discovered_project_in_root(
+        &self,
+        root: &WorkspaceRoot,
+        relative_manifest: &str,
+    ) -> Result<PreparedProject, WorkspaceError> {
+        let manifest_path = root.resolve_manifest(relative_manifest)?;
+        let (manifest, manifest_source) =
+            capture_manifest(&manifest_path).map_err(|source| WorkspaceError::OpenProject {
+                path: manifest_path.clone(),
+                source,
+            })?;
+        let (scripts, metadata) =
+            capture_project_scripts(&manifest_path, &manifest, Some(&root.path))?;
+        let inspection = DiscoveredProjectInspection {
+            root_id: root.id.clone(),
+            relative_manifest: normalized_relative_path(&validate_relative_manifest(
+                relative_manifest,
+            )?),
+            schema_id: manifest.project.id.clone(),
+            requires_trust: !metadata.is_empty(),
+            scripts: metadata,
+        };
+        Ok(PreparedProject {
+            manifest_path,
+            manifest,
+            manifest_source,
+            scripts,
+            inspection,
+        })
+    }
+
+    /// Opens exactly the captured project sources. Calling this authorizes that snapshot.
+    /// Explicit extra scripts in `options` are separately supplied, trusted local inputs.
+    pub fn open_prepared_project(
+        &self,
+        prepared: PreparedProject,
+        options: RuntimeOptions,
+    ) -> Result<Arc<ProjectSession>, WorkspaceError> {
+        let path = prepared.manifest_path.clone();
+        let open_error = |source| WorkspaceError::OpenProject {
+            path: path.clone(),
+            source,
+        };
+        let scripts = prepared
+            .scripts
+            .with_extras(&options.parser_scripts, &options.type_mapping_scripts)
+            .map_err(open_error)?;
+        let check_existing = |session: &ProjectSession| -> Result<(), WorkspaceError> {
+            if session
+                .runtime()
+                .matches_snapshot(&prepared.manifest, &scripts, &options)
+                .map_err(open_error)?
+            {
+                Ok(())
+            } else {
+                Err(WorkspaceError::PreparedProjectMismatch(path.clone()))
+            }
+        };
+        {
+            let sessions = self
+                .sessions
+                .read()
+                .map_err(|_| WorkspaceError::StatePoisoned)?;
+            if let Some(existing) = sessions
+                .values()
+                .find(|session| session.manifest_path() == path)
+            {
+                check_existing(existing)?;
+                return Ok(Arc::clone(existing));
+            }
+        }
+        if let Some(project_root) = path.parent() {
+            recover_transactions(project_root).map_err(|source| open_error(source.into()))?;
+        }
+        let sequence = self.next_project_id.fetch_add(1, Ordering::Relaxed) + 1;
+        let runtime = ProjectRuntime::load_from_sources(
+            Some(prepared.manifest.clone()),
+            scripts.clone(),
+            options.clone(),
+        )
+        .map_err(open_error)?;
+        let session = Arc::new(
+            ProjectSession::open_snapshot(
+                ProjectId::generated(sequence),
+                prepared.manifest_path,
+                prepared.manifest.clone(),
+                &prepared.manifest_source,
+                runtime,
+            )
+            .map_err(open_error)?,
+        );
+        let mut sessions = self
+            .sessions
+            .write()
+            .map_err(|_| WorkspaceError::StatePoisoned)?;
+        // Another opener may have registered this path while registries were loading.
+        if let Some(existing) = sessions
+            .values()
+            .find(|session| session.manifest_path() == path)
+        {
+            check_existing(existing)?;
+            return Ok(Arc::clone(existing));
+        }
+        if sessions.contains_key(session.id()) {
+            return Err(WorkspaceError::DuplicateProject(session.id().clone()));
+        }
+        sessions.insert(session.id().clone(), Arc::clone(&session));
+        Ok(session)
     }
 
     /// Opens and registers a project as one atomic workspace operation.
@@ -300,6 +379,12 @@ pub enum WorkspaceError {
     ManifestOutsideRoot,
     #[error("project declares Lua scripts that have not been explicitly trusted")]
     UntrustedProjectScripts,
+    #[error(
+        "existing session for `{0}` does not match the authorized project snapshot or runtime options; close it or use a new workspace"
+    )]
+    PreparedProjectMismatch(PathBuf),
+    #[error("Lua source loader script paths must stay relative to the project: `{0}`")]
+    InvalidSourceLoaderScriptPath(PathBuf),
     #[error("project script `{path}` resolves outside its allowed root")]
     ProjectScriptOutsideRoot { path: PathBuf },
     #[error("failed to read project script `{path}`")]
@@ -368,6 +453,33 @@ pub struct ProjectCandidate {
     pub project_id: Option<ProjectId>,
 }
 
+/// Immutable manifest and executable sources awaiting caller authorization.
+/// Cloning preserves the captured bytes; no filesystem reads or Lua evaluation occur.
+#[derive(Clone)]
+pub struct PreparedProject {
+    manifest_path: PathBuf,
+    manifest: ProjectManifest,
+    manifest_source: Arc<str>,
+    scripts: ScriptSources,
+    inspection: DiscoveredProjectInspection,
+}
+
+impl PreparedProject {
+    pub fn inspection(&self) -> &DiscoveredProjectInspection {
+        &self.inspection
+    }
+}
+
+impl Debug for PreparedProject {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
+        formatter
+            .debug_struct("PreparedProject")
+            .field("manifest_path", &self.manifest_path)
+            .field("inspection", &self.inspection)
+            .finish_non_exhaustive()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct DiscoveredProjectInspection {
     pub root_id: String,
@@ -390,82 +502,6 @@ pub enum ProjectScriptKind {
     Parser,
     SourceLoader,
     TypeMapping,
-}
-
-fn inspect_project_scripts(
-    allowed_root: &Path,
-    manifest_path: &Path,
-    manifest: &ProjectManifest,
-) -> Result<Vec<ProjectScript>, WorkspaceError> {
-    let project_root = manifest_path.parent().unwrap_or_else(|| Path::new("."));
-    let mut scripts = manifest
-        .parsers
-        .scripts
-        .iter()
-        .map(|path| (ProjectScriptKind::Parser, path))
-        .chain(
-            manifest
-                .source_loaders
-                .scripts
-                .iter()
-                .map(|path| (ProjectScriptKind::SourceLoader, path)),
-        )
-        .chain(
-            manifest
-                .type_mappings
-                .scripts
-                .iter()
-                .map(|path| (ProjectScriptKind::TypeMapping, path)),
-        )
-        .map(|(kind, declared)| {
-            let path = project_root.join(declared);
-            let canonical =
-                path.canonicalize()
-                    .map_err(|source| WorkspaceError::ReadProjectScript {
-                        path: path.clone(),
-                        source,
-                    })?;
-            if !canonical.starts_with(allowed_root) {
-                return Err(WorkspaceError::ProjectScriptOutsideRoot { path });
-            }
-            let bytes =
-                fs::read(&canonical).map_err(|source| WorkspaceError::ReadProjectScript {
-                    path: canonical.clone(),
-                    source,
-                })?;
-            let relative = canonical.strip_prefix(allowed_root).map_err(|_| {
-                WorkspaceError::ProjectScriptOutsideRoot {
-                    path: canonical.clone(),
-                }
-            })?;
-            Ok(ProjectScript {
-                kind,
-                path: normalized_relative_path(relative),
-                digest: format!(
-                    "sha256:{}",
-                    Sha256::digest(bytes)
-                        .iter()
-                        .map(|byte| format!("{byte:02x}"))
-                        .collect::<String>()
-                ),
-            })
-        })
-        .collect::<Result<Vec<_>, WorkspaceError>>()?;
-    scripts.sort_by(|left, right| {
-        script_kind_rank(left.kind)
-            .cmp(&script_kind_rank(right.kind))
-            .then_with(|| left.path.cmp(&right.path))
-    });
-    scripts.dedup();
-    Ok(scripts)
-}
-
-fn script_kind_rank(kind: ProjectScriptKind) -> u8 {
-    match kind {
-        ProjectScriptKind::Parser => 0,
-        ProjectScriptKind::SourceLoader => 1,
-        ProjectScriptKind::TypeMapping => 2,
-    }
 }
 
 fn discover_root_manifests(root: &Path) -> Result<Vec<PathBuf>, WorkspaceError> {

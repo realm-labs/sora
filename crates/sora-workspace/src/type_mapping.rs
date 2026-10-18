@@ -1,6 +1,5 @@
 use std::{
     collections::BTreeSet,
-    fs,
     path::{Path, PathBuf},
 };
 
@@ -10,21 +9,34 @@ use sora_codegen::type_mapping::{
     StaticTypeMappingProvider, StaticTypeMappingRule, TypeMappingRegistry,
 };
 
+use crate::scripts::ScriptSource;
+
 pub fn load_type_mapping_registry(paths: &[PathBuf]) -> Result<TypeMappingRegistry> {
-    if paths.is_empty() {
+    let scripts = paths
+        .iter()
+        .map(|path| {
+            ScriptSource::read(path).with_context(|| {
+                format!(
+                    "failed to read Lua type mapping script `{}`",
+                    path.display()
+                )
+            })
+        })
+        .collect::<Result<Vec<_>>>()?;
+    load_type_mapping_registry_from_sources(&scripts)
+}
+
+pub(crate) fn load_type_mapping_registry_from_sources(
+    scripts: &[ScriptSource],
+) -> Result<TypeMappingRegistry> {
+    if scripts.is_empty() {
         return Ok(TypeMappingRegistry::new());
     }
 
     let mut rules = Vec::new();
     let mut seen = BTreeSet::new();
-    for path in paths {
-        let source = fs::read_to_string(path).with_context(|| {
-            format!(
-                "failed to read Lua type mapping script `{}`",
-                path.display()
-            )
-        })?;
-        for rule in discover_type_mappings(path, &source)? {
+    for source in scripts {
+        for rule in discover_type_mappings(source.path(), source.source())? {
             let key = (rule.target.clone(), rule.schema_type.clone());
             if !seen.insert(key.clone()) {
                 bail!(
@@ -140,7 +152,81 @@ fn type_mapping_lua() -> Result<Lua> {
 
 #[cfg(test)]
 mod tests {
+    use std::{env::temp_dir as system_temp_dir, fs};
+
+    use sora_codegen::type_mapping::TypeMappingContext;
+    use sora_ir::model::{ConfigIr, TypeIr};
+    use uuid::Uuid;
+
     use super::*;
+
+    #[test]
+    fn type_mapping_sources_ignore_replaced_or_missing_files() {
+        let source = r#"
+return { type_mappings = { {
+  target = "csharp",
+  schema_type = "Vec3",
+  type_name = "MemoryVector3",
+  imports = { "MemoryTypes" },
+} } }
+"#;
+        let ir = ConfigIr {
+            project_id: "snapshot".to_owned(),
+            contract_id: "snapshot".to_owned(),
+            view: None,
+            group_defaults: Default::default(),
+            views: Default::default(),
+            localization: None,
+            enums: Vec::new(),
+            structs: Vec::new(),
+            unions: Vec::new(),
+            tables: Vec::new(),
+        };
+        for missing in [false, true] {
+            let path =
+                system_temp_dir().join(format!("sora-mapping-snapshot-{}.lua", Uuid::new_v4()));
+            fs::write(&path, source).unwrap();
+            let script = ScriptSource::new(path.clone(), source.to_owned());
+            if missing {
+                fs::remove_file(&path).unwrap();
+            } else {
+                fs::write(&path, source.replace("Memory", "Disk")).unwrap();
+            }
+
+            let registry = load_type_mapping_registry_from_sources(&[script]).unwrap();
+            if !missing {
+                fs::remove_file(&path).unwrap();
+            }
+            let mapping = registry
+                .map_type(TypeMappingContext {
+                    target: "csharp",
+                    ir: &ir,
+                    ty: &TypeIr::Struct("Vec3".to_owned()),
+                })
+                .unwrap();
+            assert_eq!(mapping.type_name, "MemoryVector3");
+            assert_eq!(mapping.imports, ["MemoryTypes"]);
+        }
+    }
+
+    #[test]
+    fn type_mapping_sources_reject_duplicate_rules() {
+        let script = ScriptSource::new(
+            PathBuf::from("missing.lua"),
+            r#"return { type_mappings = { {
+                target = "csharp", schema_type = "Vec3", type_name = "Vector3",
+            } } }"#
+                .to_owned(),
+        );
+        let error = load_type_mapping_registry_from_sources(&[script.clone(), script])
+            .err()
+            .expect("duplicate rules must fail");
+        assert!(
+            error
+                .to_string()
+                .contains("duplicate type mapping for target `csharp` and schema type `Vec3`")
+        );
+    }
 
     #[test]
     fn loads_lua_type_mapping_rules() {

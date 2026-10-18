@@ -1,5 +1,6 @@
 use std::{
-    collections::BTreeSet,
+    borrow::Cow,
+    collections::{BTreeMap, BTreeSet},
     fs,
     io::Result as IoResult,
     path::{Path, PathBuf},
@@ -10,15 +11,73 @@ use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use sora_config_format::load_document;
 
-use crate::{ProjectManifest, ProjectRevision};
+use crate::{
+    ProjectManifest, ProjectRevision,
+    scripts::{ScriptSources, format_digest},
+};
 
 pub(crate) fn calculate_revision(
     manifest_path: &Path,
     manifest: &ProjectManifest,
 ) -> Result<ProjectRevision> {
-    let manifest_digest = digest_files(manifest_path.parent(), &[manifest_path.to_path_buf()])?;
-    let schema_files = schema_files(manifest_path)?;
-    let schema_digest = digest_files(manifest_path.parent(), &schema_files)?;
+    calculate_revision_with_inputs(manifest_path, manifest, &RevisionInputs::default())
+}
+
+/// Root declarations and executable contents come from the loaded snapshot;
+/// all other schema and data inputs retain their normal filesystem semantics.
+pub(crate) fn calculate_revision_with_snapshot(
+    manifest_path: &Path,
+    manifest: &ProjectManifest,
+    manifest_source: &str,
+    scripts: &ScriptSources,
+) -> Result<ProjectRevision> {
+    let project_dir = manifest_path.parent().unwrap_or_else(|| Path::new("."));
+    let mut inputs = RevisionInputs::default();
+    inputs
+        .contents
+        .insert(manifest_path.to_path_buf(), manifest_source.as_bytes());
+    // Scripts may also be encountered as ordinary files under the data root.
+    for source in scripts.parsers.iter().chain(&scripts.type_mappings) {
+        inputs
+            .contents
+            .insert(source.path().to_path_buf(), source.source().as_bytes());
+    }
+    for source in &scripts.source_loaders {
+        inputs
+            .contents
+            .insert(project_dir.join(source.path()), source.source().as_bytes());
+    }
+    calculate_revision_with_inputs(manifest_path, manifest, &inputs)
+}
+
+#[derive(Default)]
+struct RevisionInputs<'a> {
+    contents: BTreeMap<PathBuf, &'a [u8]>,
+}
+
+impl RevisionInputs<'_> {
+    fn read(&self, path: &Path) -> Result<Cow<'_, [u8]>> {
+        match self.contents.get(path) {
+            Some(bytes) => Ok(Cow::Borrowed(bytes)),
+            None => fs::read(path)
+                .map(Cow::Owned)
+                .with_context(|| format!("failed to read revision input `{}`", path.display())),
+        }
+    }
+}
+
+fn calculate_revision_with_inputs(
+    manifest_path: &Path,
+    manifest: &ProjectManifest,
+    inputs: &RevisionInputs<'_>,
+) -> Result<ProjectRevision> {
+    let manifest_digest = digest_files(
+        manifest_path.parent(),
+        &[manifest_path.to_path_buf()],
+        inputs,
+    )?;
+    let schema_files = schema_files(manifest_path, manifest, inputs)?;
+    let schema_digest = digest_files(manifest_path.parent(), &schema_files, inputs)?;
     let project_dir = manifest_path.parent().unwrap_or_else(|| Path::new("."));
     let data_root = manifest
         .build
@@ -27,7 +86,7 @@ pub(crate) fn calculate_revision(
         .unwrap_or_else(|| Path::new("data"));
     let data_root = resolve_path(project_dir, data_root);
     let data_files = collect_files(&data_root)?;
-    let data_content_digest = digest_files(Some(&data_root), &data_files)?;
+    let data_content_digest = digest_files(Some(&data_root), &data_files, inputs)?;
     let source_loader_files = manifest
         .source_loaders
         .scripts
@@ -37,7 +96,7 @@ pub(crate) fn calculate_revision(
     let data_digest = if source_loader_files.is_empty() {
         data_content_digest
     } else {
-        let source_loader_digest = digest_files(Some(project_dir), &source_loader_files)?;
+        let source_loader_digest = digest_files(Some(project_dir), &source_loader_files, inputs)?;
         digest_parts([
             data_content_digest.as_bytes(),
             source_loader_digest.as_bytes(),
@@ -56,42 +115,74 @@ pub(crate) fn calculate_revision(
     })
 }
 
-fn schema_files(manifest_path: &Path) -> Result<Vec<PathBuf>> {
+fn schema_files(
+    manifest_path: &Path,
+    manifest: &ProjectManifest,
+    inputs: &RevisionInputs<'_>,
+) -> Result<Vec<PathBuf>> {
     let mut visited = BTreeSet::new();
     let mut files = Vec::new();
-    collect_schema_files(manifest_path, &mut visited, &mut files)?;
+    collect_schema_files(
+        manifest_path,
+        Some(manifest),
+        inputs,
+        &mut visited,
+        &mut files,
+    )?;
     files.sort();
     Ok(files)
 }
 
 fn collect_schema_files(
     path: &Path,
+    root_manifest: Option<&ProjectManifest>,
+    inputs: &RevisionInputs<'_>,
     visited: &mut BTreeSet<PathBuf>,
     files: &mut Vec<PathBuf>,
 ) -> Result<()> {
-    let key = path.canonicalize().with_context(|| {
-        format!(
-            "failed to resolve schema document while calculating revision `{}`",
-            path.display()
-        )
-    })?;
+    // A captured root is already canonical and may have been deleted since prepare.
+    let key = if root_manifest.is_some() && inputs.contents.contains_key(path) {
+        path.to_path_buf()
+    } else {
+        path.canonicalize().with_context(|| {
+            format!(
+                "failed to resolve schema document while calculating revision `{}`",
+                path.display()
+            )
+        })?
+    };
     if !visited.insert(key.clone()) {
         bail!(
             "schema include cycle or duplicate include `{}`",
             path.display()
         );
     }
-    let document: IncludeDocument = load_document(&key)
-        .with_context(|| format!("failed to inspect schema includes in `{}`", path.display()))?;
+    let document;
+    let (views, includes) = match root_manifest {
+        Some(manifest) => (
+            manifest.project.views.as_slice(),
+            manifest.includes.as_slice(),
+        ),
+        None => {
+            document = load_document::<IncludeDocument>(&key).with_context(|| {
+                format!("failed to inspect schema includes in `{}`", path.display())
+            })?;
+            (
+                document
+                    .project
+                    .as_ref()
+                    .map_or(&[][..], |project| project.views.as_slice()),
+                document.includes.as_slice(),
+            )
+        }
+    };
     files.push(key.clone());
     let parent = key.parent().unwrap_or_else(|| Path::new("."));
-    if let Some(project) = document.project {
-        for view in project.views {
-            collect_schema_dependency(&parent.join(view), visited, files)?;
-        }
+    for view in views {
+        collect_schema_dependency(&parent.join(view), visited, files)?;
     }
-    for include in document.includes {
-        collect_schema_files(&parent.join(include), visited, files)?;
+    for include in includes {
+        collect_schema_files(&parent.join(include), None, inputs, visited, files)?;
     }
     Ok(())
 }
@@ -151,7 +242,11 @@ fn collect_files(root: &Path) -> Result<Vec<PathBuf>> {
     Ok(files)
 }
 
-fn digest_files(base: Option<&Path>, files: &[PathBuf]) -> Result<String> {
+fn digest_files(
+    base: Option<&Path>,
+    files: &[PathBuf],
+    inputs: &RevisionInputs<'_>,
+) -> Result<String> {
     let mut hasher = Sha256::new();
     for path in files {
         let identity = base
@@ -159,8 +254,7 @@ fn digest_files(base: Option<&Path>, files: &[PathBuf]) -> Result<String> {
             .unwrap_or(path);
         hasher.update(normalized_path(identity).as_bytes());
         hasher.update([0]);
-        let content = fs::read(path)
-            .with_context(|| format!("failed to read revision input `{}`", path.display()))?;
+        let content = inputs.read(path)?;
         hasher.update((content.len() as u64).to_le_bytes());
         hasher.update(content);
     }
@@ -174,17 +268,6 @@ fn digest_parts<'a>(parts: impl IntoIterator<Item = &'a [u8]>) -> String {
         hasher.update(part);
     }
     format_digest(hasher.finalize())
-}
-
-fn format_digest(digest: impl AsRef<[u8]>) -> String {
-    format!(
-        "sha256:{}",
-        digest
-            .as_ref()
-            .iter()
-            .map(|byte| format!("{byte:02x}"))
-            .collect::<String>()
-    )
 }
 
 fn normalized_path(path: &Path) -> String {
@@ -223,9 +306,64 @@ mod tests {
         time::{SystemTime, UNIX_EPOCH},
     };
 
+    use uuid::Uuid;
+
     use super::*;
+    use crate::{project::capture_manifest, scripts::capture_project_scripts};
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+    #[test]
+    fn snapshot_revisions_preserve_the_existing_format_without_reopening_scripts() {
+        let root = system_temp_dir().join(format!("sora-revision-snapshot-{}", Uuid::new_v4()));
+        fs::create_dir_all(root.join("data")).unwrap();
+        let path = root.join("project.toml");
+        fs::write(&path, "project = { id = 'revision', views = ['view.toml'] }\nincludes = ['schema.toml']\n[parsers]\nscripts = ['data/parser.lua']\n[type_mappings]\nscripts = ['data/mapping.lua']\n[source_loaders]\nscripts = ['data/loader.lua']\n").unwrap();
+        fs::write(root.join("schema.toml"), "includes = []\n").unwrap();
+        fs::write(root.join("view.toml"), "view = {}\n").unwrap();
+        fs::write(root.join("data/input.txt"), "data").unwrap();
+        for name in ["parser.lua", "mapping.lua", "loader.lua"] {
+            fs::write(root.join("data").join(name), "return {}\n").unwrap();
+        }
+        let path = path.canonicalize().unwrap();
+        let (manifest, source) = capture_manifest(&path).unwrap();
+        let scripts = capture_project_scripts(&path, &manifest, None).unwrap().0;
+        let expected = calculate_revision(&path, &manifest).unwrap();
+        assert_eq!(
+            calculate_revision_with_snapshot(&path, &manifest, &source, &scripts).unwrap(),
+            expected
+        );
+        for name in ["parser.lua", "mapping.lua", "loader.lua"] {
+            fs::write(root.join("data").join(name), "error('replacement')\n").unwrap();
+        }
+        fs::write(&path, "invalid manifest replacement").unwrap();
+        assert_eq!(
+            calculate_revision_with_snapshot(&path, &manifest, &source, &scripts).unwrap(),
+            expected
+        );
+        fs::remove_file(&path).unwrap();
+        assert_eq!(
+            calculate_revision_with_snapshot(&path, &manifest, &source, &scripts).unwrap(),
+            expected
+        );
+        fs::write(root.join("data/input.txt"), "changed data").unwrap();
+        let changed =
+            calculate_revision_with_snapshot(&path, &manifest, &source, &scripts).unwrap();
+        assert_eq!(changed.manifest, expected.manifest);
+        assert_eq!(changed.schema, expected.schema);
+        assert_ne!(changed.data, expected.data);
+        fs::write(
+            root.join("schema.toml"),
+            "includes = []\n# changed schema\n",
+        )
+        .unwrap();
+        let changed_schema =
+            calculate_revision_with_snapshot(&path, &manifest, &source, &scripts).unwrap();
+        assert_eq!(changed_schema.manifest, expected.manifest);
+        assert_ne!(changed_schema.schema, expected.schema);
+        assert_eq!(changed_schema.data, changed.data);
+        fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn revisions_change_only_for_the_affected_content_group() {

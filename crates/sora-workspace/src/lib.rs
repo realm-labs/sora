@@ -15,6 +15,7 @@ mod project;
 mod query;
 mod revision;
 mod runtime;
+mod scripts;
 mod service;
 pub mod source;
 pub mod studio;
@@ -53,7 +54,7 @@ pub use query::{
 };
 pub use runtime::{ProjectRuntime, RuntimeOptions};
 pub use service::{
-    DiscoveredProjectInspection, ProjectCandidate, ProjectScript, ProjectScriptKind,
-    WorkspaceError, WorkspaceRoot, WorkspaceService,
+    DiscoveredProjectInspection, PreparedProject, ProjectCandidate, ProjectScript,
+    ProjectScriptKind, WorkspaceError, WorkspaceRoot, WorkspaceService,
 };
 pub use type_mapping::load_type_mapping_registry;

@@ -24,6 +24,8 @@ use sora_input::source::{
     DataSourceDependency, DataSourceLoader, DataSourceRegistry, DataSourceRequest,
 };
 
+use crate::scripts::ScriptSource;
+
 const MAX_ROWS: usize = 100_000;
 const MAX_VALUE_DEPTH: usize = 64;
 const MAX_FILES: usize = 4_096;
@@ -36,20 +38,15 @@ const MAX_MEMORY_BYTES: usize = 128 * 1024 * 1024;
 type DependencyScope = (String, PathBuf);
 type DependencyTracker = BTreeMap<DependencyScope, BTreeMap<PathBuf, String>>;
 
-pub(crate) fn register_lua_source_loaders(
+pub(crate) fn register_lua_source_loaders_from_sources(
     registry: &mut DataSourceRegistry,
-    scripts: &[(PathBuf, PathBuf)],
+    scripts: &[ScriptSource],
 ) -> Result<()> {
     let mut declared_formats = BTreeSet::new();
-    for (declared_path, resolved_path) in scripts {
-        let source = fs::read_to_string(resolved_path).with_context(|| {
-            format!(
-                "failed to read Lua source loader script `{}`",
-                declared_path.display()
-            )
-        })?;
-        let digest = sha256(source.as_bytes());
-        let definitions = discover_definitions(declared_path, &source)?;
+    for source in scripts {
+        let declared_path = source.path();
+        let digest = sha256(source.source().as_bytes());
+        let definitions = discover_definitions(declared_path, source.source())?;
         if definitions.is_empty() {
             bail!(
                 "Lua source loader script `{}` did not register any source loaders",
@@ -64,8 +61,8 @@ pub(crate) fn register_lua_source_loaders(
                 .try_register(LuaSourceLoader {
                     format: definition.format,
                     extensions: definition.extensions,
-                    script_label: declared_path.clone(),
-                    script_source: source.clone(),
+                    script_label: declared_path.to_path_buf(),
+                    script_source: source.source().to_owned(),
                     script_digest: digest.clone(),
                     dependencies: Arc::new(Mutex::new(BTreeMap::new())),
                 })
@@ -815,7 +812,105 @@ fn normalized_path(path: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::sha256;
+    use std::env::temp_dir as system_temp_dir;
+
+    use sora_input::parser::ParserRegistry as CellParserRegistry;
+    use sora_ir::model::{ConfigIr, TableIr, TableModeIr, TableSourceIr};
+    use uuid::Uuid;
+
+    use super::*;
+
+    const SNAPSHOT_SOURCE: &str = r#"
+return { source_loaders = { snapshot = {
+  extensions = { ".SNAPSHOT" },
+  load = function(source, ctx)
+    return { rows = { { value = "memory" } } }
+  end,
+} } }
+"#;
+
+    #[test]
+    fn source_loader_sources_keep_memory_definitions_execution_and_digest() {
+        let label = PathBuf::from("tools/source_loaders.lua");
+        let ir = ConfigIr {
+            project_id: "snapshot".to_owned(),
+            contract_id: "snapshot".to_owned(),
+            view: None,
+            group_defaults: BTreeMap::new(),
+            views: BTreeMap::new(),
+            localization: None,
+            enums: Vec::new(),
+            structs: Vec::new(),
+            unions: Vec::new(),
+            tables: vec![TableIr {
+                id: "snapshot".to_owned(),
+                name: "Snapshot".to_owned(),
+                canonical_name: "Snapshot".to_owned(),
+                groups: Default::default(),
+                mode: TableModeIr::List,
+                key: None,
+                source: Some(TableSourceIr {
+                    format: Some("snapshot".to_owned()),
+                    file: "input".to_owned(),
+                    sheet: None,
+                    sheets: Vec::new(),
+                }),
+                fields: Vec::new(),
+                indexes: Vec::new(),
+            }],
+        };
+        let execution = ExecutionContext::default();
+        let parsers = CellParserRegistry::builtin();
+        for missing in [false, true] {
+            let root = system_temp_dir().join(format!("sora-loader-snapshot-{}", Uuid::new_v4()));
+            let path = root.join(&label);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(&path, SNAPSHOT_SOURCE).unwrap();
+            let script = ScriptSource::new(label.clone(), SNAPSHOT_SOURCE.to_owned());
+            let replacement = SNAPSHOT_SOURCE
+                .replace("snapshot", "replaced")
+                .replace("memory", "disk");
+            if missing {
+                fs::remove_file(&path).unwrap();
+            } else {
+                fs::write(&path, &replacement).unwrap();
+            }
+
+            let mut registry = DataSourceRegistry::new();
+            register_lua_source_loaders_from_sources(&mut registry, &[script]).unwrap();
+            assert_eq!(registry.supported_formats(), ["snapshot"]);
+            let loader = registry.get("snapshot").unwrap();
+            assert_eq!(loader.extensions(), ["snapshot"]);
+            let expected = vec![DataSourceDependency {
+                path: label.clone(),
+                digest: sha256(SNAPSHOT_SOURCE.as_bytes()),
+            }];
+            assert_ne!(expected[0].digest, sha256(replacement.as_bytes()));
+            assert_eq!(registry.dependencies(), expected);
+            if !missing {
+                fs::remove_file(&path).unwrap();
+            }
+
+            let table = &ir.tables[0];
+            let data = loader
+                .load_table(DataSourceRequest {
+                    ir: &ir,
+                    table,
+                    source: table.source.as_ref().unwrap(),
+                    path: &root,
+                    execution: &execution,
+                    parser_registry: &parsers,
+                })
+                .unwrap();
+            assert_eq!(data.rows.len(), 1);
+            assert_eq!(
+                data.rows[0].values["value"],
+                Value::String("memory".to_owned())
+            );
+            assert_eq!(registry.dependencies(), expected);
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
 
     #[test]
     fn sha256_preserves_prefixed_lowercase_hex() {

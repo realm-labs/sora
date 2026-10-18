@@ -300,6 +300,71 @@ async fn unsolicited_input_cannot_grant_trust_and_changed_script_input_is_reject
 }
 
 #[tokio::test]
+async fn manifest_script_injection_after_trust_prompt_requires_new_authorization() -> Result<()> {
+    let root = project(true)?;
+    let workspace = Arc::new(WorkspaceService::new());
+    let root_id = workspace.add_root("test", &root)?.id().to_owned();
+    let server = SoraMcpServer::new(workspace.clone());
+    let original = json!({"name":"sora_project_open", "arguments":{"root_id":root_id,"relative_manifest":"project.toml"}});
+    let caps = json!({"elicitation":{"form":{}}});
+    let response = raw_request(&server, "tools/call", original.clone(), caps.clone()).await?;
+    let mut manifest = fs::read_to_string(root.join("project.toml"))?;
+    manifest.push_str("\n[type_mappings]\nscripts = ['injected.lua']\n");
+    fs::write(
+        root.join("injected.lua"),
+        "error('unapproved script must not execute')",
+    )?;
+    fs::write(root.join("project.toml"), manifest)?;
+    let request = retry(
+        &original,
+        &response,
+        "script_trust",
+        json!({"action":"accept", "content":{"trust_project_scripts":true}}),
+    );
+    let response = raw_request(&server, "tools/call", request, caps).await?;
+    assert_eq!(response["result"]["isError"], true, "{response}");
+    assert!(
+        response
+            .to_string()
+            .contains("requested input content changed"),
+        "{response}"
+    );
+    assert!(workspace.project_ids()?.is_empty());
+    fs::remove_dir_all(root)?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn project_open_normalizes_valid_selection_paths_before_binding_the_snapshot() -> Result<()> {
+    let root = project(false)?;
+    fs::create_dir(root.join("nested"))?;
+    for path in ["project.toml", "schema.toml"] {
+        fs::rename(root.join(path), root.join("nested").join(path))?;
+    }
+    let workspace = Arc::new(WorkspaceService::new());
+    let root_id = workspace.add_root("test", &root)?.id().to_owned();
+    let server = SoraMcpServer::new(workspace.clone());
+    let paths = vec![
+        "nested/project.toml",
+        "nested//project.toml",
+        "nested/./project.toml",
+    ];
+    #[cfg(windows)]
+    let paths = {
+        let mut paths = paths;
+        paths.push("nested\\project.toml");
+        paths
+    };
+    for path in paths {
+        let result = raw_request(&server, "tools/call", json!({"name":"sora_project_open", "arguments":{"root_id":root_id,"relative_manifest":path}}), json!({})).await?;
+        assert_eq!(result["result"]["isError"], false, "{path}: {result}");
+    }
+    assert_eq!(workspace.project_ids()?.len(), 1);
+    fs::remove_dir_all(root)?;
+    Ok(())
+}
+
+#[tokio::test]
 async fn concurrent_trust_cannot_turn_a_cancelled_input_into_execution() -> Result<()> {
     let root = project(true)?;
     let shared = Arc::new(WorkspaceService::new());

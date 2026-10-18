@@ -30,9 +30,14 @@ cargo install --path crates/sora-cli
 }
 ```
 
-stdout 只包含 JSON-RPC，审计日志写入 stderr。项目声明的 Lua parser 或 type-mapping
-脚本默认不受信任。只有客户端完成 form Elicitation，或本地启动命令显式加入
+stdout 只包含 JSON-RPC，审计日志写入 stderr。项目声明的 Lua parser、type-mapping
+或 source-loader 脚本默认不受信任。只有客户端完成 form Elicitation，或本地启动命令显式加入
 `--trust-project-scripts`，Sora 才会执行它们。
+
+脚本摘要与执行使用同一份不可变源码快照，Manifest 的脚本声明也一并捕获。
+打开获批快照时不会再从磁盘重新加载可执行脚本；批准前发生的变化需要重新确认，
+授权后发生的文件变化不能替换本次执行的代码。只有已加载的 Manifest、脚本及运行选项
+与获批快照一致时才会复用已有会话，否则打开操作会明确失败。
 
 支持 MCP Roots 的客户端可以省略 `--project`，随后调用 `sora_project_list` 和
 `sora_project_open`。不支持 form Elicitation 的客户端必须显式传入 `root_id` 与
