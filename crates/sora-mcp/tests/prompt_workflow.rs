@@ -1,3 +1,4 @@
+use rmcp::service::{ClientLifecycleMode, ClientServiceExt};
 use std::{
     collections::HashMap,
     env::temp_dir as system_temp_dir,
@@ -14,8 +15,8 @@ use anyhow::{Ok as anyhow_ok, Result};
 use rmcp::{
     ClientHandler, ServiceExt,
     model::{
-        ArgumentInfo, ClientInfo, CompleteRequestParams, CompletionContext, GetPromptRequestParams,
-        Implementation, Reference,
+        ArgumentInfo, ClientConfig, CompleteRequestParams, CompletionContext,
+        GetPromptRequestParams, Implementation, Reference,
     },
 };
 use serde_json::{json, to_value};
@@ -29,8 +30,8 @@ static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 struct PromptClient;
 
 impl ClientHandler for PromptClient {
-    fn get_info(&self) -> ClientInfo {
-        ClientInfo::new(
+    fn get_info(&self) -> ClientConfig {
+        ClientConfig::new(
             Default::default(),
             Implementation::new("sora-prompt-test", env!("CARGO_PKG_VERSION")),
         )
@@ -53,7 +54,14 @@ async fn prompts_embed_bounded_project_context_and_complete_arguments() -> Resul
         server.serve(server_transport).await?.waiting().await?;
         anyhow_ok(())
     });
-    let client = PromptClient.serve(client_transport).await?;
+    let client = PromptClient
+        .serve_with_lifecycle(
+            client_transport,
+            ClientLifecycleMode::Discover {
+                preferred_versions: vec![TARGET_PROTOCOL_VERSION],
+            },
+        )
+        .await?;
 
     let prompts = client.list_prompts(None).await?;
     assert_eq!(prompts.prompts.len(), 7);

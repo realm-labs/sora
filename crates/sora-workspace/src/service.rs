@@ -131,7 +131,24 @@ impl WorkspaceService {
         options: RuntimeOptions,
         trust_project_scripts: bool,
     ) -> Result<Arc<ProjectSession>, WorkspaceError> {
-        let (root, canonical) = self.resolve_discovered_manifest(root_id, relative_manifest)?;
+        let root = self.root(root_id)?;
+        self.open_discovered_project_in_root(
+            &root,
+            relative_manifest,
+            options,
+            trust_project_scripts,
+        )
+    }
+
+    /// Opens a project using an explicit root authority without registering that root.
+    pub fn open_discovered_project_in_root(
+        &self,
+        root: &WorkspaceRoot,
+        relative_manifest: &str,
+        options: RuntimeOptions,
+        trust_project_scripts: bool,
+    ) -> Result<Arc<ProjectSession>, WorkspaceError> {
+        let canonical = root.resolve_manifest(relative_manifest)?;
         let manifest =
             ProjectManifest::load(&canonical).map_err(|source| WorkspaceError::OpenProject {
                 path: canonical.clone(),
@@ -189,25 +206,8 @@ impl WorkspaceService {
         root_id: &str,
         relative_manifest: &str,
     ) -> Result<(WorkspaceRoot, PathBuf), WorkspaceError> {
-        let root = self
-            .roots
-            .read()
-            .map_err(|_| WorkspaceError::StatePoisoned)?
-            .get(root_id)
-            .cloned()
-            .ok_or_else(|| WorkspaceError::UnknownRoot(root_id.to_owned()))?;
-        let relative = validate_relative_manifest(relative_manifest)?;
-        let manifest_path = root.path.join(relative);
-        let canonical =
-            manifest_path
-                .canonicalize()
-                .map_err(|source| WorkspaceError::ResolveManifest {
-                    path: manifest_path.clone(),
-                    source,
-                })?;
-        if !canonical.starts_with(&root.path) {
-            return Err(WorkspaceError::ManifestOutsideRoot);
-        }
+        let root = self.root(root_id)?;
+        let canonical = root.resolve_manifest(relative_manifest)?;
         Ok((root, canonical))
     }
 
@@ -340,6 +340,23 @@ impl WorkspaceRoot {
 
     pub(crate) fn path(&self) -> &Path {
         &self.path
+    }
+
+    /// Resolves a manifest within this root, rejecting traversal and escaping symlinks.
+    pub fn resolve_manifest(&self, relative_manifest: &str) -> Result<PathBuf, WorkspaceError> {
+        let relative = validate_relative_manifest(relative_manifest)?;
+        let manifest_path = self.path.join(relative);
+        let canonical =
+            manifest_path
+                .canonicalize()
+                .map_err(|source| WorkspaceError::ResolveManifest {
+                    path: manifest_path,
+                    source,
+                })?;
+        if !canonical.starts_with(&self.path) {
+            return Err(WorkspaceError::ManifestOutsideRoot);
+        }
+        Ok(canonical)
     }
 }
 

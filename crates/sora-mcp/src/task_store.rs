@@ -1,6 +1,6 @@
 use std::{
     collections::BTreeMap,
-    str::from_utf8,
+    future::Future,
     sync::{
         Arc, Mutex, MutexGuard,
         atomic::{AtomicBool, Ordering},
@@ -8,57 +8,68 @@ use std::{
     time::{Duration, Instant},
 };
 
-use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 use rmcp::{
-    model::{ErrorData as McpError, ListTasksResult, Task, TaskStatus},
+    ErrorData as McpError,
+    model::{CallToolResult, DetailedTask, JsonObject, Task, TaskPayload, TaskStatus},
     task_manager::current_timestamp,
 };
-use serde_json::Value;
+use serde::Serialize;
+use serde_json::{Value, to_value};
+use tokio::{
+    pin, select,
+    time::{Instant as TokioInstant, sleep_until},
+};
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
-const DEFAULT_TTL_MS: u64 = 5 * 60 * 1_000;
-const MIN_TTL_MS: u64 = 1_000;
-const MAX_TTL_MS: u64 = 10 * 60 * 1_000;
+const EXECUTION_TTL: Duration = Duration::from_secs(300);
+const RESULT_RETENTION: Duration = Duration::from_secs(60);
 const POLL_INTERVAL_MS: u64 = 250;
 const MAX_ACTIVE_TASKS_PER_OWNER: usize = 8;
 const MAX_RETAINED_TASKS: usize = 64;
-const PAGE_SIZE: usize = 20;
-const CURSOR_PREFIX: &str = "sora-task-v1:";
 
 #[derive(Debug)]
 pub(crate) struct TaskStore {
-    state: Mutex<TaskStoreState>,
-}
-
-#[derive(Debug, Default)]
-struct TaskStoreState {
-    next_sequence: u64,
-    records: BTreeMap<String, TaskRecord>,
+    records: Mutex<BTreeMap<String, TaskRecord>>,
+    execution_ttl: Duration,
+    result_retention: Duration,
 }
 
 #[derive(Debug)]
 struct TaskRecord {
     owner: String,
     project_id: Option<String>,
-    sequence: u64,
-    task: Task,
+    created: Instant,
+    deadline: Instant,
+    task: DetailedTask,
     cancellation: CancellationToken,
-    result: Option<Result<Value, McpError>>,
-    expires_at: Option<Instant>,
+    retain_until: Option<Instant>,
 }
 
 #[derive(Debug)]
 pub(crate) struct CreatedTask {
     pub task: Task,
     pub cancellation: CancellationToken,
+    pub deadline: Instant,
 }
 
-/// Records whether a task worker actually stopped at a cancellation checkpoint.
-///
-/// A cancelled token only means that cancellation was requested. The worker may
-/// already have passed its commit point, so task finalization must not infer a
-/// cancelled outcome from the token alone.
+impl CreatedTask {
+    /// The deadline signals cancellation, but never drops a worker that may be
+    /// inside an atomic commit. Final state comes from the worker's real result.
+    pub(crate) async fn run<T>(&self, work: impl Future<Output = T>) -> T {
+        pin!(work);
+        select! {
+            result = &mut work => result,
+            _ = sleep_until(TokioInstant::from_std(self.deadline)) => {
+                self.cancellation.cancel();
+                work.await
+            }
+        }
+    }
+}
+
+/// Only a worker's cancellation checkpoint can confirm that work really stopped.
+/// A cancelled token alone cannot distinguish cancellation from a completed commit.
 #[derive(Debug, Clone, Default)]
 pub(crate) struct TaskExecutionState {
     cancellation_observed: Arc<AtomicBool>,
@@ -77,7 +88,9 @@ impl TaskExecutionState {
 impl Default for TaskStore {
     fn default() -> Self {
         Self {
-            state: Mutex::new(TaskStoreState::default()),
+            records: Mutex::new(BTreeMap::new()),
+            execution_ttl: EXECUTION_TTL,
+            result_retention: RESULT_RETENTION,
         }
     }
 }
@@ -87,34 +100,38 @@ impl TaskStore {
         &self,
         owner: &str,
         project_id: Option<String>,
-        requested_ttl_ms: Option<u64>,
     ) -> Result<CreatedTask, McpError> {
-        let mut state = self.lock()?;
-        prune(&mut state);
-        let active = state
-            .records
+        let mut records = self.lock()?;
+        sweep(&mut records, Instant::now());
+        if records
             .values()
-            .filter(|record| {
-                record.owner == owner
-                    && matches!(
-                        record.task.status,
-                        TaskStatus::Working | TaskStatus::InputRequired
-                    )
-            })
-            .count();
-        if active >= MAX_ACTIVE_TASKS_PER_OWNER {
+            .filter(|record| record.owner == owner && !record.task.status().is_terminal())
+            .count()
+            >= MAX_ACTIVE_TASKS_PER_OWNER
+        {
             return Err(McpError::invalid_request(
                 format!("too many active tasks; at most {MAX_ACTIVE_TASKS_PER_OWNER} are allowed"),
                 None,
             ));
         }
+        if records.len() >= MAX_RETAINED_TASKS {
+            let oldest_terminal = records
+                .iter()
+                .filter(|(_, record)| record.task.status().is_terminal())
+                .min_by_key(|(_, record)| record.created)
+                .map(|(id, _)| id.clone());
+            if let Some(id) = oldest_terminal {
+                records.remove(&id);
+            } else {
+                return Err(McpError::invalid_request(
+                    "task store capacity reached",
+                    None,
+                ));
+            }
+        }
 
-        evict_terminal_records(&mut state);
         let task_id = Uuid::new_v4().to_string();
         let timestamp = current_timestamp();
-        let ttl_ms = requested_ttl_ms
-            .unwrap_or(DEFAULT_TTL_MS)
-            .clamp(MIN_TTL_MS, MAX_TTL_MS);
         let task = Task::new(
             task_id.clone(),
             TaskStatus::Working,
@@ -122,104 +139,82 @@ impl TaskStore {
             timestamp,
         )
         .with_status_message("Task accepted")
-        .with_ttl(ttl_ms)
-        .with_poll_interval(POLL_INTERVAL_MS);
+        .with_ttl_ms(self.execution_ttl.as_millis() as u64)
+        .with_poll_interval_ms(POLL_INTERVAL_MS);
         let cancellation = CancellationToken::new();
-        let sequence = state.next_sequence;
-        state.next_sequence = state.next_sequence.saturating_add(1);
-        state.records.insert(
+        let created = Instant::now();
+        let deadline = created + self.execution_ttl;
+        records.insert(
             task_id,
             TaskRecord {
                 owner: owner.to_owned(),
                 project_id,
-                sequence,
-                task: task.clone(),
+                created,
+                deadline,
+                task: DetailedTask::new(task.clone(), TaskPayload::Working),
                 cancellation: cancellation.clone(),
-                result: None,
-                expires_at: None,
+                retain_until: None,
             },
         );
-        Ok(CreatedTask { task, cancellation })
+        Ok(CreatedTask {
+            task,
+            cancellation,
+            deadline,
+        })
     }
 
     pub(crate) fn finish(
         &self,
         owner: &str,
         task_id: &str,
-        result: Result<Value, McpError>,
+        result: Result<CallToolResult, McpError>,
         execution: &TaskExecutionState,
-    ) -> Result<Task, McpError> {
-        let mut state = self.lock()?;
-        let record = owned_record_mut(&mut state, owner, task_id)?;
-        let result_is_error = match &result {
-            Ok(value) => value
-                .get("isError")
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            Err(_) => true,
-        };
-        record.result = Some(result);
-        record.task.status = if execution.cancellation_observed() && result_is_error {
-            TaskStatus::Cancelled
-        } else if result_is_error {
-            TaskStatus::Failed
+    ) -> Result<DetailedTask, McpError> {
+        let mut records = self.lock()?;
+        let record = owned_record_mut(&mut records, owner, task_id)?;
+        if record.task.status().is_terminal() {
+            return Ok(record.task.clone());
+        }
+        let failed = result
+            .as_ref()
+            .map_or(true, |result| result.is_error == Some(true));
+        let payload = if execution.cancellation_observed() && failed {
+            TaskPayload::Cancelled
         } else {
-            TaskStatus::Completed
+            match result {
+                Ok(result) => TaskPayload::Completed {
+                    result: json_object(result)?,
+                },
+                Err(error) => TaskPayload::Failed {
+                    error: json_object(error)?,
+                },
+            }
         };
-        record.task.status_message = Some(
-            match record.task.status {
-                TaskStatus::Completed => "Task completed",
-                TaskStatus::Failed => "Task failed",
-                TaskStatus::Cancelled => "Task cancelled",
-                TaskStatus::Working | TaskStatus::InputRequired => unreachable!(),
-                _ => "Task finished",
+        let mut task = record.task.task.clone();
+        task.status_message = Some(
+            match &payload {
+                TaskPayload::Completed { .. } => "Task completed",
+                TaskPayload::Failed { .. } => "Task failed",
+                TaskPayload::Cancelled => "Task cancelled",
+                _ => unreachable!(),
             }
             .to_owned(),
         );
-        record.task.last_updated_at = current_timestamp();
-        record.expires_at =
-            Some(Instant::now() + Duration::from_millis(record.task.ttl.unwrap_or(DEFAULT_TTL_MS)));
+        task.last_updated_at = current_timestamp();
+        // A result has its own observation window, independent of the execution
+        // deadline. Update ttlMs so clients can still use a just-finished task.
+        let now = Instant::now();
+        task.ttl_ms =
+            Some((now.duration_since(record.created) + self.result_retention).as_millis() as u64);
+        record.task = DetailedTask::new(task, payload);
+        record.retain_until = Some(now + self.result_retention);
         Ok(record.task.clone())
     }
 
-    pub(crate) fn list(
-        &self,
-        owner: &str,
-        cursor: Option<&str>,
-    ) -> Result<ListTasksResult, McpError> {
-        let offset = decode_cursor(cursor)?;
-        let mut state = self.lock()?;
-        prune(&mut state);
-        let mut records = state
-            .records
-            .values()
-            .filter(|record| record.owner == owner)
-            .collect::<Vec<_>>();
-        records.sort_by_key(|record| record.sequence);
-        if offset > records.len() {
-            return Err(McpError::invalid_params(
-                "task cursor is out of range",
-                None,
-            ));
-        }
-        let tasks = records
-            .iter()
-            .skip(offset)
-            .take(PAGE_SIZE)
-            .map(|record| record.task.clone())
-            .collect::<Vec<_>>();
-        let next_offset = offset + tasks.len();
-        let mut result = ListTasksResult::new(tasks);
-        if next_offset < records.len() {
-            result.next_cursor = Some(encode_cursor(next_offset));
-        }
-        Ok(result)
-    }
-
-    pub(crate) fn get(&self, owner: &str, task_id: &str) -> Result<Task, McpError> {
-        let mut state = self.lock()?;
-        prune(&mut state);
-        Ok(owned_record(&state, owner, task_id)?.task.clone())
+    pub(crate) fn get(&self, owner: &str, task_id: &str) -> Result<DetailedTask, McpError> {
+        let mut records = self.lock()?;
+        sweep(&mut records, Instant::now());
+        Ok(owned_record(&records, owner, task_id)?.task.clone())
     }
 
     pub(crate) fn get_for_project(
@@ -227,130 +222,90 @@ impl TaskStore {
         owner: &str,
         project_id: &str,
         task_id: &str,
-    ) -> Result<Task, McpError> {
-        let mut state = self.lock()?;
-        prune(&mut state);
-        let record = owned_record(&state, owner, task_id)?;
+    ) -> Result<DetailedTask, McpError> {
+        let mut records = self.lock()?;
+        sweep(&mut records, Instant::now());
+        let record = owned_record(&records, owner, task_id)?;
         if record.project_id.as_deref() != Some(project_id) {
             return Err(task_not_found());
         }
         Ok(record.task.clone())
     }
 
-    pub(crate) fn result(
-        &self,
-        owner: &str,
-        task_id: &str,
-    ) -> Result<Result<Value, McpError>, McpError> {
-        let mut state = self.lock()?;
-        prune(&mut state);
-        let record = owned_record(&state, owner, task_id)?;
-        match record.task.status {
-            TaskStatus::Working | TaskStatus::InputRequired => {
-                Err(McpError::invalid_request("task result is not ready", None))
-            }
-            TaskStatus::Cancelled => Err(McpError::invalid_request("task was cancelled", None)),
-            TaskStatus::Completed | TaskStatus::Failed => record
-                .result
-                .clone()
-                .ok_or_else(|| McpError::internal_error("task result is missing", None)),
-            _ => Err(McpError::invalid_request("task result is not ready", None)),
-        }
+    pub(crate) fn cancel(&self, owner: &str, task_id: &str) -> Result<(), McpError> {
+        let mut records = self.lock()?;
+        sweep(&mut records, Instant::now());
+        request_cancellation(
+            owned_record_mut(&mut records, owner, task_id)?,
+            "Cancellation requested",
+        );
+        Ok(())
     }
 
-    pub(crate) fn cancel(&self, owner: &str, task_id: &str) -> Result<Task, McpError> {
-        let mut state = self.lock()?;
-        prune(&mut state);
-        let record = owned_record_mut(&mut state, owner, task_id)?;
-        match record.task.status {
-            TaskStatus::Working | TaskStatus::InputRequired => {
-                record.cancellation.cancel();
-                record.task.status = TaskStatus::Working;
-                record.task.status_message = Some("Cancellation requested".to_owned());
-                record.task.last_updated_at = current_timestamp();
-            }
-            TaskStatus::Completed | TaskStatus::Failed | TaskStatus::Cancelled => {}
-            _ => {}
-        }
-        Ok(record.task.clone())
+    /// Preserve authorization-local state while a task is running or its result
+    /// remains observable. Fail closed on a poisoned lock rather than evict it.
+    pub(crate) fn has_retained_tasks(&self) -> bool {
+        let Ok(mut records) = self.records.lock() else {
+            return true;
+        };
+        sweep(&mut records, Instant::now());
+        !records.is_empty()
     }
 
-    fn lock(&self) -> Result<MutexGuard<'_, TaskStoreState>, McpError> {
-        self.state
+    fn lock(&self) -> Result<MutexGuard<'_, BTreeMap<String, TaskRecord>>, McpError> {
+        self.records
             .lock()
             .map_err(|_| McpError::internal_error("task store lock poisoned", None))
     }
 }
 
+fn json_object(value: impl Serialize) -> Result<JsonObject, McpError> {
+    match to_value(value) {
+        Ok(Value::Object(object)) => Ok(object),
+        _ => Err(McpError::internal_error(
+            "failed to serialize task payload",
+            None,
+        )),
+    }
+}
+
 fn owned_record<'a>(
-    state: &'a TaskStoreState,
+    records: &'a BTreeMap<String, TaskRecord>,
     owner: &str,
-    task_id: &str,
+    id: &str,
 ) -> Result<&'a TaskRecord, McpError> {
-    state
-        .records
-        .get(task_id)
+    records
+        .get(id)
         .filter(|record| record.owner == owner)
         .ok_or_else(task_not_found)
 }
 
 fn owned_record_mut<'a>(
-    state: &'a mut TaskStoreState,
+    records: &'a mut BTreeMap<String, TaskRecord>,
     owner: &str,
-    task_id: &str,
+    id: &str,
 ) -> Result<&'a mut TaskRecord, McpError> {
-    state
-        .records
-        .get_mut(task_id)
+    records
+        .get_mut(id)
         .filter(|record| record.owner == owner)
         .ok_or_else(task_not_found)
 }
 
-fn prune(state: &mut TaskStoreState) {
-    let now = Instant::now();
-    state
-        .records
-        .retain(|_, record| record.expires_at.is_none_or(|expires_at| expires_at > now));
-}
-
-fn evict_terminal_records(state: &mut TaskStoreState) {
-    while state.records.len() >= MAX_RETAINED_TASKS {
-        let oldest_terminal = state
-            .records
-            .iter()
-            .filter(|(_, record)| {
-                matches!(
-                    record.task.status,
-                    TaskStatus::Completed | TaskStatus::Failed | TaskStatus::Cancelled
-                )
-            })
-            .min_by_key(|(_, record)| record.sequence)
-            .map(|(task_id, _)| task_id.clone());
-        let Some(task_id) = oldest_terminal else {
-            break;
-        };
-        state.records.remove(&task_id);
+fn request_cancellation(record: &mut TaskRecord, message: &str) {
+    if !record.task.status().is_terminal() && !record.cancellation.is_cancelled() {
+        record.cancellation.cancel();
+        record.task.task.status_message = Some(message.to_owned());
+        record.task.task.last_updated_at = current_timestamp();
     }
 }
 
-fn encode_cursor(offset: usize) -> String {
-    URL_SAFE_NO_PAD.encode(format!("{CURSOR_PREFIX}{offset}"))
-}
-
-fn decode_cursor(cursor: Option<&str>) -> Result<usize, McpError> {
-    let Some(cursor) = cursor else {
-        return Ok(0);
-    };
-    let bytes = URL_SAFE_NO_PAD
-        .decode(cursor)
-        .map_err(|_| McpError::invalid_params("invalid task cursor", None))?;
-    let value =
-        from_utf8(&bytes).map_err(|_| McpError::invalid_params("invalid task cursor", None))?;
-    value
-        .strip_prefix(CURSOR_PREFIX)
-        .ok_or_else(|| McpError::invalid_params("invalid task cursor", None))?
-        .parse()
-        .map_err(|_| McpError::invalid_params("invalid task cursor", None))
+fn sweep(records: &mut BTreeMap<String, TaskRecord>, now: Instant) {
+    records.retain(|_, record| record.retain_until.is_none_or(|until| until > now));
+    for record in records.values_mut() {
+        if now >= record.deadline {
+            request_cancellation(record, "Execution deadline reached; cancellation requested");
+        }
+    }
 }
 
 fn task_not_found() -> McpError {
@@ -359,104 +314,301 @@ fn task_not_found() -> McpError {
 
 #[cfg(test)]
 mod tests {
-    use serde_json::json;
-
     use super::*;
+    use serde_json::json;
+    use tokio::time::{sleep, timeout};
+
+    fn result(is_error: bool) -> CallToolResult {
+        if is_error {
+            CallToolResult::structured_error(json!({"ok": false}))
+        } else {
+            CallToolResult::structured(json!({"ok": true}))
+        }
+    }
 
     #[test]
     fn tasks_are_owner_and_project_bound() {
         let store = TaskStore::default();
-        let created = store
-            .create("owner-a", Some("project-a".to_owned()), None)
-            .expect("create task");
-
-        assert!(store.get("owner-b", &created.task.task_id).is_err());
+        let task = store.create("a", Some("project-a".into())).unwrap().task;
+        assert!(store.get("b", &task.task_id).is_err());
+        assert!(store.cancel("b", &task.task_id).is_err());
         assert!(
             store
-                .get_for_project("owner-a", "project-b", &created.task.task_id)
+                .finish(
+                    "b",
+                    &task.task_id,
+                    Ok(result(false)),
+                    &TaskExecutionState::default()
+                )
+                .is_err()
+        );
+        assert!(
+            store
+                .get_for_project("a", "project-b", &task.task_id)
                 .is_err()
         );
         assert_eq!(
             store
-                .get_for_project("owner-a", "project-a", &created.task.task_id)
-                .expect("project task")
-                .status,
+                .get_for_project("a", "project-a", &task.task_id)
+                .unwrap()
+                .status(),
             TaskStatus::Working
         );
     }
 
     #[test]
+    fn success_and_business_errors_are_completed_with_the_original_result() {
+        for is_error in [false, true] {
+            let store = TaskStore::default();
+            let task = store.create("a", None).unwrap().task;
+            let task = store
+                .finish(
+                    "a",
+                    &task.task_id,
+                    Ok(result(is_error)),
+                    &TaskExecutionState::default(),
+                )
+                .unwrap();
+            assert_eq!(task.status(), TaskStatus::Completed);
+            let TaskPayload::Completed { result } = task.payload else {
+                panic!("completed payload")
+            };
+            assert_eq!(result["isError"], is_error);
+            assert_eq!(result["structuredContent"]["ok"], !is_error);
+        }
+    }
+
+    #[test]
     fn cancellation_request_does_not_mask_an_unrelated_failure() {
         let store = TaskStore::default();
-        let created = store.create("owner", None, None).expect("create task");
-        let cancelling = store
-            .cancel("owner", &created.task.task_id)
-            .expect("cancel task");
-
-        assert_eq!(cancelling.status, TaskStatus::Working);
+        let task = store.create("a", None).unwrap().task;
+        store.cancel("a", &task.task_id).unwrap();
         assert_eq!(
-            cancelling.status_message.as_deref(),
-            Some("Cancellation requested")
+            store.get("a", &task.task_id).unwrap().status(),
+            TaskStatus::Working
         );
-        assert!(created.cancellation.is_cancelled());
-
         let task = store
             .finish(
-                "owner",
-                &created.task.task_id,
-                Ok(json!({"isError": true})),
+                "a",
+                &task.task_id,
+                Err(McpError::internal_error("unrelated failure", None)),
                 &TaskExecutionState::default(),
             )
-            .expect("finish task");
+            .unwrap();
+        assert_eq!(task.status(), TaskStatus::Failed);
+        let TaskPayload::Failed { error } = task.payload else {
+            panic!("error payload")
+        };
+        assert_eq!(error["message"], "unrelated failure");
+    }
 
-        assert_eq!(task.status, TaskStatus::Failed);
+    #[test]
+    fn unobserved_cancellation_preserves_a_business_error_as_completed() {
+        let store = TaskStore::default();
+        let task = store.create("a", None).unwrap().task;
+        store.cancel("a", &task.task_id).unwrap();
+        let task = store
+            .finish(
+                "a",
+                &task.task_id,
+                Ok(result(true)),
+                &TaskExecutionState::default(),
+            )
+            .unwrap();
+        assert_eq!(task.status(), TaskStatus::Completed);
+        let TaskPayload::Completed { result } = task.payload else {
+            panic!("tool error payload")
+        };
+        assert_eq!(result["isError"], true);
     }
 
     #[test]
     fn observed_cancellation_becomes_cancelled_after_work_stops() {
         let store = TaskStore::default();
-        let created = store.create("owner", None, None).expect("create task");
-        store
-            .cancel("owner", &created.task.task_id)
-            .expect("cancel task");
+        let task = store.create("a", None).unwrap().task;
+        store.cancel("a", &task.task_id).unwrap();
         let execution = TaskExecutionState::default();
         execution.mark_cancellation_observed();
-
-        let task = store
-            .finish(
-                "owner",
-                &created.task.task_id,
-                Ok(json!({"isError": true})),
-                &execution,
-            )
-            .expect("finish task");
-
-        assert_eq!(task.status, TaskStatus::Cancelled);
+        assert_eq!(
+            store
+                .finish("a", &task.task_id, Ok(result(true)), &execution)
+                .unwrap()
+                .status(),
+            TaskStatus::Cancelled
+        );
     }
 
     #[test]
     fn successful_work_that_passed_the_commit_point_remains_completed() {
         let store = TaskStore::default();
-        let created = store.create("owner", None, None).expect("create task");
-        store
-            .cancel("owner", &created.task.task_id)
-            .expect("cancel task");
-
-        let task = store
-            .finish(
-                "owner",
-                &created.task.task_id,
-                Ok(json!({"isError": false})),
-                &TaskExecutionState::default(),
-            )
-            .expect("finish task");
-
-        assert_eq!(task.status, TaskStatus::Completed);
+        let task = store.create("a", None).unwrap().task;
+        store.cancel("a", &task.task_id).unwrap();
+        let execution = TaskExecutionState::default();
+        execution.mark_cancellation_observed();
+        assert_eq!(
+            store
+                .finish("a", &task.task_id, Ok(result(false)), &execution)
+                .unwrap()
+                .status(),
+            TaskStatus::Completed
+        );
     }
 
     #[test]
-    fn malformed_cursors_are_rejected() {
+    fn active_limit_is_per_owner_and_total_capacity_is_strict_across_owners() {
         let store = TaskStore::default();
-        assert!(store.list("owner", Some("not-base64!")).is_err());
+        for _ in 0..MAX_ACTIVE_TASKS_PER_OWNER {
+            store.create("a", None).unwrap();
+        }
+        assert!(store.create("a", None).is_err());
+        for index in MAX_ACTIVE_TASKS_PER_OWNER..MAX_RETAINED_TASKS {
+            store.create(&format!("owner-{index}"), None).unwrap();
+        }
+        assert!(store.create("another-owner", None).is_err());
+        assert_eq!(store.records.lock().unwrap().len(), MAX_RETAINED_TASKS);
+    }
+
+    #[test]
+    fn terminal_records_can_be_evicted_without_evicting_live_work() {
+        let store = TaskStore::default();
+        let oldest = store.create("done", None).unwrap().task;
+        store
+            .finish(
+                "done",
+                &oldest.task_id,
+                Ok(result(false)),
+                &TaskExecutionState::default(),
+            )
+            .unwrap();
+        for index in 1..MAX_RETAINED_TASKS {
+            store.create(&format!("owner-{index}"), None).unwrap();
+        }
+        store.create("new-owner", None).unwrap();
+        assert!(store.get("done", &oldest.task_id).is_err());
+        assert_eq!(store.records.lock().unwrap().len(), MAX_RETAINED_TASKS);
+    }
+
+    #[test]
+    fn ttl_requests_cooperative_cancellation_without_fabricating_a_terminal_state() {
+        let store = TaskStore {
+            execution_ttl: Duration::ZERO,
+            ..TaskStore::default()
+        };
+        let created = store.create("a", None).unwrap();
+        let task = store.get("a", &created.task.task_id).unwrap();
+        assert!(created.cancellation.is_cancelled());
+        assert_eq!(task.status(), TaskStatus::Working);
+        assert_eq!(task.task.ttl_ms, Some(0));
+        assert!(store.has_retained_tasks());
+        let execution = TaskExecutionState::default();
+        execution.mark_cancellation_observed();
+        assert_eq!(
+            store
+                .finish("a", &created.task.task_id, Ok(result(true)), &execution)
+                .unwrap()
+                .status(),
+            TaskStatus::Cancelled
+        );
+    }
+
+    #[tokio::test]
+    async fn execution_deadline_cancels_the_worker_without_client_polling() {
+        let store = TaskStore {
+            execution_ttl: Duration::from_millis(5),
+            ..TaskStore::default()
+        };
+        let created = store.create("a", None).unwrap();
+        let execution = TaskExecutionState::default();
+        let outcome = timeout(
+            Duration::from_secs(1),
+            created.run(async {
+                created.cancellation.cancelled().await;
+                execution.mark_cancellation_observed();
+                Ok(result(true))
+            }),
+        )
+        .await
+        .expect("deadline must wake the worker without a poll");
+        assert_eq!(
+            store
+                .finish("a", &created.task.task_id, outcome, &execution)
+                .unwrap()
+                .status(),
+            TaskStatus::Cancelled
+        );
+    }
+
+    #[tokio::test]
+    async fn deadline_waits_for_commit_instead_of_aborting_or_fabricating_cancellation() {
+        let store = TaskStore {
+            execution_ttl: Duration::from_millis(5),
+            ..TaskStore::default()
+        };
+        let created = store.create("a", None).unwrap();
+        let committed = AtomicBool::new(false);
+        let outcome = created
+            .run(async {
+                created.cancellation.cancelled().await;
+                sleep(Duration::from_millis(5)).await;
+                committed.store(true, Ordering::Release);
+                Ok(result(false))
+            })
+            .await;
+        assert!(committed.load(Ordering::Acquire));
+        let task = store
+            .finish(
+                "a",
+                &created.task.task_id,
+                outcome,
+                &TaskExecutionState::default(),
+            )
+            .unwrap();
+        assert_eq!(task.status(), TaskStatus::Completed);
+        assert!(task.task.ttl_ms.unwrap() >= RESULT_RETENTION.as_millis() as u64);
+    }
+
+    #[test]
+    fn finished_results_have_a_separate_retention_window() {
+        let store = TaskStore {
+            result_retention: Duration::ZERO,
+            ..TaskStore::default()
+        };
+        let task = store.create("a", None).unwrap().task;
+        store
+            .finish(
+                "a",
+                &task.task_id,
+                Ok(result(false)),
+                &TaskExecutionState::default(),
+            )
+            .unwrap();
+        assert!(store.get("a", &task.task_id).is_err());
+        assert!(!store.has_retained_tasks());
+    }
+
+    #[test]
+    fn terminal_status_is_immutable() {
+        let store = TaskStore::default();
+        let task = store.create("a", None).unwrap().task;
+        let done = store
+            .finish(
+                "a",
+                &task.task_id,
+                Ok(result(false)),
+                &TaskExecutionState::default(),
+            )
+            .unwrap();
+        store.cancel("a", &task.task_id).unwrap();
+        assert_eq!(
+            store
+                .finish(
+                    "a",
+                    &task.task_id,
+                    Err(McpError::internal_error("late", None)),
+                    &TaskExecutionState::default()
+                )
+                .unwrap(),
+            done
+        );
     }
 }

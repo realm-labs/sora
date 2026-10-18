@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use heck::{ToPascalCase, ToShoutySnakeCase, ToSnakeCase};
-use minijinja::context;
+use minijinja::{context, value::Serde};
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::{
@@ -45,28 +45,37 @@ impl CodeGenerator for GodotCodeGenerator {
         let model = GodotModel::from_base_model(ir, build_base_model(ir)?, &mapper);
 
         for item in &model.enums {
-            let rendered = render_template("godot", "enum.gd.j2", context! { enum => item })?;
+            let rendered =
+                render_template("godot", "enum.gd.j2", context! { enum => Serde(item) })?;
             write_file(&out_dir.join(format!("{}.gd", item.file_path)), rendered)?;
         }
 
         for record in &model.records {
-            let rendered = render_template("godot", "record.gd.j2", context! { record => record })?;
+            let rendered = render_template(
+                "godot",
+                "record.gd.j2",
+                context! { record => Serde(record) },
+            )?;
             write_file(&out_dir.join(format!("{}.gd", record.file_path)), rendered)?;
         }
 
         for union in &model.unions {
-            let rendered = render_template("godot", "union.gd.j2", context! { union => union })?;
+            let rendered =
+                render_template("godot", "union.gd.j2", context! { union => Serde(union) })?;
             write_file(&out_dir.join(format!("{}.gd", union.file_path)), rendered)?;
             for variant in &union.variants {
                 let rendered = render_template(
                     "godot",
                     "union_variant.gd.j2",
-                    context! { union => union, variant => variant },
+                    context! { union => Serde(union), variant => Serde(variant) },
                 )?;
                 write_file(&out_dir.join(format!("{}.gd", variant.file_path)), rendered)?;
             }
-            let rendered =
-                render_template("godot", "union_codec.gd.j2", context! { union => union })?;
+            let rendered = render_template(
+                "godot",
+                "union_codec.gd.j2",
+                context! { union => Serde(union) },
+            )?;
             write_file(
                 &out_dir.join(format!("{}.gd", union.codec_file_path)),
                 rendered,
@@ -76,7 +85,8 @@ impl CodeGenerator for GodotCodeGenerator {
         let rendered = render_template("godot", "runtime.gd.j2", context! {})?;
         write_file(&out_dir.join("sora_runtime.gd"), rendered)?;
 
-        let rendered = render_template("godot", "config.gd.j2", context! { model => &model })?;
+        let rendered =
+            render_template("godot", "config.gd.j2", context! { model => Serde(&model) })?;
         write_file(&out_dir.join("sora_config.gd"), rendered)
     }
 }

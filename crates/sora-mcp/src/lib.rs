@@ -4,9 +4,11 @@
 //! behavior is delegated to [`sora_workspace`].
 
 mod artifact_store;
+mod client_roots;
 mod completion;
 mod dto;
 mod http;
+mod input;
 mod prompts;
 mod protocol;
 mod resources;
@@ -17,8 +19,7 @@ mod transport;
 
 pub use http::{
     AuthorizationPrincipal, HttpConfigError, HttpServerConfig, OAuthAuthenticator, OAuthError,
-    OAuthResourceServerConfig, ProtectedResourceMetadata, SecureSessionConfig, SecureSessionError,
-    SecureSessionManager, build_http_router, serve_http,
+    OAuthResourceServerConfig, ProtectedResourceMetadata, build_http_router, serve_http,
 };
 pub use protocol::{SERVER_NAME, TARGET_PROTOCOL_VERSION};
 pub use server::SoraMcpServer;

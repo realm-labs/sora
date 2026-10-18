@@ -1,3 +1,4 @@
+use rmcp::service::{ClientLifecycleMode, ClientServiceExt};
 use std::{
     env::temp_dir as system_temp_dir,
     fs,
@@ -12,7 +13,7 @@ use std::{
 use anyhow::{Ok as anyhow_ok, Result};
 use rmcp::{
     ClientHandler, ServiceExt,
-    model::{CallToolRequestParams, ClientInfo, Implementation},
+    model::{CallToolRequestParams, ClientConfig, Implementation},
 };
 use serde_json::{Value, json};
 use sora_mcp::{SoraMcpServer, TARGET_PROTOCOL_VERSION};
@@ -25,8 +26,8 @@ static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 struct DataClient;
 
 impl ClientHandler for DataClient {
-    fn get_info(&self) -> ClientInfo {
-        ClientInfo::new(
+    fn get_info(&self) -> ClientConfig {
+        ClientConfig::new(
             Default::default(),
             Implementation::new("sora-data-mutation-test", env!("CARGO_PKG_VERSION")),
         )
@@ -50,7 +51,14 @@ async fn data_preview_and_apply_are_structured_and_transactional() -> Result<()>
         server.serve(server_transport).await?.waiting().await?;
         anyhow_ok(())
     });
-    let client = DataClient.serve(client_transport).await?;
+    let client = DataClient
+        .serve_with_lifecycle(
+            client_transport,
+            ClientLifecycleMode::Discover {
+                preferred_versions: vec![TARGET_PROTOCOL_VERSION],
+            },
+        )
+        .await?;
 
     let preview = client
         .call_tool(

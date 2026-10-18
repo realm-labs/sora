@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use heck::ToSnakeCase;
-use minijinja::context;
+use minijinja::{context, value::Serde};
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::{
@@ -38,7 +38,7 @@ impl CodeGenerator for GoCodeGenerator {
             let rendered = render_template(
                 "go",
                 "enum.go.j2",
-                context! { package => &package, enum => item, runtime_format => runtime_format },
+                context! { package => &package, enum => Serde(item), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.go", item.snake_name)), rendered)?;
         }
@@ -47,7 +47,7 @@ impl CodeGenerator for GoCodeGenerator {
             let rendered = render_template(
                 "go",
                 "record.go.j2",
-                context! { package => &package, record => record, runtime_format => runtime_format },
+                context! { package => &package, record => Serde(record), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.go", record.snake_name)), rendered)?;
         }
@@ -56,7 +56,7 @@ impl CodeGenerator for GoCodeGenerator {
             let rendered = render_template(
                 "go",
                 "union.go.j2",
-                context! { package => &package, union => union, runtime_format => runtime_format },
+                context! { package => &package, union => Serde(union), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.go", union.snake_name)), rendered)?;
         }
@@ -71,7 +71,7 @@ impl CodeGenerator for GoCodeGenerator {
         let rendered = render_template(
             "go",
             "config.go.j2",
-            context! { package => &package, model => &model, runtime_format => runtime_format },
+            context! { package => &package, model => Serde(&model), runtime_format => runtime_format },
         )?;
         write_file(&out_dir.join("config.go"), rendered)
     }

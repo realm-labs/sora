@@ -15,7 +15,6 @@ anyhow.workspace = true
 axum.workspace = true
 base64.workspace = true
 futures-util.workspace = true
-hmac.workspace = true
 jsonwebtoken.workspace = true
 rmcp.workspace = true
 reqwest.workspace = true

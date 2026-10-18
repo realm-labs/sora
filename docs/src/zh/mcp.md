@@ -1,8 +1,9 @@
 # 模型上下文协议（MCP）
 
-Sora 内置面向 AI 客户端的 MCP `2025-11-25` 服务。MCP、CLI 与 Studio 共用同一套
+Sora 仅支持面向 AI 客户端的 MCP `2026-07-28` 协议。MCP、CLI 与 Studio 共用同一套
 project、schema、data、Excel 和 build 应用服务；generated code 与 runtime bundle
-始终只是输出，不能作为修改入口。
+始终只是输出，不能作为修改入口。客户端使用 `server/discover` 与每次请求自包含的
+协议元数据，不再使用旧 initialize 握手。
 
 ## 安装与连接
 
@@ -37,6 +38,53 @@ stdout 只包含 JSON-RPC，审计日志写入 stderr。项目声明的 Lua pars
 `sora_project_open`。不支持 form Elicitation 的客户端必须显式传入 `root_id` 与
 `relative_manifest`。
 
+## 客户端输入与重试
+
+stdio 与 HTTP 均使用 MCP `2026-07-28` 原生多轮输入流程处理 Roots、项目选择和脚本信任。
+服务端返回 `resultType: "input_required"`，不再等待反向 `roots/list` 或
+`elicitation/create` JSON-RPC 请求。客户端在本地处理内嵌 `inputRequests`，然后发起
+**新的** `tools/call`：保持 tool、arguments 与 capability 声明不变，原样回传 opaque
+`requestState`，并在 `inputResponses` 中只提供本轮要求的响应。打开项目可能依次需要
+Roots、项目选择、脚本信任三轮输入。不支持 Roots 时仅使用服务端配置的目录；不支持
+form Elicitation 时必须显式选择项目，且仍拒绝尚未信任的脚本。
+
+例如，客户端首先发送：
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"sora_project_list","arguments":{},"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{"roots":{}}}}}
+```
+
+服务端返回以下结构（`requestState` 是示例 opaque handle）：
+
+```json
+{"jsonrpc":"2.0","id":1,"result":{"resultType":"input_required","inputRequests":{"roots":{"method":"roots/list"}},"requestState":"7b5779e8-fddd-4d34-8582-415ab87baf3e"}}
+```
+
+客户端重新调用原 tool，而不是 POST 一条独立 JSON-RPC response：
+
+```json
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"sora_project_list","arguments":{},"requestState":"7b5779e8-fddd-4d34-8582-415ab87baf3e","inputResponses":{"roots":{"roots":[{"uri":"file:///work/project","name":"project"}]}},"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{"roots":{}}}}}
+```
+
+项目选择与信任输入的 method 为 `elicitation/create`，`params` 为 form 请求。
+响应分别形如 `{"action":"accept","content":{"root_id":"root-…","relative_manifest":"project.toml"}}`
+与 `{"action":"accept","content":{"trust_project_scripts":true}}`，使用对应的服务端输入
+key（`project_selection` 或 `script_trust`）和最新 handle。`decline` 或 `cancel` 结束
+本次尝试且不打开项目；再次尝试应发起不带旧输入状态的新请求。
+
+[rmcp 输入模型](https://docs.rs/rmcp/3.5.1/rmcp/model/struct.InputRequiredResult.html) 与
+[客户端实现](https://docs.rs/crate/rmcp/3.5.1/source/src/service/client.rs) 提供原生支持：
+`RunningService::call_tool` 自动调用本地 `ClientHandler::list_roots` /
+`create_elicitation` 并重试，默认最多十轮；`call_tool_once` 直接暴露每轮结果。
+声明 Tasks 的客户端应使用 `call_tool_once` 自行完成输入轮次，再轮询任务；高层
+`call_tool` 不会自动轮询 Tasks。
+
+输入 handle 只属于当前授权 server、一次性使用、五分钟过期。每个 store 最多保留
+64 个 continuation，每个状态上限 256 KiB，客户端 Roots 最多 64 个。重试核对原始
+工具、参数、capabilities、输入 kind/id 与实际请求内容，包括脚本路径及摘要。
+客户端 Roots 不进入共享 workspace 根目录注册表。等待输入不代表业务执行成功或
+任务已接受；全部必要输入完成前不会启动 worker。
+
 ## Streamable HTTP
 
 本地监听：
@@ -70,9 +118,10 @@ Sora 默认通过 RFC 8414 发现 JWKS；只有部署需要固定端点时才使
 `sub`、`exp`、可选 `nbf` 及全部 scope 校验。RFC 9728 protected resource metadata
 位于 `/.well-known/oauth-protected-resource`。
 
-HTTP 层限制 Host、Origin、body 大小、速率、并发、授权主体数量、session 数量、idle
-时间和续传 event 保留时间。session 与不透明 event cursor 都绑定授权主体。Sora 不保留
-旧式独立 HTTP+SSE transport。
+Streamable HTTP 无 session；每次请求独立授权，并限制 Host、Origin、body 大小、
+速率、并发与保留的授权主体数量。请求携带 `MCP-Protocol-Version: 2026-07-28`、
+协议与客户端能力元数据，以及适用的 `Mcp-Method` / `Mcp-Name` 路由头。
+MCP session ID 不是授权凭据。Sora 不保留旧式独立 HTTP+SSE transport。
 
 ## 推荐工作流
 
@@ -118,8 +167,33 @@ open-world hints。
 | `sora_schema_lock` | `project_id`, revision、可选 view/clean | 构建 schema lock。 |
 | `sora_excel_template` | `project_id`, revision、可选 view/clean | 构建 Excel template。 |
 
-build、codegen、export、schema-lock、Excel-template 与 Excel sync 支持可选 MCP Tasks。
-客户端不支持 Tasks 时仍可通过普通 tool call、progress 与 cancellation 完成。
+### 长操作与 Tasks
+
+Sora 实现 [`io.modelcontextprotocol/tasks` 扩展](https://modelcontextprotocol.io/extensions/tasks/overview)。
+客户端在每次请求的 `_meta.io.modelcontextprotocol/clientCapabilities.extensions` 中声明支持。
+对 build、codegen、export、schema-lock、Excel-template 与两个 Excel sync tool，服务端在
+客户端支持扩展时返回 `resultType: "task"` 句柄；其他 tool 直接返回完成结果。
+不支持扩展时同步执行相同操作，保留普通请求的 progress 与 cancellation。
+不提供旧任务 wire 适配器、tool `execution.taskSupport` 或客户端 `task` 元数据。
+
+客户端按 `pollIntervalMs`（250 ms）轮询 `tasks/get`，传入 `taskId`。
+返回的新 `DetailedTask` 在 `completed` 时内嵌原始 tool `result`，包括 `isError: true`
+的业务失败；`failed` 内嵌 JSON-RPC `error`。`tasks/cancel` 只确认取消意图，
+不代表 worker 已停止；越过提交点的操作仍可能成功完成。task resource 使用相同的新任务结构，
+继续绑定授权主体与 project。
+
+执行 `ttlMs` 从任务创建起算，默认五分钟。deadline 发出真正的协作取消，不中断原子提交，
+也不伪造终态。完成记录最多另保留一分钟，并更新 `ttlMs`。每个 store 按 owner 限制
+八个活跃任务，所有 owner 合计最多 64 条记录；容量不足时可淘汰最旧的终态记录。
+任务只保存在内存中，不跨服务端重启存活。
+
+Sora 任务不要求客户端输入，`tasks/update` 明确返回错误。任务通过轮询观察，
+不提供任务 push notification 或任务 progress notification；不支持 `tasks/list`、
+`tasks/result` 与客户端指定的 task TTL。Roots、项目选择和脚本信任通过
+`input_required` / `inputResponses` 重试，在任务接受前完成；worker 不索取输入，
+也不通过任务输入交互实现这些步骤。
+
+资源变更通知使用 `subscriptions/listen`，客户端选择资源 URI，并通过取消 listen 请求退订。
 
 ## Resources 参考
 
@@ -185,7 +259,7 @@ npx @modelcontextprotocol/inspector \
 
 在 UI 中依次：
 
-1. 确认协议为 `2025-11-25`，查看 Tools、Resources 与 Prompts。
+1. 确认协议为 `2026-07-28`，查看 Tools、Resources 与 Prompts。
 2. 调用 `sora_project_inspect`。
 3. 读取项目的 `revision`、`schema` 和 `diagnostics`。
 4. 对 `Item` 表调用 `sora_table_query`，设置 `limit: 2`。

@@ -1,7 +1,7 @@
 use std::{collections::HashSet, path::Path};
 
 use heck::{ToPascalCase, ToShoutySnakeCase, ToSnakeCase};
-use minijinja::context;
+use minijinja::{context, value::Serde};
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, TypeIr};
@@ -35,7 +35,7 @@ impl CodeGenerator for PythonCodeGenerator {
             let rendered = render_template(
                 "python",
                 "enum.py.j2",
-                context! { enum => item, runtime_format => runtime_format },
+                context! { enum => Serde(item), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.py", item.snake_name)), rendered)?;
         }
@@ -44,7 +44,7 @@ impl CodeGenerator for PythonCodeGenerator {
             let rendered = render_template(
                 "python",
                 "record.py.j2",
-                context! { record => record, runtime_format => runtime_format },
+                context! { record => Serde(record), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.py", record.snake_name)), rendered)?;
         }
@@ -53,7 +53,7 @@ impl CodeGenerator for PythonCodeGenerator {
             let rendered = render_template(
                 "python",
                 "union.py.j2",
-                context! { union => union, runtime_format => runtime_format },
+                context! { union => Serde(union), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.py", union.snake_name)), rendered)?;
         }
@@ -68,11 +68,15 @@ impl CodeGenerator for PythonCodeGenerator {
         let rendered = render_template(
             "python",
             "config.py.j2",
-            context! { model => &model, runtime_format => runtime_format },
+            context! { model => Serde(&model), runtime_format => runtime_format },
         )?;
         write_file(&out_dir.join("sora_config.py"), rendered)?;
 
-        let rendered = render_template("python", "__init__.py.j2", context! { model => &model })?;
+        let rendered = render_template(
+            "python",
+            "__init__.py.j2",
+            context! { model => Serde(&model) },
+        )?;
         write_file(&out_dir.join("__init__.py"), rendered)
     }
 }

@@ -5,7 +5,7 @@ use std::{
 };
 
 use heck::ToPascalCase;
-use minijinja::context;
+use minijinja::{context, value::Serde};
 use semver::Version;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
@@ -41,7 +41,7 @@ impl CodeGenerator for RustCodeGenerator {
         let runtime_format = runtime_format_name(options.runtime_format);
 
         for item in &model.enums {
-            let rendered = render_template("rust", "enum.rs.j2", context! { enum => item })?;
+            let rendered = render_template("rust", "enum.rs.j2", context! { enum => Serde(item) })?;
             write_file(
                 &source_dir.join(format!("{}.rs", item.module_path)),
                 rendered,
@@ -49,7 +49,8 @@ impl CodeGenerator for RustCodeGenerator {
         }
 
         for record in &model.records {
-            let rendered = render_template("rust", "struct.rs.j2", context! { record => record })?;
+            let rendered =
+                render_template("rust", "struct.rs.j2", context! { record => Serde(record) })?;
             write_file(
                 &source_dir.join(format!("{}.rs", record.module_path)),
                 rendered,
@@ -60,13 +61,14 @@ impl CodeGenerator for RustCodeGenerator {
             let rendered = render_template(
                 "rust",
                 "interval.rs.j2",
-                context! { intervals => &model.intervals },
+                context! { intervals => Serde(&model.intervals) },
             )?;
             write_file(&source_dir.join("interval.rs"), rendered)?;
         }
 
         for union in &model.unions {
-            let rendered = render_template("rust", "union.rs.j2", context! { union => union })?;
+            let rendered =
+                render_template("rust", "union.rs.j2", context! { union => Serde(union) })?;
             write_file(
                 &source_dir.join(format!("{}.rs", union.module_path)),
                 rendered,
@@ -80,7 +82,7 @@ impl CodeGenerator for RustCodeGenerator {
         let rendered = render_template(
             "rust",
             "mod.rs.j2",
-            context! { model => &model, rust_map_type => rust_map_type, runtime_format => runtime_format },
+            context! { model => Serde(&model), rust_map_type => rust_map_type, runtime_format => runtime_format },
         )?;
         let root_file = if options.crate_options.is_some() {
             "lib.rs"
@@ -103,8 +105,11 @@ impl CodeGenerator for RustCodeGenerator {
 
         if let Some(package) = &options.crate_options {
             let manifest = RustCrateManifest::new(package, &options);
-            let rendered =
-                render_template("rust", "Cargo.toml.j2", context! { package => &manifest })?;
+            let rendered = render_template(
+                "rust",
+                "Cargo.toml.j2",
+                context! { package => Serde(&manifest) },
+            )?;
             write_file(&out_dir.join("Cargo.toml"), rendered)?;
         }
 

@@ -13,7 +13,8 @@ use sora_ir::model::ConfigIr;
 use sora_workspace::{ProjectId, TableQuery, WorkspaceService};
 
 use crate::{
-    SERVER_NAME, TARGET_PROTOCOL_VERSION, artifact_store::ArtifactStore, task_store::TaskStore,
+    SERVER_NAME, TARGET_PROTOCOL_VERSION, artifact_store::ArtifactStore, client_roots::ClientRoots,
+    task_store::TaskStore,
 };
 
 pub fn list(workspace: &WorkspaceService) -> Result<ListResourcesResult, McpError> {
@@ -126,6 +127,7 @@ pub fn read(
     artifacts: &Arc<ArtifactStore>,
     tasks: &Arc<TaskStore>,
     authorization_context: &str,
+    client_roots: &ClientRoots,
     uri: &str,
 ) -> Result<ReadResourceResult, McpError> {
     let value = match uri {
@@ -135,8 +137,8 @@ pub fn read(
             "protocol_version": TARGET_PROTOCOL_VERSION.as_str(),
         }),
         "sora://workspace/projects" => serialize_json(
-            workspace
-                .discover_projects()
+            client_roots
+                .discover(workspace)
                 .map_err(|error| internal_error(error.to_string()))?,
         )?,
         uri if uri.starts_with("sora://docs/") => {
@@ -154,9 +156,18 @@ pub fn exists(
     artifacts: &Arc<ArtifactStore>,
     tasks: &Arc<TaskStore>,
     authorization_context: &str,
+    client_roots: &ClientRoots,
     uri: &str,
 ) -> bool {
-    read(workspace, artifacts, tasks, authorization_context, uri).is_ok()
+    read(
+        workspace,
+        artifacts,
+        tasks,
+        authorization_context,
+        client_roots,
+        uri,
+    )
+    .is_ok()
 }
 
 fn read_project_resource(

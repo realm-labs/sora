@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use heck::ToShoutySnakeCase;
-use minijinja::context;
+use minijinja::{context, value::Serde};
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::{
@@ -38,7 +38,7 @@ impl CodeGenerator for KotlinCodeGenerator {
             let rendered = render_template(
                 "kotlin",
                 "enum.kt.j2",
-                context! { package => &model.package, enum => item, runtime_format => runtime_format },
+                context! { package => &model.package, enum => Serde(item), runtime_format => runtime_format },
             )?;
             write_file(&package_dir.join(format!("{}.kt", item.name)), rendered)?;
         }
@@ -47,7 +47,7 @@ impl CodeGenerator for KotlinCodeGenerator {
             let rendered = render_template(
                 "kotlin",
                 "data_class.kt.j2",
-                context! { package => &model.package, record => record, runtime_format => runtime_format },
+                context! { package => &model.package, record => Serde(record), runtime_format => runtime_format },
             )?;
             write_file(
                 &package_dir.join(format!("{}.kt", record.pascal_name)),
@@ -59,7 +59,7 @@ impl CodeGenerator for KotlinCodeGenerator {
             let rendered = render_template(
                 "kotlin",
                 "union.kt.j2",
-                context! { package => &model.package, union => union, runtime_format => runtime_format },
+                context! { package => &model.package, union => Serde(union), runtime_format => runtime_format },
             )?;
             write_file(
                 &package_dir.join(format!("{}.kt", union.pascal_name)),
@@ -77,11 +77,15 @@ impl CodeGenerator for KotlinCodeGenerator {
         let rendered = render_template(
             "kotlin",
             "config.kt.j2",
-            context! { model => &model, runtime_format => runtime_format },
+            context! { model => Serde(&model), runtime_format => runtime_format },
         )?;
         write_file(&package_dir.join("SoraConfig.kt"), rendered)?;
 
-        let rendered = render_template("kotlin", "package.kt.j2", context! { model => &model })?;
+        let rendered = render_template(
+            "kotlin",
+            "package.kt.j2",
+            context! { model => Serde(&model) },
+        )?;
         write_file(&package_dir.join("Package.kt"), rendered)
     }
 }

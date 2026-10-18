@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use heck::ToSnakeCase;
-use minijinja::context;
+use minijinja::{context, value::Serde};
 use serde::Serialize;
 use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
@@ -35,7 +35,7 @@ impl CodeGenerator for ErlangCodeGenerator {
             let rendered = render_template(
                 "erlang",
                 "enum.erl.j2",
-                context! { enum => item, options => &options },
+                context! { enum => Serde(item), options => Serde(&options) },
             )?;
             write_file(&out_dir.join(format!("{}.erl", item.snake_name)), rendered)?;
         }
@@ -44,7 +44,7 @@ impl CodeGenerator for ErlangCodeGenerator {
             let rendered = render_template(
                 "erlang",
                 "record.erl.j2",
-                context! { record => record, runtime_format => runtime_format },
+                context! { record => Serde(record), runtime_format => runtime_format },
             )?;
             write_file(
                 &out_dir.join(format!("{}.erl", record.snake_name)),
@@ -56,7 +56,7 @@ impl CodeGenerator for ErlangCodeGenerator {
             let rendered = render_template(
                 "erlang",
                 "union.erl.j2",
-                context! { union => union, runtime_format => runtime_format },
+                context! { union => Serde(union), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.erl", union.snake_name)), rendered)?;
         }
@@ -71,7 +71,7 @@ impl CodeGenerator for ErlangCodeGenerator {
         let rendered = render_template(
             "erlang",
             "config.erl.j2",
-            context! { model => &model, runtime_format => runtime_format },
+            context! { model => Serde(&model), runtime_format => runtime_format },
         )?;
         write_file(&out_dir.join("sora_config.erl"), rendered)
     }

@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use heck::ToSnakeCase;
-use minijinja::context;
+use minijinja::{context, value::Serde};
 use serde::Serialize;
 use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, TypeIr};
@@ -40,7 +40,7 @@ impl CodeGenerator for LuaCodeGenerator {
             let rendered = render_template(
                 "lua",
                 "enum.lua.j2",
-                context! { enum => item, options => &options },
+                context! { enum => Serde(item), options => Serde(&options) },
             )?;
             write_file(
                 &out_dir.join(format!("{}.lua", item.name.to_snake_case())),
@@ -52,7 +52,7 @@ impl CodeGenerator for LuaCodeGenerator {
             let rendered = render_template(
                 "lua",
                 "record.lua.j2",
-                context! { options => &options, record => record, runtime_format => runtime_format },
+                context! { options => Serde(&options), record => Serde(record), runtime_format => runtime_format },
             )?;
             write_file(
                 &out_dir.join(format!("{}.lua", record.snake_name)),
@@ -64,7 +64,7 @@ impl CodeGenerator for LuaCodeGenerator {
             let rendered = render_template(
                 "lua",
                 "union.lua.j2",
-                context! { options => &options, union => union, runtime_format => runtime_format },
+                context! { options => Serde(&options), union => Serde(union), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.lua", union.snake_name)), rendered)?;
         }
@@ -72,14 +72,14 @@ impl CodeGenerator for LuaCodeGenerator {
         let rendered = render_template(
             "lua",
             "runtime.lua.j2",
-            context! { options => &options, runtime_format => runtime_format },
+            context! { options => Serde(&options), runtime_format => runtime_format },
         )?;
         write_file(&out_dir.join("sora_runtime.lua"), rendered)?;
 
         let rendered = render_template(
             "lua",
             "config.lua.j2",
-            context! { model => &model, options => &options, runtime_format => runtime_format },
+            context! { model => Serde(&model), options => Serde(&options), runtime_format => runtime_format },
         )?;
         write_file(&out_dir.join("sora_config.lua"), rendered)
     }

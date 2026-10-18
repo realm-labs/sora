@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use minijinja::context;
+use minijinja::{context, value::Serde};
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
@@ -36,7 +36,7 @@ impl CodeGenerator for ScalaCodeGenerator {
             let rendered = render_template(
                 "scala",
                 "enum.scala.j2",
-                context! { package => &model.package, enum => item, runtime_format => runtime_format },
+                context! { package => &model.package, enum => Serde(item), runtime_format => runtime_format },
             )?;
             write_file(&package_dir.join(format!("{}.scala", item.name)), rendered)?;
         }
@@ -45,7 +45,7 @@ impl CodeGenerator for ScalaCodeGenerator {
             let rendered = render_template(
                 "scala",
                 "record.scala.j2",
-                context! { package => &model.package, record => record, runtime_format => runtime_format },
+                context! { package => &model.package, record => Serde(record), runtime_format => runtime_format },
             )?;
             write_file(
                 &package_dir.join(format!("{}.scala", record.pascal_name)),
@@ -57,7 +57,7 @@ impl CodeGenerator for ScalaCodeGenerator {
             let rendered = render_template(
                 "scala",
                 "union.scala.j2",
-                context! { package => &model.package, union => union, runtime_format => runtime_format },
+                context! { package => &model.package, union => Serde(union), runtime_format => runtime_format },
             )?;
             write_file(
                 &package_dir.join(format!("{}.scala", union.pascal_name)),
@@ -72,7 +72,11 @@ impl CodeGenerator for ScalaCodeGenerator {
         )?;
         write_file(&package_dir.join("SoraRuntime.scala"), rendered)?;
 
-        let rendered = render_template("scala", "config.scala.j2", context! { model => &model })?;
+        let rendered = render_template(
+            "scala",
+            "config.scala.j2",
+            context! { model => Serde(&model) },
+        )?;
         write_file(&package_dir.join("SoraConfig.scala"), rendered)
     }
 }

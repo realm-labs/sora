@@ -64,7 +64,7 @@ mod tests {
             .server_info(Parameters(ServerInfoInput {}))
             .expect("empty workspace should be readable");
 
-        assert_eq!(output.protocol_version, "2025-11-25");
+        assert_eq!(output.protocol_version, "2026-07-28");
         assert_eq!(output.server_name, "sora");
         assert_eq!(output.project_count, 0);
     }

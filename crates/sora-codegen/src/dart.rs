@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use heck::{ToLowerCamelCase, ToPascalCase, ToSnakeCase};
-use minijinja::context;
+use minijinja::{context, value::Serde};
 use serde::Serialize;
 use sora_diagnostics::Result;
 use sora_ir::{
@@ -34,13 +34,17 @@ impl CodeGenerator for DartCodeGenerator {
         let model = DartModel::from_base_model(ir, build_base_model(ir)?, &mapper);
 
         for item in &model.enums {
-            let rendered = render_template("dart", "enum.dart.j2", context! { enum => item })?;
+            let rendered =
+                render_template("dart", "enum.dart.j2", context! { enum => Serde(item) })?;
             write_file(&out_dir.join(format!("{}.dart", item.snake_name)), rendered)?;
         }
 
         for record in &model.records {
-            let rendered =
-                render_template("dart", "record.dart.j2", context! { record => record })?;
+            let rendered = render_template(
+                "dart",
+                "record.dart.j2",
+                context! { record => Serde(record) },
+            )?;
             write_file(
                 &out_dir.join(format!("{}.dart", record.snake_name)),
                 rendered,
@@ -48,7 +52,8 @@ impl CodeGenerator for DartCodeGenerator {
         }
 
         for union in &model.unions {
-            let rendered = render_template("dart", "union.dart.j2", context! { union => union })?;
+            let rendered =
+                render_template("dart", "union.dart.j2", context! { union => Serde(union) })?;
             write_file(
                 &out_dir.join(format!("{}.dart", union.snake_name)),
                 rendered,
@@ -65,11 +70,15 @@ impl CodeGenerator for DartCodeGenerator {
         let rendered = render_template(
             "dart",
             "config.dart.j2",
-            context! { model => &model, runtime_format => runtime_format },
+            context! { model => Serde(&model), runtime_format => runtime_format },
         )?;
         write_file(&out_dir.join("sora_config.dart"), rendered)?;
 
-        let rendered = render_template("dart", "library.dart.j2", context! { model => &model })?;
+        let rendered = render_template(
+            "dart",
+            "library.dart.j2",
+            context! { model => Serde(&model) },
+        )?;
         write_file(&out_dir.join("generated.dart"), rendered)
     }
 }

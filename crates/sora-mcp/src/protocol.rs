@@ -1,7 +1,7 @@
 use rmcp::model::ProtocolVersion;
 
 /// Single MCP revision supported by Sora.
-pub const TARGET_PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V_2025_11_25;
+pub const TARGET_PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::V_2026_07_28;
 
 /// Stable MCP implementation name reported during initialization.
 pub const SERVER_NAME: &str = "sora";
@@ -12,7 +12,7 @@ mod tests {
 
     #[test]
     fn protocol_revision_is_pinned_to_the_goal_contract() {
-        assert_eq!(TARGET_PROTOCOL_VERSION.as_str(), "2025-11-25");
-        assert_eq!(ProtocolVersion::default(), TARGET_PROTOCOL_VERSION);
+        assert_eq!(TARGET_PROTOCOL_VERSION.as_str(), "2026-07-28");
+        assert!(!TARGET_PROTOCOL_VERSION.has_initialize());
     }
 }

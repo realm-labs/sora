@@ -1,3 +1,4 @@
+use rmcp::service::{ClientLifecycleMode, ClientServiceExt};
 use std::{
     env::temp_dir as system_temp_dir, fs, path::PathBuf, process::id as process_id, sync::Arc,
 };
@@ -5,7 +6,7 @@ use std::{
 use anyhow::{Ok as anyhow_ok, Result};
 use rmcp::{
     ClientHandler, ServiceExt,
-    model::{CallToolRequestParams, ClientInfo, Implementation},
+    model::{CallToolRequestParams, ClientConfig, Implementation},
 };
 use serde_json::{Value, json};
 use sora_mcp::{SoraMcpServer, TARGET_PROTOCOL_VERSION};
@@ -16,8 +17,8 @@ use tokio::{io::duplex, spawn};
 struct ReadOnlyClient;
 
 impl ClientHandler for ReadOnlyClient {
-    fn get_info(&self) -> ClientInfo {
-        ClientInfo::new(
+    fn get_info(&self) -> ClientConfig {
+        ClientConfig::new(
             Default::default(),
             Implementation::new("sora-read-only-test", env!("CARGO_PKG_VERSION")),
         )
@@ -42,7 +43,14 @@ async fn inspect_and_query_use_structured_results_without_changing_revision() ->
         server.serve(server_transport).await?.waiting().await?;
         anyhow_ok(())
     });
-    let client = ReadOnlyClient.serve(client_transport).await?;
+    let client = ReadOnlyClient
+        .serve_with_lifecycle(
+            client_transport,
+            ClientLifecycleMode::Discover {
+                preferred_versions: vec![TARGET_PROTOCOL_VERSION],
+            },
+        )
+        .await?;
 
     let inspect = client
         .call_tool(
@@ -151,7 +159,14 @@ return { source_loaders = { custom_format = {
         server.serve(server_transport).await?.waiting().await?;
         anyhow_ok(())
     });
-    let client = ReadOnlyClient.serve(client_transport).await?;
+    let client = ReadOnlyClient
+        .serve_with_lifecycle(
+            client_transport,
+            ClientLifecycleMode::Discover {
+                preferred_versions: vec![TARGET_PROTOCOL_VERSION],
+            },
+        )
+        .await?;
     let query = client
         .call_tool(
             CallToolRequestParams::new("sora_table_query").with_arguments(

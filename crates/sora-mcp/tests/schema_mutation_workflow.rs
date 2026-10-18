@@ -1,3 +1,4 @@
+use rmcp::service::{ClientLifecycleMode, ClientServiceExt};
 use std::{
     env::temp_dir as system_temp_dir,
     fs,
@@ -12,40 +13,28 @@ use std::{
 
 use anyhow::{Ok as anyhow_ok, Result};
 use rmcp::{
-    ClientHandler, RoleClient, ServiceExt,
+    ClientHandler, ServiceExt,
     model::{
-        CallToolRequestParams, ClientInfo, Implementation, ResourceUpdatedNotificationParam,
-        SubscribeRequestParams,
+        CallToolRequestParams, ClientConfig, Implementation, ServerNotification, SubscriptionFilter,
     },
-    service::NotificationContext,
 };
 use serde_json::{Value, json};
 use sora_mcp::{SoraMcpServer, TARGET_PROTOCOL_VERSION};
 use sora_workspace::{ProjectId, RuntimeOptions, WorkspaceService};
-use tokio::{io::duplex, spawn, sync::Notify, time::timeout};
+use tokio::{io::duplex, spawn, time::timeout};
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Debug, Clone)]
-struct MutationClient {
-    resource_updated: Arc<Notify>,
-}
+struct MutationClient;
 
 impl ClientHandler for MutationClient {
-    fn get_info(&self) -> ClientInfo {
-        ClientInfo::new(
+    fn get_info(&self) -> ClientConfig {
+        ClientConfig::new(
             Default::default(),
             Implementation::new("sora-schema-mutation-test", env!("CARGO_PKG_VERSION")),
         )
         .with_protocol_version(TARGET_PROTOCOL_VERSION)
-    }
-
-    async fn on_resource_updated(
-        &self,
-        _params: ResourceUpdatedNotificationParam,
-        _context: NotificationContext<RoleClient>,
-    ) {
-        self.resource_updated.notify_one();
     }
 }
 
@@ -65,15 +54,17 @@ async fn preview_and_apply_preserve_the_plan_transaction_contract() -> Result<()
         server.serve(server_transport).await?.waiting().await?;
         anyhow_ok(())
     });
-    let updated = Arc::new(Notify::new());
-    let client = MutationClient {
-        resource_updated: Arc::clone(&updated),
-    }
-    .serve(client_transport)
-    .await?;
-    client
-        .subscribe(SubscribeRequestParams::new("sora://project/demo/revision"))
+    let client = MutationClient
+        .serve_with_lifecycle(
+            client_transport,
+            ClientLifecycleMode::Discover {
+                preferred_versions: vec![TARGET_PROTOCOL_VERSION],
+            },
+        )
         .await?;
+    let mut filter = SubscriptionFilter::new();
+    filter.resource_subscriptions = Some(vec!["sora://project/demo/revision".to_owned()]);
+    let mut subscription = client.listen(filter).await?;
 
     let preview = client
         .call_tool(
@@ -130,7 +121,12 @@ async fn preview_and_apply_preserve_the_plan_transaction_contract() -> Result<()
         .await?;
     assert_eq!(apply.is_error, Some(false));
     assert!(fs::read_to_string(&schema_path)?.contains("[tables.Item.fields.name]"));
-    timeout(Duration::from_secs(1), updated.notified()).await?;
+    let notification = timeout(Duration::from_secs(1), subscription.next())
+        .await??
+        .expect("resource notification");
+    assert!(
+        matches!(notification, ServerNotification::ResourceUpdatedNotification(notification) if notification.params.uri == "sora://project/demo/revision")
+    );
 
     let rejected = client
         .call_tool(
@@ -152,6 +148,7 @@ async fn preview_and_apply_preserve_the_plan_transaction_contract() -> Result<()
         Value::Bool(false)
     );
 
+    subscription.cancel().await?;
     client.cancel().await?;
     server_handle.await??;
     let _ = fs::remove_dir_all(root);

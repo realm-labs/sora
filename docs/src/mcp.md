@@ -1,8 +1,9 @@
 # Model Context Protocol
 
-Sora includes an MCP `2025-11-25` server for AI clients. It exposes the same
+Sora supports only MCP `2026-07-28` for AI clients. It exposes the same
 project, schema, data, Excel, and build services used by the CLI and Studio.
-Generated files are outputs, never mutation inputs.
+Generated files are outputs, never mutation inputs. Clients use `server/discover`
+and self-contained per-request protocol metadata, not the legacy initialize handshake.
 
 ## Install and connect
 
@@ -37,6 +38,59 @@ includes `--trust-project-scripts`.
 Clients that provide MCP Roots can omit `--project`. Use `sora_project_list`
 and `sora_project_open`; clients without form Elicitation must pass both
 `root_id` and `relative_manifest` explicitly.
+
+## Client input and retries
+
+Roots, project selection, and script trust use MCP `2026-07-28` multi-round-trip
+input, on both stdio and HTTP. Sora returns `resultType: "input_required"`; it
+never waits for a reverse `roots/list` or `elicitation/create` JSON-RPC request.
+The client fulfils the embedded `inputRequests` locally, then sends a **new**
+`tools/call` with the same tool, arguments, and capability declarations, the
+server's opaque `requestState`, and only the responses requested in that round.
+Project opening may require three rounds: roots, selection, then script trust.
+Without Roots support, only configured server roots are available. Without form
+Elicitation, selection must be explicit and untrusted scripts remain refused.
+
+For example, a Roots-capable client's initial request is:
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"sora_project_list","arguments":{},"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{"roots":{}}}}}
+```
+
+Sora returns the following shape (`requestState` is an illustrative opaque handle):
+
+```json
+{"jsonrpc":"2.0","id":1,"result":{"resultType":"input_required","inputRequests":{"roots":{"method":"roots/list"}},"requestState":"7b5779e8-fddd-4d34-8582-415ab87baf3e"}}
+```
+
+The client retries, rather than POSTing a standalone JSON-RPC response:
+
+```json
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"sora_project_list","arguments":{},"requestState":"7b5779e8-fddd-4d34-8582-415ab87baf3e","inputResponses":{"roots":{"roots":[{"uri":"file:///work/project","name":"project"}]}},"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{"roots":{}}}}}
+```
+
+Selection and trust inputs have method `elicitation/create`, form `params`, and
+response values such as `{"action":"accept","content":{"root_id":"root-…","relative_manifest":"project.toml"}}`
+and `{"action":"accept","content":{"trust_project_scripts":true}}`. Each uses
+its own server-issued input key (`project_selection` or `script_trust`) and the
+latest handle. `decline` or `cancel` completes that attempt without opening the
+project; trying again starts a new request without previous input state.
+
+The [rmcp input model](https://docs.rs/rmcp/3.5.1/rmcp/model/struct.InputRequiredResult.html)
+and [client implementation](https://docs.rs/crate/rmcp/3.5.1/source/src/service/client.rs)
+provide native support: `RunningService::call_tool` automatically invokes local
+`ClientHandler::list_roots` / `create_elicitation` handlers and retries (default
+maximum ten rounds). `call_tool_once` exposes each intermediate response. Clients
+advertising Tasks must drive these input rounds with `call_tool_once`, then poll
+the returned task; the high-level `call_tool` helper does not poll Tasks.
+
+Input handles are authorization-server-local, single-use, and expire after five
+minutes. Sora retains at most 64 pending continuations, each with a 256 KiB state
+limit; client roots are limited to 64. Retries are checked against the original
+tool, arguments, capabilities, input kind/id, and exact requested content,
+including script paths and digests. Client roots never enter the shared workspace
+root registry. A pending input is not a successful tool execution or an accepted
+task; no worker starts until all required input is complete.
 
 ## Streamable HTTP
 
@@ -77,10 +131,12 @@ unexpired `exp`, a valid optional `nbf`, and every configured scope. Protected
 resource metadata is available at
 `/.well-known/oauth-protected-resource`.
 
-Streamable HTTP validates Host and Origin, bounds request size, request rate,
-concurrency, authorization contexts, sessions, idle time, and resumable event
-retention. Sessions and opaque event cursors are authorization-bound. Sora does
-not implement the obsolete standalone HTTP+SSE transport.
+Streamable HTTP is sessionless. It validates Host and Origin and bounds request
+size, request rate, concurrency, and retained authorization contexts. Requests
+carry `MCP-Protocol-Version: 2026-07-28`, protocol/client capability metadata,
+and the standard `Mcp-Method` / `Mcp-Name` routing headers where applicable.
+Every request is authorized independently; no MCP session ID grants access.
+Sora does not implement the obsolete standalone HTTP+SSE transport.
 
 ## Recommended workflow
 
@@ -127,9 +183,39 @@ All tools declare read-only, destructive, idempotent, and open-world hints.
 | `sora_schema_lock` | `project_id`, revision, optional view/clean | Build the declared schema lock. |
 | `sora_excel_template` | `project_id`, revision, optional view/clean | Build declared Excel templates. |
 
-Build, codegen, export, schema-lock, Excel-template, and Excel synchronization
-advertise optional MCP Tasks. Clients without Tasks receive the same operation
-as a normal tool call with progress and cancellation.
+### Long-running operations and Tasks
+
+Sora implements the [`io.modelcontextprotocol/tasks` extension](https://modelcontextprotocol.io/extensions/tasks/overview).
+Clients declare it in each request's `_meta.io.modelcontextprotocol/clientCapabilities.extensions`.
+For build, codegen, export, schema-lock, Excel-template, and both Excel synchronization
+tools, Sora returns a `resultType: "task"` handle when the client supports the extension.
+Other tools return their completed result directly. Clients without the extension
+execute the same operation synchronously, with normal request progress and cancellation.
+There is no legacy task wire adapter, per-tool `execution.taskSupport`, or client `task` metadata.
+
+Poll `tasks/get` with `taskId`, respecting `pollIntervalMs` (250 ms). The response is
+a `DetailedTask`: terminal `completed` includes the original tool `result`, including
+business failures with `isError: true`; `failed` includes a JSON-RPC `error`.
+`tasks/cancel` acknowledges cancellation intent, not completion. A worker that passed
+its commit point may still complete successfully. The task resource exposes the same
+new task shape and remains authorization- and project-bound.
+
+Execution `ttlMs` starts at task creation (five minutes). The deadline requests real
+cooperative cancellation; it does not abort an atomic commit or fabricate a terminal
+status. Completed records are retained for up to another minute, with an updated
+`ttlMs`. Each store permits eight active tasks per authorization owner and at most
+64 records across all owners; older terminal records may be evicted to admit work.
+Tasks are in-memory and do not survive a server restart.
+
+Sora tasks do not request client input: `tasks/update` returns an explicit error.
+Observe tasks by polling; task push notifications and task progress notifications
+are not provided. `tasks/list`, `tasks/result`, and client-side task TTL requests
+are not supported. Roots, project selection, and script trust complete through
+`input_required` / `inputResponses` retries before task acceptance, never from a
+worker or through task input requests.
+
+Resource change notifications use `subscriptions/listen`; clients select resource
+URIs and cancel that listen request to unsubscribe.
 
 ## Resource reference
 
@@ -206,7 +292,7 @@ npx @modelcontextprotocol/inspector \
 
 In the UI:
 
-1. Confirm protocol `2025-11-25` and inspect the Tools, Resources, and Prompts
+1. Confirm protocol `2026-07-28` and inspect the Tools, Resources, and Prompts
    tabs.
 2. Call `sora_project_inspect` for the opened project.
 3. Read its `revision`, `schema`, and `diagnostics` resources.

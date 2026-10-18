@@ -15,7 +15,7 @@ use uuid::Uuid;
 
 use super::{TransactionReceipt, commit_text_transaction};
 use crate::{
-    MutationPlanError, ProjectId, ProjectRevision, RuntimeOptions, WorkspaceService,
+    MutationPlanError, ProjectId, ProjectRevision, RuntimeOptions, WorkspaceRoot, WorkspaceService,
     studio::service::TextFileWrite,
 };
 
@@ -57,6 +57,7 @@ pub struct ProjectInitApplyReport {
 #[derive(Debug, Clone)]
 struct StoredPlan {
     owner: String,
+    root: WorkspaceRoot,
     plan: ProjectInitPlan,
 }
 
@@ -82,10 +83,30 @@ impl WorkspaceService {
         relative_directory: &str,
         schema_id: &str,
     ) -> Result<ProjectInitPlan, MutationPlanError> {
-        validate_schema_id(schema_id)?;
         let root = self
             .root(root_id)
             .map_err(|error| MutationPlanError::Project(error.to_string()))?;
+        self.preview_project_init_in_root(
+            authorization_context,
+            root,
+            relative_directory,
+            schema_id,
+        )
+    }
+
+    /// Previews a scaffold using an explicit root authority without registering it.
+    ///
+    /// The plan retains this authority until expiry, independently of later root
+    /// registry changes. All plans share this workspace's authorization-scoped
+    /// idempotency namespace and initialization coordinator.
+    pub fn preview_project_init_in_root(
+        &self,
+        authorization_context: &str,
+        root: WorkspaceRoot,
+        relative_directory: &str,
+        schema_id: &str,
+    ) -> Result<ProjectInitPlan, MutationPlanError> {
+        validate_schema_id(schema_id)?;
         let relative = validate_relative_directory(relative_directory)?;
         ensure_empty_target(root.path(), &root.path().join(&relative))?;
         let files = scaffold_files(schema_id);
@@ -94,7 +115,7 @@ impl WorkspaceService {
             plan_id: format!("plan:{}", Uuid::new_v4()),
             authorization_context: authorization_fingerprint(authorization_context),
             operation_kind: "project_init".to_owned(),
-            root_id: root_id.to_owned(),
+            root_id: root.id().to_owned(),
             relative_directory: relative_string(&relative),
             schema_id: schema_id.to_owned(),
             files: files
@@ -109,7 +130,7 @@ impl WorkspaceService {
             expires_at: created_at + Duration::minutes(PLAN_TTL_MINUTES),
         };
         self.project_init
-            .insert(authorization_context, plan.clone())?;
+            .insert(authorization_context, root, plan.clone())?;
         Ok(plan)
     }
 
@@ -127,6 +148,19 @@ impl WorkspaceService {
         {
             return Ok(report);
         }
+        let _guard = self
+            .project_init
+            .write_lock
+            .lock()
+            .map_err(|_| MutationPlanError::WriteLockPoisoned)?;
+        // Another apply may have consumed the key while this request waited.
+        // Recheck before looking up a potentially consumed plan or touching files.
+        if let Some(report) =
+            self.project_init
+                .idempotent(authorization_context, plan_id, idempotency_key)?
+        {
+            return Ok(report);
+        }
         let stored = self.project_init.plan(plan_id)?;
         if stored.owner != authorization_context {
             return Err(MutationPlanError::AuthorizationMismatch);
@@ -135,14 +169,7 @@ impl WorkspaceService {
             self.project_init.remove(plan_id)?;
             return Err(MutationPlanError::ExpiredPlan);
         }
-        let _guard = self
-            .project_init
-            .write_lock
-            .lock()
-            .map_err(|_| MutationPlanError::WriteLockPoisoned)?;
-        let root = self
-            .root(&stored.plan.root_id)
-            .map_err(|error| MutationPlanError::Project(error.to_string()))?;
+        let root = &stored.root;
         let relative = validate_relative_directory(&stored.plan.relative_directory)?;
         let target = root.path().join(&relative);
         ensure_empty_target(root.path(), &target)?;
@@ -178,8 +205,8 @@ impl WorkspaceService {
         };
         let relative_manifest = format!("{}/project.scon", stored.plan.relative_directory);
         let session = self
-            .open_discovered_project(
-                &stored.plan.root_id,
+            .open_discovered_project_in_root(
+                root,
                 &relative_manifest,
                 RuntimeOptions::default(),
                 false,
@@ -204,7 +231,12 @@ impl WorkspaceService {
 }
 
 impl ProjectInitCoordinator {
-    fn insert(&self, owner: &str, plan: ProjectInitPlan) -> Result<(), MutationPlanError> {
+    fn insert(
+        &self,
+        owner: &str,
+        root: WorkspaceRoot,
+        plan: ProjectInitPlan,
+    ) -> Result<(), MutationPlanError> {
         let now = Utc::now();
         let mut plans = self
             .plans
@@ -228,6 +260,7 @@ impl ProjectInitCoordinator {
             plan.plan_id.clone(),
             StoredPlan {
                 owner: owner.to_owned(),
+                root,
                 plan,
             },
         );
@@ -456,6 +489,8 @@ mod tests {
     };
 
     use super::*;
+    use serde_json::to_value;
+    use std::{sync::Barrier, thread::scope as thread_scope};
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -504,6 +539,177 @@ mod tests {
             "owned"
         );
         let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn project_init_authority_snapshot_survives_root_removal() {
+        let directory = temp_dir();
+        let original = directory.join("original");
+        let replacement = directory.join("replacement");
+        fs::create_dir_all(&original).unwrap();
+        fs::create_dir_all(&replacement).unwrap();
+        let workspace = WorkspaceService::new();
+        let root = workspace.add_root("snapshot:original", &original).unwrap();
+        let registered = workspace
+            .preview_project_init("owner", root.id(), "registered", "demo")
+            .unwrap();
+        workspace
+            .remove_roots_with_name_prefix("snapshot:")
+            .unwrap();
+        workspace
+            .add_root("snapshot:replacement", &replacement)
+            .unwrap();
+        let catalog = WorkspaceService::new();
+        let authority = catalog.add_root("snapshot:external", &original).unwrap();
+        let explicit = workspace
+            .preview_project_init_in_root("owner", authority, "explicit", "demo")
+            .unwrap();
+        catalog.remove_roots_with_name_prefix("snapshot:").unwrap();
+        drop(catalog);
+
+        for (plan, key, relative) in [
+            (&registered, "registered-key", "registered"),
+            (&explicit, "explicit-key", "explicit"),
+        ] {
+            let report = workspace
+                .apply_project_init("owner", &plan.plan_id, key)
+                .unwrap();
+            assert!(original.join(relative).join("project.scon").is_file());
+            assert!(!replacement.join(relative).exists());
+            assert!(workspace.project(&report.project_id).is_ok());
+        }
+        assert!(
+            workspace.root(root.id()).is_err(),
+            "applying must not republish the root"
+        );
+        assert_eq!(workspace.project_ids().unwrap().len(), 2);
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn registered_and_explicit_roots_share_owner_idempotency_and_replay() {
+        let directory = temp_dir();
+        let registered_path = directory.join("registered-root");
+        let external_path = directory.join("external-root");
+        fs::create_dir_all(&registered_path).unwrap();
+        fs::create_dir_all(&external_path).unwrap();
+        let workspace = WorkspaceService::new();
+        let root = workspace.add_root("registered", &registered_path).unwrap();
+        let catalog = WorkspaceService::new();
+        let authority = catalog.add_root("external", &external_path).unwrap();
+        let first = workspace
+            .preview_project_init("owner-a", root.id(), "first", "demo")
+            .unwrap();
+        let second = workspace
+            .preview_project_init_in_root("owner-a", authority.clone(), "second", "demo")
+            .unwrap();
+        let other_owner = workspace
+            .preview_project_init_in_root("owner-b", authority, "other-owner", "demo")
+            .unwrap();
+        drop(catalog);
+        assert!(matches!(
+            workspace.apply_project_init("owner-b", &second.plan_id, "shared-key"),
+            Err(MutationPlanError::AuthorizationMismatch)
+        ));
+        assert!(!external_path.join("second").exists());
+
+        let report = workspace
+            .apply_project_init("owner-a", &first.plan_id, "shared-key")
+            .unwrap();
+        let replay = workspace
+            .apply_project_init("owner-a", &first.plan_id, "shared-key")
+            .unwrap();
+        assert_eq!(to_value(&report).unwrap(), to_value(replay).unwrap());
+        assert!(matches!(
+            workspace.apply_project_init("owner-a", &second.plan_id, "shared-key"),
+            Err(MutationPlanError::IdempotencyConflict)
+        ));
+        assert!(!external_path.join("second").exists());
+        assert_eq!(workspace.project_ids().unwrap().len(), 1);
+        workspace
+            .apply_project_init("owner-a", &second.plan_id, "different-key")
+            .unwrap();
+        workspace
+            .apply_project_init("owner-b", &other_owner.plan_id, "shared-key")
+            .unwrap();
+        assert!(external_path.join("second/project.scon").is_file());
+        assert!(external_path.join("other-owner/project.scon").is_file());
+        assert_eq!(workspace.project_ids().unwrap().len(), 3);
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn concurrent_cross_root_applies_recheck_the_key_before_writing() {
+        let directory = temp_dir();
+        let first_path = directory.join("first-root");
+        let second_path = directory.join("second-root");
+        fs::create_dir_all(&first_path).unwrap();
+        fs::create_dir_all(&second_path).unwrap();
+        let workspace = WorkspaceService::new();
+        let root = workspace.add_root("registered", &first_path).unwrap();
+        let catalog = WorkspaceService::new();
+        let authority = catalog.add_root("external", &second_path).unwrap();
+        let first = workspace
+            .preview_project_init("owner", root.id(), "created", "demo")
+            .unwrap();
+        let second = workspace
+            .preview_project_init_in_root("owner", authority, "created", "demo")
+            .unwrap();
+        let barrier = Barrier::new(3);
+        let (first_result, second_result) = thread_scope(|scope| {
+            let a = scope.spawn(|| {
+                barrier.wait();
+                workspace.apply_project_init("owner", &first.plan_id, "one-key")
+            });
+            let b = scope.spawn(|| {
+                barrier.wait();
+                workspace.apply_project_init("owner", &second.plan_id, "one-key")
+            });
+            barrier.wait();
+            (a.join().unwrap(), b.join().unwrap())
+        });
+        let report = match (first_result, second_result) {
+            (Ok(report), Err(MutationPlanError::IdempotencyConflict))
+            | (Err(MutationPlanError::IdempotencyConflict), Ok(report)) => report,
+            other => panic!("exactly one plan may use the key: {other:?}"),
+        };
+        assert_ne!(
+            first_path.join("created").exists(),
+            second_path.join("created").exists()
+        );
+        assert_eq!(workspace.project_ids().unwrap().len(), 1);
+        let replay = workspace
+            .apply_project_init("owner", &report.plan_id, "one-key")
+            .unwrap();
+        assert_eq!(to_value(report).unwrap(), to_value(replay).unwrap());
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn concurrent_same_plan_applies_return_the_same_report() {
+        let directory = temp_dir();
+        fs::create_dir_all(&directory).unwrap();
+        let workspace = WorkspaceService::new();
+        let root = workspace.add_root("registered", &directory).unwrap();
+        let plan = workspace
+            .preview_project_init("owner", root.id(), "created", "demo")
+            .unwrap();
+        let barrier = Barrier::new(3);
+        let (first, second) = thread_scope(|scope| {
+            let a = scope.spawn(|| {
+                barrier.wait();
+                workspace.apply_project_init("owner", &plan.plan_id, "one-key")
+            });
+            let b = scope.spawn(|| {
+                barrier.wait();
+                workspace.apply_project_init("owner", &plan.plan_id, "one-key")
+            });
+            barrier.wait();
+            (a.join().unwrap().unwrap(), b.join().unwrap().unwrap())
+        });
+        assert_eq!(to_value(first).unwrap(), to_value(second).unwrap());
+        assert_eq!(workspace.project_ids().unwrap().len(), 1);
+        fs::remove_dir_all(directory).unwrap();
     }
 
     fn temp_dir() -> PathBuf {

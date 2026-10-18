@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use heck::{ToLowerCamelCase, ToShoutySnakeCase};
-use minijinja::context;
+use minijinja::{context, value::Serde};
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::{
@@ -39,7 +39,7 @@ impl CodeGenerator for JavaCodeGenerator {
             let rendered = render_template(
                 "java",
                 "enum.java.j2",
-                context! { package => &model.package, enum => item, runtime_format => runtime_format },
+                context! { package => &model.package, enum => Serde(item), runtime_format => runtime_format },
             )?;
             write_file(&package_dir.join(format!("{}.java", item.name)), rendered)?;
         }
@@ -48,7 +48,7 @@ impl CodeGenerator for JavaCodeGenerator {
             let rendered = render_template(
                 "java",
                 "record.java.j2",
-                context! { package => &model.package, record => record, runtime_format => runtime_format },
+                context! { package => &model.package, record => Serde(record), runtime_format => runtime_format },
             )?;
             write_file(
                 &package_dir.join(format!("{}.java", record.pascal_name)),
@@ -58,7 +58,7 @@ impl CodeGenerator for JavaCodeGenerator {
                 let rendered = render_template(
                     "java",
                     "table.java.j2",
-                    context! { package => &model.package, table => table },
+                    context! { package => &model.package, table => Serde(table) },
                 )?;
                 write_file(
                     &package_dir.join(format!("{}Table.java", table.pascal_name)),
@@ -71,7 +71,7 @@ impl CodeGenerator for JavaCodeGenerator {
             let rendered = render_template(
                 "java",
                 "union.java.j2",
-                context! { package => &model.package, union => union, runtime_format => runtime_format },
+                context! { package => &model.package, union => Serde(union), runtime_format => runtime_format },
             )?;
             write_file(
                 &package_dir.join(format!("{}.java", union.pascal_name)),
@@ -112,14 +112,15 @@ impl CodeGenerator for JavaCodeGenerator {
         }
 
         if model.has_localization {
-            let rendered = render_template("java", "i18n.java.j2", context! { model => &model })?;
+            let rendered =
+                render_template("java", "i18n.java.j2", context! { model => Serde(&model) })?;
             write_file(&package_dir.join("SoraI18n.java"), rendered)?;
         }
 
         let rendered = render_template(
             "java",
             "config.java.j2",
-            context! { model => &model, runtime_format => runtime_format },
+            context! { model => Serde(&model), runtime_format => runtime_format },
         )?;
         write_file(&package_dir.join("SoraConfig.java"), rendered)
     }

@@ -47,17 +47,16 @@ clap = { version = "4", features = ["derive"] }
 csv = "1"
 futures-util = "0.3"
 heck = "0.5"
-hmac = "0.13"
 include_dir = "0.7"
 indexmap = { version = "2", features = ["serde"] }
 jsonwebtoken = { version = "11.0", default-features = false, features = ["rust_crypto"] }
 libc = "0.2"
-minijinja = "2"
+minijinja = { version = "3.0.1", features = ["serde"] }
 mlua = { version = "0.12.2", features = ["lua54", "vendored", "serde", "error-send"] }
 prost = "0.14"
 rayon = "1"
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls"] }
-rmcp = { version = "2.2.0", default-features = false, features = [
+rmcp = { version = "3.5.1", default-features = false, features = [
     "elicitation",
     "macros",
     "schemars",

@@ -1,7 +1,7 @@
 use std::{collections::BTreeSet, path::Path};
 
 use heck::ToSnakeCase;
-use minijinja::context;
+use minijinja::{context, value::Serde};
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
@@ -35,7 +35,7 @@ impl CodeGenerator for CppCodeGenerator {
             let rendered = render_template(
                 "cpp",
                 "enum.hpp.j2",
-                context! { enum => item, options => &options },
+                context! { enum => Serde(item), options => Serde(&options) },
             )?;
             write_file(
                 &out_dir.join(format!("{}.hpp", item.name.to_snake_case())),
@@ -47,7 +47,7 @@ impl CodeGenerator for CppCodeGenerator {
             let rendered = render_template(
                 "cpp",
                 "record.hpp.j2",
-                context! { record => record, options => &options },
+                context! { record => Serde(record), options => Serde(&options) },
             )?;
             write_file(
                 &out_dir.join(format!("{}.hpp", record.snake_name)),
@@ -59,18 +59,22 @@ impl CodeGenerator for CppCodeGenerator {
             let rendered = render_template(
                 "cpp",
                 "union.hpp.j2",
-                context! { union => union, options => &options },
+                context! { union => Serde(union), options => Serde(&options) },
             )?;
             write_file(&out_dir.join(format!("{}.hpp", union.snake_name)), rendered)?;
         }
 
-        let rendered = render_template("cpp", "runtime.hpp.j2", context! { options => &options })?;
+        let rendered = render_template(
+            "cpp",
+            "runtime.hpp.j2",
+            context! { options => Serde(&options) },
+        )?;
         write_file(&out_dir.join("sora_runtime.hpp"), rendered)?;
 
         let rendered = render_template(
             "cpp",
             "config.hpp.j2",
-            context! { model => &model, options => &options },
+            context! { model => Serde(&model), options => Serde(&options) },
         )?;
         write_file(&out_dir.join("sora_config.hpp"), rendered)
     }

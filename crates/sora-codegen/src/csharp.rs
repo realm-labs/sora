@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use heck::{ToLowerCamelCase, ToPascalCase};
-use minijinja::context;
+use minijinja::{context, value::Serde};
 use serde::Serialize;
 use sora_diagnostics::Result;
 use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
@@ -36,7 +36,7 @@ impl CodeGenerator for CSharpCodeGenerator {
             let rendered = render_template(
                 "csharp",
                 "enum.cs.j2",
-                context! { namespace => &item.namespace, root_namespace => &root_namespace, enum => item, runtime_format => runtime_format },
+                context! { namespace => &item.namespace, root_namespace => &root_namespace, enum => Serde(item), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(&item.file_path), rendered)?;
         }
@@ -45,7 +45,7 @@ impl CodeGenerator for CSharpCodeGenerator {
             let rendered = render_template(
                 "csharp",
                 "record.cs.j2",
-                context! { namespace => &record.namespace, root_namespace => &root_namespace, record => record, runtime_format => runtime_format },
+                context! { namespace => &record.namespace, root_namespace => &root_namespace, record => Serde(record), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(&record.file_path), rendered)?;
         }
@@ -54,7 +54,7 @@ impl CodeGenerator for CSharpCodeGenerator {
             let rendered = render_template(
                 "csharp",
                 "union.cs.j2",
-                context! { namespace => &union.namespace, root_namespace => &root_namespace, union => union, runtime_format => runtime_format },
+                context! { namespace => &union.namespace, root_namespace => &root_namespace, union => Serde(union), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(&union.file_path), rendered)?;
         }
@@ -74,7 +74,7 @@ impl CodeGenerator for CSharpCodeGenerator {
         let rendered = render_template(
             "csharp",
             "config.cs.j2",
-            context! { model => &model, runtime_format => runtime_format },
+            context! { model => Serde(&model), runtime_format => runtime_format },
         )?;
         write_file(&out_dir.join("SoraConfig.cs"), rendered)
     }

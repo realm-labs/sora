@@ -33,8 +33,7 @@ impl SoraMcpServer {
             destructive_hint = true,
             idempotent_hint = true,
             open_world_hint = false
-        ),
-        execution(task_support = "optional")
+        )
     )]
     async fn build(
         &self,
@@ -77,8 +76,7 @@ impl SoraMcpServer {
             destructive_hint = true,
             idempotent_hint = true,
             open_world_hint = false
-        ),
-        execution(task_support = "optional")
+        )
     )]
     async fn codegen(
         &self,
@@ -111,8 +109,7 @@ impl SoraMcpServer {
             destructive_hint = true,
             idempotent_hint = true,
             open_world_hint = false
-        ),
-        execution(task_support = "optional")
+        )
     )]
     async fn export(
         &self,
@@ -145,8 +142,7 @@ impl SoraMcpServer {
             destructive_hint = true,
             idempotent_hint = true,
             open_world_hint = false
-        ),
-        execution(task_support = "optional")
+        )
     )]
     async fn schema_lock(
         &self,
@@ -179,8 +175,7 @@ impl SoraMcpServer {
             destructive_hint = true,
             idempotent_hint = true,
             open_world_hint = false
-        ),
-        execution(task_support = "optional")
+        )
     )]
     async fn excel_template(
         &self,
@@ -244,7 +239,11 @@ impl SoraMcpServer {
                 let _ = progress_tx.send(progress);
             });
         let worker_control = control.clone();
-        let progress_token = context.meta.get_progress_token();
+        let progress_token = if context.extensions.get::<TaskExecutionState>().is_some() {
+            None
+        } else {
+            context.meta.get_progress_token()
+        };
         let progress_peer = context.peer.clone();
         let progress_task = spawn(async move {
             while let Some(progress) = progress_rx.recv().await {
@@ -306,8 +305,7 @@ impl SoraMcpServer {
 
         match build_result {
             Ok(Ok((report, descriptors))) => {
-                self.notify_project_resources_updated(&context.peer, id.as_str())
-                    .await;
+                self.notify_project_resources_updated(id.as_str()).await;
                 let links: Vec<ArtifactLink> = descriptors
                     .into_iter()
                     .map(|artifact| artifact_link(&id, artifact))

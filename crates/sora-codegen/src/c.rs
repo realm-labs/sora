@@ -1,7 +1,7 @@
 use std::{collections::BTreeMap, path::Path};
 
 use heck::{ToShoutySnakeCase, ToSnakeCase};
-use minijinja::context;
+use minijinja::{context, value::Serde};
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::{
@@ -41,13 +41,13 @@ impl CodeGenerator for CCodeGenerator {
             let rendered = render_template(
                 "c",
                 "enum.h.j2",
-                context! { enum => item, options => &options },
+                context! { enum => Serde(item), options => Serde(&options) },
             )?;
             write_file(&out_dir.join(format!("{}.h", item.snake_name)), rendered)?;
             let rendered = render_template(
                 "c",
                 "enum.c.j2",
-                context! { enum => item, options => &options },
+                context! { enum => Serde(item), options => Serde(&options) },
             )?;
             write_file(&out_dir.join(format!("{}.c", item.snake_name)), rendered)?;
         }
@@ -56,13 +56,13 @@ impl CodeGenerator for CCodeGenerator {
             let rendered = render_template(
                 "c",
                 "record.h.j2",
-                context! { record => record, options => &options },
+                context! { record => Serde(record), options => Serde(&options) },
             )?;
             write_file(&out_dir.join(format!("{}.h", record.snake_name)), rendered)?;
             let rendered = render_template(
                 "c",
                 "record.c.j2",
-                context! { record => record, options => &options },
+                context! { record => Serde(record), options => Serde(&options) },
             )?;
             write_file(&out_dir.join(format!("{}.c", record.snake_name)), rendered)?;
         }
@@ -71,45 +71,47 @@ impl CodeGenerator for CCodeGenerator {
             let rendered = render_template(
                 "c",
                 "union.h.j2",
-                context! { union => union, options => &options },
+                context! { union => Serde(union), options => Serde(&options) },
             )?;
             write_file(&out_dir.join(format!("{}.h", union.snake_name)), rendered)?;
             let rendered = render_template(
                 "c",
                 "union.c.j2",
-                context! { union => union, options => &options },
+                context! { union => Serde(union), options => Serde(&options) },
             )?;
             write_file(&out_dir.join(format!("{}.c", union.snake_name)), rendered)?;
         }
 
-        let rendered = render_template("c", "runtime.h.j2", context! { options => &options })?;
+        let rendered =
+            render_template("c", "runtime.h.j2", context! { options => Serde(&options) })?;
         write_file(&out_dir.join("sora_runtime.h"), rendered)?;
-        let rendered = render_template("c", "runtime.c.j2", context! { options => &options })?;
+        let rendered =
+            render_template("c", "runtime.c.j2", context! { options => Serde(&options) })?;
         write_file(&out_dir.join("sora_runtime.c"), rendered)?;
 
         let rendered = render_template(
             "c",
             "types.h.j2",
-            context! { model => &model, helpers => &helpers, options => &options },
+            context! { model => Serde(&model), helpers => Serde(&helpers), options => Serde(&options) },
         )?;
         write_file(&out_dir.join("sora_types.h"), rendered)?;
         let rendered = render_template(
             "c",
             "types.c.j2",
-            context! { model => &model, helpers => &helpers, options => &options },
+            context! { model => Serde(&model), helpers => Serde(&helpers), options => Serde(&options) },
         )?;
         write_file(&out_dir.join("sora_types.c"), rendered)?;
 
         let rendered = render_template(
             "c",
             "config.h.j2",
-            context! { model => &model, options => &options },
+            context! { model => Serde(&model), options => Serde(&options) },
         )?;
         write_file(&out_dir.join("sora_config.h"), rendered)?;
         let rendered = render_template(
             "c",
             "config.c.j2",
-            context! { model => &model, options => &options },
+            context! { model => Serde(&model), options => Serde(&options) },
         )?;
         write_file(&out_dir.join("sora_config.c"), rendered)
     }

@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use minijinja::context;
+use minijinja::{context, value::Serde};
 use sora_diagnostics::Result;
 
 use crate::{
@@ -37,14 +37,14 @@ impl CodeGenerator for JavaScriptCodeGenerator {
             let rendered = render_template(
                 "javascript",
                 "enum.js.j2",
-                context! { enum => item, options => &options, runtime_format => runtime_format },
+                context! { enum => Serde(item), options => Serde(&options), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.js", item.module_path)), rendered)?;
             if options.emit_dts {
                 let rendered = render_template(
                     "javascript",
                     "enum.d.ts.j2",
-                    context! { enum => item, options => &options, runtime_format => runtime_format },
+                    context! { enum => Serde(item), options => Serde(&options), runtime_format => runtime_format },
                 )?;
                 write_file(
                     &out_dir.join(format!("{}.d.ts", item.module_path)),
@@ -57,7 +57,7 @@ impl CodeGenerator for JavaScriptCodeGenerator {
             let rendered = render_template(
                 "javascript",
                 "record.js.j2",
-                context! { record => record, options => &options, runtime_format => runtime_format },
+                context! { record => Serde(record), options => Serde(&options), runtime_format => runtime_format },
             )?;
             write_file(
                 &out_dir.join(format!("{}.js", record.module_path)),
@@ -67,7 +67,7 @@ impl CodeGenerator for JavaScriptCodeGenerator {
                 let rendered = render_template(
                     "javascript",
                     "record.d.ts.j2",
-                    context! { record => record, options => &options, runtime_format => runtime_format },
+                    context! { record => Serde(record), options => Serde(&options), runtime_format => runtime_format },
                 )?;
                 write_file(
                     &out_dir.join(format!("{}.d.ts", record.module_path)),
@@ -80,14 +80,14 @@ impl CodeGenerator for JavaScriptCodeGenerator {
             let rendered = render_template(
                 "javascript",
                 "union.js.j2",
-                context! { union => union, options => &options, runtime_format => runtime_format },
+                context! { union => Serde(union), options => Serde(&options), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.js", union.module_path)), rendered)?;
             if options.emit_dts {
                 let rendered = render_template(
                     "javascript",
                     "union.d.ts.j2",
-                    context! { union => union, options => &options, runtime_format => runtime_format },
+                    context! { union => Serde(union), options => Serde(&options), runtime_format => runtime_format },
                 )?;
                 write_file(
                     &out_dir.join(format!("{}.d.ts", union.module_path)),
@@ -114,14 +114,14 @@ impl CodeGenerator for JavaScriptCodeGenerator {
         let rendered = render_template(
             "javascript",
             "config.js.j2",
-            context! { model => &model, options => &options, runtime_format => runtime_format },
+            context! { model => Serde(&model), options => Serde(&options), runtime_format => runtime_format },
         )?;
         write_file(&out_dir.join("sora_config.js"), rendered)?;
         if options.emit_dts {
             let rendered = render_template(
                 "javascript",
                 "config.d.ts.j2",
-                context! { model => &model, options => &options, runtime_format => runtime_format },
+                context! { model => Serde(&model), options => Serde(&options), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join("sora_config.d.ts"), rendered)?;
         }

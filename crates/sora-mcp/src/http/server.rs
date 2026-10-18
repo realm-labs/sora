@@ -2,11 +2,8 @@ use std::{
     collections::BTreeMap,
     iter::once,
     net::{IpAddr, SocketAddr},
-    sync::{
-        Arc,
-        atomic::{AtomicU64, Ordering},
-    },
-    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+    sync::{Arc, Mutex as StdMutex},
+    time::{Duration, Instant},
 };
 
 use anyhow::{Context, Result};
@@ -22,16 +19,18 @@ use axum::{
     routing::{any, get},
     serve,
 };
-use hmac::{Hmac, KeyInit, Mac};
-use rmcp::transport::streamable_http_server::{StreamableHttpServerConfig, StreamableHttpService};
-use sha2::Sha256;
+use futures_util::{StreamExt, stream};
+use rmcp::transport::streamable_http_server::{
+    StreamableHttpServerConfig, StreamableHttpService, session::local::LocalSessionManager,
+};
+use serde_json::{Value, from_slice, json};
 use sora_workspace::WorkspaceService;
 use thiserror::Error;
 use tokio::{
     net::TcpListener,
     runtime::Runtime,
     signal::ctrl_c,
-    sync::{Mutex, Semaphore},
+    sync::{Mutex, OwnedSemaphorePermit, Semaphore},
 };
 use tokio_util::sync::CancellationToken;
 use tower_http::sensitive_headers::SetSensitiveRequestHeadersLayer;
@@ -43,14 +42,13 @@ use crate::SoraMcpServer;
 
 use super::{
     AuthorizationPrincipal, OAuthAuthenticator, OAuthError, OAuthResourceServerConfig,
-    ProtectedResourceMetadata, SecureSessionConfig, SecureSessionManager,
+    ProtectedResourceMetadata,
 };
 
 const MCP_PATH: &str = "/mcp";
 const RESOURCE_METADATA_PATH: &str = "/.well-known/oauth-protected-resource";
 
-type HmacSha256 = Hmac<Sha256>;
-type McpTransport = StreamableHttpService<SoraMcpServer, SecureSessionManager>;
+type McpTransport = StreamableHttpService<SoraMcpServer, LocalSessionManager>;
 
 /// Streamable HTTP resource and abuse-control settings.
 #[derive(Debug, Clone)]
@@ -63,13 +61,13 @@ pub struct HttpServerConfig {
     pub allowed_origins: Vec<String>,
     /// OAuth resource-server validation. Required for non-loopback binds.
     pub oauth: Option<OAuthResourceServerConfig>,
-    /// Per-authorization session limits and timeouts.
-    pub sessions: SecureSessionConfig,
+    /// Idle time before an inactive authorization context without retained tasks may be evicted.
+    pub authorization_idle_timeout: Duration,
     /// Maximum request body size.
     pub max_request_body_bytes: usize,
-    /// Maximum requests entering the MCP transport concurrently.
+    /// Maximum concurrent requests, including response body and SSE lifetimes.
     pub max_concurrent_requests: usize,
-    /// Maximum concurrent requests for one authorization context.
+    /// Maximum concurrent requests/response streams for one authorization context.
     pub max_concurrent_requests_per_authorization: usize,
     /// Maximum number of requests per minute for one authorization context.
     pub requests_per_minute: u32,
@@ -86,7 +84,7 @@ impl HttpServerConfig {
             public_url,
             allowed_origins: vec![public_origin],
             oauth: None,
-            sessions: SecureSessionConfig::default(),
+            authorization_idle_timeout: Duration::from_secs(300),
             max_request_body_bytes: 1024 * 1024,
             max_concurrent_requests: 64,
             max_concurrent_requests_per_authorization: 8,
@@ -118,8 +116,7 @@ impl HttpServerConfig {
             || self.max_concurrent_requests_per_authorization == 0
             || self.requests_per_minute == 0
             || self.max_authorization_contexts == 0
-            || self.sessions.max_sessions == 0
-            || self.sessions.channel_capacity == 0
+            || self.authorization_idle_timeout.is_zero()
         {
             return Err(HttpConfigError::ZeroLimit);
         }
@@ -128,15 +125,60 @@ impl HttpServerConfig {
 
     fn allowed_hosts(&self) -> Vec<String> {
         let mut hosts = vec![socket_authority(self.bind)];
-        if let Some(host) = self.public_url.host_str() {
-            hosts.push(match self.public_url.port() {
-                Some(port) => authority(host, port),
-                None => host.to_owned(),
-            });
+        if let Some(host) = self.public_url.host_str()
+            && let Some(port) = self.public_url.port_or_known_default()
+        {
+            hosts.push(authority(host, port));
         }
         hosts.sort();
         hosts.dedup();
         hosts
+    }
+
+    fn allowed_sdk_origins(&self) -> Vec<String> {
+        self.allowed_origins
+            .iter()
+            .map(|origin| {
+                if origin == "null" {
+                    return origin.clone();
+                }
+                let url = Url::parse(origin).expect("validated origin");
+                // rmcp 3.5.1 treats portless allowlist entries as any-port origins.
+                format!(
+                    "{}://{}",
+                    url.scheme(),
+                    authority(
+                        url.host_str().expect("validated origin host"),
+                        url.port_or_known_default().expect("validated web scheme"),
+                    )
+                )
+            })
+            .collect()
+    }
+
+    fn normalize_default_host(&self, request: &mut Request<Body>) {
+        // Normalize only the exact public authority, preserving strict port checks
+        // when HTTP/2 supplies :authority instead of a Host header.
+        if self.public_url.port().is_some() {
+            return;
+        }
+        let Some(host) = self.public_url.host_str() else {
+            return;
+        };
+        let supplied = match request.headers().get_all("host").iter().count() {
+            0 => request.uri().authority().map(|value| value.as_str()),
+            1 => request
+                .headers()
+                .get("host")
+                .and_then(|value| value.to_str().ok()),
+            _ => None,
+        };
+        if supplied.is_some_and(|value| value.eq_ignore_ascii_case(host))
+            && let Some(port) = self.public_url.port_or_known_default()
+            && let Ok(value) = HeaderValue::from_str(&authority(host, port))
+        {
+            request.headers_mut().insert("host", value);
+        }
     }
 
     fn resource_metadata_url(&self) -> Url {
@@ -195,7 +237,7 @@ fn validate_origin(origin: &str) -> Result<(), HttpConfigError> {
 }
 
 fn authority(host: &str, port: u16) -> String {
-    if host.contains(':') {
+    if host.contains(':') && !host.starts_with('[') {
         format!("[{host}]:{port}")
     } else {
         format!("{host}:{port}")
@@ -237,10 +279,10 @@ impl FixedWindowRateLimiter {
 
 struct AuthorizationTransport {
     service: McpTransport,
-    sessions: Arc<SecureSessionManager>,
+    server: SoraMcpServer,
     rate_limiter: Mutex<FixedWindowRateLimiter>,
     concurrency: Arc<Semaphore>,
-    last_seen: AtomicU64,
+    last_seen: StdMutex<Instant>,
 }
 
 struct HttpState {
@@ -249,7 +291,6 @@ struct HttpState {
     authenticator: Option<Arc<OAuthAuthenticator>>,
     transports: Mutex<BTreeMap<Arc<str>, Arc<AuthorizationTransport>>>,
     concurrency: Arc<Semaphore>,
-    signing_key: [u8; 32],
     cancellation: CancellationToken,
 }
 
@@ -260,59 +301,57 @@ impl HttpState {
     ) -> Result<Arc<AuthorizationTransport>, HttpRequestError> {
         let mut transports = self.transports.lock().await;
         if let Some(transport) = transports.get(&principal.context) {
-            transport.last_seen.store(unix_seconds(), Ordering::Relaxed);
+            *transport.last_seen.lock().expect("last-seen lock") = Instant::now();
             return Ok(transport.clone());
         }
         if transports.len() >= self.config.max_authorization_contexts {
-            let stale_before =
-                unix_seconds().saturating_sub(self.config.sessions.idle_timeout.as_secs());
-            let candidates = transports
-                .iter()
-                .filter(|(_, transport)| transport.last_seen.load(Ordering::Relaxed) < stale_before)
-                .map(|(context, transport)| (context.clone(), transport.clone()))
-                .collect::<Vec<_>>();
-            for (context, transport) in candidates {
-                if transport.sessions.active_session_count().await == 0 {
-                    transports.remove(&context);
-                }
-            }
+            transports.retain(|_, transport| {
+                // All request/body references are acquired while holding this map lock.
+                // A sole map reference therefore excludes in-flight dispatch and SSE.
+                Arc::strong_count(transport) != 1
+                    || transport
+                        .last_seen
+                        .lock()
+                        .expect("last-seen lock")
+                        .elapsed()
+                        < self.config.authorization_idle_timeout
+                    || transport.server.has_retained_tasks()
+                    || transport.server.has_pending_inputs()
+            });
             if transports.len() >= self.config.max_authorization_contexts {
                 return Err(HttpRequestError::AuthorizationCapacity);
             }
         }
 
-        let signing_key = derive_signing_key(&self.signing_key, &principal.context)?;
-        let manager = Arc::new(
-            SecureSessionManager::new(
-                principal.context.clone(),
-                &signing_key,
-                self.config.sessions.clone(),
-            )
-            .map_err(|_| HttpRequestError::Internal)?,
-        );
         let server = SoraMcpServer::new_with_authorization_context(
             self.workspace.clone(),
             principal.context.clone(),
         );
         let protocol_config = StreamableHttpServerConfig::default()
+            .with_legacy_session_mode(false)
+            .with_stateless_protocol_metadata_required(true)
+            .with_json_response(true)
+            .with_max_request_body_bytes(self.config.max_request_body_bytes)
             .with_allowed_hosts(self.config.allowed_hosts())
-            .with_allowed_origins(self.config.allowed_origins.clone())
+            .with_allowed_origins(self.config.allowed_sdk_origins())
             .with_sse_keep_alive(Some(Duration::from_secs(15)))
-            .with_sse_retry(Some(Duration::from_secs(3)))
             .with_cancellation_token(self.cancellation.child_token());
         let service = StreamableHttpService::new(
-            move || Ok(server.clone()),
-            manager.clone(),
+            {
+                let server = server.clone();
+                move || Ok(server.clone())
+            },
+            Default::default(),
             protocol_config,
         );
         let transport = Arc::new(AuthorizationTransport {
             service,
-            sessions: manager,
+            server,
             rate_limiter: Mutex::new(FixedWindowRateLimiter::new(self.config.requests_per_minute)),
             concurrency: Arc::new(Semaphore::new(
                 self.config.max_concurrent_requests_per_authorization,
             )),
-            last_seen: AtomicU64::new(unix_seconds()),
+            last_seen: StdMutex::new(Instant::now()),
         });
         transports.insert(principal.context.clone(), transport.clone());
         Ok(transport)
@@ -324,6 +363,9 @@ impl HttpState {
     ) -> Result<AuthorizationPrincipal, OAuthError> {
         match &self.authenticator {
             Some(authenticator) => {
+                if headers.get_all(AUTHORIZATION).iter().count() > 1 {
+                    return Err(OAuthError::MalformedToken);
+                }
                 let header = headers
                     .get(AUTHORIZATION)
                     .and_then(|value| value.to_str().ok());
@@ -386,8 +428,6 @@ enum HttpRequestError {
     ConcurrencyLimit,
     #[error("request body size limit exceeded")]
     PayloadTooLarge,
-    #[error("internal HTTP transport error")]
-    Internal,
 }
 
 /// Builds the Sora Streamable HTTP application after validating OAuth and
@@ -414,7 +454,7 @@ pub async fn build_http_router(
         config: config.clone(),
         authenticator,
         transports: Mutex::new(BTreeMap::new()),
-        signing_key: random_signing_key(),
+
         cancellation,
     });
     Ok(router_with_state(state))
@@ -457,15 +497,14 @@ async fn handle_resource_metadata(State(state): State<Arc<HttpState>>) -> Respon
     }
 }
 
-async fn handle_mcp(State(state): State<Arc<HttpState>>, request: Request<Body>) -> Response<Body> {
+async fn handle_mcp(
+    State(state): State<Arc<HttpState>>,
+    mut request: Request<Body>,
+) -> Response<Body> {
     let request_id = Uuid::new_v4();
     let started = Instant::now();
     let method = request.method().clone();
-    let session_id = request
-        .headers()
-        .get("mcp-session-id")
-        .and_then(|value| value.to_str().ok())
-        .map(str::to_owned);
+
     let principal = match state.authenticate(request.headers()).await {
         Ok(principal) => principal,
         Err(error) => {
@@ -524,6 +563,12 @@ async fn handle_mcp(State(state): State<Arc<HttpState>>, request: Request<Body>)
         }
     };
 
+    let lifetime = ResponseLifetime {
+        transport: transport.clone(),
+        _global_permit: global_permit,
+        _authorization_permit: authorization_permit,
+    };
+    state.config.normalize_default_host(&mut request);
     let (parts, body) = request.into_parts();
     let body = match to_bytes(body, state.config.max_request_body_bytes).await {
         Ok(body) => body,
@@ -536,6 +581,21 @@ async fn handle_mcp(State(state): State<Arc<HttpState>>, request: Request<Body>)
             );
         }
     };
+    // rmcp validates duplicate standard method/name headers, but 3.5.1 only
+    // reads the first protocol-version value. Reject ambiguity before dispatch.
+    if parts.headers.get_all("mcp-protocol-version").iter().count() > 1 {
+        let id = from_slice::<Value>(&body)
+            .ok()
+            .and_then(|value| value.get("id").cloned());
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(json!({
+                "jsonrpc": "2.0", "id": id,
+                "error": {"code": -32020, "message": "Duplicate MCP-Protocol-Version header"}
+            })),
+        )
+            .into_response();
+    }
     let response = transport
         .service
         .handle(Request::from_parts(parts, Body::from(body)))
@@ -545,15 +605,12 @@ async fn handle_mcp(State(state): State<Arc<HttpState>>, request: Request<Body>)
         %request_id,
         authorization_context = principal.context.as_ref(),
         %method,
-        session_id = session_id.as_deref().unwrap_or("new"),
         status = status.as_u16(),
         duration_ms = started.elapsed().as_millis(),
         "MCP HTTP request completed"
     );
-    drop(authorization_permit);
-    drop(global_permit);
     let (parts, body) = response.into_parts();
-    Response::from_parts(parts, Body::new(body))
+    retain_response_lifetime(Response::from_parts(parts, Body::new(body)), lifetime)
 }
 
 fn limited_response(
@@ -563,9 +620,7 @@ fn limited_response(
     error: HttpRequestError,
 ) -> Response<Body> {
     let status = match error {
-        HttpRequestError::AuthorizationCapacity | HttpRequestError::Internal => {
-            StatusCode::SERVICE_UNAVAILABLE
-        }
+        HttpRequestError::AuthorizationCapacity => StatusCode::SERVICE_UNAVAILABLE,
         HttpRequestError::RateLimit | HttpRequestError::ConcurrencyLimit => {
             StatusCode::TOO_MANY_REQUESTS
         }
@@ -582,319 +637,30 @@ fn limited_response(
     status.into_response()
 }
 
-fn random_signing_key() -> [u8; 32] {
-    let mut key = [0_u8; 32];
-    key[..16].copy_from_slice(Uuid::new_v4().as_bytes());
-    key[16..].copy_from_slice(Uuid::new_v4().as_bytes());
-    key
+struct ResponseLifetime {
+    transport: Arc<AuthorizationTransport>,
+    _global_permit: OwnedSemaphorePermit,
+    _authorization_permit: OwnedSemaphorePermit,
 }
 
-fn derive_signing_key(
-    root_key: &[u8; 32],
-    authorization_context: &str,
-) -> Result<[u8; 32], HttpRequestError> {
-    let mut signer =
-        HmacSha256::new_from_slice(root_key).map_err(|_| HttpRequestError::Internal)?;
-    signer.update(authorization_context.as_bytes());
-    Ok(signer.finalize().into_bytes().into())
+impl Drop for ResponseLifetime {
+    fn drop(&mut self) {
+        *self.transport.last_seen.lock().expect("last-seen lock") = Instant::now();
+    }
 }
 
-fn unix_seconds() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_or(0, |duration| duration.as_secs())
+fn retain_response_lifetime(
+    response: Response<Body>,
+    lifetime: ResponseLifetime,
+) -> Response<Body> {
+    let (parts, body) = response.into_parts();
+    let stream = stream::unfold(
+        (body.into_data_stream(), lifetime),
+        |(mut body, lifetime)| async move { body.next().await.map(|frame| (frame, (body, lifetime))) },
+    );
+    Response::from_parts(parts, Body::from_stream(stream))
 }
 
 #[cfg(test)]
-mod tests {
-    use axum::{
-        body::Body,
-        http::{Request, StatusCode},
-    };
-    use jsonwebtoken::jwk::JwkSet;
-    use serde_json::from_str;
-    use sora_workspace::WorkspaceService;
-    use std::{
-        collections::BTreeMap,
-        net::{IpAddr, Ipv4Addr, SocketAddr},
-        sync::Arc,
-    };
-    use tokio::sync::{Mutex, Semaphore};
-    use tokio_util::sync::CancellationToken;
-    use tower::ServiceExt;
-    use url::Url;
-
-    use super::{
-        AuthorizationPrincipal, HttpConfigError, HttpServerConfig, HttpState, OAuthAuthenticator,
-        OAuthResourceServerConfig, build_http_router, router_with_state,
-    };
-
-    const INITIALIZE: &str = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"security-test","version":"1.0"}}}"#;
-
-    #[test]
-    fn non_loopback_listener_requires_oauth() {
-        let config = HttpServerConfig::new(
-            SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), 8080),
-            Url::parse("https://sora.example.com/mcp").expect("valid URL"),
-        );
-        assert!(matches!(
-            config.validate(),
-            Err(HttpConfigError::OAuthRequired)
-        ));
-    }
-
-    #[test]
-    fn origin_must_be_an_exact_web_origin() {
-        let mut config = HttpServerConfig::new(
-            SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 8080),
-            Url::parse("http://127.0.0.1:8080/mcp").expect("valid URL"),
-        );
-        config.allowed_origins = vec!["https://client.example.com/path".to_owned()];
-        assert!(matches!(
-            config.validate(),
-            Err(HttpConfigError::InvalidOrigin(_))
-        ));
-    }
-
-    #[test]
-    fn local_http_configuration_is_valid() {
-        let config = HttpServerConfig::new(
-            SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 8080),
-            Url::parse("http://127.0.0.1:8080/mcp").expect("valid URL"),
-        );
-        assert!(config.validate().is_ok());
-    }
-
-    #[tokio::test]
-    async fn router_rejects_unlisted_origin_and_dns_rebinding_host() {
-        let router = build_http_router(
-            Arc::new(WorkspaceService::new()),
-            local_config(),
-            CancellationToken::new(),
-        )
-        .await
-        .expect("valid router");
-
-        let bad_origin = router
-            .clone()
-            .oneshot(initialize_request(
-                "127.0.0.1:8080",
-                "https://evil.example.com",
-                INITIALIZE,
-            ))
-            .await
-            .expect("response");
-        assert_eq!(bad_origin.status(), StatusCode::FORBIDDEN);
-
-        let bad_host = router
-            .oneshot(initialize_request(
-                "attacker.example.com",
-                "http://127.0.0.1:8080",
-                INITIALIZE,
-            ))
-            .await
-            .expect("response");
-        assert_eq!(bad_host.status(), StatusCode::FORBIDDEN);
-    }
-
-    #[tokio::test]
-    async fn router_enforces_request_body_limit_without_content_length() {
-        let mut config = local_config();
-        config.max_request_body_bytes = 64;
-        let router = build_http_router(
-            Arc::new(WorkspaceService::new()),
-            config,
-            CancellationToken::new(),
-        )
-        .await
-        .expect("valid router");
-        let response = router
-            .oneshot(initialize_request(
-                "127.0.0.1:8080",
-                "http://127.0.0.1:8080",
-                INITIALIZE,
-            ))
-            .await
-            .expect("response");
-        assert_eq!(response.status(), StatusCode::PAYLOAD_TOO_LARGE);
-    }
-
-    #[tokio::test]
-    async fn local_router_creates_and_deletes_stateful_session() {
-        let router = build_http_router(
-            Arc::new(WorkspaceService::new()),
-            local_config(),
-            CancellationToken::new(),
-        )
-        .await
-        .expect("valid router");
-        let initialized = router
-            .clone()
-            .oneshot(initialize_request(
-                "127.0.0.1:8080",
-                "http://127.0.0.1:8080",
-                INITIALIZE,
-            ))
-            .await
-            .expect("response");
-        assert_eq!(initialized.status(), StatusCode::OK);
-        let session_id = initialized
-            .headers()
-            .get("mcp-session-id")
-            .expect("session header")
-            .clone();
-
-        let deleted = router
-            .oneshot(
-                Request::delete("/mcp")
-                    .header("host", "127.0.0.1:8080")
-                    .header("origin", "http://127.0.0.1:8080")
-                    .header("mcp-session-id", session_id)
-                    .body(Body::empty())
-                    .expect("valid request"),
-            )
-            .await
-            .expect("response");
-        assert_eq!(deleted.status(), StatusCode::ACCEPTED);
-    }
-
-    #[tokio::test]
-    async fn sessions_are_bound_to_authorization_context() {
-        let state = test_state(local_config(), None);
-        let principal_a = principal("oauth:subject-a");
-        let principal_b = principal("oauth:subject-b");
-        let transport_a = state
-            .transport_for(&principal_a)
-            .await
-            .expect("transport A");
-        let transport_b = state
-            .transport_for(&principal_b)
-            .await
-            .expect("transport B");
-
-        let initialized = transport_a
-            .service
-            .handle(initialize_request(
-                "127.0.0.1:8080",
-                "http://127.0.0.1:8080",
-                INITIALIZE,
-            ))
-            .await;
-        assert_eq!(initialized.status(), StatusCode::OK);
-        let session_id = initialized
-            .headers()
-            .get("mcp-session-id")
-            .expect("session header")
-            .clone();
-
-        let cross_authorization = transport_b
-            .service
-            .handle(
-                Request::get("/mcp")
-                    .header("host", "127.0.0.1:8080")
-                    .header("origin", "http://127.0.0.1:8080")
-                    .header("accept", "text/event-stream")
-                    .header("mcp-session-id", session_id.clone())
-                    .body(Body::empty())
-                    .expect("valid request"),
-            )
-            .await;
-        assert_eq!(cross_authorization.status(), StatusCode::NOT_FOUND);
-
-        let owner = transport_a
-            .service
-            .handle(
-                Request::delete("/mcp")
-                    .header("host", "127.0.0.1:8080")
-                    .header("origin", "http://127.0.0.1:8080")
-                    .header("mcp-session-id", session_id)
-                    .body(Body::empty())
-                    .expect("valid request"),
-            )
-            .await;
-        assert_eq!(owner.status(), StatusCode::ACCEPTED);
-    }
-
-    #[tokio::test]
-    async fn protected_router_advertises_metadata_and_challenges_missing_token() {
-        let mut config = local_config();
-        let oauth = OAuthResourceServerConfig::new(
-            Url::parse("https://id.example.com").expect("valid issuer"),
-            "http://127.0.0.1:8080/mcp",
-        );
-        config.oauth = Some(oauth.clone());
-        let authenticator = OAuthAuthenticator::for_testing(
-            oauth,
-            from_str::<JwkSet>(r#"{"keys":[]}"#).expect("valid JWKS"),
-        );
-        let router = router_with_state(test_state(config, Some(Arc::new(authenticator))));
-
-        let metadata = router
-            .clone()
-            .oneshot(
-                Request::get("/.well-known/oauth-protected-resource")
-                    .body(Body::empty())
-                    .expect("valid request"),
-            )
-            .await
-            .expect("response");
-        assert_eq!(metadata.status(), StatusCode::OK);
-
-        let unauthorized = router
-            .oneshot(initialize_request(
-                "127.0.0.1:8080",
-                "http://127.0.0.1:8080",
-                INITIALIZE,
-            ))
-            .await
-            .expect("response");
-        assert_eq!(unauthorized.status(), StatusCode::UNAUTHORIZED);
-        let challenge = unauthorized
-            .headers()
-            .get("www-authenticate")
-            .and_then(|value| value.to_str().ok())
-            .unwrap_or_default();
-        assert!(challenge.contains("resource_metadata="));
-        assert!(challenge.contains("scope=\"sora:mcp\""));
-    }
-
-    fn local_config() -> HttpServerConfig {
-        HttpServerConfig::new(
-            SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 8080),
-            Url::parse("http://127.0.0.1:8080/mcp").expect("valid URL"),
-        )
-    }
-
-    fn principal(context: &str) -> AuthorizationPrincipal {
-        AuthorizationPrincipal {
-            context: Arc::from(context),
-            subject: Arc::from("test-subject"),
-            expires_at: u64::MAX,
-        }
-    }
-
-    fn test_state(
-        config: HttpServerConfig,
-        authenticator: Option<Arc<OAuthAuthenticator>>,
-    ) -> Arc<HttpState> {
-        Arc::new(HttpState {
-            workspace: Arc::new(WorkspaceService::new()),
-            concurrency: Arc::new(Semaphore::new(config.max_concurrent_requests)),
-            config,
-            authenticator,
-            transports: Mutex::new(BTreeMap::new()),
-            signing_key: [7; 32],
-            cancellation: CancellationToken::new(),
-        })
-    }
-
-    fn initialize_request(host: &str, origin: &str, body: &'static str) -> Request<Body> {
-        Request::post("/mcp")
-            .header("host", host)
-            .header("origin", origin)
-            .header("content-type", "application/json")
-            .header("accept", "application/json, text/event-stream")
-            .body(Body::from(body))
-            .expect("valid request")
-    }
-}
+#[path = "tests.rs"]
+mod tests;

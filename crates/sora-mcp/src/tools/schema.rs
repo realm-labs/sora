@@ -1,8 +1,6 @@
 use rmcp::{
-    RoleServer,
     handler::server::wrapper::{Json, Parameters},
     model::CallToolResult,
-    service::RequestContext,
     tool, tool_router,
 };
 use schemars::JsonSchema;
@@ -231,7 +229,6 @@ impl SoraMcpServer {
     async fn schema_apply(
         &self,
         Parameters(input): Parameters<SchemaApplyInput>,
-        context: RequestContext<RoleServer>,
     ) -> Result<Json<ToolEnvelope<SchemaApplyReport>>, CallToolResult> {
         let id = ProjectId::new(input.project_id).map_err(|error| {
             tool_error(ToolEnvelope::<SchemaApplyReport>::failure(
@@ -255,8 +252,7 @@ impl SoraMcpServer {
         .await;
         match result {
             Ok(Ok(report)) => {
-                self.notify_project_resources_updated(&context.peer, id.as_str())
-                    .await;
+                self.notify_project_resources_updated(id.as_str()).await;
                 let envelope = ToolEnvelope::success(
                     Some(id),
                     Some(report.revision.clone()),

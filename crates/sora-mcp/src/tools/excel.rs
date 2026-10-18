@@ -33,8 +33,7 @@ impl SoraMcpServer {
             destructive_hint = false,
             idempotent_hint = true,
             open_world_hint = false
-        ),
-        execution(task_support = "optional")
+        )
     )]
     async fn excel_sync_preview(
         &self,
@@ -98,8 +97,7 @@ impl SoraMcpServer {
             destructive_hint = true,
             idempotent_hint = true,
             open_world_hint = false
-        ),
-        execution(task_support = "optional")
+        )
     )]
     async fn excel_sync_apply(
         &self,
@@ -129,8 +127,7 @@ impl SoraMcpServer {
         .await;
         match result {
             Ok(Ok(report)) => {
-                self.notify_project_resources_updated(&context.peer, id.as_str())
-                    .await;
+                self.notify_project_resources_updated(id.as_str()).await;
                 Ok(Json(ToolEnvelope::success(
                     Some(id),
                     Some(report.revision.clone()),
@@ -176,7 +173,11 @@ where
     let control = cancellation.on_progress(move |progress| {
         let _ = progress_tx.send(progress);
     });
-    let progress_token = context.meta.get_progress_token();
+    let progress_token = if context.extensions.get::<TaskExecutionState>().is_some() {
+        None
+    } else {
+        context.meta.get_progress_token()
+    };
     let progress_peer = context.peer.clone();
     let progress_task = spawn(async move {
         while let Some(progress) = progress_rx.recv().await {

@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use minijinja::context;
+use minijinja::{context, value::Serde};
 use sora_diagnostics::Result;
 
 use crate::{
@@ -37,7 +37,7 @@ impl CodeGenerator for TypeScriptCodeGenerator {
             let rendered = render_template(
                 "typescript",
                 "enum.ts.j2",
-                context! { enum => item, options => &options, runtime_format => runtime_format },
+                context! { enum => Serde(item), options => Serde(&options), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.ts", item.module_path)), rendered)?;
         }
@@ -46,7 +46,7 @@ impl CodeGenerator for TypeScriptCodeGenerator {
             let rendered = render_template(
                 "typescript",
                 "record.ts.j2",
-                context! { record => record, options => &options, runtime_format => runtime_format },
+                context! { record => Serde(record), options => Serde(&options), runtime_format => runtime_format },
             )?;
             write_file(
                 &out_dir.join(format!("{}.ts", record.module_path)),
@@ -58,7 +58,7 @@ impl CodeGenerator for TypeScriptCodeGenerator {
             let rendered = render_template(
                 "typescript",
                 "union.ts.j2",
-                context! { union => union, options => &options, runtime_format => runtime_format },
+                context! { union => Serde(union), options => Serde(&options), runtime_format => runtime_format },
             )?;
             write_file(&out_dir.join(format!("{}.ts", union.module_path)), rendered)?;
         }
@@ -73,7 +73,7 @@ impl CodeGenerator for TypeScriptCodeGenerator {
         let rendered = render_template(
             "typescript",
             "config.ts.j2",
-            context! { model => &model, options => &options, runtime_format => runtime_format },
+            context! { model => Serde(&model), options => Serde(&options), runtime_format => runtime_format },
         )?;
         write_file(&out_dir.join("sora_config.ts"), rendered)?;
 

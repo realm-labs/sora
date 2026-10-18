@@ -1,3 +1,4 @@
+use rmcp::service::{ClientLifecycleMode, ClientServiceExt};
 use std::{
     env::temp_dir as system_temp_dir,
     fs,
@@ -13,7 +14,7 @@ use anyhow::{Ok as anyhow_ok, Result};
 use rmcp::{
     ClientHandler, RoleClient, ServiceExt,
     model::{
-        CallToolRequestParams, ClientInfo, Implementation, ProgressNotificationParam,
+        CallToolRequestParams, ClientConfig, Implementation, ProgressNotificationParam,
         ReadResourceRequestParams,
     },
     service::NotificationContext,
@@ -31,8 +32,8 @@ struct BuildClient {
 }
 
 impl ClientHandler for BuildClient {
-    fn get_info(&self) -> ClientInfo {
-        ClientInfo::new(
+    fn get_info(&self) -> ClientConfig {
+        ClientConfig::new(
             Default::default(),
             Implementation::new("sora-build-test", env!("CARGO_PKG_VERSION")),
         )
@@ -64,7 +65,14 @@ async fn schema_lock_build_reports_progress_and_exposes_immutable_artifact() -> 
         server.serve(server_transport).await?.waiting().await?;
         anyhow_ok(())
     });
-    let client = BuildClient::default().serve(client_transport).await?;
+    let client = BuildClient::default()
+        .serve_with_lifecycle(
+            client_transport,
+            ClientLifecycleMode::Discover {
+                preferred_versions: vec![TARGET_PROTOCOL_VERSION],
+            },
+        )
+        .await?;
 
     let result = client
         .call_tool(

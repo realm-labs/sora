@@ -7,47 +7,63 @@ use std::{
         Arc,
         atomic::{AtomicU64, AtomicUsize, Ordering},
     },
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 use anyhow::{Ok as anyhow_ok, Result, bail};
 use rmcp::{
-    ClientHandler, RoleClient, ServiceExt,
+    ClientHandler, RoleClient, ServiceError, ServiceExt,
     model::{
-        CallToolRequest, CallToolRequestParams, CancelTaskParams, CancelTaskRequest,
-        ClientCapabilities, ClientInfo, ClientRequest, GetTaskParams, GetTaskPayloadParams,
-        GetTaskPayloadRequest, GetTaskRequest, Implementation, ListTasksRequest,
-        ReadResourceRequestParams, ServerResult, TaskMetadata, TaskStatus,
-        TaskStatusNotificationParam, TasksCapability,
+        CallToolRequestParams, CallToolResponse, CancelTaskParams, ClientCapabilities,
+        ClientConfig, DetailedTask, ErrorCode, GetTaskParams, Implementation, NumberOrString,
+        ProgressNotificationParam, ProgressToken, ReadResourceRequestParams, RequestMetaObject,
+        TaskPayload, TaskStatus, TaskStatusNotificationParams, UpdateTaskParams,
     },
-    service::NotificationContext,
+    service::{ClientLifecycleMode, ClientServiceExt, NotificationContext},
 };
-use serde_json::{json, to_value};
+use serde_json::{from_str, json, to_value};
 use sora_mcp::{SoraMcpServer, TARGET_PROTOCOL_VERSION};
 use sora_workspace::{ProjectId, RuntimeOptions, WorkspaceService};
-use tokio::{io::duplex, spawn, task::yield_now};
+use tokio::{
+    io::duplex,
+    spawn,
+    time::{sleep, timeout},
+};
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Debug, Clone, Default)]
 struct TaskClient {
+    supports_tasks: bool,
+    progress_count: Arc<AtomicUsize>,
     status_count: Arc<AtomicUsize>,
 }
 
 impl ClientHandler for TaskClient {
-    fn get_info(&self) -> ClientInfo {
-        let mut capabilities = ClientCapabilities::default();
-        capabilities.tasks = Some(TasksCapability::client_default());
-        ClientInfo::new(
+    fn get_info(&self) -> ClientConfig {
+        let capabilities = if self.supports_tasks {
+            ClientCapabilities::builder().enable_tasks().build()
+        } else {
+            ClientCapabilities::default()
+        };
+        ClientConfig::new(
             capabilities,
             Implementation::new("sora-task-test", env!("CARGO_PKG_VERSION")),
         )
         .with_protocol_version(TARGET_PROTOCOL_VERSION)
     }
 
+    async fn on_progress(
+        &self,
+        _params: ProgressNotificationParam,
+        _context: NotificationContext<RoleClient>,
+    ) {
+        self.progress_count.fetch_add(1, Ordering::Relaxed);
+    }
+
     async fn on_task_status(
         &self,
-        _params: TaskStatusNotificationParam,
+        _params: TaskStatusNotificationParams,
         _context: NotificationContext<RoleClient>,
     ) {
         self.status_count.fetch_add(1, Ordering::Relaxed);
@@ -55,7 +71,7 @@ impl ClientHandler for TaskClient {
 }
 
 #[tokio::test]
-async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> Result<()> {
+async fn server_directed_task_is_polled_with_inline_result_and_project_resource() -> Result<()> {
     let root = temp_project();
     let workspace = Arc::new(WorkspaceService::new());
     let session = workspace.open_project(
@@ -65,161 +81,237 @@ async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> Result<(
     )?;
     let revision = session.revision();
     let (server_transport, client_transport) = duplex(128 * 1024);
-    let server = SoraMcpServer::new(Arc::clone(&workspace));
+    let server = SoraMcpServer::new(workspace);
     let server_handle = spawn(async move {
         server.serve(server_transport).await?.waiting().await?;
         anyhow_ok(())
     });
-    let client = TaskClient::default().serve(client_transport).await?;
+    let client = TaskClient {
+        supports_tasks: true,
+        ..Default::default()
+    }
+    .serve_with_lifecycle(
+        client_transport,
+        ClientLifecycleMode::Discover {
+            preferred_versions: vec![TARGET_PROTOCOL_VERSION],
+        },
+    )
+    .await?;
 
-    let request = CallToolRequestParams::new("sora_schema_lock")
-        .with_arguments(
-            json!({
-                "project_id": "demo",
-                "expected_project_revision": revision.project,
-                "view": null,
-                "clean": true
-            })
-            .as_object()
-            .unwrap()
-            .clone(),
-        )
-        .with_task(TaskMetadata::new().with_ttl(60_000));
-    let task = match client
-        .send_request(ClientRequest::CallToolRequest(CallToolRequest::new(
-            request,
-        )))
-        .await?
-    {
-        ServerResult::CreateTaskResult(result) => result.task,
-        result => bail!("expected task result, got {result:?}"),
+    let response = client
+        .call_tool_once(build_request(&revision.project))
+        .await?;
+    let CallToolResponse::Task(created) = response else {
+        bail!("expected server-directed task")
     };
-
-    let completed = loop {
-        let result = client
-            .send_request(ClientRequest::GetTaskRequest(GetTaskRequest::new(
-                GetTaskParams::new(&task.task_id),
-            )))
-            .await?;
-        let ServerResult::GetTaskResult(result) = result else {
-            bail!("expected task info");
-        };
-        if result.task.status != TaskStatus::Working {
-            break result.task;
+    assert_eq!(created.task.ttl_ms, Some(300_000));
+    assert_eq!(created.task.poll_interval_ms, Some(250));
+    let task_id = created.task.task_id;
+    let completed = timeout(Duration::from_secs(10), async {
+        loop {
+            let task = client.get_task(GetTaskParams::new(&task_id)).await?.task;
+            if task.status().is_terminal() {
+                break anyhow_ok(task);
+            }
+            sleep(Duration::from_millis(
+                task.task.poll_interval_ms.unwrap_or(250),
+            ))
+            .await;
         }
-        yield_now().await;
+    })
+    .await??;
+    let TaskPayload::Completed { result } = completed.payload else {
+        bail!("expected completed result")
     };
-    assert_eq!(completed.status, TaskStatus::Completed);
+    assert_eq!(result["isError"], false);
+    assert_eq!(result["structuredContent"]["ok"], true);
     assert!(root.join("generated/schema.lock").is_file());
-
-    let payload = client
-        .send_request(ClientRequest::GetTaskPayloadRequest(
-            GetTaskPayloadRequest::new(GetTaskPayloadParams::new(&task.task_id)),
-        ))
-        .await?;
-    let payload = match payload {
-        ServerResult::CallToolResult(payload) => to_value(payload)?,
-        ServerResult::CustomResult(payload) => payload.0,
-        payload => bail!("expected task payload, got {payload:?}"),
-    };
-    assert_eq!(payload["isError"], false);
-    assert_eq!(payload["structuredContent"]["ok"], true);
-
-    let list = client
-        .send_request(ClientRequest::ListTasksRequest(ListTasksRequest::default()))
-        .await?;
-    let ServerResult::ListTasksResult(list) = list else {
-        bail!("expected task list");
-    };
-    assert_eq!(list.tasks.len(), 1);
-    assert_eq!(list.tasks[0].task_id, task.task_id);
 
     let resource = client
         .read_resource(ReadResourceRequestParams::new(format!(
-            "sora://project/demo/task/{}",
-            task.task_id
+            "sora://project/demo/task/{task_id}"
         )))
         .await?;
-    assert_eq!(resource.contents.len(), 1);
-    assert!(client.service().status_count.load(Ordering::Relaxed) >= 1);
+    let serialized = to_value(&resource)?;
+    let text = serialized["contents"][0]["text"]
+        .as_str()
+        .expect("resource JSON");
+    let resource_task: DetailedTask = from_str(text)?;
+    assert_eq!(resource_task.status(), TaskStatus::Completed);
+    assert_eq!(resource_task.task.task_id, task_id);
+    assert!(
+        client
+            .read_resource(ReadResourceRequestParams::new(format!(
+                "sora://project/other/task/{task_id}"
+            )))
+            .await
+            .is_err()
+    );
+    assert!(
+        client
+            .update_task(UpdateTaskParams::new(&task_id, Default::default()))
+            .await
+            .is_err()
+    );
+    // Materialized work is observed through polling, not a stale request's
+    // progress token or unsolicited task status notifications.
+    assert_eq!(client.service().progress_count.load(Ordering::Relaxed), 0);
+    assert_eq!(client.service().status_count.load(Ordering::Relaxed), 0);
+
+    // Non-heavy tools stay synchronous even when the client declares tasks.
+    assert!(matches!(
+        client
+            .call_tool_once(
+                CallToolRequestParams::new("sora_server_info").with_arguments(Default::default())
+            )
+            .await?,
+        CallToolResponse::Complete(_)
+    ));
 
     fs::write(root.join("generated/schema.lock"), "sentinel")?;
-    let notifications_before_cancel = client.service().status_count.load(Ordering::Relaxed);
-    let request = CallToolRequestParams::new("sora_schema_lock")
-        .with_arguments(
-            json!({
-                "project_id": "demo",
-                "expected_project_revision": revision.project,
-                "view": null,
-                "clean": true
-            })
-            .as_object()
-            .unwrap()
-            .clone(),
-        )
-        .with_task(TaskMetadata::new().with_ttl(60_000));
-    let cancelled_task = match client
-        .send_request(ClientRequest::CallToolRequest(CallToolRequest::new(
-            request,
-        )))
+    let CallToolResponse::Task(created) = client
+        .call_tool_once(build_request(&revision.project))
         .await?
-    {
-        ServerResult::CreateTaskResult(result) => result.task,
-        result => bail!("expected task result, got {result:?}"),
+    else {
+        bail!("expected task")
     };
-    let cancellation = client
-        .send_request(ClientRequest::CancelTaskRequest(CancelTaskRequest::new(
-            CancelTaskParams::new(&cancelled_task.task_id),
-        )))
+    client
+        .cancel_task(CancelTaskParams::new(&created.task.task_id))
         .await?;
-    let cancellation = match cancellation {
-        ServerResult::CancelTaskResult(result) => result.task,
-        ServerResult::GetTaskResult(result) => result.task,
-        result => bail!("expected cancellation result, got {result:?}"),
-    };
-    assert!(matches!(
-        cancellation.status,
-        TaskStatus::Working | TaskStatus::Completed
-    ));
-    if cancellation.status == TaskStatus::Working {
-        assert_eq!(
-            cancellation.status_message.as_deref(),
-            Some("Cancellation requested")
-        );
-    }
-    let deadline = Instant::now() + Duration::from_secs(10);
-    let cancelled = loop {
-        let result = client
-            .send_request(ClientRequest::GetTaskRequest(GetTaskRequest::new(
-                GetTaskParams::new(&cancelled_task.task_id),
-            )))
-            .await?;
-        let ServerResult::GetTaskResult(result) = result else {
-            bail!("expected cancelled task info");
-        };
-        if !matches!(
-            result.task.status,
-            TaskStatus::Working | TaskStatus::InputRequired
-        ) {
-            break result.task;
+    let cancelled = timeout(Duration::from_secs(10), async {
+        loop {
+            let task = client
+                .get_task(GetTaskParams::new(&created.task.task_id))
+                .await?
+                .task;
+            if task.status().is_terminal() {
+                break anyhow_ok(task);
+            }
+            sleep(Duration::from_millis(10)).await;
         }
-        if Instant::now() >= deadline {
-            bail!("cancelled task did not reach a terminal state");
-        }
-        yield_now().await;
-    };
-    assert!(client.service().status_count.load(Ordering::Relaxed) > notifications_before_cancel);
-    let schema_lock = fs::read_to_string(root.join("generated/schema.lock"))?;
-    match cancelled.status {
-        TaskStatus::Cancelled => assert_eq!(schema_lock, "sentinel"),
-        TaskStatus::Completed => assert_ne!(schema_lock, "sentinel"),
-        status => bail!("expected terminal cancellation result, got {status:?}"),
+    })
+    .await??;
+    let contents = fs::read_to_string(root.join("generated/schema.lock"))?;
+    match cancelled.status() {
+        TaskStatus::Cancelled => assert_eq!(contents, "sentinel"),
+        TaskStatus::Completed => assert_ne!(contents, "sentinel"),
+        other => bail!("unexpected cancellation outcome: {other:?}"),
     }
-
     client.cancel().await?;
     server_handle.await??;
     fs::remove_dir_all(root)?;
     Ok(())
+}
+
+#[tokio::test]
+async fn task_business_error_is_completed_with_the_tool_error_payload() -> Result<()> {
+    let (server_transport, client_transport) = duplex(32 * 1024);
+    let server_handle = spawn(async move {
+        SoraMcpServer::new(Arc::new(WorkspaceService::new()))
+            .serve(server_transport)
+            .await?
+            .waiting()
+            .await?;
+        anyhow_ok(())
+    });
+    let client = TaskClient {
+        supports_tasks: true,
+        ..Default::default()
+    }
+    .serve_with_lifecycle(
+        client_transport,
+        ClientLifecycleMode::Discover {
+            preferred_versions: vec![TARGET_PROTOCOL_VERSION],
+        },
+    )
+    .await?;
+    let CallToolResponse::Task(created) = client
+        .call_tool_once(build_request("missing-revision"))
+        .await?
+    else {
+        bail!("expected task")
+    };
+    let completed = timeout(Duration::from_secs(10), async {
+        loop {
+            let task = client
+                .get_task(GetTaskParams::new(&created.task.task_id))
+                .await?
+                .task;
+            if task.status().is_terminal() {
+                break anyhow_ok(task);
+            }
+            sleep(Duration::from_millis(10)).await;
+        }
+    })
+    .await??;
+    assert_eq!(completed.status(), TaskStatus::Completed);
+    let TaskPayload::Completed { result } = completed.payload else {
+        bail!("expected tool error result")
+    };
+    assert_eq!(result["isError"], true);
+    assert_eq!(result["structuredContent"]["ok"], false);
+    client.cancel().await?;
+    server_handle.await??;
+    Ok(())
+}
+
+#[tokio::test]
+async fn non_declaring_client_gets_synchronous_tools_and_cannot_poll_tasks() -> Result<()> {
+    let root = temp_project();
+    let workspace = Arc::new(WorkspaceService::new());
+    let session = workspace.open_project(
+        ProjectId::new("demo")?,
+        root.join("project.toml"),
+        RuntimeOptions::default(),
+    )?;
+    let (server_transport, client_transport) = duplex(32 * 1024);
+    let server = SoraMcpServer::new(workspace);
+    let server_handle = spawn(async move {
+        server.serve(server_transport).await?.waiting().await?;
+        anyhow_ok(())
+    });
+    let client = TaskClient::default()
+        .serve_with_lifecycle(
+            client_transport,
+            ClientLifecycleMode::Discover {
+                preferred_versions: vec![TARGET_PROTOCOL_VERSION],
+            },
+        )
+        .await?;
+    let response = client
+        .call_tool_once(build_request(&session.revision().project))
+        .await?;
+    let CallToolResponse::Complete(result) = response else {
+        bail!("no task capability must mean synchronous execution")
+    };
+    assert_eq!(result.is_error, Some(false));
+    assert!(root.join("generated/schema.lock").is_file());
+    let error = client
+        .get_task(GetTaskParams::new("unknown"))
+        .await
+        .unwrap_err();
+    assert!(
+        matches!(error, ServiceError::McpError(error) if error.code == ErrorCode::MISSING_REQUIRED_CLIENT_CAPABILITY)
+    );
+    client.cancel().await?;
+    server_handle.await??;
+    fs::remove_dir_all(root)?;
+    Ok(())
+}
+
+fn build_request(revision: &str) -> CallToolRequestParams {
+    let mut request = CallToolRequestParams::new("sora_schema_lock").with_arguments(
+        json!({
+            "project_id": "demo", "expected_project_revision": revision, "view": null, "clean": true
+        })
+        .as_object()
+        .unwrap()
+        .clone(),
+    );
+    request.meta = Some(RequestMetaObject::with_progress_token(ProgressToken(
+        NumberOrString::Number(1),
+    )));
+    request
 }
 
 fn temp_project() -> PathBuf {
@@ -233,7 +325,6 @@ project = { id = "demo" }
 groups = { common = { default = true } }
 views = { default = { contract = "demo/default", groups = ["common"] } }
 includes = ["schema/settings.toml"]
-
 [build]
 schema_lock = "generated/schema.lock"
 "#,
@@ -245,7 +336,6 @@ schema_lock = "generated/schema.lock"
 [tables.Settings]
 id = "settings"
 mode = "singleton"
-
 [tables.Settings.fields]
 name = "string"
 "#,
