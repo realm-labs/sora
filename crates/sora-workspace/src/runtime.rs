@@ -89,9 +89,12 @@ impl ProjectRuntime {
         scripts: &ScriptSources,
         options: &RuntimeOptions,
     ) -> Result<bool> {
-        Ok(self.scripts.as_ref() == scripts
-            && &self.options == options
-            && self.manifest.as_deref().map(to_value).transpose()? == Some(to_value(manifest)?))
+        if self.scripts.as_ref() != scripts || &self.options != options {
+            return Ok(false);
+        }
+        let loaded_manifest = self.manifest.as_deref().map(to_value).transpose()?;
+        let requested_manifest = to_value(manifest)?;
+        Ok(loaded_manifest == Some(requested_manifest))
     }
 
     pub(crate) fn scripts(&self) -> &ScriptSources {

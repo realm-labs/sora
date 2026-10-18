@@ -611,6 +611,37 @@ fn rust_table(ir: &ConfigIr, table: BaseTable, mapper: &RustTypeMapper<'_>) -> R
         )));
     }
 
+    let unique_indexes = table
+        .unique_indexes
+        .into_iter()
+        .map(|index| {
+            rust_index(
+                index,
+                mapper,
+                &root_path,
+                key_name.as_deref(),
+                key_type.as_deref(),
+                key_is_copy,
+                key_string_like,
+            )
+        })
+        .collect();
+    let non_unique_indexes = table
+        .non_unique_indexes
+        .into_iter()
+        .map(|index| {
+            rust_index(
+                index,
+                mapper,
+                &root_path,
+                key_name.as_deref(),
+                key_type.as_deref(),
+                key_is_copy,
+                key_string_like,
+            )
+        })
+        .collect();
+
     Ok(RustTable {
         name: table.name,
         module_path: table.module_path,
@@ -627,36 +658,8 @@ fn rust_table(ir: &ConfigIr, table: BaseTable, mapper: &RustTypeMapper<'_>) -> R
         key_is_copy,
         key_string_like,
         strong_key,
-        unique_indexes: table
-            .unique_indexes
-            .into_iter()
-            .map(|index| {
-                rust_index(
-                    index,
-                    mapper,
-                    &root_path,
-                    key_name.as_deref(),
-                    key_type.as_deref(),
-                    key_is_copy,
-                    key_string_like,
-                )
-            })
-            .collect(),
-        non_unique_indexes: table
-            .non_unique_indexes
-            .into_iter()
-            .map(|index| {
-                rust_index(
-                    index,
-                    mapper,
-                    &root_path,
-                    key_name.as_deref(),
-                    key_type.as_deref(),
-                    key_is_copy,
-                    key_string_like,
-                )
-            })
-            .collect(),
+        unique_indexes,
+        non_unique_indexes,
     })
 }
 

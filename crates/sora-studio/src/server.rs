@@ -87,7 +87,7 @@ async fn schema(
     Query(query): Query<StudioSchemaQuery>,
 ) -> Json<StudioLoadResponse> {
     let worker_state = state.clone();
-    match spawn_blocking(move || {
+    let schema_result = spawn_blocking(move || {
         worker_state
             .workspace
             .project(&worker_state.project_id)
@@ -98,8 +98,8 @@ async fn schema(
                 )
             })
     })
-    .await
-    {
+    .await;
+    match schema_result {
         Ok(Ok((document, revision))) => Json(StudioLoadResponse {
             document,
             revision: Some(revision),

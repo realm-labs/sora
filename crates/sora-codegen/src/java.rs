@@ -79,6 +79,9 @@ impl CodeGenerator for JavaCodeGenerator {
             )?;
         }
 
+        let emit_sora_nullable = nullable_annotation.as_ref().is_some_and(|annotation| {
+            annotation.simple_name == "SoraNullable" && annotation.import.is_none()
+        });
         let rendered = render_template(
             "java",
             "runtime.java.j2",
@@ -87,19 +90,18 @@ impl CodeGenerator for JavaCodeGenerator {
                 runtime_format => runtime_format,
                 nullable_import => nullable_annotation.as_ref().and_then(JavaNullableAnnotation::import),
                 nullable_annotation => nullable_annotation.as_ref().map(JavaNullableAnnotation::simple_name),
-                emit_sora_nullable => nullable_annotation
-                    .as_ref()
-                    .is_some_and(|annotation| annotation.simple_name == "SoraNullable" && annotation.import.is_none()),
+                emit_sora_nullable => emit_sora_nullable,
             },
         )?;
         write_file(&package_dir.join("Runtime.java"), rendered)?;
 
-        for (template, file_name) in [
+        let runtime_support_templates = [
             ("read_exception.java.j2", "SoraReadException.java"),
             ("text_key.java.j2", "TextKey.java"),
             ("text_resolver.java.j2", "SoraTextResolver.java"),
             ("locale_pack.java.j2", "LocalePack.java"),
-        ] {
+        ];
+        for (template, file_name) in runtime_support_templates {
             let rendered = render_template(
                 "java",
                 template,

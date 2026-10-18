@@ -254,7 +254,7 @@ function cardHeight(node: StudioNode, manualSizes: Record<string, { width: numbe
   return manualSizes[node.id]?.height ?? naturalCardHeight(node);
 }
 
-function naturalCardHeight(node: StudioNode) {
+export function naturalCardHeight(node: StudioNode) {
   if (node.kind === "union") {
     const variants = unionVariants(node);
     const fieldCount = variants.reduce((count, variant) => count + variant.fields.length, 0);

@@ -89,33 +89,35 @@ fn project_values(
                 .collect()
         }
         "enum" => schema.enums.iter().map(|item| item.name.clone()).collect(),
-        "entity_name" => match request
-            .context
-            .as_ref()
-            .and_then(|context| {
-                context
-                    .get_argument("entity_kind")
-                    .or_else(|| context.get_argument("kind"))
-            })
-            .map(String::as_str)
-        {
-            Some("enum") => schema.enums.iter().map(|item| item.name.clone()).collect(),
-            Some("struct") => schema
-                .structs
-                .iter()
-                .map(|item| item.name.clone())
-                .collect(),
-            Some("union") => schema.unions.iter().map(|item| item.name.clone()).collect(),
-            Some("table") => schema.tables.iter().map(|item| item.name.clone()).collect(),
-            _ => schema
-                .enums
-                .iter()
-                .map(|item| item.name.clone())
-                .chain(schema.structs.iter().map(|item| item.name.clone()))
-                .chain(schema.unions.iter().map(|item| item.name.clone()))
-                .chain(schema.tables.iter().map(|item| item.name.clone()))
-                .collect(),
-        },
+        "entity_name" => {
+            let entity_kind = request
+                .context
+                .as_ref()
+                .and_then(|context| {
+                    context
+                        .get_argument("entity_kind")
+                        .or_else(|| context.get_argument("kind"))
+                })
+                .map(String::as_str);
+            match entity_kind {
+                Some("enum") => schema.enums.iter().map(|item| item.name.clone()).collect(),
+                Some("struct") => schema
+                    .structs
+                    .iter()
+                    .map(|item| item.name.clone())
+                    .collect(),
+                Some("union") => schema.unions.iter().map(|item| item.name.clone()).collect(),
+                Some("table") => schema.tables.iter().map(|item| item.name.clone()).collect(),
+                _ => schema
+                    .enums
+                    .iter()
+                    .map(|item| item.name.clone())
+                    .chain(schema.structs.iter().map(|item| item.name.clone()))
+                    .chain(schema.unions.iter().map(|item| item.name.clone()))
+                    .chain(schema.tables.iter().map(|item| item.name.clone()))
+                    .collect(),
+            }
+        }
         "view" => inspection.views,
         "group" => inspection.groups,
         "source" => inspection

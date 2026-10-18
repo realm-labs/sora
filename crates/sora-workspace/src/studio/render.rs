@@ -184,20 +184,17 @@ fn enum_node_value(node: &StudioNode) -> Value {
         .collect::<Vec<_>>();
     object.insert("values".to_owned(), Value::Array(values));
     if !node.aliases.is_empty() {
-        object.insert(
-            "aliases".to_owned(),
-            Value::Array(
-                node.aliases
-                    .iter()
-                    .map(|alias| {
-                        json!({
-                            "name": alias.name,
-                            "alias": alias.alias,
-                        })
-                    })
-                    .collect(),
-            ),
-        );
+        let aliases = node
+            .aliases
+            .iter()
+            .map(|alias| {
+                json!({
+                    "name": alias.name,
+                    "alias": alias.alias,
+                })
+            })
+            .collect();
+        object.insert("aliases".to_owned(), Value::Array(aliases));
     }
     Value::Object(object)
 }
@@ -289,21 +286,18 @@ fn table_node_value(node: &StudioNode) -> Value {
         object.insert("fields".to_owned(), Value::Array(fields));
     }
     if !node.indexes.is_empty() {
-        object.insert(
-            "indexes".to_owned(),
-            Value::Array(
-                node.indexes
-                    .iter()
-                    .map(|index| {
-                        json!({
-                            "name": index.name,
-                            "fields": index.fields,
-                            "unique": index.unique,
-                        })
-                    })
-                    .collect(),
-            ),
-        );
+        let indexes = node
+            .indexes
+            .iter()
+            .map(|index| {
+                json!({
+                    "name": index.name,
+                    "fields": index.fields,
+                    "unique": index.unique,
+                })
+            })
+            .collect();
+        object.insert("indexes".to_owned(), Value::Array(indexes));
     }
     Value::Object(object)
 }

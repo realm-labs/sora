@@ -4,22 +4,20 @@ use sora_workspace::{BuildRequest, ProjectRuntime, SourceFormat, build_project};
 use crate::args::{BuildArgs, SourceFormatArg};
 
 pub fn run(args: BuildArgs, context: &ProjectRuntime) -> Result<()> {
-    build_project(
-        BuildRequest {
-            project: args.project,
-            default_source_format: args.default_source_format.map(SourceFormat::from),
-            data_root: args.data_root,
-            view: args.view,
-            include_schema_lock: true,
-            include_excel_templates: true,
-            include_codegen: true,
-            include_exports: true,
-            targets: args.target,
-            export_formats: Vec::new(),
-            clean: args.clean,
-        },
-        context,
-    )?;
+    let request = BuildRequest {
+        project: args.project,
+        default_source_format: args.default_source_format.map(SourceFormat::from),
+        data_root: args.data_root,
+        view: args.view,
+        include_schema_lock: true,
+        include_excel_templates: true,
+        include_codegen: true,
+        include_exports: true,
+        targets: args.target,
+        export_formats: Vec::new(),
+        clean: args.clean,
+    };
+    build_project(request, context)?;
     Ok(())
 }
 

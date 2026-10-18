@@ -150,6 +150,7 @@ export function addNode(schema: StudioSchema, kind: NodeKind): { schema: StudioS
     schema.nodes.filter((node) => node.kind === kind).map((node) => node.name),
     kindPrefixes[kind]
   );
+  const fields = kind === "enum" ? [enumValueField(0, "Value", [])] : [];
   const node: StudioNode = {
     id: nodeId(kind, name),
     name,
@@ -157,7 +158,7 @@ export function addNode(schema: StudioSchema, kind: NodeKind): { schema: StudioS
     source: schema.sources[0] ?? "",
     groups: [],
     subtitle: subtitleFor(kind, 0),
-    fields: kind === "enum" ? [{ name: "Value", ty: "enum value", enumValueId: 0, groups: [], parser: null, comment: null, default: null, range: null, length: null, source: null }] : [],
+    fields,
     metadata: defaultMetadata(kind, name)
   };
   return { schema: rebuildSchema({ ...schema, nodes: [...schema.nodes, node] }), nodeId: node.id };

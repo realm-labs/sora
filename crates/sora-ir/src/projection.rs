@@ -14,9 +14,10 @@ use crate::{
 /// generator and exporter.
 pub fn project_config_ir(ir: &ConfigIr, view_name: &str) -> Result<ConfigIr> {
     let view = ir.views.get(view_name).ok_or_else(|| {
+        let declared_views = ir.views.keys().cloned().collect::<Vec<_>>().join(", ");
         SoraError::InvalidSchema(format!(
             "unknown view `{view_name}`; declared views: {}",
-            ir.views.keys().cloned().collect::<Vec<_>>().join(", ")
+            declared_views
         ))
     })?;
     validate_view_table_references(ir, view_name, view)?;
@@ -103,14 +104,14 @@ fn validate_view_table_references(ir: &ConfigIr, view_name: &str, view: &ViewIr)
         .iter()
         .map(|table| table.id.as_str())
         .collect::<BTreeSet<_>>();
-    for table_id in view
+    let referenced_table_ids = view
         .tables
         .include
         .iter()
         .chain(&view.tables.exclude)
         .filter(|table_id| table_id.as_str() != "*")
-        .chain(view.table_names.keys())
-    {
+        .chain(view.table_names.keys());
+    for table_id in referenced_table_ids {
         if !table_ids.contains(table_id.as_str()) {
             return Err(SoraError::InvalidSchema(format!(
                 "view `{view_name}` references unknown table id `{table_id}`"

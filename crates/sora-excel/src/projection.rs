@@ -220,13 +220,11 @@ pub fn schema_hash(ir: &ConfigIr, table: &TableIr) -> String {
         if let Some(tuple_shape) = tuple_shape(ir, field) {
             update(&mut hash, &tuple_shape);
         }
-        update(
-            &mut hash,
-            &field
-                .range
-                .map(|[min, max]| format!("{min}..{max}"))
-                .unwrap_or_default(),
-        );
+        let range_description = field
+            .range
+            .map(|[min, max]| format!("{min}..{max}"))
+            .unwrap_or_default();
+        update(&mut hash, &range_description);
         update(
             &mut hash,
             if field.is_required() {
@@ -259,14 +257,13 @@ pub(crate) fn field_type_hint(ir: &ConfigIr, field: &FieldIr) -> String {
 pub(crate) fn tuple_shape(ir: &ConfigIr, field: &FieldIr) -> Option<String> {
     let struct_name = tuple_struct_type_name(field)?;
     let struct_ir = struct_ir(ir, struct_name)?;
-    Some(
-        struct_ir
-            .fields
-            .iter()
-            .map(|field| format!("{}: {}", field.name, field.ty))
-            .collect::<Vec<_>>()
-            .join(", "),
-    )
+    let field_descriptions = struct_ir
+        .fields
+        .iter()
+        .map(|field| format!("{}: {}", field.name, field.ty))
+        .collect::<Vec<_>>()
+        .join(", ");
+    Some(field_descriptions)
 }
 
 fn tuple_struct_type_name(field: &FieldIr) -> Option<&str> {

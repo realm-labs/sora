@@ -89,7 +89,7 @@ pub(crate) fn capture_project_scripts(
     let project_dir = manifest_path.parent().unwrap_or_else(|| Path::new("."));
     let mut sources = ScriptSources::default();
     let mut inspection = Vec::new();
-    for (kind, declarations, destination) in [
+    let script_groups = [
         (
             ProjectScriptKind::Parser,
             &manifest.parsers.scripts,
@@ -105,7 +105,8 @@ pub(crate) fn capture_project_scripts(
             &manifest.type_mappings.scripts,
             &mut sources.type_mappings,
         ),
-    ] {
+    ];
+    for (kind, declarations, destination) in script_groups {
         for declared in declarations {
             if kind == ProjectScriptKind::SourceLoader
                 && (declared.is_absolute()
@@ -149,15 +150,15 @@ pub(crate) fn capture_project_scripts(
             destination.push(ScriptSource::new(label, source));
         }
     }
+    let script_kind_rank = |kind| match kind {
+        ProjectScriptKind::Parser => 0,
+        ProjectScriptKind::SourceLoader => 1,
+        ProjectScriptKind::TypeMapping => 2,
+    };
     // Preserve the established metadata ordering without changing execution order.
     inspection.sort_by(|left, right| {
-        let rank = |kind| match kind {
-            ProjectScriptKind::Parser => 0,
-            ProjectScriptKind::SourceLoader => 1,
-            ProjectScriptKind::TypeMapping => 2,
-        };
-        rank(left.kind)
-            .cmp(&rank(right.kind))
+        script_kind_rank(left.kind)
+            .cmp(&script_kind_rank(right.kind))
             .then_with(|| left.path.cmp(&right.path))
     });
     inspection.dedup();
@@ -165,14 +166,12 @@ pub(crate) fn capture_project_scripts(
 }
 
 pub(crate) fn format_digest(digest: impl AsRef<[u8]>) -> String {
-    format!(
-        "sha256:{}",
-        digest
-            .as_ref()
-            .iter()
-            .map(|byte| format!("{byte:02x}"))
-            .collect::<String>()
-    )
+    let hex_digest = digest
+        .as_ref()
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect::<String>();
+    format!("sha256:{hex_digest}")
 }
 
 fn normalized_path(path: &Path) -> String {

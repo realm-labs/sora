@@ -427,29 +427,29 @@ fn c_variant(
     mapper: &CTypeMapper<'_>,
     helpers: &mut CHelperRegistry,
 ) -> CUnionVariant {
+    let tag_name = format!(
+        "{}_{}_{}",
+        mapper.options.prefix_upper,
+        union_name.to_shouty_snake_case(),
+        variant.snake_name.to_shouty_snake_case()
+    );
+    let decode_target = format!("&out->value.{}.", variant.snake_name);
+    let free_target = format!("value->value.{}.", variant.snake_name);
+    let fields = variant
+        .fields
+        .into_iter()
+        .map(|field| {
+            let mut field = c_field(ir, field, mapper, helpers);
+            field.decode = field.decode.replace("&out->", &decode_target);
+            field.free = field.free.map(|free| free.replace("value->", &free_target));
+            field
+        })
+        .collect();
     CUnionVariant {
-        tag_name: format!(
-            "{}_{}_{}",
-            mapper.options.prefix_upper,
-            union_name.to_shouty_snake_case(),
-            variant.snake_name.to_shouty_snake_case()
-        ),
+        tag_name,
         field_name: variant.snake_name.clone(),
         name: variant.pascal_name,
-        fields: variant
-            .fields
-            .into_iter()
-            .map(|field| {
-                let mut field = c_field(ir, field, mapper, helpers);
-                field.decode = field
-                    .decode
-                    .replace("&out->", &format!("&out->value.{}.", variant.snake_name));
-                field.free = field.free.map(|free| {
-                    free.replace("value->", &format!("value->value.{}.", variant.snake_name))
-                });
-                field
-            })
-            .collect(),
+        fields,
     }
 }
 

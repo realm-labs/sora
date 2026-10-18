@@ -2,7 +2,7 @@ import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { Handle, Position, useViewport, type Node, type NodeProps } from "@xyflow/react";
 
 import { fieldHandleId, kindMeta } from "../constants";
-import type { SchemaCardData } from "../graph";
+import { naturalCardHeight, type SchemaCardData } from "../graph";
 import { translations } from "../i18n";
 import { unionFieldCount, unionVariantCount, unionVariants } from "../unionFields";
 
@@ -215,13 +215,6 @@ function resizeRect(
     position: { x, y },
     size: { width, height }
   };
-}
-
-function naturalCardHeight(node: SchemaCardData["node"]) {
-  if (node.kind !== "union") return 48 + Math.max(node.fields.length, 1) * 28;
-  const variants = unionVariants(node);
-  const fieldCount = variants.reduce((count, variant) => count + variant.fields.length, 0);
-  return 66 + variants.length * 28 + Math.max(fieldCount, 1) * 28;
 }
 
 function clamp(value: number, min: number, max: number) {

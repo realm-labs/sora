@@ -61,12 +61,12 @@ fn render_proto(ir: &ConfigIr, package: &str) -> String {
         if !item.values.iter().any(|value| value.id == 0) {
             output.push_str(&format!("  {prefix}_UNSPECIFIED = 0;\n"));
         }
-        for value in item
+        let values_zero_first = item
             .values
             .iter()
             .filter(|value| value.id == 0)
-            .chain(item.values.iter().filter(|value| value.id != 0))
-        {
+            .chain(item.values.iter().filter(|value| value.id != 0));
+        for value in values_zero_first {
             if let Some(comment) = &value.comment {
                 output.push_str(&format!("  // {comment}\n"));
             }
@@ -282,7 +282,7 @@ fn collect_interval_elements(ir: &ConfigIr) -> BTreeMap<String, TypeIr> {
     }
 
     let mut out = BTreeMap::new();
-    for field in ir
+    let schema_fields = ir
         .structs
         .iter()
         .flat_map(|item| item.fields.iter())
@@ -292,8 +292,8 @@ fn collect_interval_elements(ir: &ConfigIr) -> BTreeMap<String, TypeIr> {
                 .flat_map(|item| item.variants.iter())
                 .flat_map(|variant| variant.fields.iter()),
         )
-        .chain(ir.tables.iter().flat_map(|item| item.fields.iter()))
-    {
+        .chain(ir.tables.iter().flat_map(|item| item.fields.iter()));
+    for field in schema_fields {
         collect(&field.ty, &mut out);
     }
     out

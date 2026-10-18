@@ -35,7 +35,7 @@ pub fn list(workspace: &WorkspaceService) -> Result<ListResourcesResult, McpErro
         .map_err(|error| internal_error(error.to_string()))?;
     for id in ids {
         let prefix = format!("sora://project/{id}");
-        for (suffix, name, description) in [
+        let project_resources = [
             (
                 "summary",
                 "project_summary",
@@ -62,7 +62,8 @@ pub fn list(workspace: &WorkspaceService) -> Result<ListResourcesResult, McpErro
                 "Current project validation diagnostics",
             ),
             ("revision", "project_revision", "Current content revisions"),
-        ] {
+        ];
+        for (suffix, name, description) in project_resources {
             resources.push(json_resource(
                 format!("{prefix}/{suffix}"),
                 format!("{name}_{id}"),
@@ -74,7 +75,7 @@ pub fn list(workspace: &WorkspaceService) -> Result<ListResourcesResult, McpErro
 }
 
 pub fn templates() -> ListResourceTemplatesResult {
-    let templates = [
+    let template_definitions = [
         (
             "sora://project/{project_id}/schema/{kind}/{name}",
             "schema_entity",
@@ -111,14 +112,15 @@ pub fn templates() -> ListResourceTemplatesResult {
             "Sora workflow documentation",
             "text/markdown",
         ),
-    ]
-    .into_iter()
-    .map(|(uri, name, description, mime)| {
-        ResourceTemplate::new(uri, name)
-            .with_description(description)
-            .with_mime_type(mime)
-    })
-    .collect();
+    ];
+    let templates = template_definitions
+        .into_iter()
+        .map(|(uri, name, description, mime)| {
+            ResourceTemplate::new(uri, name)
+                .with_description(description)
+                .with_mime_type(mime)
+        })
+        .collect();
     ListResourceTemplatesResult::with_all_items(templates)
 }
 
@@ -256,19 +258,17 @@ fn read_project_resource(
                         .collect()
                 })
                 .unwrap_or_default();
-            serialize_json(
-                session
-                    .query_table(&TableQuery {
-                        table: (*table).to_owned(),
-                        cursor: params.get("cursor").cloned(),
-                        limit,
-                        select,
-                        ..TableQuery::default()
-                    })
-                    .map_err(|error| {
-                        McpError::invalid_params(format!("table query failed: {error}"), None)
-                    })?,
-            )?
+            let query = TableQuery {
+                table: (*table).to_owned(),
+                cursor: params.get("cursor").cloned(),
+                limit,
+                select,
+                ..TableQuery::default()
+            };
+            let rows = session.query_table(&query).map_err(|error| {
+                McpError::invalid_params(format!("table query failed: {error}"), None)
+            })?;
+            serialize_json(rows)?
         }
         _ => return Err(not_found(uri)),
     };

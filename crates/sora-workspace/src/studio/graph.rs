@@ -214,28 +214,27 @@ pub(crate) fn build_schema(
     }
 
     let edges = edges.into_iter().collect::<Vec<_>>();
+    let views = ir
+        .views
+        .iter()
+        .map(|(name, view)| {
+            let definition = json!({
+                "contract": view.contract,
+                "groups": view.groups,
+                "tables": {
+                    "include": view.tables.include,
+                    "exclude": view.tables.exclude,
+                },
+                "names": { "tables": view.table_names },
+                "bindings": view.bindings,
+            });
+            (name.clone(), definition)
+        })
+        .collect();
     StudioSchema {
         project_id: ir.project_id.clone(),
         groups: ir.group_defaults.clone(),
-        views: ir
-            .views
-            .iter()
-            .map(|(name, view)| {
-                (
-                    name.clone(),
-                    json!({
-                        "contract": view.contract,
-                        "groups": view.groups,
-                        "tables": {
-                            "include": view.tables.include,
-                            "exclude": view.tables.exclude,
-                        },
-                        "names": { "tables": view.table_names },
-                        "bindings": view.bindings,
-                    }),
-                )
-            })
-            .collect(),
+        views,
         sources: sources.to_vec(),
         module_namespaces: BTreeMap::new(),
         module_imports: BTreeMap::new(),
@@ -433,6 +432,23 @@ pub(crate) fn build_schema_from_raw(
     }
 
     let edges = build_studio_edges(&nodes);
+    let views = schema
+        .views
+        .iter()
+        .map(|(name, view)| {
+            let definition = json!({
+                "contract": view.contract,
+                "groups": view.groups,
+                "tables": {
+                    "include": view.tables.include,
+                    "exclude": view.tables.exclude,
+                },
+                "names": { "tables": view.names.tables },
+                "bindings": view.bindings,
+            });
+            (name.clone(), definition)
+        })
+        .collect();
     StudioSchema {
         project_id: schema.project.id.clone(),
         groups: schema
@@ -440,25 +456,7 @@ pub(crate) fn build_schema_from_raw(
             .iter()
             .map(|(name, group)| (name.clone(), group.default))
             .collect(),
-        views: schema
-            .views
-            .iter()
-            .map(|(name, view)| {
-                (
-                    name.clone(),
-                    json!({
-                        "contract": view.contract,
-                        "groups": view.groups,
-                        "tables": {
-                            "include": view.tables.include,
-                            "exclude": view.tables.exclude,
-                        },
-                        "names": { "tables": view.names.tables },
-                        "bindings": view.bindings,
-                    }),
-                )
-            })
-            .collect(),
+        views,
         sources: sources.to_vec(),
         module_namespaces: BTreeMap::new(),
         module_imports: BTreeMap::new(),

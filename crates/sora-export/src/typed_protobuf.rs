@@ -224,48 +224,26 @@ fn encode_value(
         TypeIr::Interval(element) => {
             let object = expect_object(table, field, value)?;
             writer.message(tag, |writer| {
-                encode_value(
-                    ir,
-                    writer,
-                    table,
-                    field,
-                    1,
-                    element,
-                    object.get(INTERVAL_START_FIELD).ok_or_else(|| {
-                        missing_interval_field(table, field, INTERVAL_START_FIELD)
-                    })?,
-                )?;
-                encode_value(
-                    ir,
-                    writer,
-                    table,
-                    field,
-                    2,
-                    element,
-                    object
-                        .get(INTERVAL_END_FIELD)
-                        .ok_or_else(|| missing_interval_field(table, field, INTERVAL_END_FIELD))?,
-                )?;
-                writer.bool(
-                    3,
-                    expect_bool(
-                        table,
-                        field,
-                        object.get(INTERVAL_START_INCLUSIVE_FIELD).ok_or_else(|| {
-                            missing_interval_field(table, field, INTERVAL_START_INCLUSIVE_FIELD)
-                        })?,
-                    )?,
-                );
-                writer.bool(
-                    4,
-                    expect_bool(
-                        table,
-                        field,
-                        object.get(INTERVAL_END_INCLUSIVE_FIELD).ok_or_else(|| {
-                            missing_interval_field(table, field, INTERVAL_END_INCLUSIVE_FIELD)
-                        })?,
-                    )?,
-                );
+                let start = object
+                    .get(INTERVAL_START_FIELD)
+                    .ok_or_else(|| missing_interval_field(table, field, INTERVAL_START_FIELD))?;
+                encode_value(ir, writer, table, field, 1, element, start)?;
+
+                let end = object
+                    .get(INTERVAL_END_FIELD)
+                    .ok_or_else(|| missing_interval_field(table, field, INTERVAL_END_FIELD))?;
+                encode_value(ir, writer, table, field, 2, element, end)?;
+
+                let start_inclusive =
+                    object.get(INTERVAL_START_INCLUSIVE_FIELD).ok_or_else(|| {
+                        missing_interval_field(table, field, INTERVAL_START_INCLUSIVE_FIELD)
+                    })?;
+                writer.bool(3, expect_bool(table, field, start_inclusive)?);
+
+                let end_inclusive = object.get(INTERVAL_END_INCLUSIVE_FIELD).ok_or_else(|| {
+                    missing_interval_field(table, field, INTERVAL_END_INCLUSIVE_FIELD)
+                })?;
+                writer.bool(4, expect_bool(table, field, end_inclusive)?);
                 Ok(())
             })?;
         }
@@ -563,6 +541,58 @@ type = "enum<ItemType>"
 
         assert!(!bytes.is_empty());
         assert_eq!(bytes[0], 0x0a);
+    }
+
+    #[test]
+    fn interval_payload_preserves_wire_format_and_error_order() {
+        let schema: ProjectSchema = from_str(
+            r#"
+project = { id = "game_config" }
+groups = { common = { default = true } }
+views = { default = { contract = "game_config/default", groups = ["common"] } }
+
+[[tables]]
+id = "settings"
+name = "Settings"
+mode = "singleton"
+
+[[tables.fields]]
+name = "levels"
+type = "interval<i32>"
+"#,
+        )
+        .unwrap();
+        let ir = normalize_schema(schema).unwrap();
+        let table = &ir.tables[0];
+        let mut interval = BTreeMap::from([
+            (INTERVAL_START_FIELD.to_owned(), Value::Integer(1)),
+            (INTERVAL_END_FIELD.to_owned(), Value::Integer(10)),
+            (INTERVAL_START_INCLUSIVE_FIELD.to_owned(), Value::Bool(true)),
+            (INTERVAL_END_INCLUSIVE_FIELD.to_owned(), Value::Bool(false)),
+        ]);
+        let row = RowData {
+            values: BTreeMap::from([("levels".to_owned(), Value::Object(interval.clone()))]),
+        };
+        let mut writer = ProtoWriter::default();
+        encode_row(&ir, &mut writer, &table.name, &table.fields, &row).unwrap();
+        assert_eq!(
+            writer.into_bytes(),
+            [0x0a, 0x08, 0x08, 0x01, 0x10, 0x0a, 0x18, 0x01, 0x20, 0x00]
+        );
+
+        interval.insert(INTERVAL_START_FIELD.to_owned(), Value::Bool(false));
+        interval.remove(INTERVAL_END_FIELD);
+        let row = RowData {
+            values: BTreeMap::from([("levels".to_owned(), Value::Object(interval))]),
+        };
+        let mut writer = ProtoWriter::default();
+        let error = encode_row(&ir, &mut writer, &table.name, &table.fields, &row).unwrap_err();
+        assert!(matches!(
+            error,
+            SoraError::TypeMismatch { expected, actual, .. }
+                if expected == "integer" && actual == "bool"
+        ));
+        assert!(writer.into_bytes().is_empty());
     }
 
     #[derive(Clone, PartialEq, Message)]

@@ -37,6 +37,7 @@ import type {
   GraphMode,
   Language,
   NodeKind,
+  ProjectRevision,
   StudioDiagnostic,
   StudioPreviewResponse,
   StudioResponse,
@@ -300,15 +301,7 @@ export function App() {
     if (!schema || !response?.revision || localValidationIssues.length > 0) return;
     setSaving(true);
     try {
-      const plan: StudioPreviewResponse = await fetch("/api/schema/preview", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          schema,
-          expected_schema_revision: response.revision.schema,
-          expected_manifest_revision: response.revision.manifest
-        })
-      }).then((res) => res.json());
+      const plan = await requestSchemaPreview(schema, response.revision);
       if (!plan.ok || !plan.plan_id) {
         setPreview(plan);
         return;
@@ -347,15 +340,7 @@ export function App() {
     if (!schema || !response?.revision || localValidationIssues.length > 0) return;
     setPreviewing(true);
     try {
-      const next: StudioPreviewResponse = await fetch("/api/schema/preview", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          schema,
-          expected_schema_revision: response.revision.schema,
-          expected_manifest_revision: response.revision.manifest
-        })
-      }).then((res) => res.json());
+      const next = await requestSchemaPreview(schema, response.revision);
       setPreview(next);
     } catch (error) {
       setPreview({
@@ -823,6 +808,21 @@ export function App() {
       )}
     </main>
   );
+}
+
+function requestSchemaPreview(
+  schema: StudioSchema,
+  revision: ProjectRevision
+): Promise<StudioPreviewResponse> {
+  return fetch("/api/schema/preview", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      schema,
+      expected_schema_revision: revision.schema,
+      expected_manifest_revision: revision.manifest
+    })
+  }).then((res) => res.json());
 }
 
 function DiffView({ value }: { value: string }) {

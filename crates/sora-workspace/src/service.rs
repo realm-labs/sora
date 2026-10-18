@@ -228,11 +228,11 @@ impl WorkspaceService {
             .with_extras(&options.parser_scripts, &options.type_mapping_scripts)
             .map_err(open_error)?;
         let check_existing = |session: &ProjectSession| -> Result<(), WorkspaceError> {
-            if session
+            let matches_snapshot = session
                 .runtime()
                 .matches_snapshot(&prepared.manifest, &scripts, &options)
-                .map_err(open_error)?
-            {
+                .map_err(open_error)?;
+            if matches_snapshot {
                 Ok(())
             } else {
                 Err(WorkspaceError::PreparedProjectMismatch(path.clone()))
@@ -261,16 +261,15 @@ impl WorkspaceService {
             options.clone(),
         )
         .map_err(open_error)?;
-        let session = Arc::new(
-            ProjectSession::open_snapshot(
-                ProjectId::generated(sequence),
-                prepared.manifest_path,
-                prepared.manifest.clone(),
-                &prepared.manifest_source,
-                runtime,
-            )
-            .map_err(open_error)?,
-        );
+        let session = ProjectSession::open_snapshot(
+            ProjectId::generated(sequence),
+            prepared.manifest_path,
+            prepared.manifest.clone(),
+            &prepared.manifest_source,
+            runtime,
+        )
+        .map_err(open_error)?;
+        let session = Arc::new(session);
         let mut sessions = self
             .sessions
             .write()
