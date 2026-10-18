@@ -445,7 +445,12 @@ async fn discovery_skips_an_escaping_directory_link_but_open_still_rejects_it() 
     assert_eq!(rejected["result"]["isError"], true, "{rejected}");
     assert!(shared.project_ids()?.is_empty());
     assert!(outside.join("project.toml").is_file());
+    #[cfg(unix)]
+    fs::remove_file(&link)?;
+    #[cfg(windows)]
     fs::remove_dir(&link)?;
+    assert!(!link.exists());
+    assert!(outside.join("project.toml").is_file());
     fs::remove_dir_all(root)?;
     fs::remove_dir_all(outside)?;
     Ok(())
