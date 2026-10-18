@@ -144,10 +144,13 @@ mod tests {
     use crate::options::{EnumRepr, JavaScriptCodegenOptions, RuntimeFormat};
     use sora_ir::{model::ConfigIr, normalize::normalize_schema};
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir as system_temp_dir;
+    use std::fs::{read_to_string, remove_dir_all};
     use std::{
         path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
     };
+    use toml::from_str;
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -158,12 +161,12 @@ mod tests {
 
         JavaScriptCodeGenerator.generate(&ir, &base).unwrap();
 
-        let item = std::fs::read_to_string(base.join("item.js")).unwrap();
-        let item_dts = std::fs::read_to_string(base.join("item.d.ts")).unwrap();
-        let runtime = std::fs::read_to_string(base.join("sora_runtime.js")).unwrap();
-        let config = std::fs::read_to_string(base.join("sora_config.js")).unwrap();
-        let config_dts = std::fs::read_to_string(base.join("sora_config.d.ts")).unwrap();
-        let package = std::fs::read_to_string(base.join("package.json")).unwrap();
+        let item = read_to_string(base.join("item.js")).unwrap();
+        let item_dts = read_to_string(base.join("item.d.ts")).unwrap();
+        let runtime = read_to_string(base.join("sora_runtime.js")).unwrap();
+        let config = read_to_string(base.join("sora_config.js")).unwrap();
+        let config_dts = read_to_string(base.join("sora_config.d.ts")).unwrap();
+        let package = read_to_string(base.join("package.json")).unwrap();
 
         assert!(item.contains("export function decodeItem(reader)"));
         assert!(item.contains("largeId: reader.readI64()"));
@@ -185,7 +188,7 @@ mod tests {
         assert!(config_dts.contains("import type { ItemTable } from \"./item.js\";"));
         assert!(package.contains("\"type\": \"module\""));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -205,12 +208,12 @@ mod tests {
             )
             .unwrap();
 
-        let item_type = std::fs::read_to_string(base.join("item_type.js")).unwrap();
+        let item_type = read_to_string(base.join("item_type.js")).unwrap();
         assert!(item_type.contains("Weapon: 10"));
         assert!(item_type.contains("return id;"));
         assert!(!base.join("item_type.d.ts").exists());
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -238,11 +241,11 @@ mod tests {
                 )
                 .unwrap();
 
-            let config = std::fs::read_to_string(base.join("sora_config.js")).unwrap();
-            let runtime = std::fs::read_to_string(base.join("sora_runtime.js")).unwrap();
-            let runtime_dts = std::fs::read_to_string(base.join("sora_runtime.d.ts")).unwrap();
-            let item = std::fs::read_to_string(base.join("item.js")).unwrap();
-            let item_dts = std::fs::read_to_string(base.join("item.d.ts")).unwrap();
+            let config = read_to_string(base.join("sora_config.js")).unwrap();
+            let runtime = read_to_string(base.join("sora_runtime.js")).unwrap();
+            let runtime_dts = read_to_string(base.join("sora_runtime.d.ts")).unwrap();
+            let item = read_to_string(base.join("item.js")).unwrap();
+            let item_dts = read_to_string(base.join("item.d.ts")).unwrap();
 
             assert!(!config.contains("SoraValueBundle"));
             assert!(!config.contains(parse_fn));
@@ -262,12 +265,12 @@ mod tests {
                 assert!(runtime.contains("new protobuf.Type(\"Bundle\")"));
             }
 
-            let _ = std::fs::remove_dir_all(base);
+            let _ = remove_dir_all(base);
         }
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -316,6 +319,6 @@ fields = ["item_type"]
 
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-javascript-codegen-test-{unique}"))
+        system_temp_dir().join(format!("sora-javascript-codegen-test-{unique}"))
     }
 }

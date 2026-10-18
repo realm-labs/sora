@@ -1,10 +1,12 @@
 use std::{
     borrow::Cow,
     collections::{BTreeMap, BTreeSet, HashMap},
+    result::Result as StdResult,
     sync::OnceLock,
 };
 
-use serde_json::Value as JsonValue;
+use chrono::DateTime;
+use serde_json::{Value as JsonValue, from_str as from_json_str};
 use sora_data::model::Value;
 use sora_diagnostics::Result;
 use sora_ir::{
@@ -287,7 +289,7 @@ fn datetime_cell(cell: &CellValue<'_>, context: &CellContext<'_>) -> Result<Valu
     }
 }
 
-fn parse_duration_millis(source: &str) -> std::result::Result<i64, String> {
+fn parse_duration_millis(source: &str) -> StdResult<i64, String> {
     let bytes = source.as_bytes();
     let mut index = 0usize;
     let mut total = 0i64;
@@ -351,8 +353,8 @@ fn parse_duration_millis(source: &str) -> std::result::Result<i64, String> {
     }
 }
 
-fn parse_datetime_millis(source: &str) -> std::result::Result<i64, String> {
-    chrono::DateTime::parse_from_rfc3339(source)
+fn parse_datetime_millis(source: &str) -> StdResult<i64, String> {
+    DateTime::parse_from_rfc3339(source)
         .map(|value| value.timestamp_millis())
         .map_err(|error| format!("expected RFC3339 datetime with timezone in `{source}`: {error}"))
 }
@@ -619,7 +621,7 @@ fn tuple_object_value(
 }
 
 fn json_cell_value(source: &str, ty: &TypeIr, context: &CellContext<'_>) -> Result<Value> {
-    let parsed: JsonValue = serde_json::from_str(source)
+    let parsed: JsonValue = from_json_str(source)
         .map_err(|error| context.error(format!("failed to parse JSON cell `{source}`: {error}")))?;
     json_to_cell_value(&parsed, ty, context)
 }
@@ -791,7 +793,7 @@ fn separated_item_to_value(
             .map_err(|_| context.error(format!("expected float list item, got `{item}`"))),
         TypeIr::String | TypeIr::Text | TypeIr::Enum(_) => string_item_to_value(item, context),
         TypeIr::Struct(_) | TypeIr::Union(_) => {
-            let parsed: JsonValue = serde_json::from_str(item).map_err(|error| {
+            let parsed: JsonValue = from_json_str(item).map_err(|error| {
                 context.error(format!(
                     "failed to parse JSON object list item `{item}`: {error}"
                 ))
@@ -838,7 +840,7 @@ fn json_to_map_pair(
 
 fn string_item_to_value(item: &str, context: &CellContext<'_>) -> Result<Value> {
     if item.starts_with('"') || item.ends_with('"') {
-        serde_json::from_str::<String>(item)
+        from_json_str::<String>(item)
             .map(Value::String)
             .map_err(|error| {
                 context.error(format!(
@@ -851,7 +853,7 @@ fn string_item_to_value(item: &str, context: &CellContext<'_>) -> Result<Value> 
 }
 
 fn json_object_value(source: &str, context: &CellContext<'_>) -> Result<Value> {
-    let parsed: JsonValue = serde_json::from_str(source)
+    let parsed: JsonValue = from_json_str(source)
         .map_err(|error| context.error(format!("failed to parse JSON cell `{source}`: {error}")))?;
     let JsonValue::Object(values) = parsed else {
         return Err(context.error("expected JSON object"));
@@ -959,6 +961,7 @@ mod tests {
         validate::validate_config_ir,
     };
     use sora_schema::model::ProjectSchema;
+    use toml::from_str as from_toml_str;
 
     use super::*;
     use crate::cell::CellLocation;
@@ -1528,7 +1531,7 @@ mod tests {
     }
 
     fn string_ref_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_toml_str(
             r#"
 project = { id = "test" }
 groups = { common = { default = true } }

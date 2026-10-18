@@ -1,18 +1,23 @@
 use std::{
+    env::temp_dir as system_temp_dir,
     fs,
     path::PathBuf,
+    process::id as process_id,
     sync::{
         Arc,
         atomic::{AtomicU64, Ordering},
     },
 };
 
+use anyhow::{Ok as anyhow_ok, Result};
 use rmcp::{
     ClientHandler, ServiceExt,
     model::{CallToolRequestParams, ClientInfo, Implementation},
 };
+use serde_json::{Value, json};
 use sora_mcp::{SoraMcpServer, TARGET_PROTOCOL_VERSION};
 use sora_workspace::{ProjectId, RuntimeOptions, WorkspaceService};
+use tokio::{io::duplex, spawn};
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -30,7 +35,7 @@ impl ClientHandler for DataClient {
 }
 
 #[tokio::test]
-async fn data_preview_and_apply_are_structured_and_transactional() -> anyhow::Result<()> {
+async fn data_preview_and_apply_are_structured_and_transactional() -> Result<()> {
     let root = temp_project();
     let data_path = root.join("data/items.json");
     let original = fs::read_to_string(&data_path)?;
@@ -39,18 +44,18 @@ async fn data_preview_and_apply_are_structured_and_transactional() -> anyhow::Re
     let session =
         workspace.open_project(id, root.join("project.toml"), RuntimeOptions::default())?;
     let revision = session.revision();
-    let (server_transport, client_transport) = tokio::io::duplex(128 * 1024);
+    let (server_transport, client_transport) = duplex(128 * 1024);
     let server = SoraMcpServer::new(Arc::clone(&workspace));
-    let server_handle = tokio::spawn(async move {
+    let server_handle = spawn(async move {
         server.serve(server_transport).await?.waiting().await?;
-        anyhow::Ok(())
+        anyhow_ok(())
     });
     let client = DataClient.serve(client_transport).await?;
 
     let preview = client
         .call_tool(
             CallToolRequestParams::new("sora_data_preview").with_arguments(
-                serde_json::json!({
+                json!({
                     "project_id": "demo",
                     "expected_schema_revision": revision.schema,
                     "expected_data_revision": revision.data,
@@ -77,7 +82,7 @@ async fn data_preview_and_apply_are_structured_and_transactional() -> anyhow::Re
     let apply = client
         .call_tool(
             CallToolRequestParams::new("sora_data_apply").with_arguments(
-                serde_json::json!({
+                json!({
                     "project_id": "demo",
                     "plan_id": plan_id,
                     "idempotency_key": "data-mutation-1"
@@ -94,7 +99,7 @@ async fn data_preview_and_apply_are_structured_and_transactional() -> anyhow::Re
     let rejected = client
         .call_tool(
             CallToolRequestParams::new("sora_data_apply").with_arguments(
-                serde_json::json!({
+                json!({
                     "project_id": "demo",
                     "plan_id": "plan:missing",
                     "idempotency_key": "data-mutation-2"
@@ -108,7 +113,7 @@ async fn data_preview_and_apply_are_structured_and_transactional() -> anyhow::Re
     assert_eq!(rejected.is_error, Some(true));
     assert_eq!(
         rejected.structured_content.as_ref().unwrap()["ok"],
-        serde_json::Value::Bool(false)
+        Value::Bool(false)
     );
 
     client.cancel().await?;
@@ -119,10 +124,7 @@ async fn data_preview_and_apply_are_structured_and_transactional() -> anyhow::Re
 
 fn temp_project() -> PathBuf {
     let nonce = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let root = std::env::temp_dir().join(format!(
-        "sora-mcp-data-mutation-{}-{nonce}",
-        std::process::id()
-    ));
+    let root = system_temp_dir().join(format!("sora-mcp-data-mutation-{}-{nonce}", process_id()));
     fs::create_dir_all(root.join("data")).unwrap();
     fs::write(
         root.join("project.toml"),

@@ -1,14 +1,18 @@
 use std::{
     collections::BTreeMap,
+    str::from_utf8,
     sync::{
-        Arc, Mutex,
+        Arc, Mutex, MutexGuard,
         atomic::{AtomicBool, Ordering},
     },
     time::{Duration, Instant},
 };
 
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
-use rmcp::model::{ErrorData as McpError, ListTasksResult, Task, TaskStatus};
+use rmcp::{
+    model::{ErrorData as McpError, ListTasksResult, Task, TaskStatus},
+    task_manager::current_timestamp,
+};
 use serde_json::Value;
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
@@ -107,7 +111,7 @@ impl TaskStore {
 
         evict_terminal_records(&mut state);
         let task_id = Uuid::new_v4().to_string();
-        let timestamp = rmcp::task_manager::current_timestamp();
+        let timestamp = current_timestamp();
         let ttl_ms = requested_ttl_ms
             .unwrap_or(DEFAULT_TTL_MS)
             .clamp(MIN_TTL_MS, MAX_TTL_MS);
@@ -172,7 +176,7 @@ impl TaskStore {
             }
             .to_owned(),
         );
-        record.task.last_updated_at = rmcp::task_manager::current_timestamp();
+        record.task.last_updated_at = current_timestamp();
         record.expires_at =
             Some(Instant::now() + Duration::from_millis(record.task.ttl.unwrap_or(DEFAULT_TTL_MS)));
         Ok(record.task.clone())
@@ -263,7 +267,7 @@ impl TaskStore {
                 record.cancellation.cancel();
                 record.task.status = TaskStatus::Working;
                 record.task.status_message = Some("Cancellation requested".to_owned());
-                record.task.last_updated_at = rmcp::task_manager::current_timestamp();
+                record.task.last_updated_at = current_timestamp();
             }
             TaskStatus::Completed | TaskStatus::Failed | TaskStatus::Cancelled => {}
             _ => {}
@@ -271,7 +275,7 @@ impl TaskStore {
         Ok(record.task.clone())
     }
 
-    fn lock(&self) -> Result<std::sync::MutexGuard<'_, TaskStoreState>, McpError> {
+    fn lock(&self) -> Result<MutexGuard<'_, TaskStoreState>, McpError> {
         self.state
             .lock()
             .map_err(|_| McpError::internal_error("task store lock poisoned", None))
@@ -340,8 +344,8 @@ fn decode_cursor(cursor: Option<&str>) -> Result<usize, McpError> {
     let bytes = URL_SAFE_NO_PAD
         .decode(cursor)
         .map_err(|_| McpError::invalid_params("invalid task cursor", None))?;
-    let value = std::str::from_utf8(&bytes)
-        .map_err(|_| McpError::invalid_params("invalid task cursor", None))?;
+    let value =
+        from_utf8(&bytes).map_err(|_| McpError::invalid_params("invalid task cursor", None))?;
     value
         .strip_prefix(CURSOR_PREFIX)
         .ok_or_else(|| McpError::invalid_params("invalid task cursor", None))?
@@ -355,6 +359,8 @@ fn task_not_found() -> McpError {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::json;
+
     use super::*;
 
     #[test]
@@ -398,7 +404,7 @@ mod tests {
             .finish(
                 "owner",
                 &created.task.task_id,
-                Ok(serde_json::json!({"isError": true})),
+                Ok(json!({"isError": true})),
                 &TaskExecutionState::default(),
             )
             .expect("finish task");
@@ -420,7 +426,7 @@ mod tests {
             .finish(
                 "owner",
                 &created.task.task_id,
-                Ok(serde_json::json!({"isError": true})),
+                Ok(json!({"isError": true})),
                 &execution,
             )
             .expect("finish task");
@@ -440,7 +446,7 @@ mod tests {
             .finish(
                 "owner",
                 &created.task.task_id,
-                Ok(serde_json::json!({"isError": false})),
+                Ok(json!({"isError": false})),
                 &TaskExecutionState::default(),
             )
             .expect("finish task");

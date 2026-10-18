@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use anyhow::Error as AnyhowError;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sora_diagnostics::{DataLocation, SoraError};
@@ -123,7 +124,7 @@ pub fn diagnostics_from_sora_error(error: &SoraError) -> Vec<Diagnostic> {
     }
 }
 
-pub fn diagnostics_from_anyhow(error: &anyhow::Error) -> Vec<Diagnostic> {
+pub fn diagnostics_from_anyhow(error: &AnyhowError) -> Vec<Diagnostic> {
     error
         .chain()
         .find_map(|cause| cause.downcast_ref::<SoraError>())

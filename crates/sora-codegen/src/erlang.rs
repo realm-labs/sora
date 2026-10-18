@@ -570,10 +570,13 @@ mod tests {
     use crate::options::{ErlangCodegenOptions, ErlangEnumRepr, RuntimeFormat};
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir as system_temp_dir;
+    use std::fs::{read_to_string, remove_dir_all};
     use std::{
         path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
     };
+    use toml::from_str;
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -584,11 +587,11 @@ mod tests {
 
         ErlangCodeGenerator.generate(&ir, &base).unwrap();
 
-        let item = std::fs::read_to_string(base.join("item.erl")).unwrap();
-        let item_type = std::fs::read_to_string(base.join("item_type.erl")).unwrap();
-        let action = std::fs::read_to_string(base.join("action.erl")).unwrap();
-        let runtime = std::fs::read_to_string(base.join("sora_runtime.erl")).unwrap();
-        let config = std::fs::read_to_string(base.join("sora_config.erl")).unwrap();
+        let item = read_to_string(base.join("item.erl")).unwrap();
+        let item_type = read_to_string(base.join("item_type.erl")).unwrap();
+        let action = read_to_string(base.join("action.erl")).unwrap();
+        let runtime = read_to_string(base.join("sora_runtime.erl")).unwrap();
+        let config = read_to_string(base.join("sora_config.erl")).unwrap();
 
         assert!(item.contains("-module(item)."));
         assert!(item.contains("-type t() :: #{"));
@@ -610,7 +613,7 @@ mod tests {
         assert!(!config.contains("item_get(Key, Config) ->"));
         assert!(config.ends_with('\n'));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -629,13 +632,13 @@ mod tests {
             )
             .unwrap();
 
-        let item_type = std::fs::read_to_string(base.join("item_type.erl")).unwrap();
+        let item_type = read_to_string(base.join("item_type.erl")).unwrap();
         assert!(item_type.contains("-type t() ::"));
         assert!(item_type.contains("0 |"));
         assert!(item_type.contains("1."));
         assert!(item_type.contains("0 -> {Id, Reader1};"));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -663,11 +666,11 @@ mod tests {
                 )
                 .unwrap();
 
-            let item = std::fs::read_to_string(base.join("item.erl")).unwrap();
-            let item_type = std::fs::read_to_string(base.join("item_type.erl")).unwrap();
-            let action = std::fs::read_to_string(base.join("action.erl")).unwrap();
-            let runtime = std::fs::read_to_string(base.join("sora_runtime.erl")).unwrap();
-            let config = std::fs::read_to_string(base.join("sora_config.erl")).unwrap();
+            let item = read_to_string(base.join("item.erl")).unwrap();
+            let item_type = read_to_string(base.join("item_type.erl")).unwrap();
+            let action = read_to_string(base.join("action.erl")).unwrap();
+            let runtime = read_to_string(base.join("sora_runtime.erl")).unwrap();
+            let config = read_to_string(base.join("sora_config.erl")).unwrap();
 
             assert!(runtime.contains(&format!("{parse_function}(Bytes, Options) ->")));
             assert!(runtime.contains(adapter));
@@ -684,12 +687,12 @@ mod tests {
             assert!(item_type.contains("-export([decode/1, decode_value/1])."));
             assert!(action.contains("decode_value(Value) ->"));
 
-            let _ = std::fs::remove_dir_all(base);
+            let _ = remove_dir_all(base);
         }
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -752,6 +755,6 @@ fields = ["item_type"]
 
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-erlang-codegen-test-{unique}"))
+        system_temp_dir().join(format!("sora-erlang-codegen-test-{unique}"))
     }
 }

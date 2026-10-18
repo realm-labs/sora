@@ -1,5 +1,7 @@
 use std::{
     collections::BTreeSet,
+    fmt::{Debug, Formatter, Result as FmtResult},
+    net::IpAddr,
     sync::Arc,
     time::{Duration, Instant},
 };
@@ -9,6 +11,7 @@ use jsonwebtoken::{
     Algorithm, DecodingKey, Validation, decode, decode_header,
     jwk::{Jwk, JwkSet, PublicKeyUse},
 };
+use reqwest::{Client, Response as HttpResponse, redirect::Policy as RedirectPolicy};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
@@ -118,14 +121,14 @@ struct CachedJwks {
 /// rotating JWKS.
 pub struct OAuthAuthenticator {
     config: OAuthResourceServerConfig,
-    client: reqwest::Client,
+    client: Client,
     jwks_uri: Url,
     jwks: RwLock<CachedJwks>,
     refresh_lock: Mutex<()>,
 }
 
-impl std::fmt::Debug for OAuthAuthenticator {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for OAuthAuthenticator {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         formatter
             .debug_struct("OAuthAuthenticator")
             .field("issuer", &self.config.issuer)
@@ -140,10 +143,10 @@ impl OAuthAuthenticator {
     /// JWKS. Network failures are reported during startup, not on first use.
     pub async fn initialize(config: OAuthResourceServerConfig) -> Result<Self, OAuthError> {
         validate_oauth_config(&config)?;
-        let client = reqwest::Client::builder()
+        let client = Client::builder()
             .connect_timeout(Duration::from_secs(5))
             .timeout(Duration::from_secs(10))
-            .redirect(reqwest::redirect::Policy::none())
+            .redirect(RedirectPolicy::none())
             .build()
             .map_err(|error| OAuthError::Discovery(error.to_string()))?;
         let jwks_uri = match config.jwks_uri.clone() {
@@ -172,7 +175,7 @@ impl OAuthAuthenticator {
             .unwrap_or_else(|| config.issuer.clone());
         Self {
             config,
-            client: reqwest::Client::new(),
+            client: Client::new(),
             jwks_uri,
             jwks: RwLock::new(CachedJwks {
                 document,
@@ -299,13 +302,13 @@ fn bearer_token(header: Option<&str>) -> Result<&str, OAuthError> {
     Ok(token)
 }
 
-async fn discover_jwks_uri(client: &reqwest::Client, issuer: &Url) -> Result<Url, OAuthError> {
+async fn discover_jwks_uri(client: &Client, issuer: &Url) -> Result<Url, OAuthError> {
     let discovery_url = authorization_server_metadata_url(issuer)?;
     let metadata = client
         .get(discovery_url)
         .send()
         .await
-        .and_then(reqwest::Response::error_for_status)
+        .and_then(HttpResponse::error_for_status)
         .map_err(|error| OAuthError::Discovery(error.to_string()))?
         .json::<AuthorizationServerMetadata>()
         .await
@@ -336,12 +339,12 @@ fn authorization_server_metadata_url(issuer: &Url) -> Result<Url, OAuthError> {
     Ok(discovery)
 }
 
-async fn fetch_jwks(client: &reqwest::Client, uri: &Url) -> Result<JwkSet, OAuthError> {
+async fn fetch_jwks(client: &Client, uri: &Url) -> Result<JwkSet, OAuthError> {
     let jwks = client
         .get(uri.clone())
         .send()
         .await
-        .and_then(reqwest::Response::error_for_status)
+        .and_then(HttpResponse::error_for_status)
         .map_err(|error| OAuthError::Jwks(error.to_string()))?
         .json::<JwkSet>()
         .await
@@ -380,7 +383,7 @@ pub(super) fn ensure_https_or_loopback(url: &Url, label: &str) -> Result<(), OAu
     }
     let is_loopback = url
         .host_str()
-        .and_then(|host| host.parse::<std::net::IpAddr>().ok())
+        .and_then(|host| host.parse::<IpAddr>().ok())
         .is_some_and(|address| address.is_loopback())
         || matches!(url.host_str(), Some("localhost"));
     if url.scheme() == "http" && is_loopback {
@@ -393,17 +396,19 @@ pub(super) fn ensure_https_or_loopback(url: &Url, label: &str) -> Result<(), OAu
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        collections::BTreeSet,
-        time::{Duration, Instant},
-    };
-
     use base64::{Engine as _, engine::general_purpose::STANDARD};
     use jsonwebtoken::{
         Algorithm, EncodingKey, Header, encode, get_current_timestamp, jwk::JwkSet,
     };
+    use reqwest::Client;
     use serde::Serialize;
+    use serde_json::from_str;
+    use std::{
+        collections::BTreeSet,
+        time::{Duration, Instant},
+    };
     use tokio::sync::{Mutex, RwLock};
+    use url::Url;
 
     use super::{
         CachedJwks, OAuthAuthenticator, OAuthError, OAuthResourceServerConfig,
@@ -433,7 +438,7 @@ mod tests {
 
     #[test]
     fn discovery_url_preserves_issuer_path_using_rfc_8414_layout() {
-        let issuer = url::Url::parse("https://id.example.com/tenant").expect("valid URL");
+        let issuer = Url::parse("https://id.example.com/tenant").expect("valid URL");
         assert_eq!(
             authorization_server_metadata_url(&issuer)
                 .expect("valid discovery URL")
@@ -471,7 +476,7 @@ mod tests {
     }
 
     fn test_authenticator() -> OAuthAuthenticator {
-        let issuer = url::Url::parse("https://id.example.com").expect("valid issuer");
+        let issuer = Url::parse("https://id.example.com").expect("valid issuer");
         let config = OAuthResourceServerConfig {
             issuer: issuer.clone(),
             audience: "https://sora.example.com/mcp".to_owned(),
@@ -481,10 +486,10 @@ mod tests {
         };
         OAuthAuthenticator {
             config,
-            client: reqwest::Client::new(),
+            client: Client::new(),
             jwks_uri: issuer,
             jwks: RwLock::new(CachedJwks {
-                document: serde_json::from_str::<JwkSet>(JWK).expect("valid JWKS"),
+                document: from_str::<JwkSet>(JWK).expect("valid JWKS"),
                 loaded_at: Instant::now(),
             }),
             refresh_lock: Mutex::new(()),

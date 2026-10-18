@@ -335,10 +335,9 @@ fn godot_type_name_inner(ir: &ConfigIr, ty: &TypeIr) -> String {
         TypeIr::F32 | TypeIr::F64 => "float".to_owned(),
         TypeIr::String | TypeIr::Enum(_) => "String".to_owned(),
         TypeIr::Text => "SoraRuntime.TextKey".to_owned(),
-        TypeIr::Struct(name) | TypeIr::Union(name) => name
-            .split('.')
-            .map(heck::ToPascalCase::to_pascal_case)
-            .collect(),
+        TypeIr::Struct(name) | TypeIr::Union(name) => {
+            name.split('.').map(ToPascalCase::to_pascal_case).collect()
+        }
         TypeIr::List(_) | TypeIr::Set(_) | TypeIr::Map { .. } | TypeIr::Array { .. } => {
             "Array".to_owned()
         }
@@ -402,6 +401,7 @@ mod tests {
     use super::*;
     use sora_ir::{normalize::normalize_schema, parse::parse_type};
     use sora_schema::model::ProjectSchema;
+    use toml::from_str;
 
     #[test]
     fn maps_rust_types() {
@@ -715,7 +715,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

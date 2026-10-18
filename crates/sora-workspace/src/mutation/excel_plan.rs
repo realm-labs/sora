@@ -1,6 +1,7 @@
 use std::{
     collections::BTreeMap,
     fs,
+    io::ErrorKind,
     path::{Path, PathBuf},
     sync::{
         Arc, RwLock,
@@ -13,6 +14,7 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use sora_excel::sync::{ExcelSyncReport, ExcelTemplateSync};
+use sora_ir::model::ConfigIr;
 use uuid::Uuid;
 
 use super::{DataFileChange, FileWrite, TransactionReceipt, commit_file_transaction};
@@ -465,7 +467,7 @@ fn render_sync(
     let result = render_sync_in_stage(&ir, &data_root, &stage_root, preview, control);
     let cleanup_error = fs::remove_dir_all(&stage_root)
         .err()
-        .filter(|error| error.kind() != std::io::ErrorKind::NotFound);
+        .filter(|error| error.kind() != ErrorKind::NotFound);
     match (result, cleanup_error) {
         (Ok(rendered), None) => Ok(rendered),
         (Ok(_), Some(error)) => Err(ExcelSyncPlanError::Rendering(format!(
@@ -476,7 +478,7 @@ fn render_sync(
 }
 
 fn render_sync_in_stage(
-    ir: &sora_ir::model::ConfigIr,
+    ir: &ConfigIr,
     data_root: &Path,
     stage_root: &Path,
     preview: ExcelSyncReport,
@@ -569,7 +571,7 @@ fn file_changes(
         .map(|write| {
             let current = match fs::read(&write.path) {
                 Ok(content) => content,
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => Vec::new(),
+                Err(error) if error.kind() == ErrorKind::NotFound => Vec::new(),
                 Err(error) => return Err(ExcelSyncPlanError::Rendering(error.to_string())),
             };
             let path = write.path.strip_prefix(root).map_err(|_| {

@@ -2,8 +2,12 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_json::to_string;
 
-use crate::studio::{StudioField, StudioIndex, StudioNode, StudioNodeKind, StudioSchema};
+use crate::studio::{
+    StudioField, StudioIndex, StudioNode, StudioNodeKind, StudioSchema,
+    graph::{node_id, refresh_schema_graph},
+};
 
 /// Table modes accepted by schema mutation operations.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -386,7 +390,7 @@ pub fn execute_schema_operations(
         apply_operation(&mut execution, operation)?;
     }
     validate_declared_groups(&execution.schema)?;
-    crate::studio::graph::refresh_schema_graph(&mut execution.schema);
+    refresh_schema_graph(&mut execution.schema);
     let related = execution
         .schema
         .edges
@@ -444,7 +448,7 @@ fn apply_operation(
             ]);
             set_table_source_metadata(&mut metadata, table_source.as_ref());
             execution.schema.nodes.push(StudioNode {
-                id: crate::studio::graph::node_id(StudioNodeKind::Table, name),
+                id: node_id(StudioNodeKind::Table, name),
                 name: name.clone(),
                 kind: StudioNodeKind::Table,
                 source: source.clone(),
@@ -646,7 +650,7 @@ fn apply_operation(
             validate_new_entity(&execution.schema, StudioNodeKind::Enum, name, source)?;
             validate_enum_values(name, values)?;
             execution.schema.nodes.push(StudioNode {
-                id: crate::studio::graph::node_id(StudioNodeKind::Enum, name),
+                id: node_id(StudioNodeKind::Enum, name),
                 name: name.clone(),
                 kind: StudioNodeKind::Enum,
                 source: source.clone(),
@@ -812,7 +816,7 @@ fn apply_operation(
                 append_union_variant(&mut fields, name, variant)?;
             }
             execution.schema.nodes.push(StudioNode {
-                id: crate::studio::graph::node_id(StudioNodeKind::Union, name),
+                id: node_id(StudioNodeKind::Union, name),
                 name: name.clone(),
                 kind: StudioNodeKind::Union,
                 source: source.clone(),
@@ -913,7 +917,7 @@ fn add_field_entity(
 ) -> Result<(), SchemaMutationError> {
     validate_new_entity(&execution.schema, kind, name, source)?;
     execution.schema.nodes.push(StudioNode {
-        id: crate::studio::graph::node_id(kind, name),
+        id: node_id(kind, name),
         name: name.to_owned(),
         kind,
         source: source.to_owned(),
@@ -977,7 +981,7 @@ fn rename_entity(
     }
     let node = node_mut(&mut execution.schema, kind, from)?;
     node.name = to.to_owned();
-    node.id = crate::studio::graph::node_id(kind, to);
+    node.id = node_id(kind, to);
     affect_entity(execution, entity_kind_name(kind), from);
     affect_entity(execution, entity_kind_name(kind), to);
     if kind == StudioNodeKind::Table {
@@ -1263,7 +1267,7 @@ fn set_table_source_metadata(
         if !source.sheets.is_empty() {
             metadata.insert(
                 "sheets".to_owned(),
-                serde_json::to_string(&source.sheets).expect("string list serializes"),
+                to_string(&source.sheets).expect("string list serializes"),
             );
         }
     }
@@ -1471,11 +1475,11 @@ mod tests {
     fn schema() -> StudioSchema {
         StudioSchema {
             project_id: "demo".to_owned(),
-            groups: std::collections::BTreeMap::from([("common".to_owned(), true)]),
-            views: std::collections::BTreeMap::new(),
+            groups: BTreeMap::from([("common".to_owned(), true)]),
+            views: BTreeMap::new(),
             sources: vec!["schema.toml".to_owned()],
-            module_namespaces: std::collections::BTreeMap::new(),
-            module_imports: std::collections::BTreeMap::new(),
+            module_namespaces: BTreeMap::new(),
+            module_imports: BTreeMap::new(),
             summary: StudioSummary {
                 enums: 0,
                 structs: 0,

@@ -1,5 +1,6 @@
-use std::{collections::BTreeMap, fs, path::Path, sync::RwLock};
+use std::{collections::BTreeMap, fs, io::ErrorKind, path::Path, sync::RwLock};
 
+use anyhow::bail;
 use chrono::{DateTime, Duration, Utc};
 use schemars::JsonSchema;
 use serde::Serialize;
@@ -11,7 +12,14 @@ use super::{
 };
 use crate::{
     Diagnostic, ProjectId, ProjectRevision, ProjectSession, WorkspaceService,
-    studio::{StudioPreviewResponse, StudioSchema, service::TextFileWrite},
+    studio::{
+        StudioPreviewResponse, StudioSchema,
+        diff::simple_diff,
+        service::{
+            TextFileWrite, preview_studio_schema_with_parsers, render_studio_schema_writes,
+            validate_studio_schema_with_parsers,
+        },
+    },
 };
 
 const PLAN_TTL_MINUTES: i64 = 10;
@@ -173,16 +181,10 @@ impl WorkspaceService {
         let base = load_valid_schema(&session)?;
         let execution = execute_schema_operations(&base, &operations)
             .map_err(|error| MutationPlanError::Operation(error.to_string()))?;
-        crate::studio::service::validate_studio_schema_with_parsers(
-            &execution.schema,
-            session.runtime().schema_parsers(),
-        )
-        .map_err(|error| MutationPlanError::Validation(error.to_string()))?;
-        let writes = crate::studio::service::render_studio_schema_writes(
-            session.manifest_path(),
-            &execution.schema,
-        )
-        .map_err(|error| MutationPlanError::Rendering(error.to_string()))?;
+        validate_studio_schema_with_parsers(&execution.schema, session.runtime().schema_parsers())
+            .map_err(|error| MutationPlanError::Validation(error.to_string()))?;
+        let writes = render_studio_schema_writes(session.manifest_path(), &execution.schema)
+            .map_err(|error| MutationPlanError::Rendering(error.to_string()))?;
         let root = project_root(&session);
         let text_diffs = text_diffs(root, &writes)?;
         let affected_files = text_diffs.iter().map(|diff| diff.path.clone()).collect();
@@ -262,23 +264,14 @@ impl WorkspaceService {
         let base = load_valid_schema(&session)?;
         let execution = execute_schema_operations(&base, &stored.plan.normalized_operations)
             .map_err(|error| MutationPlanError::Operation(error.to_string()))?;
-        crate::studio::service::validate_studio_schema_with_parsers(
-            &execution.schema,
-            session.runtime().schema_parsers(),
-        )
-        .map_err(|error| MutationPlanError::Validation(error.to_string()))?;
-        let writes = crate::studio::service::render_studio_schema_writes(
-            session.manifest_path(),
-            &execution.schema,
-        )
-        .map_err(|error| MutationPlanError::Rendering(error.to_string()))?;
+        validate_studio_schema_with_parsers(&execution.schema, session.runtime().schema_parsers())
+            .map_err(|error| MutationPlanError::Validation(error.to_string()))?;
+        let writes = render_studio_schema_writes(session.manifest_path(), &execution.schema)
+            .map_err(|error| MutationPlanError::Rendering(error.to_string()))?;
         let next_schema = execution.schema.clone();
         let parser_registry = session.runtime().schema_parsers();
         let receipt = commit_text_transaction(project_root(&session), &writes, || {
-            crate::studio::service::validate_studio_schema_with_parsers(
-                &next_schema,
-                parser_registry,
-            )?;
+            validate_studio_schema_with_parsers(&next_schema, parser_registry)?;
             let loaded = session.load_studio_schema();
             if loaded.ok {
                 Ok(())
@@ -289,7 +282,7 @@ impl WorkspaceService {
                     .map(|diagnostic| diagnostic.message)
                     .collect::<Vec<_>>()
                     .join("; ");
-                anyhow::bail!("reloaded schema is invalid: {message}")
+                bail!("reloaded schema is invalid: {message}")
             }
         })
         .map_err(|error| MutationPlanError::Transaction(error.to_string()))?;
@@ -342,7 +335,7 @@ impl WorkspaceService {
             expected_schema_revision,
             expected_manifest_revision,
         )?;
-        let preview = crate::studio::service::preview_studio_schema_with_parsers(
+        let preview = preview_studio_schema_with_parsers(
             session.manifest_path(),
             &schema,
             session.runtime().schema_parsers(),
@@ -414,20 +407,14 @@ impl WorkspaceService {
             &stored.plan.input_revisions.schema,
             &stored.plan.input_revisions.manifest,
         )?;
-        crate::studio::service::validate_studio_schema_with_parsers(
-            &stored.schema,
-            session.runtime().schema_parsers(),
-        )
-        .map_err(|error| MutationPlanError::Validation(error.to_string()))?;
-        let writes = crate::studio::service::render_studio_schema_writes(
-            session.manifest_path(),
-            &stored.schema,
-        )
-        .map_err(|error| MutationPlanError::Rendering(error.to_string()))?;
+        validate_studio_schema_with_parsers(&stored.schema, session.runtime().schema_parsers())
+            .map_err(|error| MutationPlanError::Validation(error.to_string()))?;
+        let writes = render_studio_schema_writes(session.manifest_path(), &stored.schema)
+            .map_err(|error| MutationPlanError::Rendering(error.to_string()))?;
         let schema = stored.schema.clone();
         let parser_registry = session.runtime().schema_parsers();
         let receipt = commit_text_transaction(project_root(&session), &writes, || {
-            crate::studio::service::validate_studio_schema_with_parsers(&schema, parser_registry)?;
+            validate_studio_schema_with_parsers(&schema, parser_registry)?;
             let loaded = session.load_studio_schema();
             if loaded.ok {
                 Ok(())
@@ -438,7 +425,7 @@ impl WorkspaceService {
                     .map(|diagnostic| diagnostic.message)
                     .collect::<Vec<_>>()
                     .join("; ");
-                anyhow::bail!("reloaded schema is invalid: {message}")
+                bail!("reloaded schema is invalid: {message}")
             }
         })
         .map_err(|error| MutationPlanError::Transaction(error.to_string()))?;
@@ -720,7 +707,7 @@ fn text_diffs(
         .map(|write| {
             let current = match fs::read_to_string(&write.path) {
                 Ok(content) => content,
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => String::new(),
+                Err(error) if error.kind() == ErrorKind::NotFound => String::new(),
                 Err(error) => return Err(MutationPlanError::Rendering(error.to_string())),
             };
             let path = write
@@ -737,7 +724,7 @@ fn text_diffs(
                 .join("/");
             Ok(TextFileDiff {
                 path,
-                diff: crate::studio::diff::simple_diff(&current, &write.content),
+                diff: simple_diff(&current, &write.content),
                 previous_size: current.len(),
                 next_size: write.content.len(),
             })
@@ -773,6 +760,7 @@ fn validate_idempotency_key(key: &str) -> Result<(), MutationPlanError> {
 
 #[cfg(test)]
 mod tests {
+    use std::{env::temp_dir as system_temp_dir, process::id as process_id};
     use std::{
         path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
@@ -952,10 +940,8 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let root = std::env::temp_dir().join(format!(
-            "sora-schema-plan-{}-{time}-{nonce}",
-            std::process::id()
-        ));
+        let root =
+            system_temp_dir().join(format!("sora-schema-plan-{}-{time}-{nonce}", process_id()));
         fs::create_dir_all(&root).unwrap();
         fs::write(
             root.join("project.toml"),

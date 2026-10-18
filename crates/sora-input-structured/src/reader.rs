@@ -4,6 +4,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use serde_json::{Value as JsonValue, from_str as from_json_str};
+use serde_yaml::{Value as YamlValue, from_str as from_yaml_str};
 use sora_data::model::{RowData, TableData, Value};
 use sora_diagnostics::{Result, SoraError};
 
@@ -24,19 +26,17 @@ impl StructuredFormat {
     fn parse_rows(self, path: &Path, content: &str) -> Result<Vec<RowData>> {
         match self {
             Self::Json => {
-                let value =
-                    serde_json::from_str(content).map_err(|source| SoraError::ParseData {
-                        path: path.to_path_buf(),
-                        message: source.to_string(),
-                    })?;
+                let value = from_json_str(content).map_err(|source| SoraError::ParseData {
+                    path: path.to_path_buf(),
+                    message: source.to_string(),
+                })?;
                 rows_from_json_value(path, value)
             }
             Self::Yaml => {
-                let value =
-                    serde_yaml::from_str(content).map_err(|source| SoraError::ParseData {
-                        path: path.to_path_buf(),
-                        message: source.to_string(),
-                    })?;
+                let value = from_yaml_str(content).map_err(|source| SoraError::ParseData {
+                    path: path.to_path_buf(),
+                    message: source.to_string(),
+                })?;
                 rows_from_yaml_value(path, value)
             }
         }
@@ -45,19 +45,17 @@ impl StructuredFormat {
     fn parse_row(self, path: &Path, content: &str) -> Result<RowData> {
         match self {
             Self::Json => {
-                let value =
-                    serde_json::from_str(content).map_err(|source| SoraError::ParseData {
-                        path: path.to_path_buf(),
-                        message: source.to_string(),
-                    })?;
+                let value = from_json_str(content).map_err(|source| SoraError::ParseData {
+                    path: path.to_path_buf(),
+                    message: source.to_string(),
+                })?;
                 row_from_json_value(path, value)
             }
             Self::Yaml => {
-                let value =
-                    serde_yaml::from_str(content).map_err(|source| SoraError::ParseData {
-                        path: path.to_path_buf(),
-                        message: source.to_string(),
-                    })?;
+                let value = from_yaml_str(content).map_err(|source| SoraError::ParseData {
+                    path: path.to_path_buf(),
+                    message: source.to_string(),
+                })?;
                 row_from_yaml_value(path, value)
             }
         }
@@ -139,8 +137,8 @@ fn read_to_string(path: &Path) -> Result<String> {
     })
 }
 
-fn rows_from_json_value(path: &Path, value: serde_json::Value) -> Result<Vec<RowData>> {
-    let serde_json::Value::Array(rows) = value else {
+fn rows_from_json_value(path: &Path, value: JsonValue) -> Result<Vec<RowData>> {
+    let JsonValue::Array(rows) = value else {
         return Err(SoraError::ParseData {
             path: path.to_path_buf(),
             message: "JSON table data must be an array of row objects".to_owned(),
@@ -151,8 +149,8 @@ fn rows_from_json_value(path: &Path, value: serde_json::Value) -> Result<Vec<Row
         .collect()
 }
 
-fn row_from_json_value(path: &Path, value: serde_json::Value) -> Result<RowData> {
-    let serde_json::Value::Object(values) = value else {
+fn row_from_json_value(path: &Path, value: JsonValue) -> Result<RowData> {
+    let JsonValue::Object(values) = value else {
         return Err(SoraError::ParseData {
             path: path.to_path_buf(),
             message: "JSON row data must be an object".to_owned(),
@@ -166,11 +164,11 @@ fn row_from_json_value(path: &Path, value: serde_json::Value) -> Result<RowData>
     })
 }
 
-fn json_value_to_data_value(path: &Path, value: serde_json::Value) -> Result<Value> {
+fn json_value_to_data_value(path: &Path, value: JsonValue) -> Result<Value> {
     Ok(match value {
-        serde_json::Value::Null => Value::Null,
-        serde_json::Value::Bool(value) => Value::Bool(value),
-        serde_json::Value::Number(value) => {
+        JsonValue::Null => Value::Null,
+        JsonValue::Bool(value) => Value::Bool(value),
+        JsonValue::Number(value) => {
             if let Some(value) = value.as_i64() {
                 Value::Integer(value)
             } else if let Some(value) = value.as_f64() {
@@ -182,14 +180,14 @@ fn json_value_to_data_value(path: &Path, value: serde_json::Value) -> Result<Val
                 });
             }
         }
-        serde_json::Value::String(value) => Value::String(value),
-        serde_json::Value::Array(values) => Value::List(
+        JsonValue::String(value) => Value::String(value),
+        JsonValue::Array(values) => Value::List(
             values
                 .into_iter()
                 .map(|value| json_value_to_data_value(path, value))
                 .collect::<Result<Vec<_>>>()?,
         ),
-        serde_json::Value::Object(values) => Value::Object(
+        JsonValue::Object(values) => Value::Object(
             values
                 .into_iter()
                 .map(|(key, value)| Ok((key, json_value_to_data_value(path, value)?)))
@@ -198,8 +196,8 @@ fn json_value_to_data_value(path: &Path, value: serde_json::Value) -> Result<Val
     })
 }
 
-fn rows_from_yaml_value(path: &Path, value: serde_yaml::Value) -> Result<Vec<RowData>> {
-    let serde_yaml::Value::Sequence(rows) = value else {
+fn rows_from_yaml_value(path: &Path, value: YamlValue) -> Result<Vec<RowData>> {
+    let YamlValue::Sequence(rows) = value else {
         return Err(SoraError::ParseData {
             path: path.to_path_buf(),
             message: "YAML table data must be a sequence of row mappings".to_owned(),
@@ -210,8 +208,8 @@ fn rows_from_yaml_value(path: &Path, value: serde_yaml::Value) -> Result<Vec<Row
         .collect()
 }
 
-fn row_from_yaml_value(path: &Path, value: serde_yaml::Value) -> Result<RowData> {
-    let serde_yaml::Value::Mapping(values) = value else {
+fn row_from_yaml_value(path: &Path, value: YamlValue) -> Result<RowData> {
+    let YamlValue::Mapping(values) = value else {
         return Err(SoraError::ParseData {
             path: path.to_path_buf(),
             message: "YAML row data must be a mapping".to_owned(),
@@ -220,7 +218,7 @@ fn row_from_yaml_value(path: &Path, value: serde_yaml::Value) -> Result<RowData>
 
     let mut row = BTreeMap::new();
     for (key, value) in values {
-        let serde_yaml::Value::String(key) = key else {
+        let YamlValue::String(key) = key else {
             return Err(SoraError::ParseData {
                 path: path.to_path_buf(),
                 message: "YAML row keys must be strings".to_owned(),
@@ -231,11 +229,11 @@ fn row_from_yaml_value(path: &Path, value: serde_yaml::Value) -> Result<RowData>
     Ok(RowData { values: row })
 }
 
-fn yaml_value_to_data_value(path: &Path, value: serde_yaml::Value) -> Result<Value> {
+fn yaml_value_to_data_value(path: &Path, value: YamlValue) -> Result<Value> {
     Ok(match value {
-        serde_yaml::Value::Null => Value::Null,
-        serde_yaml::Value::Bool(value) => Value::Bool(value),
-        serde_yaml::Value::Number(value) => {
+        YamlValue::Null => Value::Null,
+        YamlValue::Bool(value) => Value::Bool(value),
+        YamlValue::Number(value) => {
             if let Some(value) = value.as_i64() {
                 Value::Integer(value)
             } else if let Some(value) = value.as_f64() {
@@ -247,17 +245,17 @@ fn yaml_value_to_data_value(path: &Path, value: serde_yaml::Value) -> Result<Val
                 });
             }
         }
-        serde_yaml::Value::String(value) => Value::String(value),
-        serde_yaml::Value::Sequence(values) => Value::List(
+        YamlValue::String(value) => Value::String(value),
+        YamlValue::Sequence(values) => Value::List(
             values
                 .into_iter()
                 .map(|value| yaml_value_to_data_value(path, value))
                 .collect::<Result<Vec<_>>>()?,
         ),
-        serde_yaml::Value::Mapping(values) => {
+        YamlValue::Mapping(values) => {
             let mut object = BTreeMap::new();
             for (key, value) in values {
-                let serde_yaml::Value::String(key) = key else {
+                let YamlValue::String(key) = key else {
                     return Err(SoraError::ParseData {
                         path: path.to_path_buf(),
                         message: "YAML object keys must be strings".to_owned(),
@@ -267,13 +265,14 @@ fn yaml_value_to_data_value(path: &Path, value: serde_yaml::Value) -> Result<Val
             }
             Value::Object(object)
         }
-        serde_yaml::Value::Tagged(value) => yaml_value_to_data_value(path, value.value)?,
+        YamlValue::Tagged(value) => yaml_value_to_data_value(path, value.value)?,
     })
 }
 
 #[cfg(test)]
 mod tests {
     use std::{
+        env::temp_dir as env_temp_dir,
         fs,
         sync::atomic::{AtomicU64, Ordering},
     };
@@ -367,6 +366,6 @@ mod tests {
 
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-input-structured-test-{unique}"))
+        env_temp_dir().join(format!("sora-input-structured-test-{unique}"))
     }
 }

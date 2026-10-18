@@ -1,21 +1,27 @@
 use std::{
+    env::temp_dir as system_temp_dir,
     fs,
     path::PathBuf,
+    process::id as process_id,
     sync::{
         Arc, Mutex,
         atomic::{AtomicU64, AtomicUsize, Ordering},
     },
 };
 
+use anyhow::{Ok as anyhow_ok, Result};
 use rmcp::{
-    ClientHandler, ServiceExt,
+    ClientHandler, ErrorData, RoleClient, ServiceExt,
     model::{
         CallToolRequestParams, ClientCapabilities, ClientInfo, ElicitRequestParams, ElicitResult,
         ElicitationAction, ElicitationCapability, FormElicitationCapability, Implementation,
     },
+    service::RequestContext,
 };
+use serde_json::json;
 use sora_mcp::{SoraMcpServer, TARGET_PROTOCOL_VERSION};
 use sora_workspace::WorkspaceService;
+use tokio::{io::duplex, spawn};
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -43,22 +49,22 @@ impl ClientHandler for ElicitingClient {
     async fn create_elicitation(
         &self,
         request: ElicitRequestParams,
-        _context: rmcp::service::RequestContext<rmcp::RoleClient>,
-    ) -> Result<ElicitResult, rmcp::ErrorData> {
+        _context: RequestContext<RoleClient>,
+    ) -> Result<ElicitResult, ErrorData> {
         let ElicitRequestParams::FormElicitationParams { message, .. } = request else {
             return Ok(ElicitResult::new(ElicitationAction::Decline));
         };
         self.messages
             .lock()
-            .map_err(|_| rmcp::ErrorData::internal_error("message lock poisoned", None))?
+            .map_err(|_| ErrorData::internal_error("message lock poisoned", None))?
             .push(message);
         let index = self.requests.fetch_add(1, Ordering::Relaxed);
         let content = match index {
-            0 => serde_json::json!({
+            0 => json!({
                 "root_id": self.root_id.as_ref(),
                 "relative_manifest": "project.toml"
             }),
-            1 => serde_json::json!({
+            1 => json!({
                 "trust_project_scripts": true
             }),
             _ => return Ok(ElicitResult::new(ElicitationAction::Decline)),
@@ -81,8 +87,7 @@ impl ClientHandler for NonElicitingClient {
 }
 
 #[tokio::test]
-async fn project_selection_and_script_trust_use_capability_negotiated_elicitation()
--> anyhow::Result<()> {
+async fn project_selection_and_script_trust_use_capability_negotiated_elicitation() -> Result<()> {
     let root = scripted_project();
     let workspace = Arc::new(WorkspaceService::new());
     let workspace_root = workspace.add_root("test", &root)?;
@@ -91,18 +96,18 @@ async fn project_selection_and_script_trust_use_capability_negotiated_elicitatio
         requests: Arc::new(AtomicUsize::new(0)),
         messages: Arc::new(Mutex::new(Vec::new())),
     };
-    let (server_transport, client_transport) = tokio::io::duplex(128 * 1024);
+    let (server_transport, client_transport) = duplex(128 * 1024);
     let server = SoraMcpServer::new(Arc::clone(&workspace));
-    let server_handle = tokio::spawn(async move {
+    let server_handle = spawn(async move {
         server.serve(server_transport).await?.waiting().await?;
-        anyhow::Ok(())
+        anyhow_ok(())
     });
     let client = handler.serve(client_transport).await?;
 
     let result = client
         .call_tool(
             CallToolRequestParams::new("sora_project_open")
-                .with_arguments(serde_json::json!({}).as_object().expect("object").clone()),
+                .with_arguments(json!({}).as_object().expect("object").clone()),
         )
         .await?;
     assert_eq!(result.is_error, Some(false));
@@ -122,23 +127,22 @@ async fn project_selection_and_script_trust_use_capability_negotiated_elicitatio
 }
 
 #[tokio::test]
-async fn clients_without_elicitation_receive_an_explicit_parameter_fallback() -> anyhow::Result<()>
-{
+async fn clients_without_elicitation_receive_an_explicit_parameter_fallback() -> Result<()> {
     let root = plain_project();
     let workspace = Arc::new(WorkspaceService::new());
     let workspace_root = workspace.add_root("test", &root)?;
-    let (server_transport, client_transport) = tokio::io::duplex(64 * 1024);
+    let (server_transport, client_transport) = duplex(64 * 1024);
     let server = SoraMcpServer::new(Arc::clone(&workspace));
-    let server_handle = tokio::spawn(async move {
+    let server_handle = spawn(async move {
         server.serve(server_transport).await?.waiting().await?;
-        anyhow::Ok(())
+        anyhow_ok(())
     });
     let client = NonElicitingClient.serve(client_transport).await?;
 
     let missing = client
         .call_tool(
             CallToolRequestParams::new("sora_project_open")
-                .with_arguments(serde_json::json!({}).as_object().expect("object").clone()),
+                .with_arguments(json!({}).as_object().expect("object").clone()),
         )
         .await?;
     assert_eq!(missing.is_error, Some(true));
@@ -146,7 +150,7 @@ async fn clients_without_elicitation_receive_an_explicit_parameter_fallback() ->
     let opened = client
         .call_tool(
             CallToolRequestParams::new("sora_project_open").with_arguments(
-                serde_json::json!({
+                json!({
                     "root_id": workspace_root.id(),
                     "relative_manifest": "project.toml"
                 })
@@ -199,7 +203,7 @@ return {
 
 fn plain_project() -> PathBuf {
     let nonce = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let root = std::env::temp_dir().join(format!("sora-mcp-elicit-{}-{nonce}", std::process::id()));
+    let root = system_temp_dir().join(format!("sora-mcp-elicit-{}-{nonce}", process_id()));
     fs::create_dir_all(&root).unwrap();
     fs::write(
         root.join("project.toml"),

@@ -7,6 +7,10 @@ use sora_codegen::{
     generator::{CodegenContext, CodegenRegistry},
     type_mapping::TypeMappingRegistry,
 };
+use sora_data::{
+    localization::LocaleCatalog, model::ConfigData, projection::project_config_data_by_ir,
+    validate::validate_config_data,
+};
 use sora_diagnostics::{Result, SoraError};
 use sora_excel::generator::ExcelTemplateGenerator;
 use sora_excel::sync::{ExcelSyncReport, ExcelTemplateSync};
@@ -15,9 +19,11 @@ use sora_export::{
     exporter::{ExportOptions, ExportOutput, ExportRequest, OutputKind},
     registry::ExporterRegistry,
 };
-use sora_input::parser::ParserRegistry as CellParserRegistry;
+use sora_input::parser::{ParserRegistry as CellParserRegistry, builtin_registry};
 use sora_input::traits::{ProjectInput, SchemaInput};
-use sora_ir::parser::ParserRegistry as SchemaParserRegistry;
+use sora_ir::{
+    model::ConfigIr, parser::ParserRegistry as SchemaParserRegistry, projection::project_config_ir,
+};
 
 mod support;
 
@@ -31,21 +37,18 @@ pub struct CodegenPipelineExtensions<'a> {
     pub type_mappings: &'a TypeMappingRegistry,
 }
 
-pub fn load_schema_ir(input: &impl SchemaInput) -> Result<sora_ir::model::ConfigIr> {
+pub fn load_schema_ir(input: &impl SchemaInput) -> Result<ConfigIr> {
     load_ir(input)
 }
 
 pub fn load_schema_ir_with_parsers(
     input: &impl SchemaInput,
     parser_registry: &SchemaParserRegistry,
-) -> Result<sora_ir::model::ConfigIr> {
+) -> Result<ConfigIr> {
     support::load_ir_with_parsers(input, parser_registry)
 }
 
-pub fn load_schema_ir_with_view(
-    input: &impl SchemaInput,
-    view: Option<&str>,
-) -> Result<sora_ir::model::ConfigIr> {
+pub fn load_schema_ir_with_view(input: &impl SchemaInput, view: Option<&str>) -> Result<ConfigIr> {
     load_ir_with_view(input, view)
 }
 
@@ -53,14 +56,14 @@ pub fn load_schema_ir_with_view_and_parsers(
     input: &impl SchemaInput,
     view: Option<&str>,
     parser_registry: &SchemaParserRegistry,
-) -> Result<sora_ir::model::ConfigIr> {
+) -> Result<ConfigIr> {
     support::load_ir_with_view_and_parsers(input, view, parser_registry)
 }
 
 pub fn load_project_data_with_context(
     input: &impl ProjectInput,
     execution: &ExecutionContext,
-) -> Result<(sora_ir::model::ConfigIr, sora_data::model::ConfigData)> {
+) -> Result<(ConfigIr, ConfigData)> {
     let ir = load_ir(input)?;
     let data = load_validated_data(input, &ir, execution)?;
     Ok((ir, data))
@@ -71,7 +74,7 @@ pub fn load_project_data_with_context_and_parsers(
     execution: &ExecutionContext,
     schema_parser_registry: &SchemaParserRegistry,
     cell_parser_registry: &CellParserRegistry,
-) -> Result<(sora_ir::model::ConfigIr, sora_data::model::ConfigData)> {
+) -> Result<(ConfigIr, ConfigData)> {
     let ir = support::load_ir_with_parsers(input, schema_parser_registry)?;
     let data =
         support::load_validated_data_with_parsers(input, &ir, execution, cell_parser_registry)?;
@@ -83,11 +86,7 @@ pub fn load_project_data_and_catalog_with_context_and_parsers(
     execution: &ExecutionContext,
     schema_parser_registry: &SchemaParserRegistry,
     cell_parser_registry: &CellParserRegistry,
-) -> Result<(
-    sora_ir::model::ConfigIr,
-    sora_data::model::ConfigData,
-    Option<sora_data::localization::LocaleCatalog>,
-)> {
+) -> Result<(ConfigIr, ConfigData, Option<LocaleCatalog>)> {
     let ir = support::load_ir_with_parsers(input, schema_parser_registry)?;
     let project_data = support::load_validated_project_data_with_parsers(
         input,
@@ -115,7 +114,7 @@ pub fn check_schema_with_lock(input: &impl SchemaInput, lock_path: &Path) -> Res
     let ir = load_ir(input)?;
     let lock = read_schema_lock_file(lock_path)?;
     let ir = match lock.view.as_deref() {
-        Some(view) => sora_ir::projection::project_config_ir(&ir, view)?,
+        Some(view) => project_config_ir(&ir, view)?,
         None => ir,
     };
     verify_schema_lock(&ir, &lock)
@@ -129,7 +128,7 @@ pub fn check_schema_with_lock_and_parsers(
     let ir = support::load_ir_with_parsers(input, parser_registry)?;
     let lock = read_schema_lock_file(lock_path)?;
     let ir = match lock.view.as_deref() {
-        Some(view) => sora_ir::projection::project_config_ir(&ir, view)?,
+        Some(view) => project_config_ir(&ir, view)?,
         None => ir,
     };
     verify_schema_lock(&ir, &lock)
@@ -269,7 +268,7 @@ pub fn generate_code_with_registry_view_and_format(
             .or_else(|| view.bindings.get(target))
     });
     let options = support::merge_codegen_options(canonical_target, global_options, binding)?;
-    let ir = sora_ir::projection::project_config_ir(&ir, &view_name)?;
+    let ir = project_config_ir(&ir, &view_name)?;
     generator.generator.generate(
         CodegenContext {
             target: canonical_target,
@@ -340,7 +339,7 @@ pub fn generate_code_with_registry_view_format_extensions_and_cancellation(
             .or_else(|| view.bindings.get(target))
     });
     let options = support::merge_codegen_options(canonical_target, global_options, binding)?;
-    let ir = sora_ir::projection::project_config_ir(&ir, &view_name)?;
+    let ir = project_config_ir(&ir, &view_name)?;
     generator.generator.generate(
         CodegenContext {
             target: canonical_target,
@@ -398,7 +397,7 @@ pub fn export_data_with_view_and_context(
         input,
         &ir,
         execution,
-        sora_input::parser::builtin_registry(),
+        builtin_registry(),
     )?;
     export_loaded_data(LoadedDataExportRequest {
         ir: &ir,
@@ -413,8 +412,8 @@ pub fn export_data_with_view_and_context(
 }
 
 pub fn export_loaded_data_with_view_and_context(
-    ir: &sora_ir::model::ConfigIr,
-    data: &sora_data::model::ConfigData,
+    ir: &ConfigIr,
+    data: &ConfigData,
     format: &str,
     output: ExportOutput,
     view: Option<&str>,
@@ -432,8 +431,8 @@ pub fn export_loaded_data_with_view_and_context(
 }
 
 pub fn export_loaded_data_with_view_context_and_options(
-    ir: &sora_ir::model::ConfigIr,
-    data: &sora_data::model::ConfigData,
+    ir: &ConfigIr,
+    data: &ConfigData,
     format: &str,
     output: ExportOutput,
     view: Option<&str>,
@@ -453,9 +452,9 @@ pub fn export_loaded_data_with_view_context_and_options(
 }
 
 pub struct LoadedDataExportRequest<'a> {
-    pub ir: &'a sora_ir::model::ConfigIr,
-    pub data: &'a sora_data::model::ConfigData,
-    pub locale_catalog: Option<&'a sora_data::localization::LocaleCatalog>,
+    pub ir: &'a ConfigIr,
+    pub data: &'a ConfigData,
+    pub locale_catalog: Option<&'a LocaleCatalog>,
     pub format: &'a str,
     pub output: ExportOutput,
     pub view: Option<&'a str>,
@@ -527,8 +526,8 @@ pub fn diff_data_with_view_and_context(
     let (ir, left_data) = project_ir_and_data_by_view(&ir, &left_data, view)?;
     let right_data = match view {
         Some(_) => {
-            let scoped = sora_data::projection::project_config_data_by_ir(&ir, &right_data);
-            sora_data::validate::validate_config_data(&ir, &scoped)?;
+            let scoped = project_config_data_by_ir(&ir, &right_data);
+            validate_config_data(&ir, &scoped)?;
             scoped
         }
         None => right_data,
@@ -555,8 +554,8 @@ pub fn diff_data_with_view_context_and_parsers(
     let (ir, left_data) = project_ir_and_data_by_view(&ir, &left_data, view)?;
     let right_data = match view {
         Some(_) => {
-            let scoped = sora_data::projection::project_config_data_by_ir(&ir, &right_data);
-            sora_data::validate::validate_config_data(&ir, &scoped)?;
+            let scoped = project_config_data_by_ir(&ir, &right_data);
+            validate_config_data(&ir, &scoped)?;
             scoped
         }
         None => right_data,

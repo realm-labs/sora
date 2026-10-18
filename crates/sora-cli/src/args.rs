@@ -1,7 +1,8 @@
 use std::{net::IpAddr, path::PathBuf};
 
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use sora_codegen::format::FormatMode;
+use url::Url;
 
 #[derive(Debug, Parser)]
 #[command(name = "sora")]
@@ -79,7 +80,7 @@ pub struct McpArgs {
 
     /// Externally visible Streamable HTTP resource URL.
     #[arg(long, value_name = "URL")]
-    pub public_url: Option<url::Url>,
+    pub public_url: Option<Url>,
 
     /// Browser Origin allowed to call the HTTP MCP endpoint.
     #[arg(long, value_name = "ORIGIN")]
@@ -87,7 +88,7 @@ pub struct McpArgs {
 
     /// OAuth authorization server issuer identifier.
     #[arg(long, value_name = "URL", requires = "oauth_audience")]
-    pub oauth_issuer: Option<url::Url>,
+    pub oauth_issuer: Option<Url>,
 
     /// Audience required in OAuth JWT access tokens.
     #[arg(long, value_name = "AUDIENCE", requires = "oauth_issuer")]
@@ -95,14 +96,14 @@ pub struct McpArgs {
 
     /// Explicit JWKS endpoint; otherwise RFC 8414 discovery is used.
     #[arg(long, value_name = "URL", requires = "oauth_issuer")]
-    pub oauth_jwks_uri: Option<url::Url>,
+    pub oauth_jwks_uri: Option<Url>,
 
     /// Required OAuth scope. Repeat to require multiple scopes.
     #[arg(long, value_name = "SCOPE", requires = "oauth_issuer")]
     pub oauth_scope: Vec<String>,
 }
 
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, clap::ValueEnum)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, ValueEnum)]
 pub enum McpTransportArg {
     #[default]
     Stdio,
@@ -214,7 +215,7 @@ pub struct InitArgs {
     pub force: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum SchemaFormatArg {
     Scon,
     Toml,
@@ -223,7 +224,7 @@ pub enum SchemaFormatArg {
     Lua,
 }
 
-#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+#[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum SourceFormatArg {
     Csv,
     Json,
@@ -232,7 +233,7 @@ pub enum SourceFormatArg {
     Yaml,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum ExportCompressionArg {
     None,
     Zstd,
@@ -250,7 +251,7 @@ impl SourceFormatArg {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, clap::ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, ValueEnum)]
 pub enum CodeFormatMode {
     #[default]
     Never,
@@ -313,7 +314,7 @@ pub struct StudioArgs {
     pub project: PathBuf,
 
     #[arg(long, default_value = "127.0.0.1")]
-    pub host: std::net::IpAddr,
+    pub host: IpAddr,
 
     #[arg(long, default_value_t = 5174)]
     pub port: u16,

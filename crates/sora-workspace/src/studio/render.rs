@@ -1,8 +1,8 @@
 use std::{collections::BTreeMap, path::Path};
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Error as AnyhowError, Result, bail};
 use serde::Deserialize;
-use serde_json::{Map, Value};
+use serde_json::{Map, Value, from_str, from_value, json};
 use sora_input_schema::schema::render_schema_module as render_canonical_schema_module;
 use sora_schema::model::{EnumSchema, SchemaModule, StructSchema, TableSchema, UnionSchema};
 
@@ -20,7 +20,7 @@ pub(crate) fn render_schema_module_for_path(
 ) -> Result<String> {
     let _ = current;
     let module = schema_module_from_studio(schema)?;
-    render_canonical_schema_module(path, &module).map_err(anyhow::Error::from)
+    render_canonical_schema_module(path, &module).map_err(AnyhowError::from)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -39,11 +39,11 @@ pub(crate) fn document_format(path: &Path) -> Result<StudioDocumentFormat> {
         Some("yaml" | "yml") => Ok(StudioDocumentFormat::Yaml),
         Some("json") => Ok(StudioDocumentFormat::Json),
         Some("lua") => Ok(StudioDocumentFormat::Lua),
-        Some(extension) => anyhow::bail!(
+        Some(extension) => bail!(
             "Studio supports schema files with scon, toml, yaml, yml, json, or lua extensions: `{}` has `{extension}`",
             path.display()
         ),
-        None => anyhow::bail!(
+        None => bail!(
             "Studio schema file `{}` must have an extension",
             path.display()
         ),
@@ -51,7 +51,7 @@ pub(crate) fn document_format(path: &Path) -> Result<StudioDocumentFormat> {
 }
 
 fn schema_module_from_studio(schema: &StudioSchema) -> Result<SchemaModule> {
-    let mut document = serde_json::from_value::<StudioModuleDocument>(schema_module_value(schema))
+    let mut document = from_value::<StudioModuleDocument>(schema_module_value(schema))
         .context("failed to materialize Studio schema module")?;
     let source = schema
         .sources
@@ -190,7 +190,7 @@ fn enum_node_value(node: &StudioNode) -> Value {
                 node.aliases
                     .iter()
                     .map(|alias| {
-                        serde_json::json!({
+                        json!({
                             "name": alias.name,
                             "alias": alias.alias,
                         })
@@ -271,7 +271,7 @@ fn table_node_value(node: &StudioNode) -> Value {
             source_object.insert("sheet".to_owned(), Value::String(sheet.clone()));
         }
         if let Some(sheets) = node.metadata.get("sheets")
-            && let Ok(sheets) = serde_json::from_str::<Vec<String>>(sheets)
+            && let Ok(sheets) = from_str::<Vec<String>>(sheets)
         {
             source_object.insert(
                 "sheets".to_owned(),
@@ -295,7 +295,7 @@ fn table_node_value(node: &StudioNode) -> Value {
                 node.indexes
                     .iter()
                     .map(|index| {
-                        serde_json::json!({
+                        json!({
                             "name": index.name,
                             "fields": index.fields,
                             "unique": index.unique,

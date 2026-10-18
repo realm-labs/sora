@@ -1,13 +1,18 @@
 use rmcp::{
+    RoleServer,
     handler::server::wrapper::{Json, Parameters},
+    model::CallToolResult,
+    service::RequestContext,
     tool, tool_router,
 };
 use schemars::JsonSchema;
 use serde::Deserialize;
+use serde_json::{Error as JsonError, Value, to_value};
 use sora_workspace::{
     DataApplyReport, DataMutationPlan, DataOperation, DataValidationQuery, DataValidationReport,
-    ProjectId, TableQuery, TableQueryReport,
+    LocalizationChange, ProjectId, RowChange, TableQuery, TableQueryReport,
 };
+use tokio::task::spawn_blocking;
 
 use crate::{
     SoraMcpServer,
@@ -29,7 +34,7 @@ impl SoraMcpServer {
     async fn data_preview(
         &self,
         Parameters(input): Parameters<DataPreviewInput>,
-    ) -> Result<Json<ToolEnvelope<DataMutationPlan>>, rmcp::model::CallToolResult> {
+    ) -> Result<Json<ToolEnvelope<DataMutationPlan>>, CallToolResult> {
         let id = ProjectId::new(input.project_id).map_err(|error| {
             tool_error(ToolEnvelope::<DataMutationPlan>::failure(
                 None,
@@ -41,7 +46,7 @@ impl SoraMcpServer {
         let workspace = self.workspace.clone();
         let owner = self.authorization_context.clone();
         let operation_id = id.clone();
-        let result = tokio::task::spawn_blocking(move || {
+        let result = spawn_blocking(move || {
             workspace.preview_data_mutation(
                 &operation_id,
                 &owner,
@@ -109,8 +114,8 @@ impl SoraMcpServer {
     async fn data_apply(
         &self,
         Parameters(input): Parameters<DataApplyInput>,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<Json<ToolEnvelope<DataApplyReport>>, rmcp::model::CallToolResult> {
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<ToolEnvelope<DataApplyReport>>, CallToolResult> {
         let id = ProjectId::new(input.project_id).map_err(|error| {
             tool_error(ToolEnvelope::<DataApplyReport>::failure(
                 None,
@@ -122,7 +127,7 @@ impl SoraMcpServer {
         let workspace = self.workspace.clone();
         let owner = self.authorization_context.clone();
         let operation_id = id.clone();
-        let result = tokio::task::spawn_blocking(move || {
+        let result = spawn_blocking(move || {
             workspace.apply_data_mutation(
                 &operation_id,
                 &owner,
@@ -191,7 +196,7 @@ impl SoraMcpServer {
     async fn data_validate(
         &self,
         Parameters(input): Parameters<DataValidateInput>,
-    ) -> Result<Json<ToolEnvelope<DataValidationReport>>, rmcp::model::CallToolResult> {
+    ) -> Result<Json<ToolEnvelope<DataValidationReport>>, CallToolResult> {
         let id = ProjectId::new(input.project_id).map_err(|error| {
             tool_error(ToolEnvelope::<DataValidationReport>::failure(
                 None,
@@ -202,17 +207,16 @@ impl SoraMcpServer {
         })?;
         match self.workspace.project(&id) {
             Ok(session) => {
-                let report =
-                    tokio::task::spawn_blocking(move || session.validate_data(&input.query))
-                        .await
-                        .map_err(|error| {
-                            tool_error(ToolEnvelope::<DataValidationReport>::failure(
-                                Some(id.clone()),
-                                None,
-                                "data validation worker failed",
-                                error,
-                            ))
-                        })?;
+                let report = spawn_blocking(move || session.validate_data(&input.query))
+                    .await
+                    .map_err(|error| {
+                        tool_error(ToolEnvelope::<DataValidationReport>::failure(
+                            Some(id.clone()),
+                            None,
+                            "data validation worker failed",
+                            error,
+                        ))
+                    })?;
                 let mut envelope = ToolEnvelope::success(
                     Some(id),
                     Some(report.revision.clone()),
@@ -257,7 +261,7 @@ impl SoraMcpServer {
     async fn table_query(
         &self,
         Parameters(input): Parameters<TableQueryInput>,
-    ) -> Result<Json<ToolEnvelope<TableQueryReport>>, rmcp::model::CallToolResult> {
+    ) -> Result<Json<ToolEnvelope<TableQueryReport>>, CallToolResult> {
         let id = ProjectId::new(input.project_id).map_err(|error| {
             tool_error(ToolEnvelope::<TableQueryReport>::failure(
                 None,
@@ -269,7 +273,7 @@ impl SoraMcpServer {
         match self.workspace.project(&id) {
             Ok(session) => {
                 let revision = session.revision();
-                match tokio::task::spawn_blocking(move || session.query_table(&input.query)).await {
+                match spawn_blocking(move || session.query_table(&input.query)).await {
                     Ok(Ok(report)) => {
                         let count = report.rows.len();
                         let mut envelope = ToolEnvelope::success(
@@ -320,9 +324,9 @@ impl SoraMcpServer {
     async fn data_diff(
         &self,
         Parameters(input): Parameters<DataDiffInput>,
-    ) -> Result<Json<ToolEnvelope<serde_json::Value>>, rmcp::model::CallToolResult> {
+    ) -> Result<Json<ToolEnvelope<Value>>, CallToolResult> {
         let id = ProjectId::new(input.project_id).map_err(|error| {
-            tool_error(ToolEnvelope::<serde_json::Value>::failure(
+            tool_error(ToolEnvelope::<Value>::failure(
                 None,
                 None,
                 "invalid project id",
@@ -332,24 +336,20 @@ impl SoraMcpServer {
         match self.workspace.project(&id) {
             Ok(session) => {
                 let revision = session.revision();
-                match tokio::task::spawn_blocking(move || {
-                    session.diff_data_root(&input.other_data_root)
-                })
-                .await
-                {
+                match spawn_blocking(move || session.diff_data_root(&input.other_data_root)).await {
                     Ok(Ok(diff)) => Ok(Json(ToolEnvelope::success(
                         Some(id),
                         Some(revision),
                         "compared validated data roots",
                         diff,
                     ))),
-                    Ok(Err(error)) => Err(tool_error(ToolEnvelope::<serde_json::Value>::failure(
+                    Ok(Err(error)) => Err(tool_error(ToolEnvelope::<Value>::failure(
                         Some(id),
                         Some(revision),
                         "data diff failed",
                         error,
                     ))),
-                    Err(error) => Err(tool_error(ToolEnvelope::<serde_json::Value>::failure(
+                    Err(error) => Err(tool_error(ToolEnvelope::<Value>::failure(
                         Some(id),
                         Some(revision),
                         "data diff worker failed",
@@ -357,7 +357,7 @@ impl SoraMcpServer {
                     ))),
                 }
             }
-            Err(error) => Err(tool_error(ToolEnvelope::<serde_json::Value>::failure(
+            Err(error) => Err(tool_error(ToolEnvelope::<Value>::failure(
                 Some(id),
                 None,
                 "unknown Sora project",
@@ -408,17 +408,14 @@ struct DataApplyInput {
 }
 
 fn encode_data_changes(
-    rows: &[sora_workspace::RowChange],
-    localization: &[sora_workspace::LocalizationChange],
-) -> Result<Vec<serde_json::Value>, serde_json::Error> {
-    let mut changes = rows
-        .iter()
-        .map(serde_json::to_value)
-        .collect::<Result<Vec<_>, _>>()?;
+    rows: &[RowChange],
+    localization: &[LocalizationChange],
+) -> Result<Vec<Value>, JsonError> {
+    let mut changes = rows.iter().map(to_value).collect::<Result<Vec<_>, _>>()?;
     changes.extend(
         localization
             .iter()
-            .map(serde_json::to_value)
+            .map(to_value)
             .collect::<Result<Vec<_>, _>>()?,
     );
     Ok(changes)

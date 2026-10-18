@@ -4,8 +4,9 @@ use std::{
     path::{Component, Path, PathBuf},
 };
 
-use anyhow::{Context, Result};
-use serde_json::Value;
+use anyhow::{Context, Result, bail};
+use serde_json::{Value, from_value, json, to_string_pretty};
+use serde_yaml::{Value as YamlValue, to_string as to_yaml_string};
 use sora_config_format::{load_document, render_document};
 use sora_diagnostics::SoraError;
 use sora_input_schema::schema::{
@@ -16,18 +17,25 @@ use sora_ir::{
     projection::project_config_ir, validate::validate_config_ir,
 };
 use sora_schema::model::{ProjectSchema, ViewSchema};
+use toml::{Table as TomlTable, Value as TomlValue, to_string_pretty as to_toml_string_pretty};
 
 use super::{
     diff::simple_diff,
     graph::{build_schema, build_schema_from_raw, node_id},
     model::{
-        StudioDiagnostic, StudioNodeKind, StudioPreviewResponse, StudioSchema, StudioSchemaResponse,
+        StudioDiagnostic, StudioNodeKind, StudioPreviewResponse, StudioSchema,
+        StudioSchemaResponse, StudioSummary,
     },
     render::{
         StudioDocumentFormat, document_format, render_lua_document, render_schema_module,
-        render_schema_module_for_path,
+        render_schema_module_for_path, schema_module_value,
     },
 };
+
+#[cfg(test)]
+use crate::mutation::commit_text_transaction;
+#[cfg(test)]
+use anyhow::Error as AnyhowError;
 
 #[cfg(test)]
 pub(crate) fn load_studio_schema(project: &Path) -> StudioSchemaResponse {
@@ -124,11 +132,11 @@ pub(super) fn save_studio_schema_with_parsers(
         let writes = render_studio_schema_writes(project, schema)?;
         let root = project.parent().unwrap_or_else(|| Path::new("."));
         let next = schema.clone();
-        let receipt = crate::mutation::commit_text_transaction(root, &writes, || {
+        let receipt = commit_text_transaction(root, &writes, || {
             validate_studio_schema_with_parsers(&next, parser_registry)?;
             Ok(())
         })?;
-        Ok::<_, anyhow::Error>(receipt.affected_files)
+        Ok::<_, AnyhowError>(receipt.affected_files)
     })();
     match result {
         Ok(paths) => {
@@ -397,7 +405,7 @@ pub(crate) fn write_studio_schema(project: &Path, schema: &StudioSchema) -> Resu
         .skip(1)
         .map(|write| write.path.clone())
         .collect();
-    crate::mutation::commit_text_transaction(
+    commit_text_transaction(
         project.parent().unwrap_or_else(|| Path::new(".")),
         &writes,
         || Ok(()),
@@ -439,18 +447,18 @@ fn validate_studio_project_declarations(project: &Path, schema: &StudioSchema) -
         .map(|(name, group)| (name, group.default))
         .collect::<BTreeMap<_, _>>();
     if schema.groups != current_groups {
-        anyhow::bail!(
+        bail!(
             "Studio does not edit project group declarations; update `{}` directly",
             project.display()
         );
     }
 
-    let incoming_views = serde_json::from_value::<BTreeMap<String, ViewSchema>>(Value::Object(
+    let incoming_views = from_value::<BTreeMap<String, ViewSchema>>(Value::Object(
         schema.views.clone().into_iter().collect(),
     ))
     .context("failed to parse Studio view declarations")?;
     if incoming_views != current.views {
-        anyhow::bail!(
+        bail!(
             "Studio does not edit project view declarations; update the project or external view files directly"
         );
     }
@@ -461,21 +469,18 @@ pub(crate) fn validate_studio_schema_with_parsers(
     schema: &StudioSchema,
     parser_registry: &SchemaParserRegistry,
 ) -> Result<()> {
-    let mut value = super::render::schema_module_value(schema);
+    let mut value = schema_module_value(schema);
     let object = value
         .as_object_mut()
         .context("rendered schema root must be an object")?;
-    object.insert(
-        "project".to_owned(),
-        serde_json::json!({ "id": schema.project_id }),
-    );
+    object.insert("project".to_owned(), json!({ "id": schema.project_id }));
     object.insert(
         "groups".to_owned(),
         Value::Object(
             schema
                 .groups
                 .iter()
-                .map(|(name, default)| (name.clone(), serde_json::json!({ "default": default })))
+                .map(|(name, default)| (name.clone(), json!({ "default": default })))
                 .collect(),
         ),
     );
@@ -483,8 +488,7 @@ pub(crate) fn validate_studio_schema_with_parsers(
         "views".to_owned(),
         Value::Object(schema.views.clone().into_iter().collect()),
     );
-    let raw: ProjectSchema =
-        serde_json::from_value(value).context("failed to materialize schema model")?;
+    let raw: ProjectSchema = from_value(value).context("failed to materialize schema model")?;
     let ir = normalize_schema_with_parsers(raw, parser_registry)?;
     validate_config_ir(&ir)?;
     Ok(())
@@ -508,20 +512,20 @@ fn schema_includes_from_sources(project: &Path, sources: &[String]) -> Result<Ve
 
 fn validate_schema_sources(sources: &[String]) -> Result<()> {
     if sources.is_empty() {
-        anyhow::bail!("Studio project must declare at least one schema include");
+        bail!("Studio project must declare at least one schema include");
     }
     let mut seen = BTreeMap::<&str, usize>::new();
     for source in sources {
         let clean = source.trim();
         if clean.is_empty() {
-            anyhow::bail!("schema include path cannot be empty");
+            bail!("schema include path cannot be empty");
         }
         if clean != source {
-            anyhow::bail!("schema include path `{source}` must not contain surrounding whitespace");
+            bail!("schema include path `{source}` must not contain surrounding whitespace");
         }
         let path = Path::new(source);
         if path.is_absolute() {
-            anyhow::bail!("schema include path `{source}` must be relative");
+            bail!("schema include path `{source}` must be relative");
         }
         document_format(path)?;
         for component in path.components() {
@@ -532,11 +536,11 @@ fn validate_schema_sources(sources: &[String]) -> Result<()> {
                     | Component::RootDir
                     | Component::Prefix(_)
             ) {
-                anyhow::bail!("schema include path `{source}` must be a plain relative path");
+                bail!("schema include path `{source}` must be a plain relative path");
             }
         }
         if let Some(first_index) = seen.insert(clean, seen.len()) {
-            anyhow::bail!(
+            bail!(
                 "schema include path `{source}` duplicates include at index {}",
                 first_index + 1
             );
@@ -548,7 +552,7 @@ fn validate_schema_sources(sources: &[String]) -> Result<()> {
 fn validate_node_sources(schema: &StudioSchema, includes: &[SchemaInclude]) -> Result<()> {
     for node in &schema.nodes {
         if !includes.iter().any(|include| include.source == node.source) {
-            anyhow::bail!(
+            bail!(
                 "{} `{}` belongs to unknown schema file `{}`",
                 node_kind_name(node.kind),
                 node.name,
@@ -599,7 +603,7 @@ fn schema_for_source(schema: &StudioSchema, source: &str) -> StudioSchema {
             .get(source)
             .map(|imports| BTreeMap::from([(source.to_owned(), imports.clone())]))
             .unwrap_or_default(),
-        summary: super::model::StudioSummary {
+        summary: StudioSummary {
             enums: nodes
                 .iter()
                 .filter(|node| node.kind == StudioNodeKind::Enum)
@@ -659,13 +663,13 @@ fn project_toml_text_with_schema_files(
     let project_text = fs::read_to_string(project)
         .with_context(|| format!("failed to read project file `{}`", project.display()))?;
     let mut project_doc = project_text
-        .parse::<toml::Table>()
+        .parse::<TomlTable>()
         .with_context(|| format!("failed to parse project TOML `{}`", project.display()))?;
     if project_doc
         .get("project")
-        .and_then(toml::Value::as_table)
+        .and_then(TomlValue::as_table)
         .and_then(|project| project.get("id"))
-        .and_then(toml::Value::as_str)
+        .and_then(TomlValue::as_str)
         == Some(project_id)
         && project_doc
             .get("includes")
@@ -676,20 +680,20 @@ fn project_toml_text_with_schema_files(
     }
     let project_table = project_doc
         .entry("project".to_owned())
-        .or_insert_with(|| toml::Value::Table(Default::default()))
+        .or_insert_with(|| TomlValue::Table(Default::default()))
         .as_table_mut()
         .context("project TOML `project` must be a table")?;
-    project_table.insert("id".to_owned(), toml::Value::String(project_id.to_owned()));
+    project_table.insert("id".to_owned(), TomlValue::String(project_id.to_owned()));
     project_doc.insert(
         "includes".to_owned(),
-        toml::Value::Array(
+        TomlValue::Array(
             sources
                 .iter()
-                .map(|source| toml::Value::String(source.clone()))
+                .map(|source| TomlValue::String(source.clone()))
                 .collect(),
         ),
     );
-    toml::to_string_pretty(&project_doc).context("failed to render project TOML")
+    to_toml_string_pretty(&project_doc).context("failed to render project TOML")
 }
 
 fn project_yaml_text_with_schema_files(
@@ -697,10 +701,10 @@ fn project_yaml_text_with_schema_files(
     project_id: &str,
     sources: &[String],
 ) -> Result<String> {
-    let mut value = load_document::<serde_yaml::Value>(project)
+    let mut value = load_document::<YamlValue>(project)
         .with_context(|| format!("failed to load project `{}`", project.display()))?;
     set_yaml_project_fields(&mut value, project_id, sources)?;
-    serde_yaml::to_string(&value).context("failed to render project YAML")
+    to_yaml_string(&value).context("failed to render project YAML")
 }
 
 fn project_json_text_with_schema_files(
@@ -711,7 +715,7 @@ fn project_json_text_with_schema_files(
     let mut value = load_document::<Value>(project)
         .with_context(|| format!("failed to load project `{}`", project.display()))?;
     set_json_project_fields(&mut value, project_id, sources)?;
-    let mut out = serde_json::to_string_pretty(&value).context("failed to render project JSON")?;
+    let mut out = to_string_pretty(&value).context("failed to render project JSON")?;
     out.push('\n');
     Ok(out)
 }
@@ -750,36 +754,36 @@ fn set_json_project_fields(value: &mut Value, project_id: &str, sources: &[Strin
 }
 
 fn set_yaml_project_fields(
-    value: &mut serde_yaml::Value,
+    value: &mut YamlValue,
     project_id: &str,
     sources: &[String],
 ) -> Result<()> {
     let object = value
         .as_mapping_mut()
         .context("project document root must be a mapping")?;
-    let project_key = serde_yaml::Value::String("project".to_owned());
+    let project_key = YamlValue::String("project".to_owned());
     let project = object
         .entry(project_key)
-        .or_insert_with(|| serde_yaml::Value::Mapping(Default::default()))
+        .or_insert_with(|| YamlValue::Mapping(Default::default()))
         .as_mapping_mut()
         .context("project document `project` must be a mapping")?;
     project.insert(
-        serde_yaml::Value::String("id".to_owned()),
-        serde_yaml::Value::String(project_id.to_owned()),
+        YamlValue::String("id".to_owned()),
+        YamlValue::String(project_id.to_owned()),
     );
     object.insert(
-        serde_yaml::Value::String("includes".to_owned()),
-        serde_yaml::Value::Sequence(
+        YamlValue::String("includes".to_owned()),
+        YamlValue::Sequence(
             sources
                 .iter()
-                .map(|source| serde_yaml::Value::String(source.clone()))
+                .map(|source| YamlValue::String(source.clone()))
                 .collect(),
         ),
     );
     Ok(())
 }
 
-fn toml_array_strings(value: &toml::Value) -> Option<Vec<String>> {
+fn toml_array_strings(value: &TomlValue) -> Option<Vec<String>> {
     Some(
         value
             .as_array()?

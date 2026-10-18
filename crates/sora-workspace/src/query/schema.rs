@@ -1,9 +1,10 @@
+use anyhow::{Result, anyhow, bail};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     ProjectRevision, ProjectSession,
-    studio::{StudioNodeKind, StudioSchema},
+    studio::{StudioNode, StudioNodeKind, StudioSchema},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
@@ -46,13 +47,13 @@ pub struct SchemaSearchResult {
 }
 
 impl ProjectSession {
-    pub fn search_schema(&self, query: &SchemaSearchQuery) -> anyhow::Result<SchemaSearchReport> {
+    pub fn search_schema(&self, query: &SchemaSearchQuery) -> Result<SchemaSearchReport> {
         let response = self.load_studio_schema();
         let schema = response
             .schema
-            .ok_or_else(|| anyhow::anyhow!("schema graph is unavailable"))?;
+            .ok_or_else(|| anyhow!("schema graph is unavailable"))?;
         if !response.ok {
-            anyhow::bail!("schema must validate before it can be searched");
+            bail!("schema must validate before it can be searched");
         }
         let limit = query.limit.unwrap_or(50).clamp(1, 100);
         let mut results = schema
@@ -76,7 +77,7 @@ impl ProjectSession {
 fn match_node(
     project_id: &str,
     schema: &StudioSchema,
-    node: &crate::studio::StudioNode,
+    node: &StudioNode,
     query: &SchemaSearchQuery,
 ) -> Option<SchemaSearchResult> {
     if query.kind.is_some_and(|kind| kind != node.kind.into()) {

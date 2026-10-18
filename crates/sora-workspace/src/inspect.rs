@@ -3,13 +3,16 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use sora_input::traits::SchemaInput;
 use sora_input_schema::input::ProjectSchemaInput;
-use sora_ir::model::ConfigIr;
+use sora_ir::{
+    model::ConfigIr, normalize::normalize_schema_with_parsers, projection::validate_config_views,
+    validate::validate_config_ir,
+};
 
-use crate::{Diagnostic, ProjectRevision, ProjectSession, diagnostics_from_anyhow};
+use crate::{Diagnostic, ProjectId, ProjectRevision, ProjectSession, diagnostics_from_anyhow};
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct ProjectInspection {
-    pub project_id: crate::ProjectId,
+    pub project_id: ProjectId,
     pub schema_id: String,
     pub schema_sources: Vec<String>,
     pub view_sources: Vec<String>,
@@ -59,23 +62,20 @@ impl ProjectSession {
     pub fn normalized_schema(&self) -> Result<ConfigIr> {
         let input = ProjectSchemaInput::new(self.manifest_path());
         let schema = input.load_schema()?;
-        let ir = sora_ir::normalize::normalize_schema_with_parsers(
-            schema,
-            self.runtime().schema_parsers(),
-        )
-        .with_context(|| {
-            format!(
-                "failed to normalize project `{}`",
-                self.manifest_path().display()
-            )
-        })?;
-        sora_ir::validate::validate_config_ir(&ir).with_context(|| {
+        let ir = normalize_schema_with_parsers(schema, self.runtime().schema_parsers())
+            .with_context(|| {
+                format!(
+                    "failed to normalize project `{}`",
+                    self.manifest_path().display()
+                )
+            })?;
+        validate_config_ir(&ir).with_context(|| {
             format!(
                 "failed to validate project `{}`",
                 self.manifest_path().display()
             )
         })?;
-        sora_ir::projection::validate_config_views(&ir).with_context(|| {
+        validate_config_views(&ir).with_context(|| {
             format!(
                 "failed to validate project views in `{}`",
                 self.manifest_path().display()

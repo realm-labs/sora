@@ -1,9 +1,14 @@
 use std::{
     collections::BTreeMap,
+    env::temp_dir as system_temp_dir,
     fs,
     path::{Path, PathBuf},
+    process::id as process_id,
     sync::atomic::{AtomicU64, Ordering},
 };
+
+use serde_json::json;
+use toml::{Table as TomlTable, Value as TomlValue};
 
 use super::{
     diff::simple_diff,
@@ -280,20 +285,17 @@ parser = { kind = "unknown_parser" }
 fn renders_editable_table_and_field_settings() {
     let schema = StudioSchema {
         project_id: "game_config".to_owned(),
-        groups: std::collections::BTreeMap::from([
-            ("client".to_owned(), false),
-            ("common".to_owned(), true),
-        ]),
-        views: std::collections::BTreeMap::from([(
+        groups: BTreeMap::from([("client".to_owned(), false), ("common".to_owned(), true)]),
+        views: BTreeMap::from([(
             "default".to_owned(),
-            serde_json::json!({
+            json!({
                 "contract": "game_config/default",
                 "groups": ["common", "client"],
             }),
         )]),
         sources: vec!["schema/items.toml".to_owned()],
-        module_namespaces: std::collections::BTreeMap::new(),
-        module_imports: std::collections::BTreeMap::new(),
+        module_namespaces: BTreeMap::new(),
+        module_imports: BTreeMap::new(),
         summary: StudioSummary {
             enums: 0,
             structs: 0,
@@ -388,17 +390,17 @@ fn renders_editable_table_and_field_settings() {
 fn does_not_render_key_for_non_map_table() {
     let schema = StudioSchema {
         project_id: "game_config".to_owned(),
-        groups: std::collections::BTreeMap::from([("common".to_owned(), true)]),
-        views: std::collections::BTreeMap::from([(
+        groups: BTreeMap::from([("common".to_owned(), true)]),
+        views: BTreeMap::from([(
             "default".to_owned(),
-            serde_json::json!({
+            json!({
                 "contract": "game_config/default",
                 "groups": ["common"],
             }),
         )]),
         sources: vec!["schema/items.toml".to_owned()],
-        module_namespaces: std::collections::BTreeMap::new(),
-        module_imports: std::collections::BTreeMap::new(),
+        module_namespaces: BTreeMap::new(),
+        module_imports: BTreeMap::new(),
         summary: StudioSummary {
             enums: 0,
             structs: 0,
@@ -718,11 +720,11 @@ Rarity = ["Common"]
 
     let project_text = fs::read_to_string(&project).unwrap();
     let new_schema = fs::read_to_string(base.join("schema/new_items.toml")).unwrap();
-    let project_value: toml::Table = project_text.parse().unwrap();
+    let project_value: TomlTable = project_text.parse().unwrap();
     assert_eq!(
         project_value
             .get("includes")
-            .and_then(toml::Value::as_array)
+            .and_then(TomlValue::as_array)
             .unwrap()
             .iter()
             .map(|value| value.as_str().unwrap())
@@ -1074,5 +1076,5 @@ fn copy_showcase_project(base: &Path) -> PathBuf {
 
 fn temp_dir() -> PathBuf {
     let id = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    std::env::temp_dir().join(format!("sora-studio-test-{}-{id}", std::process::id()))
+    system_temp_dir().join(format!("sora-studio-test-{}-{id}", process_id()))
 }

@@ -82,10 +82,16 @@ impl ExcelTemplateGenerator {
 mod tests {
     use super::*;
     use crate::projection::{DATA_START_ROW, METADATA_ROW, NAME_ROW};
-    use calamine::Reader;
+    use calamine::{Reader, Xlsx, open_workbook};
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::ProjectSchema;
-    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::{
+        env::temp_dir as env_temp_dir,
+        path::PathBuf,
+        process::id as process_id,
+        sync::atomic::{AtomicU64, Ordering},
+    };
+    use toml::from_str;
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -168,8 +174,7 @@ mod tests {
             })
             .unwrap();
 
-        let mut workbook: calamine::Xlsx<_> =
-            calamine::open_workbook(out_dir.join("Item.xlsx")).unwrap();
+        let mut workbook: Xlsx<_> = open_workbook(out_dir.join("Item.xlsx")).unwrap();
         let range = workbook.worksheet_range("Item").unwrap();
 
         assert_eq!(
@@ -195,8 +200,7 @@ mod tests {
 
         ExcelTemplateGenerator.generate(&ir, &out_dir).unwrap();
 
-        let mut workbook: calamine::Xlsx<_> =
-            calamine::open_workbook(out_dir.join("VisualProfile.xlsx")).unwrap();
+        let mut workbook: Xlsx<_> = open_workbook(out_dir.join("VisualProfile.xlsx")).unwrap();
         assert_eq!(workbook.sheet_names(), ["VisualProfile"]);
         let range = workbook.worksheet_range("VisualProfile").unwrap();
         assert_eq!(
@@ -214,8 +218,7 @@ mod tests {
 
         ExcelTemplateGenerator.generate(&ir, &out_dir).unwrap();
 
-        let workbook: calamine::Xlsx<_> =
-            calamine::open_workbook(out_dir.join("Activity.xlsx")).unwrap();
+        let workbook: Xlsx<_> = open_workbook(out_dir.join("Activity.xlsx")).unwrap();
         assert_eq!(workbook.sheet_names(), ["2026-02", "2026-01"]);
 
         let _ = fs::remove_dir_all(out_dir);
@@ -248,7 +251,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -299,7 +302,7 @@ comment = "Max stack count"
             .map(|sheet| format!("\"{sheet}\""))
             .collect::<Vec<_>>()
             .join(", ");
-        let schema: ProjectSchema = toml::from_str(&format!(
+        let schema: ProjectSchema = from_str(&format!(
             r#"
 project = {{ id = "game_config" }}
 groups = {{ common = {{ default = true }} }}
@@ -322,7 +325,7 @@ type = "i32"
     }
 
     fn namespaced_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -352,8 +355,8 @@ type = "enum<worldgen.geography.TraversalBarrierKind>"
         normalize_schema(schema).unwrap()
     }
 
-    fn temp_dir() -> std::path::PathBuf {
+    fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-excel-test-{}-{unique}", std::process::id()))
+        env_temp_dir().join(format!("sora-excel-test-{}-{unique}", process_id()))
     }
 }

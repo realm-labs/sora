@@ -1,6 +1,11 @@
-use std::path::{Path, PathBuf};
+use std::{
+    collections::BTreeMap,
+    path::{Path, PathBuf},
+};
 
-use sora_data::model::{ConfigData, LocalizationData, LocalizationRowData, LocalizationSourceData};
+use sora_data::model::{
+    ConfigData, LocalizationData, LocalizationRowData, LocalizationSourceData, Value,
+};
 use sora_diagnostics::Result;
 use sora_input::traits::DataInput;
 use sora_ir::model::ConfigIr;
@@ -39,9 +44,9 @@ impl DataInput for TomlDataInput {
             let mut columns = Vec::new();
             let mut rows = Vec::with_capacity(table.rows.len());
             for row in table.rows {
-                let mut values = std::collections::BTreeMap::new();
+                let mut values = BTreeMap::new();
                 for (field, value) in row.values {
-                    if let sora_data::model::Value::String(value) = value {
+                    if let Value::String(value) = value {
                         if !columns.iter().any(|column| column == &field) {
                             columns.push(field.clone());
                         }

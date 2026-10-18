@@ -4,11 +4,21 @@ use std::{
 };
 
 use anyhow::{Context, Result};
+use sora_codegen::format::FormatMode;
+use sora_core::pipeline::{
+    LoadedDataExportRequest, check_schema, export_data_with_view, export_loaded_data,
+    generate_code_with_view_and_format, generate_schema_lock_with_view,
+    load_project_data_and_catalog_with_context_and_parsers,
+};
 use sora_execution::ExecutionContext;
 use sora_export::exporter::{ExportOptions, ExportOutput};
+use sora_input::parser::builtin_registry;
 use sora_input_schema::{input::ProjectSchemaInput, schema::load_project_schema};
 use sora_input_xlsx::input::XlsxProjectInput;
-use sora_ir::{model::ConfigIr, normalize::normalize_schema, validate::validate_config_ir};
+use sora_ir::{
+    model::ConfigIr, normalize::normalize_schema, parser::ParserRegistry as SchemaParserRegistry,
+    validate::validate_config_ir,
+};
 
 mod fs_util;
 mod rows;
@@ -77,8 +87,8 @@ fn main() -> Result<()> {
     clean_file(&generated_root.join("config.pb"))?;
     clean_file(&generated_root.join("config.cbor"))?;
 
-    sora_core::pipeline::check_schema(&schema_input)?;
-    sora_core::pipeline::generate_schema_lock_with_view(
+    check_schema(&schema_input)?;
+    generate_schema_lock_with_view(
         &schema_input,
         &generated_root.join("schema.lock"),
         Some("full"),
@@ -89,18 +99,18 @@ fn main() -> Result<()> {
     generate_code(&schema_input, "java", &java_generated, "full")?;
     generate_code(&schema_input, "scala", &scala_generated, "full")?;
     generate_code(&schema_input, "go", &go_generated, "full")?;
-    sora_core::pipeline::generate_code_with_view_and_format(
+    generate_code_with_view_and_format(
         &schema_input,
         "dart",
         &dart_generated,
-        sora_codegen::format::FormatMode::Never,
+        FormatMode::Never,
         Some("client"),
     )?;
-    sora_core::pipeline::generate_code_with_view_and_format(
+    generate_code_with_view_and_format(
         &schema_input,
         "godot",
         &godot_generated,
-        sora_codegen::format::FormatMode::Never,
+        FormatMode::Never,
         Some("client"),
     )?;
     generate_code(&schema_input, "c", &c_generated, "full")?;
@@ -111,55 +121,55 @@ fn main() -> Result<()> {
     generate_code(&schema_input, "lua", &lua_generated, "full")?;
     generate_code(&schema_input, "python", &python_generated, "full")?;
     generate_code(&schema_input, "proto-schema", &proto_generated, "full")?;
-    sora_core::pipeline::export_data_with_view(
+    export_data_with_view(
         &project_input,
         "binary",
         ExportOutput::File(generated_root.join("config.sora")),
         Some("full"),
     )?;
-    sora_core::pipeline::export_data_with_view(
+    export_data_with_view(
         &project_input,
         "json",
         ExportOutput::File(generated_root.join("config.json")),
         Some("full"),
     )?;
-    sora_core::pipeline::export_data_with_view(
+    export_data_with_view(
         &project_input,
         "json",
         ExportOutput::File(generated_root.join("client/config.json")),
         Some("client"),
     )?;
-    sora_core::pipeline::export_data_with_view(
+    export_data_with_view(
         &project_input,
         "json",
         ExportOutput::File(root.join("godot/config/config.json")),
         Some("client"),
     )?;
-    sora_core::pipeline::export_data_with_view(
+    export_data_with_view(
         &project_input,
         "json",
         ExportOutput::File(generated_root.join("server/config.json")),
         Some("server"),
     )?;
-    sora_core::pipeline::export_data_with_view(
+    export_data_with_view(
         &project_input,
         "sora-protobuf",
         ExportOutput::File(generated_root.join("config.sora.pb")),
         Some("full"),
     )?;
-    sora_core::pipeline::export_data_with_view(
+    export_data_with_view(
         &project_input,
         "proto",
         ExportOutput::File(generated_root.join("config.pb")),
         Some("full"),
     )?;
-    sora_core::pipeline::export_data_with_view(
+    export_data_with_view(
         &project_input,
         "cbor",
         ExportOutput::File(generated_root.join("config.cbor")),
         Some("full"),
     )?;
-    sora_core::pipeline::export_data_with_view(
+    export_data_with_view(
         &project_input,
         "json-debug",
         ExportOutput::Directory(generated_root.join("debug-json")),
@@ -176,35 +186,32 @@ fn generate_i18n_exports(
     generated_root: &Path,
 ) -> Result<()> {
     let execution = ExecutionContext::default();
-    let schema_parsers = sora_ir::parser::ParserRegistry::default();
-    let (ir, data, locale_catalog) =
-        sora_core::pipeline::load_project_data_and_catalog_with_context_and_parsers(
-            input,
-            &execution,
-            &schema_parsers,
-            sora_input::parser::builtin_registry(),
-        )?;
+    let schema_parsers = SchemaParserRegistry::default();
+    let (ir, data, locale_catalog) = load_project_data_and_catalog_with_context_and_parsers(
+        input,
+        &execution,
+        &schema_parsers,
+        builtin_registry(),
+    )?;
     for locale in ["zh_cn", "en_us"] {
         for (format, extension) in [("i18n-binary", "sora-i18n"), ("i18n-json", "json")] {
-            sora_core::pipeline::export_loaded_data(
-                sora_core::pipeline::LoadedDataExportRequest {
-                    ir: &ir,
-                    data: &data,
-                    locale_catalog: locale_catalog.as_ref(),
-                    format,
-                    output: ExportOutput::File(
-                        generated_root
-                            .join("i18n")
-                            .join(format!("{locale}.{extension}")),
-                    ),
-                    view: Some("full"),
-                    execution: &execution,
-                    options: ExportOptions {
-                        locale: Some(locale.to_owned()),
-                        ..ExportOptions::default()
-                    },
+            export_loaded_data(LoadedDataExportRequest {
+                ir: &ir,
+                data: &data,
+                locale_catalog: locale_catalog.as_ref(),
+                format,
+                output: ExportOutput::File(
+                    generated_root
+                        .join("i18n")
+                        .join(format!("{locale}.{extension}")),
+                ),
+                view: Some("full"),
+                execution: &execution,
+                options: ExportOptions {
+                    locale: Some(locale.to_owned()),
+                    ..ExportOptions::default()
                 },
-            )?;
+            })?;
         }
     }
     Ok(())
@@ -212,17 +219,11 @@ fn generate_i18n_exports(
 
 fn generate_code(input: &ProjectSchemaInput, target: &str, out: &Path, view: &str) -> Result<()> {
     let format = if matches!(target, "rust" | "go") {
-        sora_codegen::format::FormatMode::Auto
+        FormatMode::Auto
     } else {
-        sora_codegen::format::FormatMode::Never
+        FormatMode::Never
     };
-    sora_core::pipeline::generate_code_with_view_and_format(
-        input,
-        target,
-        out,
-        format,
-        Some(view),
-    )?;
+    generate_code_with_view_and_format(input, target, out, format, Some(view))?;
     Ok(())
 }
 

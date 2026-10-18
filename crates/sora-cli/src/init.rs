@@ -4,6 +4,7 @@ use std::{
 };
 
 use anyhow::{Context, Result, bail};
+use sora_core::pipeline::load_schema_ir;
 use sora_excel::generator::ExcelTemplateGenerator;
 use sora_input_schema::input::ProjectSchemaInput;
 
@@ -143,7 +144,7 @@ fn write_sample_data(layout: &InitLayout, force: bool) -> Result<()> {
     }
 
     let input = ProjectSchemaInput::new(&layout.project_file);
-    let ir = sora_core::pipeline::load_schema_ir(&input).with_context(|| {
+    let ir = load_schema_ir(&input).with_context(|| {
         format!(
             "failed to load generated project `{}`",
             layout.project_file.display()
@@ -502,9 +503,17 @@ tables:
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use sora_core::pipeline::{check_schema, generate_code};
+    use sora_workspace::{ProjectRuntime, RuntimeOptions};
+    use std::{
+        env::temp_dir as system_temp_dir,
+        process::id as process_id,
+        sync::atomic::{AtomicU64, Ordering},
+    };
+
     use crate::{args::BuildArgs, build};
-    use std::sync::atomic::{AtomicU64, Ordering};
+
+    use super::*;
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -566,9 +575,8 @@ mod tests {
             .unwrap();
             let project = base.join(format!("project.{}", format.extension()));
             let input = ProjectSchemaInput::new(project);
-            sora_core::pipeline::check_schema(&input).unwrap();
-            sora_core::pipeline::generate_code(&input, "rust", &base.join("generated/rust"))
-                .unwrap();
+            check_schema(&input).unwrap();
+            generate_code(&input, "rust", &base.join("generated/rust")).unwrap();
             assert!(base.join("data/Item.xlsx").exists());
             assert!(base.join("generated/rust/Cargo.toml").exists());
             assert!(base.join("generated/rust/src/lib.rs").exists());
@@ -625,11 +633,10 @@ mod tests {
 
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-init-test-{}-{unique}", std::process::id()))
+        system_temp_dir().join(format!("sora-init-test-{}-{unique}", process_id()))
     }
 
-    fn test_context() -> sora_workspace::ProjectRuntime {
-        sora_workspace::ProjectRuntime::load(None, sora_workspace::RuntimeOptions::default())
-            .unwrap()
+    fn test_context() -> ProjectRuntime {
+        ProjectRuntime::load(None, RuntimeOptions::default()).unwrap()
     }
 }

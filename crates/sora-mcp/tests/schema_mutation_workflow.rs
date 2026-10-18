@@ -1,23 +1,28 @@
 use std::{
+    env::temp_dir as system_temp_dir,
     fs,
     path::PathBuf,
+    process::id as process_id,
     sync::{
         Arc,
         atomic::{AtomicU64, Ordering},
     },
-    time::{SystemTime, UNIX_EPOCH},
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
+use anyhow::{Ok as anyhow_ok, Result};
 use rmcp::{
-    ClientHandler, ServiceExt,
+    ClientHandler, RoleClient, ServiceExt,
     model::{
         CallToolRequestParams, ClientInfo, Implementation, ResourceUpdatedNotificationParam,
         SubscribeRequestParams,
     },
+    service::NotificationContext,
 };
+use serde_json::{Value, json};
 use sora_mcp::{SoraMcpServer, TARGET_PROTOCOL_VERSION};
 use sora_workspace::{ProjectId, RuntimeOptions, WorkspaceService};
-use tokio::sync::Notify;
+use tokio::{io::duplex, spawn, sync::Notify, time::timeout};
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -38,14 +43,14 @@ impl ClientHandler for MutationClient {
     async fn on_resource_updated(
         &self,
         _params: ResourceUpdatedNotificationParam,
-        _context: rmcp::service::NotificationContext<rmcp::RoleClient>,
+        _context: NotificationContext<RoleClient>,
     ) {
         self.resource_updated.notify_one();
     }
 }
 
 #[tokio::test]
-async fn preview_and_apply_preserve_the_plan_transaction_contract() -> anyhow::Result<()> {
+async fn preview_and_apply_preserve_the_plan_transaction_contract() -> Result<()> {
     let root = temp_project();
     let project = root.join("project.toml");
     let schema_path = root.join("schema.toml");
@@ -54,11 +59,11 @@ async fn preview_and_apply_preserve_the_plan_transaction_contract() -> anyhow::R
     let id = ProjectId::new("demo")?;
     let session = workspace.open_project(id.clone(), project, RuntimeOptions::default())?;
     let revision = session.revision();
-    let (server_transport, client_transport) = tokio::io::duplex(128 * 1024);
+    let (server_transport, client_transport) = duplex(128 * 1024);
     let server = SoraMcpServer::new(Arc::clone(&workspace));
-    let server_handle = tokio::spawn(async move {
+    let server_handle = spawn(async move {
         server.serve(server_transport).await?.waiting().await?;
-        anyhow::Ok(())
+        anyhow_ok(())
     });
     let updated = Arc::new(Notify::new());
     let client = MutationClient {
@@ -73,7 +78,7 @@ async fn preview_and_apply_preserve_the_plan_transaction_contract() -> anyhow::R
     let preview = client
         .call_tool(
             CallToolRequestParams::new("sora_schema_preview").with_arguments(
-                serde_json::json!({
+                json!({
                     "project_id": "demo",
                     "expected_schema_revision": revision.schema,
                     "expected_manifest_revision": revision.manifest,
@@ -112,7 +117,7 @@ async fn preview_and_apply_preserve_the_plan_transaction_contract() -> anyhow::R
     let apply = client
         .call_tool(
             CallToolRequestParams::new("sora_schema_apply").with_arguments(
-                serde_json::json!({
+                json!({
                     "project_id": "demo",
                     "plan_id": plan_id,
                     "idempotency_key": "mutation-test-1"
@@ -125,12 +130,12 @@ async fn preview_and_apply_preserve_the_plan_transaction_contract() -> anyhow::R
         .await?;
     assert_eq!(apply.is_error, Some(false));
     assert!(fs::read_to_string(&schema_path)?.contains("[tables.Item.fields.name]"));
-    tokio::time::timeout(std::time::Duration::from_secs(1), updated.notified()).await?;
+    timeout(Duration::from_secs(1), updated.notified()).await?;
 
     let rejected = client
         .call_tool(
             CallToolRequestParams::new("sora_schema_apply").with_arguments(
-                serde_json::json!({
+                json!({
                     "project_id": "demo",
                     "plan_id": "plan:missing",
                     "idempotency_key": "mutation-test-2"
@@ -144,7 +149,7 @@ async fn preview_and_apply_preserve_the_plan_transaction_contract() -> anyhow::R
     assert_eq!(rejected.is_error, Some(true));
     assert_eq!(
         rejected.structured_content.as_ref().unwrap()["ok"],
-        serde_json::Value::Bool(false)
+        Value::Bool(false)
     );
 
     client.cancel().await?;
@@ -159,9 +164,9 @@ fn temp_project() -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_nanos();
-    let root = std::env::temp_dir().join(format!(
+    let root = system_temp_dir().join(format!(
         "sora-mcp-schema-mutation-{}-{time}-{nonce}",
-        std::process::id()
+        process_id()
     ));
     fs::create_dir_all(&root).unwrap();
     fs::write(

@@ -1,24 +1,40 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
+    fmt::{Debug, Formatter, Result as FmtResult},
     fs,
-    path::{Path, PathBuf},
+    io::ErrorKind,
+    mem::take,
+    path::{Component, Path, PathBuf},
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
     },
 };
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result, anyhow, bail};
 use schemars::JsonSchema;
 use serde::Serialize;
+use serde_json::{Map, Value};
 use sora_codegen::{
     format::FormatMode,
     generator::{CodegenRegistry, runtime_format_name},
     options::RuntimeFormat,
 };
-use sora_export::exporter::ExportOptions;
+use sora_core::pipeline::{
+    LoadedDataExportRequest, export_loaded_data, export_output_kind,
+    generate_code_with_view_format_parsers_and_cancellation,
+    generate_excel_template_with_view_and_parsers, generate_schema_lock_with_view_and_parsers,
+    load_project_data_and_catalog_with_context_and_parsers, supported_export_formats,
+};
+use sora_diagnostics::SoraError;
+use sora_export::exporter::{
+    ExportCompression as ExporterCompression, ExportOptions, ExportOutput, OutputKind,
+};
 use sora_input::traits::SchemaInput;
 use sora_input_schema::input::ProjectSchemaInput;
+use sora_ir::{
+    model::ConfigIr, normalize::normalize_schema_with_parsers, validate::validate_config_ir,
+};
 use sora_schema::model::CodegenSchema;
 use uuid::Uuid;
 
@@ -89,8 +105,8 @@ pub struct BuildControl {
     progress: Option<Arc<ProgressCallback>>,
 }
 
-impl std::fmt::Debug for BuildControl {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for BuildControl {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         formatter
             .debug_struct("BuildControl")
             .field("cancelled", &self.cancelled.load(Ordering::Acquire))
@@ -142,9 +158,7 @@ impl BuildControl {
     fn checkpoint(&self, phase: BuildPhase) -> Result<()> {
         if self.is_cancelled() {
             self.cancellation_observed.store(true, Ordering::Release);
-            return Err(
-                sora_diagnostics::SoraError::OperationCancelled { operation: "build" }.into(),
-            );
+            return Err(SoraError::OperationCancelled { operation: "build" }.into());
         }
         if let Some(progress) = &self.progress {
             progress(BuildProgress {
@@ -155,9 +169,7 @@ impl BuildControl {
         }
         if self.is_cancelled() {
             self.cancellation_observed.store(true, Ordering::Release);
-            return Err(
-                sora_diagnostics::SoraError::OperationCancelled { operation: "build" }.into(),
-            );
+            return Err(SoraError::OperationCancelled { operation: "build" }.into());
         }
         Ok(())
     }
@@ -260,7 +272,7 @@ pub fn build_project_with_control(
     );
     let cleanup_error = fs::remove_dir_all(&stage_root)
         .err()
-        .filter(|error| error.kind() != std::io::ErrorKind::NotFound);
+        .filter(|error| error.kind() != ErrorKind::NotFound);
     match (result, cleanup_error) {
         (Ok(report), None) => Ok(report),
         (Ok(_), Some(error)) => Err(error).with_context(|| {
@@ -300,9 +312,9 @@ fn build_project_staged(
     let schema = schema_input.load_schema()?;
     let codegen_options = schema.codegen.clone();
     control.checkpoint(BuildPhase::NormalizeSchema)?;
-    let ir = sora_ir::normalize::normalize_schema_with_parsers(schema, context.schema_parsers())
+    let ir = normalize_schema_with_parsers(schema, context.schema_parsers())
         .with_context(|| format!("failed to check project `{}`", args.project.display()))?;
-    sora_ir::validate::validate_config_ir(&ir)
+    validate_config_ir(&ir)
         .with_context(|| format!("failed to check project `{}`", args.project.display()))?;
     validate_codegen_runtime_exports(
         &selected.codegen,
@@ -327,9 +339,9 @@ fn build_project_staged(
             &data_root,
             default_source_format.map(SourceFormat::as_str),
             Arc::clone(context.source_registry()),
-            std::sync::Arc::clone(context.cell_parsers()),
+            Arc::clone(context.cell_parsers()),
         );
-        let values = sora_core::pipeline::load_project_data_and_catalog_with_context_and_parsers(
+        let values = load_project_data_and_catalog_with_context_and_parsers(
             &project_input,
             &source_execution,
             context.schema_parsers(),
@@ -351,7 +363,7 @@ fn build_project_staged(
     if let Some(path) = selected.schema_lock {
         let path = resolve_declared_output(project_dir, path)?;
         let staged = staged_output_path(stage_root, staged_outputs.len());
-        sora_core::pipeline::generate_schema_lock_with_view_and_parsers(
+        generate_schema_lock_with_view_and_parsers(
             schema_input,
             &staged,
             view,
@@ -378,7 +390,7 @@ fn build_project_staged(
     if let Some(path) = selected.excel_templates {
         let path = resolve_declared_output(project_dir, path)?;
         let staged = staged_output_path(stage_root, staged_outputs.len());
-        sora_core::pipeline::generate_excel_template_with_view_and_parsers(
+        generate_excel_template_with_view_and_parsers(
             schema_input,
             &staged,
             view,
@@ -411,7 +423,7 @@ fn build_project_staged(
             .as_deref()
             .or(item.view.as_deref())
             .or(build.view.as_deref());
-        sora_core::pipeline::generate_code_with_view_format_parsers_and_cancellation(
+        generate_code_with_view_format_parsers_and_cancellation(
             schema_input,
             &item.target,
             &staged,
@@ -455,7 +467,7 @@ fn build_project_staged(
                 .or(item.view.as_deref())
                 .or(build.view.as_deref());
             let output = export_output(&item.format, staged.clone())?;
-            sora_core::pipeline::export_loaded_data(sora_core::pipeline::LoadedDataExportRequest {
+            export_loaded_data(LoadedDataExportRequest {
                 ir: &ir,
                 data: &data,
                 locale_catalog: locale_catalog.as_ref(),
@@ -473,8 +485,8 @@ fn build_project_staged(
                 )
             })?;
             let directory = matches!(
-                sora_core::pipeline::export_output_kind(&item.format),
-                Some(sora_export::exporter::OutputKind::Directory)
+                export_output_kind(&item.format),
+                Some(OutputKind::Directory)
             );
             staged_outputs.push(StagedOutput {
                 final_path: out.clone(),
@@ -500,22 +512,22 @@ fn build_project_staged(
             }
             Ok(())
         })
-        .map_err(|error| anyhow::anyhow!("build output transaction failed: {error}"))?;
+        .map_err(|error| anyhow!("build output transaction failed: {error}"))?;
     } else if args.clean {
         prune_empty_output_directories(&staged_outputs)?;
     }
     Ok(BuildReport {
-        artifacts: std::mem::take(artifacts),
+        artifacts: take(artifacts),
     })
 }
 
 fn validate_export_formats(exports: &[&BuildExport]) -> Result<()> {
     for item in exports {
-        if sora_core::pipeline::export_output_kind(&item.format).is_none() {
+        if export_output_kind(&item.format).is_none() {
             bail!(
                 "unknown export format `{}`; supported formats: {}",
                 item.format,
-                sora_core::pipeline::supported_export_formats().join(", ")
+                supported_export_formats().join(", ")
             );
         }
     }
@@ -586,11 +598,11 @@ fn validate_codegen_runtime_exports(
     build_view: Option<&str>,
     registry: &CodegenRegistry,
     codegen_options: &CodegenSchema,
-    ir: &sora_ir::model::ConfigIr,
+    ir: &ConfigIr,
 ) -> Result<()> {
     for item in codegen {
         let generator = registry.get(&item.target).ok_or_else(|| {
-            anyhow::anyhow!(
+            anyhow!(
                 "unknown codegen target `{}`; supported targets: {}",
                 item.target,
                 registry.supported_targets().join(", ")
@@ -654,7 +666,7 @@ fn validate_codegen_runtime_exports(
 }
 
 fn resolved_output_view<'a>(
-    ir: &'a sora_ir::model::ConfigIr,
+    ir: &'a ConfigIr,
     requested: Option<&'a str>,
     output: Option<&'a str>,
     build: Option<&'a str>,
@@ -669,20 +681,20 @@ fn resolved_output_view<'a>(
 
 fn merge_codegen_options(
     target: &str,
-    global: Option<&serde_json::Value>,
-    binding: Option<&serde_json::Value>,
-) -> Result<serde_json::Value> {
+    global: Option<&Value>,
+    binding: Option<&Value>,
+) -> Result<Value> {
     let mut values = match global {
-        Some(serde_json::Value::Object(values)) => values.clone(),
+        Some(Value::Object(values)) => values.clone(),
         Some(_) => bail!("`{target}` codegen options must be an object"),
-        None => serde_json::Map::new(),
+        None => Map::new(),
     };
     match binding {
-        Some(serde_json::Value::Object(binding)) => values.extend(binding.clone()),
+        Some(Value::Object(binding)) => values.extend(binding.clone()),
         Some(_) => bail!("`{target}` view binding must be an object"),
         None => {}
     }
-    Ok(serde_json::Value::Object(values))
+    Ok(Value::Object(values))
 }
 
 fn export_format_for_runtime(runtime_format: RuntimeFormat) -> &'static str {
@@ -694,19 +706,15 @@ fn export_format_for_runtime(runtime_format: RuntimeFormat) -> &'static str {
     }
 }
 
-fn export_output(format: &str, out: PathBuf) -> Result<sora_export::exporter::ExportOutput> {
-    match sora_core::pipeline::export_output_kind(format) {
-        Some(sora_export::exporter::OutputKind::File) => {
-            Ok(sora_export::exporter::ExportOutput::File(out))
-        }
-        Some(sora_export::exporter::OutputKind::Directory) => {
-            Ok(sora_export::exporter::ExportOutput::Directory(out))
-        }
+fn export_output(format: &str, out: PathBuf) -> Result<ExportOutput> {
+    match export_output_kind(format) {
+        Some(OutputKind::File) => Ok(ExportOutput::File(out)),
+        Some(OutputKind::Directory) => Ok(ExportOutput::Directory(out)),
         None => {
             bail!(
                 "unknown export format `{}`; supported formats: {}",
                 format,
-                sora_core::pipeline::supported_export_formats().join(", ")
+                supported_export_formats().join(", ")
             );
         }
     }
@@ -714,7 +722,7 @@ fn export_output(format: &str, out: PathBuf) -> Result<sora_export::exporter::Ex
 
 fn export_options(item: &BuildExport) -> Result<ExportOptions> {
     let compression = match item.compression {
-        ExportCompression::None => sora_export::exporter::ExportCompression::None,
+        ExportCompression::None => ExporterCompression::None,
         ExportCompression::Zstd => {
             if item.format != "binary" {
                 bail!(
@@ -722,7 +730,7 @@ fn export_options(item: &BuildExport) -> Result<ExportOptions> {
                     item.format
                 );
             }
-            sora_export::exporter::ExportCompression::Zstd {
+            ExporterCompression::Zstd {
                 level: item.compression_level.unwrap_or(3),
             }
         }
@@ -803,7 +811,7 @@ fn resolve_declared_output(project_dir: &Path, declared: &Path) -> Result<PathBu
         || declared.is_absolute()
         || declared
             .components()
-            .any(|component| !matches!(component, std::path::Component::Normal(_)))
+            .any(|component| !matches!(component, Component::Normal(_)))
     {
         bail!(
             "build output must be a non-empty project-relative path without traversal: `{}`",
@@ -820,7 +828,7 @@ fn resolve_declared_output(project_dir: &Path, declared: &Path) -> Result<PathBu
     let mut existing = candidate.as_path();
     while !existing.exists() {
         existing = existing.parent().ok_or_else(|| {
-            anyhow::anyhow!(
+            anyhow!(
                 "build output has no resolvable parent: `{}`",
                 declared.display()
             )
@@ -840,7 +848,7 @@ fn resolve_declared_output(project_dir: &Path, declared: &Path) -> Result<PathBu
     }
     let unresolved = candidate
         .strip_prefix(existing)
-        .map_err(|_| anyhow::anyhow!("failed to bound build output `{}`", declared.display()))?;
+        .map_err(|_| anyhow!("failed to bound build output `{}`", declared.display()))?;
     if unresolved.as_os_str().is_empty() {
         Ok(resolved_existing)
     } else {
@@ -869,14 +877,14 @@ fn reconcile_output_writes(outputs: &[StagedOutput], clean: bool) -> Result<Vec<
                     path.strip_prefix(&output.staged_path)
                         .map(Path::to_path_buf)
                         .map_err(|_| {
-                            anyhow::anyhow!("staged output escaped its root: `{}`", path.display())
+                            anyhow!("staged output escaped its root: `{}`", path.display())
                         })
                 })
                 .collect::<Result<BTreeSet<_>>>()?;
             if clean && output.final_path.exists() {
                 for path in regular_files(&output.final_path)? {
                     let relative = path.strip_prefix(&output.final_path).map_err(|_| {
-                        anyhow::anyhow!("existing output escaped its root: `{}`", path.display())
+                        anyhow!("existing output escaped its root: `{}`", path.display())
                     })?;
                     if !staged_relative.contains(relative) {
                         writes.insert(path, None);
@@ -917,7 +925,7 @@ fn queue_changed_output(
 fn file_bytes_equal(path: &Path, expected: &[u8]) -> Result<bool> {
     let metadata = match fs::metadata(path) {
         Ok(metadata) => metadata,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(error) if error.kind() == ErrorKind::NotFound => return Ok(false),
         Err(error) => {
             return Err(error)
                 .with_context(|| format!("failed to inspect build output `{}`", path.display()));
@@ -1034,11 +1042,11 @@ fn resolve_project_path(project_dir: &Path, path: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::env::temp_dir as system_temp_dir;
 
     #[test]
     fn declared_outputs_reject_traversal_and_project_root() {
-        let root =
-            std::env::temp_dir().join(format!("sora-build-output-boundary-{}", Uuid::new_v4()));
+        let root = system_temp_dir().join(format!("sora-build-output-boundary-{}", Uuid::new_v4()));
         fs::create_dir_all(&root).unwrap();
 
         assert!(resolve_declared_output(&root, Path::new("../outside")).is_err());
@@ -1062,10 +1070,9 @@ mod tests {
     fn declared_outputs_reject_symlink_escape() {
         use std::os::unix::fs::symlink;
 
-        let root =
-            std::env::temp_dir().join(format!("sora-build-output-symlink-{}", Uuid::new_v4()));
+        let root = system_temp_dir().join(format!("sora-build-output-symlink-{}", Uuid::new_v4()));
         let outside =
-            std::env::temp_dir().join(format!("sora-build-output-outside-{}", Uuid::new_v4()));
+            system_temp_dir().join(format!("sora-build-output-outside-{}", Uuid::new_v4()));
         fs::create_dir_all(&root).unwrap();
         fs::create_dir_all(&outside).unwrap();
         symlink(&outside, root.join("generated")).unwrap();
@@ -1091,10 +1098,10 @@ mod tests {
         assert!(control.cancellation_observed());
         assert!(
             error
-                .downcast_ref::<sora_diagnostics::SoraError>()
+                .downcast_ref::<SoraError>()
                 .is_some_and(|error| matches!(
                     error,
-                    sora_diagnostics::SoraError::OperationCancelled { operation: "build" }
+                    SoraError::OperationCancelled { operation: "build" }
                 ))
         );
     }
@@ -1102,7 +1109,7 @@ mod tests {
     #[test]
     fn cancelled_build_leaves_existing_outputs_untouched() {
         let root =
-            std::env::temp_dir().join(format!("sora-build-cancel-transaction-{}", Uuid::new_v4()));
+            system_temp_dir().join(format!("sora-build-cancel-transaction-{}", Uuid::new_v4()));
         fs::create_dir_all(root.join("schema")).unwrap();
         fs::create_dir_all(root.join("generated")).unwrap();
         let project = root.join("project.toml");

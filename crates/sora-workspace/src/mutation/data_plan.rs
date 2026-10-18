@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, fs, path::Path, sync::RwLock};
+use std::{collections::BTreeMap, fs, io::ErrorKind, path::Path, sync::RwLock};
 
 use chrono::{DateTime, Duration, Utc};
 use schemars::JsonSchema;
@@ -384,7 +384,7 @@ fn file_changes(root: &Path, writes: &[FileWrite]) -> Result<Vec<DataFileChange>
         .map(|write| {
             let current = match fs::read(&write.path) {
                 Ok(content) => content,
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => Vec::new(),
+                Err(error) if error.kind() == ErrorKind::NotFound => Vec::new(),
                 Err(error) => return Err(DataPlanError::Rendering(error.to_string())),
             };
             let path = write

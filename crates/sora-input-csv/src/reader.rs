@@ -1,8 +1,8 @@
 use std::{collections::BTreeMap, path::Path};
 
-use csv::StringRecord;
+use csv::{Error as CsvError, Reader, StringRecord};
 use sora_data::model::{
-    ConfigData, LocalizationRowData, LocalizationSourceData, RowData, TableData,
+    ConfigData, LocalizationRowData, LocalizationSourceData, RowData, TableData, Value,
 };
 use sora_diagnostics::{Result, SoraError};
 use sora_input::{
@@ -62,7 +62,7 @@ pub fn load_csv_table_data_with_parsers(
     path: &Path,
     parser_registry: &ParserRegistry,
 ) -> Result<TableData> {
-    let mut reader = csv::Reader::from_path(path).map_err(|source| csv_error(path, source))?;
+    let mut reader = Reader::from_path(path).map_err(|source| csv_error(path, source))?;
     let headers = reader
         .headers()
         .map_err(|source| csv_error(path, source))?
@@ -153,7 +153,7 @@ pub fn load_csv_localization_source_data(
     source: &LocalizationSourceIr,
     path: &Path,
 ) -> Result<LocalizationSourceData> {
-    let mut reader = csv::Reader::from_path(path).map_err(|source| csv_error(path, source))?;
+    let mut reader = Reader::from_path(path).map_err(|source| csv_error(path, source))?;
     let headers = reader
         .headers()
         .map_err(|source| csv_error(path, source))?
@@ -219,12 +219,12 @@ struct CsvRowContext<'a> {
 
 fn tagged_columns_value(
     ir: &ConfigIr,
-    field: &sora_ir::model::FieldIr,
+    field: &FieldIr,
     header_index: &BTreeMap<String, usize>,
     record: &StringRecord,
     row_context: CsvRowContext<'_>,
     parser_registry: &ParserRegistry,
-) -> Result<Option<sora_data::model::Value>> {
+) -> Result<Option<Value>> {
     let Some(union) = tagged_columns_union(ir, field) else {
         return Ok(None);
     };
@@ -270,7 +270,7 @@ fn tagged_columns_value(
         .error(format!("unknown union variant `{tag}`")));
     };
 
-    let mut values = BTreeMap::from([(union.tag.clone(), sora_data::model::Value::String(tag))]);
+    let mut values = BTreeMap::from([(union.tag.clone(), Value::String(tag))]);
     for tagged_column in projected {
         let TaggedColumnKind::VariantField(variant_field) = tagged_column.kind else {
             continue;
@@ -326,7 +326,7 @@ fn tagged_columns_value(
         );
     }
 
-    Ok(Some(sora_data::model::Value::Object(values)))
+    Ok(Some(Value::Object(values)))
 }
 
 fn struct_columns_value(
@@ -336,14 +336,14 @@ fn struct_columns_value(
     record: &StringRecord,
     row_context: CsvRowContext<'_>,
     parser_registry: &ParserRegistry,
-) -> Result<Option<sora_data::model::Value>> {
+) -> Result<Option<Value>> {
     let projected = struct_columns(ir, field).unwrap_or_default();
     let all_empty = projected.iter().all(|column| {
         let index = header_index[&column.name];
         record.get(index).unwrap_or_default().trim().is_empty()
     });
     if all_empty {
-        return Ok(matches!(field.ty, TypeIr::Optional(_)).then_some(sora_data::model::Value::Null));
+        return Ok(matches!(field.ty, TypeIr::Optional(_)).then_some(Value::Null));
     }
 
     let mut values = BTreeMap::new();
@@ -376,7 +376,7 @@ fn struct_columns_value(
         );
     }
 
-    Ok(Some(sora_data::model::Value::Object(values)))
+    Ok(Some(Value::Object(values)))
 }
 
 fn header_index(headers: &StringRecord) -> BTreeMap<String, usize> {
@@ -448,7 +448,7 @@ fn expected_headers(ir: &ConfigIr, table: &TableIr) -> Vec<String> {
         .collect()
 }
 
-fn csv_error(path: &Path, source: csv::Error) -> SoraError {
+fn csv_error(path: &Path, source: CsvError) -> SoraError {
     SoraError::ParseData {
         path: path.to_path_buf(),
         message: source.to_string(),
@@ -458,13 +458,14 @@ fn csv_error(path: &Path, source: csv::Error) -> SoraError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sora_data::model::Value;
     use sora_ir::{normalize::normalize_schema, validate::validate_config_ir};
     use std::{
+        env::temp_dir as env_temp_dir,
         fs,
         path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
     };
+    use toml::from_str;
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -695,7 +696,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema = toml::from_str(
+        let schema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -743,7 +744,7 @@ type = "list<string>"
     }
 
     fn tuple_ir() -> ConfigIr {
-        let schema = toml::from_str(
+        let schema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -790,7 +791,7 @@ parser = { kind = "tuple" }
     }
 
     fn interval_ir() -> ConfigIr {
-        let schema = toml::from_str(
+        let schema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -817,7 +818,7 @@ type = "interval<i32>"
     }
 
     fn tagged_union_ir() -> ConfigIr {
-        let schema = toml::from_str(
+        let schema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -872,7 +873,7 @@ parser = { kind = "tagged_columns", prefix = "" }
     }
 
     fn struct_columns_ir() -> ConfigIr {
-        let schema = toml::from_str(
+        let schema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -925,6 +926,6 @@ parser = { kind = "columns", prefix = "cost_" }
 
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-input-csv-test-{unique}"))
+        env_temp_dir().join(format!("sora-input-csv-test-{unique}"))
     }
 }

@@ -1,3 +1,4 @@
+use serde_json::to_vec_pretty;
 use sora_diagnostics::{Result, SoraError};
 
 use crate::{
@@ -26,9 +27,8 @@ impl DataExporter for JsonBundleExporter {
         };
 
         create_parent_dir(&path)?;
-        let content =
-            serde_json::to_vec_pretty(&DataBundleView::new("json", request.ir, request.data)?)
-                .map_err(SoraError::SerializeData)?;
+        let content = to_vec_pretty(&DataBundleView::new("json", request.ir, request.data)?)
+            .map_err(SoraError::SerializeData)?;
         write_file(path, content)
     }
 }
@@ -37,9 +37,12 @@ impl DataExporter for JsonBundleExporter {
 mod tests {
     use super::*;
     use crate::exporter::ExportOutput;
+    use serde_json::{Value as JsonValue, from_slice};
     use sora_data::model::{ConfigData, RowData, TableData, Value};
-    use sora_ir::{model::ConfigIr, normalize::normalize_schema};
+    use sora_execution::ExecutionContext;
+    use sora_ir::{model::ConfigIr, normalize::normalize_schema, projection::project_config_ir};
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir as system_temp_dir;
     use std::{
         collections::BTreeMap,
         fs,
@@ -47,6 +50,7 @@ mod tests {
         sync::atomic::{AtomicUsize, Ordering},
         time::{SystemTime, UNIX_EPOCH},
     };
+    use toml::from_str;
 
     #[test]
     fn json_exporter_writes_bundle_file() {
@@ -59,13 +63,13 @@ mod tests {
                 ir: &ir,
                 data: &data,
                 locale_catalog: None,
-                execution: &sora_execution::ExecutionContext::default(),
+                execution: &ExecutionContext::default(),
                 options: Default::default(),
                 output: ExportOutput::File(path.clone()),
             })
             .unwrap();
 
-        let value: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        let value: JsonValue = from_slice(&fs::read(&path).unwrap()).unwrap();
         assert_eq!(value["format"], "json");
         assert_eq!(value["format_version"], 3);
         assert!(value["schema_fingerprint"].as_str().unwrap().len() > 8);
@@ -78,7 +82,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -97,7 +101,7 @@ type = "i32"
         )
         .unwrap();
         let ir = normalize_schema(schema).unwrap();
-        sora_ir::projection::project_config_ir(&ir, "default").unwrap()
+        project_config_ir(&ir, "default").unwrap()
     }
 
     fn example_data() -> ConfigData {
@@ -121,6 +125,6 @@ type = "i32"
             .unwrap()
             .as_nanos();
         let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-export-json-test-{unique}-{id}"))
+        system_temp_dir().join(format!("sora-export-json-test-{unique}-{id}"))
     }
 }

@@ -1,11 +1,18 @@
-use super::*;
 use std::{
     collections::BTreeMap,
+    env::temp_dir as system_temp_dir,
     fs,
     path::{Path, PathBuf},
     sync::atomic::{AtomicU64, Ordering},
+    thread::sleep,
     time::{Duration, SystemTime},
 };
+
+use anyhow::Result;
+use sora_execution::ExecutionOptions;
+use sora_workspace::{ProjectRuntime, RuntimeOptions};
+
+use super::*;
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -154,10 +161,10 @@ item_type = "MissingVariant"
 fn parallel_rebuild_preserves_identical_generated_files() {
     let base = temp_dir();
     let project = write_project(&base);
-    let context = sora_workspace::ProjectRuntime::load(
+    let context = ProjectRuntime::load(
         None,
-        sora_workspace::RuntimeOptions {
-            execution: sora_execution::ExecutionOptions {
+        RuntimeOptions {
+            execution: ExecutionOptions {
                 parallel: true,
                 jobs: Some(4),
             },
@@ -198,11 +205,7 @@ fn assert_identical_rebuild_preserves_generated_files(clean: bool) {
     let _ = fs::remove_dir_all(base);
 }
 
-fn run_build(
-    project: &Path,
-    clean: bool,
-    context: &sora_workspace::ProjectRuntime,
-) -> anyhow::Result<()> {
+fn run_build(project: &Path, clean: bool, context: &ProjectRuntime) -> Result<()> {
     run(
         BuildArgs {
             project: project.to_path_buf(),
@@ -296,7 +299,7 @@ fn file_identity(metadata: &fs::Metadata) -> (u64, u64) {
 }
 
 fn wait_for_distinct_mtime() {
-    std::thread::sleep(Duration::from_millis(1_100));
+    sleep(Duration::from_millis(1_100));
 }
 
 #[test]
@@ -900,9 +903,9 @@ item_type = "Weapon"
 
 fn temp_dir() -> PathBuf {
     let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    std::env::temp_dir().join(format!("sora-cli-build-test-{unique}"))
+    system_temp_dir().join(format!("sora-cli-build-test-{unique}"))
 }
 
-fn test_context() -> sora_workspace::ProjectRuntime {
-    sora_workspace::ProjectRuntime::load(None, sora_workspace::RuntimeOptions::default()).unwrap()
+fn test_context() -> ProjectRuntime {
+    ProjectRuntime::load(None, RuntimeOptions::default()).unwrap()
 }

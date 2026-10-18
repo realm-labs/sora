@@ -1,7 +1,9 @@
 use std::{
     collections::BTreeMap,
     fs,
+    io::Error as IoError,
     path::{Path, PathBuf},
+    str::from_utf8,
     sync::{Arc, RwLock},
     time::{Duration, Instant},
 };
@@ -9,6 +11,7 @@ use std::{
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use rmcp::model::{ReadResourceResult, ResourceContents};
 use sora_workspace::{BuildReport, ProjectId};
+use thiserror::Error;
 use uuid::Uuid;
 
 const ARTIFACT_TTL: Duration = Duration::from_secs(30 * 60);
@@ -45,7 +48,7 @@ pub(crate) struct ArtifactStore {
     state: RwLock<ArtifactState>,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Error)]
 pub(crate) enum ArtifactError {
     #[error("artifact store lock is poisoned")]
     StatePoisoned,
@@ -63,7 +66,7 @@ pub(crate) enum ArtifactError {
     Read {
         path: PathBuf,
         #[source]
-        source: std::io::Error,
+        source: IoError,
     },
 }
 
@@ -177,7 +180,7 @@ impl ArtifactStore {
                 artifact.mime_type.as_str(),
                 "application/json" | "application/toml" | "application/yaml"
             ) {
-            match std::str::from_utf8(&artifact.bytes) {
+            match from_utf8(&artifact.bytes) {
                 Ok(text) => ResourceContents::text(text, uri).with_mime_type(&artifact.mime_type),
                 Err(_) => ResourceContents::blob(STANDARD.encode(&artifact.bytes), uri)
                     .with_mime_type(&artifact.mime_type),
@@ -274,12 +277,14 @@ fn mime_type(path: &Path) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use sora_workspace::{BuildArtifact, BuildArtifactKind};
+    use std::env::temp_dir as system_temp_dir;
+
+    use super::*;
 
     #[test]
     fn artifacts_are_bound_to_project_and_authorization() {
-        let root = std::env::temp_dir().join(format!("sora-artifacts-{}", Uuid::new_v4()));
+        let root = system_temp_dir().join(format!("sora-artifacts-{}", Uuid::new_v4()));
         fs::create_dir_all(root.join("generated")).unwrap();
         let path = root.join("generated/config.json");
         fs::write(&path, br#"{"ok":true}"#).unwrap();

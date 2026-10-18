@@ -1,13 +1,15 @@
-use std::path::Path;
+use std::{fmt::Display, path::Path};
 
 use rust_xlsxwriter::{
     Color, DataValidation, DataValidationRule, DocProperties, ExcelDateTime, Format, FormatAlign,
-    FormatBorder, Note, Workbook,
+    FormatBorder, Note, Workbook, Worksheet,
 };
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::{
-    input_projection::{TaggedColumnKind, struct_columns, tagged_columns, tagged_columns_union},
-    model::{ConfigIr, FieldIr, TableIr, TypeIr},
+    input_projection::{
+        TaggedColumn, TaggedColumnKind, struct_columns, tagged_columns, tagged_columns_union,
+    },
+    model::{ConfigIr, EnumValueIr, FieldIr, TableIr, TypeIr},
 };
 
 use crate::generator::ExcelAdditionalSheet;
@@ -170,7 +172,7 @@ pub(crate) fn write_synced_workbook(
 fn write_synced_headers(
     ir: &ConfigIr,
     sheet: &SyncedTableSheet<'_>,
-    worksheet: &mut rust_xlsxwriter::Worksheet,
+    worksheet: &mut Worksheet,
     formats: &TemplateFormats,
     path: &Path,
 ) -> Result<()> {
@@ -212,7 +214,7 @@ fn write_synced_headers(
 }
 
 fn write_header_cell(
-    worksheet: &mut rust_xlsxwriter::Worksheet,
+    worksheet: &mut Worksheet,
     row: usize,
     column: usize,
     value: &str,
@@ -234,7 +236,7 @@ fn write_header_cell(
 fn apply_legacy_column_layout(
     columns: &[TemplateColumn],
     legacy_columns: &[LegacyColumn],
-    worksheet: &mut rust_xlsxwriter::Worksheet,
+    worksheet: &mut Worksheet,
     formats: &TemplateFormats,
     path: &Path,
 ) -> Result<()> {
@@ -259,7 +261,7 @@ fn apply_legacy_column_layout(
 }
 
 fn write_synced_data_rows(
-    worksheet: &mut rust_xlsxwriter::Worksheet,
+    worksheet: &mut Worksheet,
     formats: &TemplateFormats,
     path: &Path,
     columns: &[TemplateColumn],
@@ -318,7 +320,7 @@ fn write_synced_data_rows(
 }
 
 fn write_data_rows(
-    worksheet: &mut rust_xlsxwriter::Worksheet,
+    worksheet: &mut Worksheet,
     formats: &TemplateFormats,
     path: &Path,
     columns: &[TemplateColumn],
@@ -357,7 +359,7 @@ fn derived_placeholder(column: Option<&TemplateColumn>) -> String {
 fn apply_data_validations(
     ir: &ConfigIr,
     table: &TableIr,
-    worksheet: &mut rust_xlsxwriter::Worksheet,
+    worksheet: &mut Worksheet,
     path: &Path,
 ) -> Result<()> {
     let mut column = FIELD_START_COLUMN;
@@ -442,7 +444,7 @@ fn apply_data_validations(
 fn apply_field_notes(
     ir: &ConfigIr,
     table: &TableIr,
-    worksheet: &mut rust_xlsxwriter::Worksheet,
+    worksheet: &mut Worksheet,
     path: &Path,
 ) -> Result<()> {
     let mut column = FIELD_START_COLUMN;
@@ -504,7 +506,7 @@ fn apply_field_notes(
 }
 
 fn insert_note(
-    worksheet: &mut rust_xlsxwriter::Worksheet,
+    worksheet: &mut Worksheet,
     row: u32,
     column: u16,
     text: String,
@@ -544,7 +546,7 @@ fn struct_column_note_text(
 fn tagged_column_note_text(
     ir: &ConfigIr,
     root_field: &FieldIr,
-    tagged_column: &sora_ir::input_projection::TaggedColumn<'_>,
+    tagged_column: &TaggedColumn<'_>,
 ) -> String {
     match tagged_column.kind {
         TaggedColumnKind::Tag => {
@@ -831,7 +833,7 @@ fn decimal_validation(field: &FieldIr, path: &Path) -> Result<Option<DataValidat
     Ok(Some(data_validation))
 }
 
-fn enum_values<'a>(ir: &'a ConfigIr, enum_name: &str) -> Option<&'a [sora_ir::model::EnumValueIr]> {
+fn enum_values<'a>(ir: &'a ConfigIr, enum_name: &str) -> Option<&'a [EnumValueIr]> {
     ir.enums
         .iter()
         .find(|candidate| candidate.name == enum_name)
@@ -1012,7 +1014,7 @@ fn group_palette() -> [Color; 6] {
 fn apply_sheet_layout(
     ir: &ConfigIr,
     table: &TableIr,
-    worksheet: &mut rust_xlsxwriter::Worksheet,
+    worksheet: &mut Worksheet,
     formats: &TemplateFormats,
     path: &Path,
 ) -> Result<()> {
@@ -1068,7 +1070,7 @@ fn deterministic_workbook(path: &Path) -> Result<Workbook> {
     Ok(workbook)
 }
 
-fn excel_error(path: &Path, source: impl std::fmt::Display) -> SoraError {
+fn excel_error(path: &Path, source: impl Display) -> SoraError {
     SoraError::ExcelTemplate {
         path: path.to_path_buf(),
         message: source.to_string(),
@@ -1080,7 +1082,9 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::*;
-    use sora_ir::model::{ConfigIr, DerivedFieldIr, EnumIr, GroupSetIr, StructIr, TypeIr};
+    use sora_ir::model::{
+        ConfigIr, DerivedFieldIr, EnumIr, GroupSetIr, ParserIr, StructIr, TypeIr,
+    };
 
     #[test]
     fn enum_validation_titles_use_local_names_and_respect_excel_limits() {
@@ -1165,7 +1169,7 @@ mod tests {
                 name: "ResourceType".to_owned(),
                 comment: None,
                 groups: GroupSetIr::default(),
-                values: vec![sora_ir::model::EnumValueIr {
+                values: vec![EnumValueIr {
                     id: 0,
                     name: "Item".to_owned(),
                     comment: None,
@@ -1226,7 +1230,7 @@ mod tests {
             default: None,
             range: None,
             length: None,
-            parser: Some(sora_ir::model::ParserIr {
+            parser: Some(ParserIr {
                 kind: "tuple".to_owned(),
                 options: BTreeMap::new(),
             }),
@@ -1249,7 +1253,7 @@ mod tests {
             default: None,
             range: None,
             length: None,
-            parser: Some(sora_ir::model::ParserIr {
+            parser: Some(ParserIr {
                 kind: "columns".to_owned(),
                 options: BTreeMap::new(),
             }),
@@ -1291,7 +1295,7 @@ mod tests {
             default: None,
             range: None,
             length: None,
-            parser: Some(sora_ir::model::ParserIr {
+            parser: Some(ParserIr {
                 kind: "tagged_columns".to_owned(),
                 options: BTreeMap::new(),
             }),
@@ -1309,9 +1313,9 @@ mod tests {
             parser: None,
             derived_from: None,
         };
-        let tagged_column = sora_ir::input_projection::TaggedColumn {
+        let tagged_column = TaggedColumn {
             name: "quest_id".to_owned(),
-            kind: sora_ir::input_projection::TaggedColumnKind::VariantField(&variant_field),
+            kind: TaggedColumnKind::VariantField(&variant_field),
         };
 
         let note_text = tagged_column_note_text(&empty_ir(), &root_field, &tagged_column);
@@ -1335,15 +1339,15 @@ mod tests {
             default: None,
             range: None,
             length: None,
-            parser: Some(sora_ir::model::ParserIr {
+            parser: Some(ParserIr {
                 kind: "tagged_columns".to_owned(),
                 options: BTreeMap::new(),
             }),
             derived_from: None,
         };
-        let tagged_column = sora_ir::input_projection::TaggedColumn {
+        let tagged_column = TaggedColumn {
             name: "type".to_owned(),
-            kind: sora_ir::input_projection::TaggedColumnKind::Tag,
+            kind: TaggedColumnKind::Tag,
         };
 
         let note_text = tagged_column_note_text(&empty_ir(), &root_field, &tagged_column);

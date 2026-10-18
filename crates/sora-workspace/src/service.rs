@@ -1,19 +1,22 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
+    fmt::{Display, Formatter, Result as FmtResult},
     fs,
-    path::{Path, PathBuf},
+    io::Error as IoError,
+    path::{Component, Path, PathBuf},
     sync::{
         Arc, RwLock,
         atomic::{AtomicU64, Ordering},
     },
 };
 
+use anyhow::Error as AnyhowError;
 use schemars::JsonSchema;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
 use crate::{
-    ProjectId, ProjectSession, RuntimeOptions,
+    ProjectId, ProjectManifest, ProjectSession, RuntimeOptions,
     mutation::{
         DataMutationCoordinator, ExcelSyncCoordinator, MutationCoordinator, ProjectInitCoordinator,
     },
@@ -129,12 +132,11 @@ impl WorkspaceService {
         trust_project_scripts: bool,
     ) -> Result<Arc<ProjectSession>, WorkspaceError> {
         let (root, canonical) = self.resolve_discovered_manifest(root_id, relative_manifest)?;
-        let manifest = crate::ProjectManifest::load(&canonical).map_err(|source| {
-            WorkspaceError::OpenProject {
+        let manifest =
+            ProjectManifest::load(&canonical).map_err(|source| WorkspaceError::OpenProject {
                 path: canonical.clone(),
                 source,
-            }
-        })?;
+            })?;
         if let Some(existing) = self
             .sessions
             .read()
@@ -165,12 +167,11 @@ impl WorkspaceService {
         relative_manifest: &str,
     ) -> Result<DiscoveredProjectInspection, WorkspaceError> {
         let (root, canonical) = self.resolve_discovered_manifest(root_id, relative_manifest)?;
-        let manifest = crate::ProjectManifest::load(&canonical).map_err(|source| {
-            WorkspaceError::OpenProject {
+        let manifest =
+            ProjectManifest::load(&canonical).map_err(|source| WorkspaceError::OpenProject {
                 path: canonical.clone(),
                 source,
-            }
-        })?;
+            })?;
         let scripts = inspect_project_scripts(&root.path, &canonical, &manifest)?;
         Ok(DiscoveredProjectInspection {
             root_id: root.id,
@@ -273,7 +274,7 @@ pub enum WorkspaceError {
     ResolveRoot {
         path: PathBuf,
         #[source]
-        source: std::io::Error,
+        source: IoError,
     },
     #[error("workspace root `{0}` is not a directory")]
     RootNotDirectory(PathBuf),
@@ -281,7 +282,7 @@ pub enum WorkspaceError {
     ReadRoot {
         path: PathBuf,
         #[source]
-        source: std::io::Error,
+        source: IoError,
     },
     #[error("unknown workspace root `{0}`")]
     UnknownRoot(String),
@@ -293,7 +294,7 @@ pub enum WorkspaceError {
     ResolveManifest {
         path: PathBuf,
         #[source]
-        source: std::io::Error,
+        source: IoError,
     },
     #[error("project manifest resolves outside its allowed root")]
     ManifestOutsideRoot,
@@ -305,13 +306,13 @@ pub enum WorkspaceError {
     ReadProjectScript {
         path: PathBuf,
         #[source]
-        source: std::io::Error,
+        source: IoError,
     },
     #[error("failed to open project manifest `{path}`")]
     OpenProject {
-        path: std::path::PathBuf,
+        path: PathBuf,
         #[source]
-        source: anyhow::Error,
+        source: AnyhowError,
     },
     #[error("project `{0}` is already registered")]
     DuplicateProject(ProjectId),
@@ -377,7 +378,7 @@ pub enum ProjectScriptKind {
 fn inspect_project_scripts(
     allowed_root: &Path,
     manifest_path: &Path,
-    manifest: &crate::ProjectManifest,
+    manifest: &ProjectManifest,
 ) -> Result<Vec<ProjectScript>, WorkspaceError> {
     let project_root = manifest_path.parent().unwrap_or_else(|| Path::new("."));
     let mut scripts = manifest
@@ -482,7 +483,7 @@ fn validate_relative_manifest(path: &str) -> Result<PathBuf, WorkspaceError> {
             .is_some_and(|name| PROJECT_MANIFEST_NAMES.contains(&name))
         || path
             .components()
-            .any(|component| !matches!(component, std::path::Component::Normal(_)))
+            .any(|component| !matches!(component, Component::Normal(_)))
     {
         return Err(WorkspaceError::InvalidRelativeManifest);
     }
@@ -506,7 +507,6 @@ fn normalized_relative_path(path: &Path) -> String {
 }
 
 fn stable_root_suffix(path: &Path) -> String {
-    use sha2::{Digest, Sha256};
     let digest = Sha256::digest(path.as_os_str().as_encoded_bytes());
     digest[..8]
         .iter()
@@ -514,14 +514,15 @@ fn stable_root_suffix(path: &Path) -> String {
         .collect()
 }
 
-impl std::fmt::Display for ProjectId {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for ProjectId {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         formatter.write_str(self.as_str())
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::{env::temp_dir as system_temp_dir, process::id as process_id};
     use std::{
         fs,
         path::PathBuf,
@@ -724,9 +725,9 @@ return {
 
     fn temp_dir(label: &str) -> PathBuf {
         let nonce = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!(
+        system_temp_dir().join(format!(
             "sora-workspace-service-{}-{label}-{nonce}",
-            std::process::id()
+            process_id()
         ))
     }
 }

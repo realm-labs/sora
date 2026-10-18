@@ -505,6 +505,9 @@ impl ProtoWriter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
+    use toml::from_str;
+
     use prost::Message;
     use sora_data::model::TableData;
     use sora_ir::normalize::normalize_schema;
@@ -512,7 +515,7 @@ mod tests {
 
     #[test]
     fn typed_protobuf_exporter_writes_business_payload() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -565,12 +568,12 @@ type = "enum<ItemType>"
     #[derive(Clone, PartialEq, Message)]
     struct MapRow {
         #[prost(map = "string, int32", tag = "1")]
-        attributes: std::collections::HashMap<String, i32>,
+        attributes: HashMap<String, i32>,
     }
 
     #[test]
     fn map_payload_matches_protobuf_map_wire_format() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

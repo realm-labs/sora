@@ -1,6 +1,7 @@
 use std::{
+    env::current_dir,
     fs,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
 };
 
 use sora_diagnostics::{Result, SoraError};
@@ -16,9 +17,7 @@ pub(crate) fn ensure_workbook_path_is_bounded(root: &Path, path: &Path) -> Resul
         || relative.components().any(|component| {
             matches!(
                 component,
-                std::path::Component::ParentDir
-                    | std::path::Component::RootDir
-                    | std::path::Component::Prefix(_)
+                Component::ParentDir | Component::RootDir | Component::Prefix(_)
             )
         })
     {
@@ -54,7 +53,7 @@ fn resolve_through_existing_ancestor(path: &Path) -> Result<PathBuf> {
     let absolute = if path.is_absolute() {
         path.to_path_buf()
     } else {
-        std::env::current_dir()
+        current_dir()
             .map_err(|source| SoraError::ReadFile {
                 path: path.to_path_buf(),
                 source,
@@ -77,11 +76,9 @@ fn resolve_through_existing_ancestor(path: &Path) -> Result<PathBuf> {
         .expect("an ancestor must be a path prefix");
     for component in unresolved.components() {
         match component {
-            std::path::Component::Normal(segment) => resolved.push(segment),
-            std::path::Component::CurDir => {}
-            std::path::Component::ParentDir
-            | std::path::Component::RootDir
-            | std::path::Component::Prefix(_) => {
+            Component::Normal(segment) => resolved.push(segment),
+            Component::CurDir => {}
+            Component::ParentDir | Component::RootDir | Component::Prefix(_) => {
                 return Err(SoraError::ExcelTemplate {
                     path: path.to_path_buf(),
                     message: "workbook path contains unsafe unresolved traversal".to_owned(),

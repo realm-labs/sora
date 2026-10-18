@@ -1,13 +1,15 @@
 use std::{
     collections::BTreeSet,
     fs::{self, File},
-    io::Write,
+    io::{Error as IoError, ErrorKind, Write},
     path::{Component, Path, PathBuf},
     time::SystemTime,
 };
 
+use anyhow::Result as AnyhowResult;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_json::{Error as JsonError, from_slice, to_vec_pretty};
 use uuid::Uuid;
 
 use crate::studio::service::TextFileWrite;
@@ -44,15 +46,15 @@ pub enum TransactionError {
         action: &'static str,
         path: PathBuf,
         #[source]
-        source: std::io::Error,
+        source: IoError,
     },
     #[error("failed to encode transaction journal")]
-    EncodeJournal(#[source] serde_json::Error),
+    EncodeJournal(#[source] JsonError),
     #[error("failed to decode transaction journal `{path}`")]
     DecodeJournal {
         path: PathBuf,
         #[source]
-        source: serde_json::Error,
+        source: JsonError,
     },
     #[error("post-commit validation failed: {0}")]
     PostValidation(String),
@@ -91,7 +93,7 @@ pub(crate) fn commit_text_transaction<F>(
     validate: F,
 ) -> Result<TransactionReceipt, TransactionError>
 where
-    F: FnOnce() -> anyhow::Result<()>,
+    F: FnOnce() -> AnyhowResult<()>,
 {
     let writes = writes
         .iter()
@@ -109,7 +111,7 @@ pub(crate) fn commit_file_transaction<F>(
     validate: F,
 ) -> Result<TransactionReceipt, TransactionError>
 where
-    F: FnOnce() -> anyhow::Result<()>,
+    F: FnOnce() -> AnyhowResult<()>,
 {
     let root = canonical_directory(project_root)?;
     let id = Uuid::new_v4().to_string();
@@ -234,7 +236,7 @@ pub(crate) fn recover_transactions(project_root: &Path) -> Result<(), Transactio
         }
         let bytes = read_file(&path)?;
         let journal: TransactionJournal =
-            serde_json::from_slice(&bytes).map_err(|source| TransactionError::DecodeJournal {
+            from_slice(&bytes).map_err(|source| TransactionError::DecodeJournal {
                 path: path.clone(),
                 source,
             })?;
@@ -412,7 +414,7 @@ fn write_journal(path: &Path, journal: &TransactionJournal) -> Result<(), Transa
     if let Some(parent) = path.parent() {
         create_dir_all(parent)?;
     }
-    let bytes = serde_json::to_vec_pretty(journal).map_err(TransactionError::EncodeJournal)?;
+    let bytes = to_vec_pretty(journal).map_err(TransactionError::EncodeJournal)?;
     let temporary = path.with_extension("json.tmp");
     write_durable(&temporary, &bytes)?;
     replace_file(&temporary, path)
@@ -448,7 +450,7 @@ fn replace_file(source: &Path, target: &Path) -> Result<(), TransactionError> {
 
 #[cfg(windows)]
 fn replace_file(source: &Path, target: &Path) -> Result<(), TransactionError> {
-    use std::{os::windows::ffi::OsStrExt, ptr};
+    use std::{iter::once, os::windows::ffi::OsStrExt, ptr};
 
     use windows_sys::Win32::Storage::FileSystem::ReplaceFileW;
 
@@ -463,12 +465,12 @@ fn replace_file(source: &Path, target: &Path) -> Result<(), TransactionError> {
     let target_wide = target
         .as_os_str()
         .encode_wide()
-        .chain(std::iter::once(0))
+        .chain(once(0))
         .collect::<Vec<_>>();
     let source_wide = source
         .as_os_str()
         .encode_wide()
-        .chain(std::iter::once(0))
+        .chain(once(0))
         .collect::<Vec<_>>();
     // SAFETY: both path buffers are NUL-terminated and remain alive for the
     // duration of the call. The optional backup and reserved pointers are null.
@@ -488,7 +490,7 @@ fn replace_file(source: &Path, target: &Path) -> Result<(), TransactionError> {
         Err(TransactionError::Io {
             action: "atomically replace file",
             path: target.to_path_buf(),
-            source: std::io::Error::last_os_error(),
+            source: IoError::last_os_error(),
         })
     }
 }
@@ -517,7 +519,7 @@ fn create_dir_all(path: &Path) -> Result<(), TransactionError> {
 fn remove_file_if_exists(path: &Path) -> Result<(), TransactionError> {
     match fs::remove_file(path) {
         Ok(()) => Ok(()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
         Err(source) => Err(TransactionError::Io {
             action: "remove file",
             path: path.to_path_buf(),
@@ -529,7 +531,7 @@ fn remove_file_if_exists(path: &Path) -> Result<(), TransactionError> {
 fn remove_dir_all_if_exists(path: &Path) -> Result<(), TransactionError> {
     match fs::remove_dir_all(path) {
         Ok(()) => Ok(()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
         Err(source) => Err(TransactionError::Io {
             action: "remove directory",
             path: path.to_path_buf(),
@@ -577,6 +579,9 @@ fn relative_string(path: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
+    use anyhow::bail;
+    use serde_json::to_vec;
+    use std::{env::temp_dir as system_temp_dir, process::id as process_id};
     use std::{
         sync::atomic::{AtomicU64, Ordering},
         time::{SystemTime, UNIX_EPOCH},
@@ -607,7 +612,7 @@ mod tests {
                     content: "new-second".to_owned(),
                 },
             ],
-            || anyhow::bail!("invalid schema"),
+            || bail!("invalid schema"),
         );
 
         assert!(result.is_err());
@@ -640,7 +645,7 @@ mod tests {
                 backup: Some(".sora/backups/interrupted/0.backup".to_owned()),
             }],
         };
-        fs::write(&journal_path, serde_json::to_vec(&journal).unwrap()).unwrap();
+        fs::write(&journal_path, to_vec(&journal).unwrap()).unwrap();
 
         recover_transactions(&root).unwrap();
 
@@ -689,9 +694,9 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        std::env::temp_dir().join(format!(
+        system_temp_dir().join(format!(
             "sora-workspace-transaction-{}-{time}-{nonce}",
-            std::process::id()
+            process_id()
         ))
     }
 }

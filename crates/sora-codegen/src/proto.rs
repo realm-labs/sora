@@ -4,7 +4,7 @@ use heck::{ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
 use sora_diagnostics::Result;
 use sora_ir::{
     interval::interval_record_name,
-    model::{ConfigIr, FieldIr, TypeIr},
+    model::{ConfigIr, FieldIr, TableModeIr, TypeIr},
 };
 
 use crate::{
@@ -40,7 +40,7 @@ fn render_proto(ir: &ConfigIr, package: &str) -> String {
     for (index, table) in ir.tables.iter().enumerate() {
         let field_name = schema_flat_snake_name(&table.name);
         let message_name = schema_flat_pascal_name(&table.name);
-        if matches!(table.mode, sora_ir::model::TableModeIr::Singleton) {
+        if matches!(table.mode, TableModeIr::Singleton) {
             output.push_str(&format!("  {message_name} {field_name} = {};\n", index + 1));
         } else {
             output.push_str(&format!(
@@ -313,10 +313,11 @@ mod tests {
     use super::*;
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::ProjectSchema;
+    use toml::from_str;
 
     #[test]
     fn generates_business_proto_schema() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "com.sora.game" }
 groups = { common = { default = true } }

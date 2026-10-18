@@ -1,12 +1,14 @@
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap},
-    fs, io,
+    fs,
+    io::{self, Error as IoError},
     path::{Path, PathBuf},
+    process::id as process_id,
     sync::atomic::{AtomicU64, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use calamine::{Data, Reader, open_workbook_auto};
+use calamine::{Data, Range, Reader, open_workbook_auto};
 use sora_diagnostics::{Result, SoraError};
 use sora_input::source::{SourceFormat, resolve_table_source_format};
 use sora_ir::model::{ConfigIr, TableIr};
@@ -14,7 +16,8 @@ use sora_ir::model::{ConfigIr, TableIr};
 use crate::{
     path::{create_workbook_parent, ensure_workbook_path_is_bounded},
     projection::{
-        DATA_START_ROW, FIELD_ROW, FIELD_START_COLUMN, table_template_columns, table_template_rows,
+        DATA_START_ROW, FIELD_ROW, FIELD_START_COLUMN, TemplateColumn, table_template_columns,
+        table_template_rows,
     },
     sheets::{ensure_single_table_definition, resolve_table_sheet_names_with_metadata},
     writer::{LegacyColumn, PreservedSheet, SyncedTableSheet, write_synced_workbook},
@@ -174,7 +177,7 @@ fn replace_file(source: &Path, target: &Path) -> io::Result<()> {
         Err(error) if target.exists() => {
             fs::remove_file(target)?;
             fs::rename(source, target).map_err(|second_error| {
-                io::Error::new(
+                IoError::new(
                     second_error.kind(),
                     format!("failed after initial replace error `{error}`: {second_error}"),
                 )
@@ -196,7 +199,7 @@ fn sibling_temp_path(target: &Path) -> PathBuf {
         .unwrap_or("workbook.xlsx");
     target.with_file_name(format!(
         ".{name}.sora-excel-write-{}-{timestamp}-{id}.tmp",
-        std::process::id()
+        process_id()
     ))
 }
 
@@ -210,7 +213,7 @@ fn backup_existing_workbook(data_root: &Path, path: &Path) -> Result<PathBuf> {
     let backup_root = data_root.join(".sora-backup");
     ensure_backup_root(&backup_root)?;
     let backup_path = backup_root
-        .join(format!("{timestamp}-{}-{sequence}", std::process::id()))
+        .join(format!("{timestamp}-{}-{sequence}", process_id()))
         .join(relative);
     if let Some(parent) = backup_path.parent() {
         fs::create_dir_all(parent).map_err(|source| SoraError::CreateDir {
@@ -408,7 +411,7 @@ fn synced_sheet_rows(ir: &ConfigIr, sheet: &SyncedTableSheet<'_>) -> Vec<Vec<Str
     rows
 }
 
-fn derived_placeholder(column: &crate::projection::TemplateColumn) -> String {
+fn derived_placeholder(column: &TemplateColumn) -> String {
     if column.input.is_empty() {
         "generated".to_owned()
     } else {
@@ -528,7 +531,7 @@ impl ExistingWorkbook {
     }
 }
 
-fn range_to_rows(range: &calamine::Range<Data>) -> Vec<Vec<String>> {
+fn range_to_rows(range: &Range<Data>) -> Vec<Vec<String>> {
     range
         .rows()
         .map(|row| row.iter().map(cell_to_string).collect())
@@ -573,10 +576,15 @@ fn group_xlsx_tables(ir: &ConfigIr) -> Result<BTreeMap<String, Vec<&TableIr>>> {
 mod tests {
     use std::sync::atomic::{AtomicU64, Ordering};
 
-    use calamine::Reader;
+    use crate::projection::METADATA_ROW;
+    use calamine::{Reader, Xlsx, open_workbook};
     use rust_xlsxwriter::{Format, Workbook};
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir as env_temp_dir;
+    #[cfg(unix)]
+    use std::os::unix::fs::symlink;
+    use toml::from_str;
 
     use super::*;
 
@@ -603,8 +611,7 @@ mod tests {
             ["old_category"]
         );
 
-        let mut workbook: calamine::Xlsx<_> =
-            calamine::open_workbook(base.join("Item.xlsx")).unwrap();
+        let mut workbook: Xlsx<_> = open_workbook(base.join("Item.xlsx")).unwrap();
         let range = workbook.worksheet_range("Item").unwrap();
         let field_row = range.rows().nth(FIELD_ROW as usize).unwrap();
         assert_eq!(cell_to_string(&field_row[1]), "id");
@@ -665,7 +672,7 @@ mod tests {
             &["id", "name"],
             &["1001", "Iron Sword"],
         );
-        std::os::unix::fs::symlink(outside.join("Item.xlsx"), base.join("Item.xlsx")).unwrap();
+        symlink(outside.join("Item.xlsx"), base.join("Item.xlsx")).unwrap();
 
         let error = ExcelTemplateSync
             .preview(&ir, &base)
@@ -693,8 +700,7 @@ mod tests {
         assert!(report.workbooks[0].sheets[0].added_columns.is_empty());
         assert_eq!(report.workbooks[0].sheets[0].legacy_columns, ["cost_count"]);
 
-        let mut workbook: calamine::Xlsx<_> =
-            calamine::open_workbook(base.join("Reward.xlsx")).unwrap();
+        let mut workbook: Xlsx<_> = open_workbook(base.join("Reward.xlsx")).unwrap();
         let range = workbook.worksheet_range("Reward").unwrap();
         let field_row = range.rows().nth(FIELD_ROW as usize).unwrap();
         assert_eq!(cell_to_string(&field_row[1]), "id");
@@ -728,8 +734,7 @@ mod tests {
         assert!(report.workbooks[0].sheets[0].added_columns.is_empty());
         assert_eq!(report.workbooks[0].sheets[0].legacy_columns, ["count"]);
 
-        let mut workbook: calamine::Xlsx<_> =
-            calamine::open_workbook(base.join("EventConditionEntry.xlsx")).unwrap();
+        let mut workbook: Xlsx<_> = open_workbook(base.join("EventConditionEntry.xlsx")).unwrap();
         let range = workbook.worksheet_range("EventConditionEntry").unwrap();
         let field_row = range.rows().nth(FIELD_ROW as usize).unwrap();
         assert_eq!(cell_to_string(&field_row[1]), "id");
@@ -780,12 +785,11 @@ mod tests {
 
         assert!(first.workbooks[0].written);
         assert_eq!(first.workbooks[0].sheets[0].sheet, "VisualProfile");
-        let mut workbook: calamine::Xlsx<_> =
-            calamine::open_workbook(base.join("VisualProfile.xlsx")).unwrap();
+        let mut workbook: Xlsx<_> = open_workbook(base.join("VisualProfile.xlsx")).unwrap();
         assert_eq!(workbook.sheet_names(), ["VisualProfile"]);
         let range = workbook.worksheet_range("VisualProfile").unwrap();
         assert_eq!(
-            cell_to_string(&range[(crate::projection::METADATA_ROW as usize, 1)]),
+            cell_to_string(&range[(METADATA_ROW as usize, 1)]),
             "presentation.SurfaceResourceVisualProfile"
         );
 
@@ -843,8 +847,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             ["2026-01", "2026-02"]
         );
-        let mut workbook: calamine::Xlsx<_> =
-            calamine::open_workbook(base.join("Item.xlsx")).unwrap();
+        let mut workbook: Xlsx<_> = open_workbook(base.join("Item.xlsx")).unwrap();
         let january = workbook.worksheet_range("2026-01").unwrap();
         let february = workbook.worksheet_range("2026-02").unwrap();
         assert_eq!(
@@ -969,7 +972,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1004,7 +1007,7 @@ type = "string"
     }
 
     fn namespaced_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1035,7 +1038,7 @@ type = "enum<worldgen.geography.TraversalBarrierKind>"
     }
 
     fn struct_columns_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1082,7 +1085,7 @@ parser = { kind = "columns", prefix = "cost_" }
     }
 
     fn tagged_columns_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1132,6 +1135,6 @@ parser = { kind = "tagged_columns", prefix = "" }
 
     fn temp_dir() -> PathBuf {
         let id = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-excel-sync-test-{}-{id}", std::process::id()))
+        env_temp_dir().join(format!("sora-excel-sync-test-{}-{id}", process_id()))
     }
 }

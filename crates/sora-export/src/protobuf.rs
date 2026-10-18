@@ -1,8 +1,10 @@
 use prost::Message;
+use serde_json::to_vec;
 use sora_data::model::{ConfigData, Value};
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::ConfigIr;
 
+use self::proto_value::Kind as ProtoValueKind;
 use crate::{
     bundle::{FORMAT_VERSION, data_fingerprint, schema_fingerprint},
     exporter::{DataExporter, ExportOutput, ExportRequest, OutputKind},
@@ -77,11 +79,15 @@ struct ProtoField {
 #[derive(Clone, PartialEq, Message)]
 struct ProtoValue {
     #[prost(oneof = "proto_value::Kind", tags = "1, 2, 3, 4, 5, 6, 7")]
-    kind: Option<proto_value::Kind>,
+    kind: Option<ProtoValueKind>,
 }
 
 mod proto_value {
-    #[derive(Clone, PartialEq, prost::Oneof)]
+    use prost::Oneof;
+
+    use super::{ProtoList, ProtoObject};
+
+    #[derive(Clone, PartialEq, Oneof)]
     pub enum Kind {
         #[prost(bool, tag = "1")]
         Bool(bool),
@@ -92,9 +98,9 @@ mod proto_value {
         #[prost(string, tag = "4")]
         String(String),
         #[prost(message, tag = "5")]
-        List(super::ProtoList),
+        List(ProtoList),
         #[prost(message, tag = "6")]
-        Object(super::ProtoObject),
+        Object(ProtoObject),
         #[prost(bool, tag = "7")]
         Null(bool),
     }
@@ -115,7 +121,7 @@ struct ProtoObject {
 impl ProtoBundle {
     fn from_data(ir: &ConfigIr, data: &ConfigData) -> Result<Self> {
         let schema = ir.data_schema();
-        let schema_json = serde_json::to_vec(&schema).map_err(SoraError::SerializeData)?;
+        let schema_json = to_vec(&schema).map_err(SoraError::SerializeData)?;
         Ok(Self {
             format_version: FORMAT_VERSION,
             format: "sora-protobuf".to_owned(),
@@ -151,14 +157,14 @@ impl ProtoBundle {
 impl From<&Value> for ProtoValue {
     fn from(value: &Value) -> Self {
         let kind = match value {
-            Value::Bool(value) => proto_value::Kind::Bool(*value),
-            Value::Integer(value) => proto_value::Kind::Integer(*value),
-            Value::Float(value) => proto_value::Kind::Float(*value),
-            Value::String(value) => proto_value::Kind::String(value.clone()),
-            Value::List(values) => proto_value::Kind::List(ProtoList {
+            Value::Bool(value) => ProtoValueKind::Bool(*value),
+            Value::Integer(value) => ProtoValueKind::Integer(*value),
+            Value::Float(value) => ProtoValueKind::Float(*value),
+            Value::String(value) => ProtoValueKind::String(value.clone()),
+            Value::List(values) => ProtoValueKind::List(ProtoList {
                 values: values.iter().map(ProtoValue::from).collect(),
             }),
-            Value::Object(fields) => proto_value::Kind::Object(ProtoObject {
+            Value::Object(fields) => ProtoValueKind::Object(ProtoObject {
                 fields: fields
                     .iter()
                     .map(|(name, value)| ProtoField {
@@ -167,7 +173,7 @@ impl From<&Value> for ProtoValue {
                     })
                     .collect(),
             }),
-            Value::Null => proto_value::Kind::Null(true),
+            Value::Null => ProtoValueKind::Null(true),
         };
 
         Self { kind: Some(kind) }
@@ -179,8 +185,10 @@ mod tests {
     use super::*;
     use crate::exporter::ExportOutput;
     use sora_data::model::{RowData, TableData};
-    use sora_ir::{model::ConfigIr, normalize::normalize_schema};
+    use sora_execution::ExecutionContext;
+    use sora_ir::{model::ConfigIr, normalize::normalize_schema, projection::project_config_ir};
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir as system_temp_dir;
     use std::{
         collections::BTreeMap,
         fs,
@@ -188,6 +196,7 @@ mod tests {
         sync::atomic::{AtomicUsize, Ordering},
         time::{SystemTime, UNIX_EPOCH},
     };
+    use toml::from_str;
 
     #[test]
     fn protobuf_exporter_writes_bundle_file() {
@@ -200,7 +209,7 @@ mod tests {
                 ir: &ir,
                 data: &data,
                 locale_catalog: None,
-                execution: &sora_execution::ExecutionContext::default(),
+                execution: &ExecutionContext::default(),
                 options: Default::default(),
                 output: ExportOutput::File(path.clone()),
             })
@@ -219,7 +228,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -238,7 +247,7 @@ type = "i32"
         )
         .unwrap();
         let ir = normalize_schema(schema).unwrap();
-        sora_ir::projection::project_config_ir(&ir, "default").unwrap()
+        project_config_ir(&ir, "default").unwrap()
     }
 
     fn example_data() -> ConfigData {
@@ -262,6 +271,6 @@ type = "i32"
             .unwrap()
             .as_nanos();
         let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-export-protobuf-test-{unique}-{id}"))
+        system_temp_dir().join(format!("sora-export-protobuf-test-{unique}-{id}"))
     }
 }

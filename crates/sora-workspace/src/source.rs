@@ -4,7 +4,9 @@ use std::{
     sync::Arc,
 };
 
-use sora_data::model::{ConfigData, LocalizationData, LocalizationSourceData, TableData};
+use sora_data::model::{
+    ConfigData, LocalizationData, LocalizationRowData, LocalizationSourceData, TableData, Value,
+};
 use sora_diagnostics::{Result, SoraError};
 use sora_execution::ExecutionContext;
 use sora_input::{
@@ -22,7 +24,7 @@ use sora_input_toml::data::load_table_data_file;
 use sora_input_xlsx::reader::{
     load_xlsx_localization_source_data, load_xlsx_table_source_data_with_ir_and_parsers,
 };
-use sora_ir::model::{ConfigIr, TableIr};
+use sora_ir::model::{ConfigIr, LocalizationSourceIr, TableIr};
 use sora_schema::model::ProjectSchema;
 
 #[derive(Clone)]
@@ -210,7 +212,7 @@ pub fn load_mixed_localization_data_with_context(
 
 fn load_mixed_localization_source_data(
     ir: &ConfigIr,
-    source: &sora_ir::model::LocalizationSourceIr,
+    source: &LocalizationSourceIr,
     data_root: &Path,
     default_source_format: Option<&str>,
     source_registry: &DataSourceRegistry,
@@ -426,7 +428,7 @@ fn localization_source_from_table(table: TableData) -> Result<LocalizationSource
             }
             values.insert(field, value);
         }
-        rows.push(sora_data::model::LocalizationRowData { values });
+        rows.push(LocalizationRowData { values });
     }
     Ok(LocalizationSourceData {
         name: table.name,
@@ -435,20 +437,19 @@ fn localization_source_from_table(table: TableData) -> Result<LocalizationSource
     })
 }
 
-fn localization_value_to_string(value: sora_data::model::Value) -> Option<String> {
+fn localization_value_to_string(value: Value) -> Option<String> {
     match value {
-        sora_data::model::Value::String(value) => Some(value),
-        sora_data::model::Value::Integer(value) => Some(value.to_string()),
-        sora_data::model::Value::Float(value) => Some(value.to_string()),
-        sora_data::model::Value::Bool(value) => Some(value.to_string()),
-        sora_data::model::Value::Null
-        | sora_data::model::Value::List(_)
-        | sora_data::model::Value::Object(_) => None,
+        Value::String(value) => Some(value),
+        Value::Integer(value) => Some(value.to_string()),
+        Value::Float(value) => Some(value.to_string()),
+        Value::Bool(value) => Some(value.to_string()),
+        Value::Null | Value::List(_) | Value::Object(_) => None,
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::env::temp_dir as system_temp_dir;
     use std::{
         collections::BTreeMap,
         fs,
@@ -456,7 +457,7 @@ mod tests {
         sync::atomic::{AtomicU64, Ordering},
     };
 
-    use sora_data::model::{RowData, Value};
+    use sora_data::model::RowData;
     use sora_ir::model::{FieldIr, GroupSetIr, TableModeIr, TableSourceIr, TypeIr};
 
     use super::*;
@@ -635,7 +636,7 @@ mod tests {
 
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-cli-source-test-{unique}"))
+        system_temp_dir().join(format!("sora-cli-source-test-{unique}"))
     }
 
     struct FakeSourceLoader;

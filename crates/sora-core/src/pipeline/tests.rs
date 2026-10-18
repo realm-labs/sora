@@ -1,4 +1,10 @@
 use super::*;
+use serde_json::Value as JsonValue;
+use sora_codegen::{
+    format::FormatMode,
+    generator::{CodeGenerator, CodegenContext, CodegenRegistration, CodegenRegistry},
+    type_mapping::TypeMappingRegistry,
+};
 use sora_data::model::{ConfigData, RowData, TableData, Value};
 use sora_diagnostics::Result;
 use sora_export::exporter::ExportOutput;
@@ -9,7 +15,8 @@ use sora_input_toml::input::TomlDataInput;
 use sora_schema::model::ProjectSchema;
 use std::{
     collections::BTreeMap,
-    fs,
+    env, fs,
+    path::{Path, PathBuf},
     sync::atomic::{AtomicU64, Ordering},
 };
 
@@ -55,12 +62,8 @@ fn checks_schema_and_generates_outputs() {
 fn accepts_registered_codegen_target() {
     struct MarkerGenerator;
 
-    impl sora_codegen::generator::CodeGenerator for MarkerGenerator {
-        fn generate(
-            &self,
-            _context: sora_codegen::generator::CodegenContext<'_>,
-            out_dir: &std::path::Path,
-        ) -> Result<()> {
+    impl CodeGenerator for MarkerGenerator {
+        fn generate(&self, _context: CodegenContext<'_>, out_dir: &Path) -> Result<()> {
             fs::create_dir_all(out_dir).unwrap();
             fs::write(out_dir.join("marker.txt"), "generated").unwrap();
             Ok(())
@@ -70,9 +73,9 @@ fn accepts_registered_codegen_target() {
     let base = temp_dir();
     let project_path = write_example(&base);
     let input = ProjectSchemaInput::new(&project_path);
-    let mut registry = sora_codegen::generator::CodegenRegistry::new();
+    let mut registry = CodegenRegistry::new();
     registry
-        .register(sora_codegen::generator::CodegenRegistration {
+        .register(CodegenRegistration {
             id: "marker",
             aliases: &[],
             display_name: "Marker",
@@ -87,10 +90,10 @@ fn accepts_registered_codegen_target() {
         &input,
         "marker",
         &base.join("marker"),
-        sora_codegen::format::FormatMode::Never,
+        FormatMode::Never,
         None,
         &registry,
-        &sora_codegen::type_mapping::TypeMappingRegistry::new(),
+        &TypeMappingRegistry::new(),
     )
     .unwrap();
 
@@ -157,7 +160,7 @@ fn scoped_export_filters_schema_and_data() {
     )
     .unwrap();
 
-    let value: serde_json::Value = serde_json::from_slice(&fs::read(output).unwrap()).unwrap();
+    let value: JsonValue = serde_json::from_slice(&fs::read(output).unwrap()).unwrap();
     let fields = value["schema"]["tables"][0]["fields"]
         .as_array()
         .unwrap()
@@ -227,7 +230,7 @@ fn diffs_loaded_project_data() {
     let _ = fs::remove_dir_all(base);
 }
 
-fn write_example(base: &Path) -> std::path::PathBuf {
+fn write_example(base: &Path) -> PathBuf {
     let data_dir = base.join("data");
     let schema_dir = base.join("schema");
     fs::create_dir_all(&data_dir).unwrap();
@@ -305,9 +308,9 @@ max_stack = 1
     project_path
 }
 
-fn temp_dir() -> std::path::PathBuf {
+fn temp_dir() -> PathBuf {
     let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    std::env::temp_dir().join(format!("sora-core-test-{unique}"))
+    env::temp_dir().join(format!("sora-core-test-{unique}"))
 }
 
 fn example_schema() -> ProjectSchema {

@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{iter::once, path::Path};
 
 use anyhow::Result;
 use sora_excel::generator::{ExcelAdditionalSheet, ExcelTemplateGenerator};
@@ -31,11 +31,11 @@ pub(crate) fn write_workbooks(ir: &ConfigIr, data_root: &Path) -> Result<()> {
         vec!["#input".to_owned()],
         vec!["#desc".to_owned()],
     ];
-    localization_rows.extend(showcase_rows("Localization").into_iter().map(|row| {
-        std::iter::once(String::new())
-            .chain(row)
-            .collect::<Vec<_>>()
-    }));
+    localization_rows.extend(
+        showcase_rows("Localization")
+            .into_iter()
+            .map(|row| once(String::new()).chain(row).collect::<Vec<_>>()),
+    );
     ExcelTemplateGenerator.generate_with_rows_and_sheets(
         ir,
         data_root,

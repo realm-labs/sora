@@ -1,16 +1,21 @@
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    mem::take,
+};
+
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
-    EnumAliasSchema, FieldSchema, GroupSetSchema, IndexSchema, LocalizationSchema, ParserSchema,
-    ProjectSchema, TableFieldSchema, TableModeSchema, TableSchema, TableSourceSchema, UnionSchema,
-    UnionVariantSchema,
+    EnumAliasSchema, FieldSchema, GroupSchema, GroupSetSchema, IndexSchema, LocalizationSchema,
+    ParserSchema, ProjectSchema, TableFieldSchema, TableModeSchema, TableSchema, TableSourceSchema,
+    UnionSchema, UnionVariantSchema, ViewSchema,
 };
 
 use crate::{
     input_projection::{COLUMNS_PARSER, TAGGED_COLUMNS_PARSER},
     model::{
         ConfigIr, DerivedFieldIr, EnumAliasIr, EnumIr, EnumValueIr, FieldIr, GroupSetIr, IndexIr,
-        ParserIr, StructIr, TableIr, TableModeIr, TableSourceIr, TypeIr, UnionIr, UnionVariantIr,
-        ViewIr, ViewTableSelectionIr,
+        LocalizationIr, LocalizationSourceIr, ParserIr, StructIr, TableIr, TableModeIr,
+        TableSourceIr, TypeIr, UnionIr, UnionVariantIr, ViewIr, ViewTableSelectionIr,
     },
     parse::parse_type,
     parser::ParserRegistry,
@@ -96,14 +101,14 @@ fn validate_project_id(project_id: &str) -> Result<()> {
 }
 
 fn normalize_group_definitions(
-    groups: &std::collections::BTreeMap<String, sora_schema::model::GroupSchema>,
-) -> Result<std::collections::BTreeMap<String, bool>> {
+    groups: &BTreeMap<String, GroupSchema>,
+) -> Result<BTreeMap<String, bool>> {
     if groups.is_empty() {
         return Err(SoraError::InvalidSchema(
             "project must declare at least one group".to_owned(),
         ));
     }
-    let mut normalized = std::collections::BTreeMap::new();
+    let mut normalized = BTreeMap::new();
     for (name, group) in groups {
         validate_group_name(name)?;
         normalized.insert(name.clone(), group.default);
@@ -117,9 +122,9 @@ fn normalize_group_definitions(
 }
 
 fn normalize_views(
-    views: std::collections::BTreeMap<String, sora_schema::model::ViewSchema>,
-    groups: &std::collections::BTreeMap<String, bool>,
-) -> Result<std::collections::BTreeMap<String, ViewIr>> {
+    views: BTreeMap<String, ViewSchema>,
+    groups: &BTreeMap<String, bool>,
+) -> Result<BTreeMap<String, ViewIr>> {
     if views.is_empty() {
         return Err(SoraError::InvalidSchema(
             "project must declare at least one view".to_owned(),
@@ -232,7 +237,7 @@ fn apply_and_validate_groups(ir: &mut ConfigIr) -> Result<()> {
 fn resolve_groups(
     groups: &mut GroupSetIr,
     defaults: &[String],
-    definitions: &std::collections::BTreeMap<String, bool>,
+    definitions: &BTreeMap<String, bool>,
     kind: &str,
     name: &str,
 ) -> Result<()> {
@@ -240,14 +245,13 @@ fn resolve_groups(
         groups.values = defaults.to_vec();
         return Ok(());
     }
-    groups.values =
-        normalize_group_names(std::mem::take(&mut groups.values), definitions, kind, name)?;
+    groups.values = normalize_group_names(take(&mut groups.values), definitions, kind, name)?;
     Ok(())
 }
 
 fn normalize_group_names(
     values: Vec<String>,
-    definitions: &std::collections::BTreeMap<String, bool>,
+    definitions: &BTreeMap<String, bool>,
     kind: &str,
     name: &str,
 ) -> Result<Vec<String>> {
@@ -282,7 +286,7 @@ fn validate_group_name(value: &str) -> Result<()> {
 
 fn convert_localization(
     localization: Option<&LocalizationSchema>,
-) -> Result<Option<crate::model::LocalizationIr>> {
+) -> Result<Option<LocalizationIr>> {
     let Some(localization) = localization else {
         return Ok(None);
     };
@@ -319,7 +323,7 @@ fn convert_localization(
     for source in &localization.sources {
         validate_identifier("localization source", &source.name)?;
         validate_identifier("localization key field", &source.key)?;
-        sources.push(crate::model::LocalizationSourceIr {
+        sources.push(LocalizationSourceIr {
             name: source.name.clone(),
             format: source.format.clone(),
             file: source.file.clone(),
@@ -327,7 +331,7 @@ fn convert_localization(
             key: source.key.clone(),
         });
     }
-    Ok(Some(crate::model::LocalizationIr {
+    Ok(Some(LocalizationIr {
         locales: localization.locales.clone(),
         default_locale,
         fallback_locale: localization.fallback_locale.clone(),
@@ -678,7 +682,7 @@ fn convert_table_source(table: &str, source: TableSourceSchema) -> Result<TableS
         )));
     }
     let sheets = source.sheets.unwrap_or_default();
-    let mut seen = std::collections::BTreeSet::new();
+    let mut seen = BTreeSet::new();
     for selector in &sheets {
         if selector.trim().is_empty() {
             return Err(SoraError::InvalidSchema(format!(

@@ -1,11 +1,16 @@
-use std::{fs, path::PathBuf, sync::Arc};
+use std::{
+    env::temp_dir as system_temp_dir, fs, path::PathBuf, process::id as process_id, sync::Arc,
+};
 
+use anyhow::{Ok as anyhow_ok, Result};
 use rmcp::{
     ClientHandler, ServiceExt,
     model::{CallToolRequestParams, ClientInfo, Implementation},
 };
+use serde_json::{Value, json};
 use sora_mcp::{SoraMcpServer, TARGET_PROTOCOL_VERSION};
 use sora_workspace::{ProjectId, RuntimeOptions, WorkspaceService};
+use tokio::{io::duplex, spawn};
 
 #[derive(Debug, Clone)]
 struct ReadOnlyClient;
@@ -21,8 +26,7 @@ impl ClientHandler for ReadOnlyClient {
 }
 
 #[tokio::test]
-async fn inspect_and_query_use_structured_results_without_changing_revision() -> anyhow::Result<()>
-{
+async fn inspect_and_query_use_structured_results_without_changing_revision() -> Result<()> {
     let workspace = Arc::new(WorkspaceService::new());
     let project =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/showcase/project.scon");
@@ -32,18 +36,18 @@ async fn inspect_and_query_use_structured_results_without_changing_revision() ->
         RuntimeOptions::default(),
     )?;
     let revision = session.revision();
-    let (server_transport, client_transport) = tokio::io::duplex(64 * 1024);
+    let (server_transport, client_transport) = duplex(64 * 1024);
     let server = SoraMcpServer::new(Arc::clone(&workspace));
-    let server_handle = tokio::spawn(async move {
+    let server_handle = spawn(async move {
         server.serve(server_transport).await?.waiting().await?;
-        anyhow::Ok(())
+        anyhow_ok(())
     });
     let client = ReadOnlyClient.serve(client_transport).await?;
 
     let inspect = client
         .call_tool(
             CallToolRequestParams::new("sora_project_inspect").with_arguments(
-                serde_json::json!({"project_id": "showcase"})
+                json!({"project_id": "showcase"})
                     .as_object()
                     .unwrap()
                     .clone(),
@@ -53,13 +57,13 @@ async fn inspect_and_query_use_structured_results_without_changing_revision() ->
     assert_eq!(inspect.is_error, Some(false));
     assert_eq!(
         inspect.structured_content.as_ref().unwrap()["ok"],
-        serde_json::Value::Bool(true)
+        Value::Bool(true)
     );
 
     let query = client
         .call_tool(
             CallToolRequestParams::new("sora_table_query").with_arguments(
-                serde_json::json!({
+                json!({
                     "project_id": "showcase",
                     "table": "Item",
                     "select": ["id", "name"],
@@ -90,9 +94,8 @@ async fn inspect_and_query_use_structured_results_without_changing_revision() ->
 }
 
 #[tokio::test]
-async fn mcp_query_uses_the_project_lua_source_registry() -> anyhow::Result<()> {
-    let root =
-        std::env::temp_dir().join(format!("sora-mcp-lua-source-loader-{}", std::process::id()));
+async fn mcp_query_uses_the_project_lua_source_registry() -> Result<()> {
+    let root = system_temp_dir().join(format!("sora-mcp-lua-source-loader-{}", process_id()));
     let _ = fs::remove_dir_all(&root);
     fs::create_dir_all(root.join("data/items"))?;
     fs::create_dir_all(root.join("tools"))?;
@@ -142,17 +145,17 @@ return { source_loaders = { custom_format = {
         root.join("project.toml"),
         RuntimeOptions::default(),
     )?;
-    let (server_transport, client_transport) = tokio::io::duplex(64 * 1024);
+    let (server_transport, client_transport) = duplex(64 * 1024);
     let server = SoraMcpServer::new(Arc::clone(&workspace));
-    let server_handle = tokio::spawn(async move {
+    let server_handle = spawn(async move {
         server.serve(server_transport).await?.waiting().await?;
-        anyhow::Ok(())
+        anyhow_ok(())
     });
     let client = ReadOnlyClient.serve(client_transport).await?;
     let query = client
         .call_tool(
             CallToolRequestParams::new("sora_table_query").with_arguments(
-                serde_json::json!({
+                json!({
                     "project_id": "mcp-custom",
                     "table": "Item",
                     "limit": 10
@@ -166,7 +169,7 @@ return { source_loaders = { custom_format = {
     assert_eq!(query.is_error, Some(false));
     assert_eq!(
         query.structured_content.as_ref().unwrap()["data"]["rows"][0]["values"]["name"],
-        serde_json::json!("from-lua")
+        json!("from-lua")
     );
     client.cancel().await?;
     server_handle.await??;

@@ -1,12 +1,17 @@
 use std::{
+    fmt::{Debug, Formatter, Result as FmtResult},
     path::{Path, PathBuf},
     sync::{Mutex, RwLock},
 };
 
+use anyhow::{Result as AnyhowResult, anyhow};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{ProjectManifest, ProjectRuntime, RuntimeOptions, revision::calculate_revision};
+use crate::{
+    ProjectManifest, ProjectRuntime, RuntimeOptions, mutation::recover_transactions,
+    revision::calculate_revision,
+};
 
 /// Opaque identifier for an opened project within one workspace service.
 #[derive(
@@ -70,10 +75,10 @@ impl ProjectSession {
         id: ProjectId,
         manifest_path: impl AsRef<Path>,
         options: RuntimeOptions,
-    ) -> anyhow::Result<Self> {
+    ) -> AnyhowResult<Self> {
         let manifest_path = manifest_path.as_ref().canonicalize()?;
         if let Some(project_root) = manifest_path.parent() {
-            crate::mutation::recover_transactions(project_root)?;
+            recover_transactions(project_root)?;
         }
         let manifest = ProjectManifest::load(&manifest_path)?;
         let runtime = ProjectRuntime::load_with_manifest(
@@ -115,19 +120,19 @@ impl ProjectSession {
         }
     }
 
-    pub(crate) fn refresh_revision(&self) -> anyhow::Result<ProjectRevision> {
+    pub(crate) fn refresh_revision(&self) -> AnyhowResult<ProjectRevision> {
         let manifest = ProjectManifest::load(&self.manifest_path)?;
         let revision = calculate_revision(&self.manifest_path, &manifest)?;
         *self
             .revision
             .write()
-            .map_err(|_| anyhow::anyhow!("project revision lock is poisoned"))? = revision.clone();
+            .map_err(|_| anyhow!("project revision lock is poisoned"))? = revision.clone();
         Ok(revision)
     }
 }
 
-impl std::fmt::Debug for ProjectSession {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for ProjectSession {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         formatter
             .debug_struct("ProjectSession")
             .field("id", &self.id)

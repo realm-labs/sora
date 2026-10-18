@@ -3,6 +3,7 @@ use std::{fs, path::Path};
 use minijinja::Environment;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
+use sora_templates::template_source;
 
 pub(crate) fn render_template(
     target: &str,
@@ -10,11 +11,9 @@ pub(crate) fn render_template(
     ctx: impl Serialize,
 ) -> Result<String> {
     let template_name = format!("{target}/{file_name}");
-    let source = sora_templates::template_source(target, file_name).ok_or_else(|| {
-        SoraError::RenderTemplate {
-            template: template_name.clone(),
-            message: "embedded template not found".to_owned(),
-        }
+    let source = template_source(target, file_name).ok_or_else(|| SoraError::RenderTemplate {
+        template: template_name.clone(),
+        message: "embedded template not found".to_owned(),
     })?;
     let mut env = Environment::new();
     env.set_keep_trailing_newline(true);

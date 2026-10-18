@@ -8,7 +8,7 @@ use std::{
 use anyhow::{Context, Result, bail};
 use mlua::{Function, Lua, LuaOptions, StdLib, Table, Value as LuaValue};
 use sora_data::model::Value;
-use sora_diagnostics::SoraError;
+use sora_diagnostics::{Result as DiagnosticResult, SoraError};
 use sora_input::{
     cell::{CellContext, CellLocation, CellValue},
     parser::{CellParser, ParserRegistry as CellParserRegistry},
@@ -232,7 +232,7 @@ impl ParserValidator for LuaParserValidator {
         field_name: &str,
         ty: &TypeIr,
         parser: &ParserSchema,
-    ) -> sora_diagnostics::Result<()> {
+    ) -> DiagnosticResult<()> {
         let definition = self.parsers.definition(&self.kind);
         for (key, value) in &parser.options {
             if !definition.options.contains(key) {
@@ -286,7 +286,7 @@ impl CellParser for LuaCellParser {
         ty: &TypeIr,
         context: &CellContext<'_>,
         _registry: &CellParserRegistry,
-    ) -> sora_diagnostics::Result<Value> {
+    ) -> DiagnosticResult<Value> {
         self.parsers
             .with_parser(&self.kind, |lua, parser_table| {
                 let parse: Function = parser_table.get("parse")?;

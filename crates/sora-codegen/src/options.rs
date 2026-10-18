@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use serde_json::Value;
+use serde_json::{Value, from_value};
 use sora_diagnostics::{Result, SoraError};
 
 pub fn decode_options<T>(target: &str, raw: &Value) -> Result<T>
 where
     T: DeserializeOwned + Default,
 {
-    serde_json::from_value(raw.clone()).map_err(|source| {
+    from_value(raw.clone()).map_err(|source| {
         SoraError::InvalidSchema(format!("invalid `{target}` codegen options: {source}"))
     })
 }

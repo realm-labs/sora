@@ -1,10 +1,11 @@
 use std::{
-    fs,
+    env, fs,
     path::{Path, PathBuf},
     process::Command,
     time::{SystemTime, UNIX_EPOCH},
 };
 
+use sora_core::pipeline;
 use sora_export::exporter::ExportOutput;
 use sora_input::project::SplitProjectInput;
 use sora_input_schema::input::ProjectSchemaInput;
@@ -39,13 +40,13 @@ fn generated_rust_runtime_compiles_and_loads_config_bundles() {
         let generated_dir = base.join("generated-crate");
 
         let schema_input = ProjectSchemaInput::new(&project_path);
-        sora_core::pipeline::generate_code(&schema_input, "rust", &generated_dir).unwrap();
+        pipeline::generate_code(&schema_input, "rust", &generated_dir).unwrap();
 
         let project_input = SplitProjectInput::new(
             ProjectSchemaInput::new(&project_path),
             TomlDataInput::new(base.join("data")),
         );
-        sora_core::pipeline::export_data(
+        pipeline::export_data(
             &project_input,
             case.export_format,
             ExportOutput::File(generated_dir.join(case.file_name)),
@@ -310,7 +311,7 @@ impl SoraTableSource for BadSource {
 }
 
 fn assert_generated_crate_tests_pass(crate_dir: &Path) {
-    let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());
+    let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());
     let status = Command::new(cargo)
         .arg("test")
         .arg("--manifest-path")
@@ -328,5 +329,5 @@ fn temp_dir() -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_nanos();
-    std::env::temp_dir().join(format!("sora-generated-runtime-test-{unique}"))
+    env::temp_dir().join(format!("sora-generated-runtime-test-{unique}"))
 }

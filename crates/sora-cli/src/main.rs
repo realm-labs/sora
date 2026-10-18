@@ -6,14 +6,16 @@ mod mcp;
 mod report;
 mod studio;
 
+use std::process::exit;
+
 use clap::Parser;
 
-use crate::args::Cli;
+use crate::{args::Cli, report::ErrorReport};
 
 fn main() {
     let cli = Cli::parse();
     if let Err(error) = commands::run(cli) {
-        eprintln!("{}", report::ErrorReport::new(&error));
-        std::process::exit(1);
+        eprintln!("{}", ErrorReport::new(&error));
+        exit(1);
     }
 }

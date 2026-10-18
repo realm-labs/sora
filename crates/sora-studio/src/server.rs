@@ -1,5 +1,6 @@
 use std::{
     net::{IpAddr, SocketAddr},
+    path::Path,
     sync::Arc,
 };
 
@@ -11,13 +12,16 @@ use axum::{
     http::{StatusCode, Uri, header},
     response::{IntoResponse, Response},
     routing::{get, put},
+    serve,
 };
 use include_dir::{Dir, include_dir};
 use serde::{Deserialize, Serialize};
 use sora_workspace::{
-    ProjectId, ProjectRevision, StudioSchemaApplyReport, WorkspaceService,
+    Diagnostic, MutationPlanError, ProjectId, ProjectRevision, StudioSchemaApplyReport,
+    WorkspaceService,
     studio::{StudioPreviewResponse, StudioSchema, StudioSchemaResponse},
 };
+use tokio::{net::TcpListener, runtime::Runtime, task::spawn_blocking};
 use tower_http::cors::CorsLayer;
 
 static STUDIO_DIST: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/dist");
@@ -31,7 +35,7 @@ pub struct StudioOptions {
 }
 
 pub fn run_blocking(options: StudioOptions) -> Result<()> {
-    let runtime = tokio::runtime::Runtime::new().context("failed to start async runtime")?;
+    let runtime = Runtime::new().context("failed to start async runtime")?;
     runtime.block_on(run(options))
 }
 
@@ -56,14 +60,14 @@ pub async fn run(options: StudioOptions) -> Result<()> {
         .fallback(not_found)
         .with_state(state)
         .layer(CorsLayer::permissive());
-    let listener = tokio::net::TcpListener::bind(addr)
+    let listener = TcpListener::bind(addr)
         .await
         .with_context(|| format!("failed to bind studio server at http://{addr}"))?;
 
     println!("Sora Studio: http://{addr}");
     println!("Project: {}", project.display());
 
-    axum::serve(listener, app)
+    serve(listener, app)
         .await
         .context("studio server stopped unexpectedly")
 }
@@ -83,7 +87,7 @@ async fn schema(
     Query(query): Query<StudioSchemaQuery>,
 ) -> Json<StudioLoadResponse> {
     let worker_state = state.clone();
-    match tokio::task::spawn_blocking(move || {
+    match spawn_blocking(move || {
         worker_state
             .workspace
             .project(&worker_state.project_id)
@@ -122,7 +126,7 @@ async fn preview_schema(
     Json(request): Json<StudioPreviewRequest>,
 ) -> Json<StudioPlanResponse> {
     let worker_state = state.clone();
-    let result = tokio::task::spawn_blocking(move || {
+    let result = spawn_blocking(move || {
         worker_state.workspace.preview_studio_schema_mutation(
             &worker_state.project_id,
             STUDIO_AUTHORIZATION_CONTEXT,
@@ -145,7 +149,7 @@ async fn preview_schema(
                 target: None,
                 content: None,
                 diff: None,
-                diagnostics: vec![sora_workspace::Diagnostic::error(error.to_string())],
+                diagnostics: vec![Diagnostic::error(error.to_string())],
             },
             plan_id: None,
             revision: current_revision(&state),
@@ -157,7 +161,7 @@ async fn preview_schema(
                 target: None,
                 content: None,
                 diff: None,
-                diagnostics: vec![sora_workspace::Diagnostic::error(error.to_string())],
+                diagnostics: vec![Diagnostic::error(error.to_string())],
             },
             plan_id: None,
             revision: current_revision(&state),
@@ -170,7 +174,7 @@ async fn apply_schema(
     Json(request): Json<StudioApplyRequest>,
 ) -> Json<StudioApplyResponse> {
     let worker_state = state.clone();
-    let result = tokio::task::spawn_blocking(move || {
+    let result = spawn_blocking(move || {
         let report = worker_state.workspace.apply_studio_schema_mutation(
             &worker_state.project_id,
             STUDIO_AUTHORIZATION_CONTEXT,
@@ -182,7 +186,7 @@ async fn apply_schema(
             .project(&worker_state.project_id)
             .map(|session| session.load_studio_schema())
             .unwrap_or_else(|error| studio_error("", error));
-        Ok::<_, sora_workspace::MutationPlanError>((report, document))
+        Ok::<_, MutationPlanError>((report, document))
     })
     .await;
     match result {
@@ -264,7 +268,7 @@ fn studio_error(project: &str, error: impl ToString) -> StudioSchemaResponse {
     StudioSchemaResponse {
         ok: false,
         project: project.to_owned(),
-        diagnostics: vec![sora_workspace::Diagnostic::error(error.to_string())],
+        diagnostics: vec![Diagnostic::error(error.to_string())],
         schema: None,
     }
 }
@@ -301,7 +305,7 @@ fn missing_frontend_response() -> Response {
         .into_response()
 }
 
-fn content_type(path: &std::path::Path) -> &'static str {
+fn content_type(path: &Path) -> &'static str {
     match path.extension().and_then(|value| value.to_str()) {
         Some("html") => "text/html; charset=utf-8",
         Some("js") => "text/javascript; charset=utf-8",
@@ -324,6 +328,8 @@ struct HealthResponse {
 
 #[cfg(test)]
 mod tests {
+    use std::str::from_utf8;
+
     use super::*;
 
     #[test]
@@ -332,25 +338,21 @@ mod tests {
             .get_file("index.html")
             .expect("crates/sora-studio/dist/index.html must be embedded");
 
-        assert!(
-            std::str::from_utf8(index.contents())
-                .unwrap()
-                .contains("<script")
-        );
+        assert!(from_utf8(index.contents()).unwrap().contains("<script"));
     }
 
     #[test]
     fn assigns_frontend_asset_content_types() {
         assert_eq!(
-            content_type(std::path::Path::new("index.html")),
+            content_type(Path::new("index.html")),
             "text/html; charset=utf-8"
         );
         assert_eq!(
-            content_type(std::path::Path::new("assets/app.js")),
+            content_type(Path::new("assets/app.js")),
             "text/javascript; charset=utf-8"
         );
         assert_eq!(
-            content_type(std::path::Path::new("assets/app.css")),
+            content_type(Path::new("assets/app.css")),
             "text/css; charset=utf-8"
         );
     }

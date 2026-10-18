@@ -1,5 +1,7 @@
+use rmcp::model::CallToolResult;
 use schemars::JsonSchema;
 use serde::Serialize;
+use serde_json::{Value, json, to_value};
 use sora_workspace::{Diagnostic, ProjectId, ProjectRevision};
 
 #[derive(Debug, Serialize, JsonSchema)]
@@ -9,7 +11,7 @@ pub struct ToolEnvelope<T: JsonSchema> {
     pub revision: Option<ProjectRevision>,
     pub summary: String,
     pub diagnostics: Vec<Diagnostic>,
-    pub changes: Vec<serde_json::Value>,
+    pub changes: Vec<Value>,
     pub artifacts: Vec<ArtifactLink>,
     pub next_cursor: Option<String>,
     pub data: Option<T>,
@@ -64,13 +66,13 @@ pub struct ArtifactLink {
     pub size: Option<usize>,
 }
 
-pub fn tool_error<T>(envelope: ToolEnvelope<T>) -> rmcp::model::CallToolResult
+pub fn tool_error<T>(envelope: ToolEnvelope<T>) -> CallToolResult
 where
     T: JsonSchema + Serialize,
 {
-    match serde_json::to_value(envelope) {
-        Ok(value) => rmcp::model::CallToolResult::structured_error(value),
-        Err(error) => rmcp::model::CallToolResult::structured_error(serde_json::json!({
+    match to_value(envelope) {
+        Ok(value) => CallToolResult::structured_error(value),
+        Err(error) => CallToolResult::structured_error(json!({
             "ok": false,
             "summary": "failed to encode structured tool error",
             "diagnostics": [{

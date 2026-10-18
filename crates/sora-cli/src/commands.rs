@@ -1,14 +1,29 @@
+use std::{path::Path, sync::Arc};
+
 use anyhow::{Context, Result, bail};
+use sora_core::pipeline::{
+    check_schema_with_lock_and_parsers, check_schema_with_parsers,
+    diff_data_with_view_context_and_parsers, export_loaded_data_with_view_context_and_options,
+    export_output_kind, generate_code_with_view_format_and_parsers,
+    generate_excel_template_with_view_and_parsers, generate_schema_lock_with_view_and_parsers,
+    load_project_data_with_context_and_parsers, preview_excel_sync_with_parsers,
+    supported_export_formats, write_excel_sync_with_parsers,
+};
 use sora_excel::sync::ExcelSyncReport;
 use sora_execution::ExecutionOptions;
 use sora_export::exporter::{ExportCompression, ExportOptions, ExportOutput, OutputKind};
 use sora_input_schema::input::ProjectSchemaInput;
 use sora_workspace::{ProjectRuntime, RuntimeOptions, source::MixedProjectInput};
-use std::sync::Arc;
 
-use crate::args::{
-    CheckArgs, Cli, Command, DiffArgs, ExcelSyncArgs, ExcelTemplateArgs, ExportArgs,
-    ExportCompressionArg, GenArgs, SchemaLockArgs, SourceFormatArg,
+use crate::{
+    args::{
+        CheckArgs, Cli, Command, DiffArgs, ExcelSyncArgs, ExcelTemplateArgs, ExportArgs,
+        ExportCompressionArg, GenArgs, SchemaLockArgs, SourceFormatArg,
+    },
+    build::run as run_build_command,
+    init::run as run_init_command,
+    mcp::run as run_mcp_command,
+    studio::run as run_studio_command,
 };
 pub fn run(cli: Cli) -> Result<()> {
     if cli.jobs == Some(0) {
@@ -25,9 +40,9 @@ pub fn run(cli: Cli) -> Result<()> {
     };
 
     let command = match cli.command {
-        Command::Init(args) => return crate::init::run(args),
-        Command::Mcp(args) => return crate::mcp::run(*args, runtime_options),
-        Command::Studio(args) => return crate::studio::run(args, runtime_options),
+        Command::Init(args) => return run_init_command(args),
+        Command::Mcp(args) => return run_mcp_command(*args, runtime_options),
+        Command::Studio(args) => return run_studio_command(args, runtime_options),
         command => command,
     };
     let project = command_project_path(&command)
@@ -36,7 +51,7 @@ pub fn run(cli: Cli) -> Result<()> {
     let context = ProjectRuntime::load(Some(&project), runtime_options)?;
 
     match command {
-        Command::Build(args) => crate::build::run(args, &context),
+        Command::Build(args) => run_build_command(args, &context),
         Command::Check(args) => check(args, &context),
         Command::Gen { target, args } => generate(args, &target, &context),
         Command::Export(args) => export(args, &context),
@@ -50,7 +65,7 @@ pub fn run(cli: Cli) -> Result<()> {
     }
 }
 
-fn command_project_path(command: &Command) -> Option<&std::path::Path> {
+fn command_project_path(command: &Command) -> Option<&Path> {
     match command {
         Command::Build(args) => Some(&args.project),
         Command::Check(args) => Some(&args.project),
@@ -69,26 +84,22 @@ fn command_project_path(command: &Command) -> Option<&std::path::Path> {
 fn check(args: CheckArgs, context: &ProjectRuntime) -> Result<()> {
     let input = ProjectSchemaInput::new(&args.project);
     match &args.lock {
-        Some(lock) => sora_core::pipeline::check_schema_with_lock_and_parsers(
-            &input,
-            lock,
-            context.schema_parsers(),
-        )
-        .with_context(|| {
-            format!(
-                "failed to check project `{}` against lock `{}`",
-                args.project.display(),
-                lock.display()
-            )
-        }),
-        None => sora_core::pipeline::check_schema_with_parsers(&input, context.schema_parsers())
+        Some(lock) => check_schema_with_lock_and_parsers(&input, lock, context.schema_parsers())
+            .with_context(|| {
+                format!(
+                    "failed to check project `{}` against lock `{}`",
+                    args.project.display(),
+                    lock.display()
+                )
+            }),
+        None => check_schema_with_parsers(&input, context.schema_parsers())
             .with_context(|| format!("failed to check project `{}`", args.project.display())),
     }
 }
 
 fn generate(args: GenArgs, target: &str, context: &ProjectRuntime) -> Result<()> {
     let input = ProjectSchemaInput::new(&args.project);
-    sora_core::pipeline::generate_code_with_view_format_and_parsers(
+    generate_code_with_view_format_and_parsers(
         &input,
         target,
         &args.out,
@@ -108,7 +119,7 @@ fn generate(args: GenArgs, target: &str, context: &ProjectRuntime) -> Result<()>
 
 fn excel_template(args: ExcelTemplateArgs, context: &ProjectRuntime) -> Result<()> {
     let input = ProjectSchemaInput::new(&args.project);
-    sora_core::pipeline::generate_excel_template_with_view_and_parsers(
+    generate_excel_template_with_view_and_parsers(
         &input,
         &args.out,
         args.view.as_deref(),
@@ -125,14 +136,14 @@ fn excel_template(args: ExcelTemplateArgs, context: &ProjectRuntime) -> Result<(
 fn excel_sync(args: ExcelSyncArgs, context: &ProjectRuntime) -> Result<()> {
     let input = ProjectSchemaInput::new(&args.project);
     let report = if args.write {
-        sora_core::pipeline::write_excel_sync_with_parsers(
+        write_excel_sync_with_parsers(
             &input,
             &args.data_root,
             args.view.as_deref(),
             context.schema_parsers(),
         )
     } else {
-        sora_core::pipeline::preview_excel_sync_with_parsers(
+        preview_excel_sync_with_parsers(
             &input,
             &args.data_root,
             args.view.as_deref(),
@@ -206,7 +217,7 @@ fn print_excel_sync_report(report: &ExcelSyncReport, write: bool) {
 
 fn schema_lock(args: SchemaLockArgs, context: &ProjectRuntime) -> Result<()> {
     let input = ProjectSchemaInput::new(&args.project);
-    sora_core::pipeline::generate_schema_lock_with_view_and_parsers(
+    generate_schema_lock_with_view_and_parsers(
         &input,
         &args.out,
         args.view.as_deref(),
@@ -228,14 +239,14 @@ fn export(args: ExportArgs, context: &ProjectRuntime) -> Result<()> {
         bail!("export compression `zstd` is only supported by `binary` exports, got `{format}`");
     }
 
-    let output = match sora_core::pipeline::export_output_kind(format) {
+    let output = match export_output_kind(format) {
         Some(OutputKind::File) => ExportOutput::File(args.out.clone()),
         Some(OutputKind::Directory) => ExportOutput::Directory(args.out.clone()),
         None => {
             bail!(
                 "unknown export format `{}`; supported formats: {}",
                 format,
-                sora_core::pipeline::supported_export_formats().join(", ")
+                supported_export_formats().join(", ")
             );
         }
     };
@@ -248,13 +259,13 @@ fn export(args: ExportArgs, context: &ProjectRuntime) -> Result<()> {
         Arc::clone(context.source_registry()),
         Arc::clone(context.cell_parsers()),
     );
-    let (ir, data) = sora_core::pipeline::load_project_data_with_context_and_parsers(
+    let (ir, data) = load_project_data_with_context_and_parsers(
         &input,
         context.execution(),
         context.schema_parsers(),
         context.cell_parsers(),
     )?;
-    sora_core::pipeline::export_loaded_data_with_view_context_and_options(
+    export_loaded_data_with_view_context_and_options(
         &ir,
         &data,
         format,
@@ -307,7 +318,7 @@ fn diff(args: DiffArgs, context: &ProjectRuntime) -> Result<()> {
         Arc::clone(context.source_registry()),
         parser_registry,
     );
-    sora_core::pipeline::diff_data_with_view_context_and_parsers(
+    diff_data_with_view_context_and_parsers(
         &left,
         &right,
         &args.out,
@@ -331,8 +342,10 @@ fn diff(args: DiffArgs, context: &ProjectRuntime) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use std::{
+        env::temp_dir as system_temp_dir,
         fs,
         path::{Path, PathBuf},
+        process::id as process_id,
         sync::atomic::{AtomicU64, Ordering},
     };
 
@@ -600,10 +613,7 @@ return {
 
     fn temp_dir() -> PathBuf {
         let id = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!(
-            "sora-cli-commands-test-{}-{id}",
-            std::process::id()
-        ))
+        system_temp_dir().join(format!("sora-cli-commands-test-{}-{id}", process_id()))
     }
 
     fn test_context() -> ProjectRuntime {

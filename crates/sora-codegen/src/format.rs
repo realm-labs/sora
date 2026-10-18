@@ -1,6 +1,6 @@
 use std::{
     fs,
-    io::Read,
+    io::{ErrorKind, Read},
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
     thread,
@@ -90,7 +90,7 @@ pub fn format_generated_code_with_cancellation(
     configure_formatter_process(&mut command);
     let mut child = match command.spawn() {
         Ok(child) => child,
-        Err(source) if source.kind() == std::io::ErrorKind::NotFound => {
+        Err(source) if source.kind() == ErrorKind::NotFound => {
             return match mode {
                 FormatMode::Never | FormatMode::Auto => Ok(()),
                 FormatMode::Required => Err(format_error(
@@ -241,6 +241,7 @@ fn format_error(
 mod tests {
     use super::*;
     use std::env;
+    use std::process::id;
     #[cfg(unix)]
     use std::sync::{
         Arc,
@@ -251,10 +252,7 @@ mod tests {
 
     #[test]
     fn auto_skips_missing_formatter() {
-        let base = env::temp_dir().join(format!(
-            "sora-codegen-format-missing-auto-{}",
-            std::process::id()
-        ));
+        let base = env::temp_dir().join(format!("sora-codegen-format-missing-auto-{}", id()));
         fs::create_dir_all(&base).unwrap();
         fs::write(base.join("generated.test"), "content").unwrap();
         let formatter =
@@ -267,10 +265,7 @@ mod tests {
 
     #[test]
     fn required_rejects_missing_formatter() {
-        let base = env::temp_dir().join(format!(
-            "sora-codegen-format-missing-required-{}",
-            std::process::id()
-        ));
+        let base = env::temp_dir().join(format!("sora-codegen-format-missing-required-{}", id()));
         fs::create_dir_all(&base).unwrap();
         fs::write(base.join("generated.test"), "content").unwrap();
         let formatter =
@@ -286,10 +281,7 @@ mod tests {
     #[cfg(windows)]
     #[test]
     fn required_resolves_windows_executable_suffix() {
-        let base = env::temp_dir().join(format!(
-            "sora-codegen-format-windows-exe-{}",
-            std::process::id()
-        ));
+        let base = env::temp_dir().join(format!("sora-codegen-format-windows-exe-{}", id()));
         fs::create_dir_all(&base).unwrap();
         fs::write(base.join("generated.test"), "content").unwrap();
         let formatter = FormatterConfig::new("test", "cmd", &["/D", "/C", "rem"], &["test"]);
@@ -310,8 +302,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn cancellation_terminates_formatter_process() {
-        let base =
-            env::temp_dir().join(format!("sora-codegen-format-cancel-{}", std::process::id()));
+        let base = env::temp_dir().join(format!("sora-codegen-format-cancel-{}", id()));
         fs::create_dir_all(&base).unwrap();
         fs::write(base.join("generated.test"), "content").unwrap();
         let cancelled = Arc::new(AtomicBool::new(false));

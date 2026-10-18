@@ -1,6 +1,7 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, result::Result as StdResult};
 
-use serde::Serialize;
+use serde::{Serialize, Serializer};
+use serde_json::to_vec;
 use sora_data::model::{ConfigData, RowData, TableData, Value};
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::{fingerprint, model::ConfigIr};
@@ -39,8 +40,7 @@ pub(crate) fn schema_fingerprint(ir: &ConfigIr) -> Result<String> {
 }
 
 pub(crate) fn data_fingerprint(data: &ConfigData) -> Result<String> {
-    let bytes =
-        serde_json::to_vec(&NaturalConfigDataView(data)).map_err(SoraError::SerializeData)?;
+    let bytes = to_vec(&NaturalConfigDataView(data)).map_err(SoraError::SerializeData)?;
     Ok(fingerprint_hex(&bytes))
 }
 
@@ -51,9 +51,9 @@ pub(crate) fn fingerprint_hex(bytes: &[u8]) -> String {
 pub(crate) struct NaturalConfigDataView<'a>(&'a ConfigData);
 
 impl Serialize for NaturalConfigDataView<'_> {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> StdResult<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: Serializer,
     {
         NaturalConfigData {
             tables: self.0.tables.iter().map(NaturalTableDataView).collect(),
@@ -70,9 +70,9 @@ struct NaturalConfigData<'a> {
 struct NaturalTableDataView<'a>(&'a TableData);
 
 impl Serialize for NaturalTableDataView<'_> {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> StdResult<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: Serializer,
     {
         NaturalTableData {
             name: &self.0.name,
@@ -91,9 +91,9 @@ struct NaturalTableData<'a> {
 struct NaturalRowDataView<'a>(&'a RowData);
 
 impl Serialize for NaturalRowDataView<'_> {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> StdResult<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: Serializer,
     {
         let values = self
             .0
@@ -108,9 +108,9 @@ impl Serialize for NaturalRowDataView<'_> {
 struct NaturalValueView<'a>(&'a Value);
 
 impl Serialize for NaturalValueView<'_> {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> StdResult<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: Serializer,
     {
         match self.0 {
             Value::Bool(value) => value.serialize(serializer),

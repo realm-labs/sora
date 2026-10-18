@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use heck::ToShoutySnakeCase;
 use minijinja::context;
 use serde::Serialize;
-use sora_diagnostics::Result;
+use sora_diagnostics::{Result, SoraError};
 use sora_ir::{
     interval::interval_record_name,
     model::{ConfigIr, TableModeIr, TypeIr},
@@ -673,7 +673,7 @@ fn kotlin_package_dir(out_dir: &Path, package: &str) -> Result<PathBuf> {
     let mut path = out_dir.to_path_buf();
     for segment in package.split('.') {
         if !is_kotlin_package_segment(segment) {
-            return Err(sora_diagnostics::SoraError::InvalidSchema(format!(
+            return Err(SoraError::InvalidSchema(format!(
                 "kotlin package `{package}` must use dot-separated identifier segments"
             )));
         }

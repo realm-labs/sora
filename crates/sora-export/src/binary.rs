@@ -42,17 +42,22 @@ impl DataExporter for BinaryBundleExporter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::exporter::ExportOutput;
+    use crate::exporter::{ExportCompression, ExportOptions, ExportOutput};
+    use serde_json::{Value as JsonValue, from_slice};
     use sora_data::model::{ConfigData, RowData, TableData, Value};
-    use sora_ir::{model::ConfigIr, normalize::normalize_schema};
+    use sora_execution::ExecutionContext;
+    use sora_ir::{model::ConfigIr, normalize::normalize_schema, projection::project_config_ir};
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir as system_temp_dir;
     use std::{
         collections::BTreeMap,
         fs,
         path::PathBuf,
+        str::from_utf8,
         sync::atomic::{AtomicUsize, Ordering},
         time::{SystemTime, UNIX_EPOCH},
     };
+    use toml::from_str;
 
     #[test]
     fn binary_bundle_has_expected_header() {
@@ -65,7 +70,7 @@ mod tests {
                 ir: &ir,
                 data: &data,
                 locale_catalog: None,
-                execution: &sora_execution::ExecutionContext::default(),
+                execution: &ExecutionContext::default(),
                 options: Default::default(),
                 output: ExportOutput::File(path.clone()),
             })
@@ -83,10 +88,8 @@ mod tests {
         assert_eq!(sections[0].compression, 0);
         assert_eq!(sections[0].name, "$manifest");
         assert_eq!(sections[0].len, sections[0].uncompressed_len);
-        let manifest: serde_json::Value = serde_json::from_slice(
-            &bytes[sections[0].offset..sections[0].offset + sections[0].len],
-        )
-        .unwrap();
+        let manifest: JsonValue =
+            from_slice(&bytes[sections[0].offset..sections[0].offset + sections[0].len]).unwrap();
         assert_eq!(manifest["format_version"], 3);
         assert_eq!(manifest["contract_id"], "game_config/default");
         assert_eq!(manifest["tables"][0]["name"], "Item");
@@ -140,9 +143,9 @@ mod tests {
                 ir: &ir,
                 data: &data,
                 locale_catalog: None,
-                execution: &sora_execution::ExecutionContext::default(),
-                options: crate::exporter::ExportOptions {
-                    compression: crate::exporter::ExportCompression::Zstd { level: 3 },
+                execution: &ExecutionContext::default(),
+                options: ExportOptions {
+                    compression: ExportCompression::Zstd { level: 3 },
                     locale: None,
                 },
                 output: ExportOutput::File(path.clone()),
@@ -164,7 +167,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -187,7 +190,7 @@ type = "string"
         )
         .unwrap();
         let ir = normalize_schema(schema).unwrap();
-        sora_ir::projection::project_config_ir(&ir, "default").unwrap()
+        project_config_ir(&ir, "default").unwrap()
     }
 
     fn example_data() -> ConfigData {
@@ -211,7 +214,7 @@ type = "string"
             .unwrap()
             .as_nanos();
         let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-export-binary-test-{unique}-{id}"))
+        system_temp_dir().join(format!("sora-export-binary-test-{unique}-{id}"))
     }
 
     #[derive(Debug)]
@@ -238,7 +241,7 @@ type = "string"
             let len = read_u32(bytes, cursor + 20) as usize;
             let uncompressed_len = read_u32(bytes, cursor + 24) as usize;
             let name_start = cursor + 28;
-            let name = std::str::from_utf8(&bytes[name_start..name_start + name_len])
+            let name = from_utf8(&bytes[name_start..name_start + name_len])
                 .unwrap()
                 .to_owned();
             sections.push(TestSection {

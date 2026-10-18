@@ -1,13 +1,16 @@
 use std::{
     collections::HashMap,
+    env::temp_dir as system_temp_dir,
     fs,
     path::PathBuf,
+    process::id as process_id,
     sync::{
         Arc,
         atomic::{AtomicU64, Ordering},
     },
 };
 
+use anyhow::{Ok as anyhow_ok, Result};
 use rmcp::{
     ClientHandler, ServiceExt,
     model::{
@@ -15,8 +18,10 @@ use rmcp::{
         Implementation, Reference,
     },
 };
+use serde_json::{json, to_value};
 use sora_mcp::{SoraMcpServer, TARGET_PROTOCOL_VERSION};
 use sora_workspace::{ProjectId, RuntimeOptions, WorkspaceService};
+use tokio::{io::duplex, spawn};
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -34,7 +39,7 @@ impl ClientHandler for PromptClient {
 }
 
 #[tokio::test]
-async fn prompts_embed_bounded_project_context_and_complete_arguments() -> anyhow::Result<()> {
+async fn prompts_embed_bounded_project_context_and_complete_arguments() -> Result<()> {
     let root = temp_project();
     let workspace = Arc::new(WorkspaceService::new());
     workspace.open_project(
@@ -42,11 +47,11 @@ async fn prompts_embed_bounded_project_context_and_complete_arguments() -> anyho
         root.join("project.toml"),
         RuntimeOptions::default(),
     )?;
-    let (server_transport, client_transport) = tokio::io::duplex(128 * 1024);
+    let (server_transport, client_transport) = duplex(128 * 1024);
     let server = SoraMcpServer::new(Arc::clone(&workspace));
-    let server_handle = tokio::spawn(async move {
+    let server_handle = spawn(async move {
         server.serve(server_transport).await?.waiting().await?;
-        anyhow::Ok(())
+        anyhow_ok(())
     });
     let client = PromptClient.serve(client_transport).await?;
 
@@ -58,7 +63,7 @@ async fn prompts_embed_bounded_project_context_and_complete_arguments() -> anyho
     let prompt = client
         .get_prompt(
             GetPromptRequestParams::new("sora_rename_entity_safely").with_arguments(
-                serde_json::json!({
+                json!({
                     "project_id": "demo",
                     "entity_kind": "table",
                     "entity_name": "Settings",
@@ -71,7 +76,7 @@ async fn prompts_embed_bounded_project_context_and_complete_arguments() -> anyho
         )
         .await?;
     assert_eq!(prompt.messages.len(), 4);
-    let serialized = serde_json::to_value(&prompt)?;
+    let serialized = to_value(&prompt)?;
     let text = serialized.to_string();
     assert!(text.contains("sora_schema_preview"));
     assert!(text.contains("untrusted project data"));
@@ -114,7 +119,7 @@ async fn prompts_embed_bounded_project_context_and_complete_arguments() -> anyho
 
 fn temp_project() -> PathBuf {
     let nonce = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let root = std::env::temp_dir().join(format!("sora-mcp-prompt-{}-{nonce}", std::process::id()));
+    let root = system_temp_dir().join(format!("sora-mcp-prompt-{}-{nonce}", process_id()));
     fs::create_dir_all(root.join("schema")).unwrap();
     fs::write(
         root.join("project.toml"),

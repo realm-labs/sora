@@ -1,10 +1,11 @@
 use std::{
-    fs,
+    env, fs,
     path::{Path, PathBuf},
     time::{SystemTime, UNIX_EPOCH},
 };
 
 use rust_xlsxwriter::Workbook;
+use sora_core::pipeline;
 use sora_excel::projection::{DATA_START_ROW, FIELD_START_COLUMN, table_template_rows};
 use sora_export::exporter::ExportOutput;
 use sora_input::project::SplitProjectInput;
@@ -23,49 +24,48 @@ fn simple_example_pipeline_generates_all_artifacts() {
     write_item_workbook(&project, &data_root);
     let project_input = XlsxProjectInput::new(ProjectSchemaInput::new(&project), &data_root);
 
-    sora_core::pipeline::check_schema(&schema_input).unwrap();
+    pipeline::check_schema(&schema_input).unwrap();
 
-    sora_core::pipeline::generate_code(&schema_input, "rust", &out_dir.join("rust")).unwrap();
-    sora_core::pipeline::generate_code(&schema_input, "kotlin", &out_dir.join("kotlin")).unwrap();
-    sora_core::pipeline::generate_code(&schema_input, "proto-schema", &out_dir.join("proto"))
-        .unwrap();
-    sora_core::pipeline::export_data(
+    pipeline::generate_code(&schema_input, "rust", &out_dir.join("rust")).unwrap();
+    pipeline::generate_code(&schema_input, "kotlin", &out_dir.join("kotlin")).unwrap();
+    pipeline::generate_code(&schema_input, "proto-schema", &out_dir.join("proto")).unwrap();
+    pipeline::export_data(
         &project_input,
         "binary",
         ExportOutput::File(out_dir.join("config.sora")),
     )
     .unwrap();
-    sora_core::pipeline::export_data(
+    pipeline::export_data(
         &project_input,
         "json",
         ExportOutput::File(out_dir.join("config.json")),
     )
     .unwrap();
-    sora_core::pipeline::export_data(
+    pipeline::export_data(
         &project_input,
         "sora-protobuf",
         ExportOutput::File(out_dir.join("config.sora.pb")),
     )
     .unwrap();
-    sora_core::pipeline::export_data(
+    pipeline::export_data(
         &project_input,
         "proto",
         ExportOutput::File(out_dir.join("config.pb")),
     )
     .unwrap();
-    sora_core::pipeline::export_data(
+    pipeline::export_data(
         &project_input,
         "cbor",
         ExportOutput::File(out_dir.join("config.cbor")),
     )
     .unwrap();
-    sora_core::pipeline::export_data(
+    pipeline::export_data(
         &project_input,
         "json-debug",
         ExportOutput::Directory(out_dir.join("debug-json")),
     )
     .unwrap();
-    sora_core::pipeline::generate_excel_template(&schema_input, &out_dir.join("excel")).unwrap();
+    pipeline::generate_excel_template(&schema_input, &out_dir.join("excel")).unwrap();
 
     assert!(
         fs::read_to_string(out_dir.join("rust/item.rs"))
@@ -166,15 +166,15 @@ tables {
         TomlDataInput::new(&data_dir),
     );
     let out = root.join("generated");
-    sora_core::pipeline::check_schema(&schema_input).unwrap();
-    sora_core::pipeline::generate_code(&schema_input, "rust", &out.join("rust")).unwrap();
-    sora_core::pipeline::export_data(
+    pipeline::check_schema(&schema_input).unwrap();
+    pipeline::generate_code(&schema_input, "rust", &out.join("rust")).unwrap();
+    pipeline::export_data(
         &project_input,
         "binary",
         ExportOutput::File(out.join("config.sora")),
     )
     .unwrap();
-    sora_core::pipeline::export_data(
+    pipeline::export_data(
         &project_input,
         "json-debug",
         ExportOutput::Directory(out.join("debug")),
@@ -239,5 +239,5 @@ fn temp_dir() -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_nanos();
-    std::env::temp_dir().join(format!("sora-simple-pipeline-test-{unique}"))
+    env::temp_dir().join(format!("sora-simple-pipeline-test-{unique}"))
 }

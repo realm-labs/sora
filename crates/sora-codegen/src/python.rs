@@ -830,10 +830,13 @@ mod tests {
     use crate::options::{LanguageCodegenOptions, RuntimeFormat};
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir as system_temp_dir;
+    use std::fs::{read_to_string, remove_dir_all};
     use std::{
         path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
     };
+    use toml::from_str;
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -844,12 +847,12 @@ mod tests {
 
         PythonCodeGenerator.generate(&ir, &base).unwrap();
 
-        let item = std::fs::read_to_string(base.join("item.py")).unwrap();
-        let item_type = std::fs::read_to_string(base.join("item_type.py")).unwrap();
-        let action = std::fs::read_to_string(base.join("action.py")).unwrap();
-        let runtime = std::fs::read_to_string(base.join("sora_runtime.py")).unwrap();
-        let config = std::fs::read_to_string(base.join("sora_config.py")).unwrap();
-        let init = std::fs::read_to_string(base.join("__init__.py")).unwrap();
+        let item = read_to_string(base.join("item.py")).unwrap();
+        let item_type = read_to_string(base.join("item_type.py")).unwrap();
+        let action = read_to_string(base.join("action.py")).unwrap();
+        let runtime = read_to_string(base.join("sora_runtime.py")).unwrap();
+        let config = read_to_string(base.join("sora_config.py")).unwrap();
+        let init = read_to_string(base.join("__init__.py")).unwrap();
 
         assert!(item.contains("@dataclass(frozen=True, slots=True)"));
         assert!(item.contains("class Item:"));
@@ -877,7 +880,7 @@ mod tests {
         assert!(config.contains("def from_bytes(bytes_data: bytes) -> SoraConfig:"));
         assert!(init.contains("from .sora_config import SoraConfig"));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -894,11 +897,11 @@ mod tests {
                 .generate_with_options(&ir, LanguageCodegenOptions { runtime_format }, &base)
                 .unwrap();
 
-            let item = std::fs::read_to_string(base.join("item.py")).unwrap();
-            let item_type = std::fs::read_to_string(base.join("item_type.py")).unwrap();
-            let action = std::fs::read_to_string(base.join("action.py")).unwrap();
-            let runtime = std::fs::read_to_string(base.join("sora_runtime.py")).unwrap();
-            let config = std::fs::read_to_string(base.join("sora_config.py")).unwrap();
+            let item = read_to_string(base.join("item.py")).unwrap();
+            let item_type = read_to_string(base.join("item_type.py")).unwrap();
+            let action = read_to_string(base.join("action.py")).unwrap();
+            let runtime = read_to_string(base.join("sora_runtime.py")).unwrap();
+            let config = read_to_string(base.join("sora_config.py")).unwrap();
 
             assert!(runtime.contains("class SoraValueBundle"));
             assert!(runtime.contains(parse_function));
@@ -908,12 +911,12 @@ mod tests {
             assert!(item_type.contains("def decode_value(value: SoraValue) -> ItemType:"));
             assert!(action.contains("def decode_value(value: SoraValue) -> Action:"));
 
-            let _ = std::fs::remove_dir_all(base);
+            let _ = remove_dir_all(base);
         }
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -976,6 +979,6 @@ fields = ["item_type"]
 
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-python-codegen-test-{unique}"))
+        system_temp_dir().join(format!("sora-python-codegen-test-{unique}"))
     }
 }

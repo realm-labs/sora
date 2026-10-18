@@ -1,19 +1,26 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
     sync::Arc,
 };
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result, anyhow, bail};
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_json::{Number, Value as JsonValue, from_slice, to_string, to_value, to_vec};
 use sha2::{Digest, Sha256};
+use sora_core::{diff::diff_config_data, pipeline::load_project_data_with_context_and_parsers};
 use sora_data::model::{ConfigData, Value};
 use sora_input_schema::input::ProjectSchemaInput;
+use sora_ir::{
+    model::{ConfigIr, TableIr},
+    projection::project_config_ir,
+};
 
 use crate::{
     Diagnostic, ProjectRevision, ProjectSession, SourceFormat, diagnostics_from_anyhow,
+    mutation::{data_row_hash, load_raw_project_data},
     source::MixedProjectInput,
 };
 
@@ -37,14 +44,14 @@ pub struct DataValidationReport {
 #[serde(deny_unknown_fields)]
 pub struct TableFilter {
     pub field: String,
-    pub equals: serde_json::Value,
+    pub equals: JsonValue,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct IndexLookup {
     pub index: String,
-    pub values: Vec<serde_json::Value>,
+    pub values: Vec<JsonValue>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
@@ -53,7 +60,7 @@ pub struct TableQuery {
     pub table: String,
     #[serde(default)]
     pub filters: Vec<TableFilter>,
-    pub key: Option<serde_json::Value>,
+    pub key: Option<JsonValue>,
     pub index: Option<IndexLookup>,
     #[serde(default)]
     pub select: Vec<String>,
@@ -78,7 +85,7 @@ pub struct TableQueryReport {
 pub struct TableQueryRow {
     pub index: usize,
     pub row_hash: String,
-    pub values: BTreeMap<String, serde_json::Value>,
+    pub values: BTreeMap<String, JsonValue>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -90,7 +97,7 @@ struct QueryCursor {
 }
 
 impl ProjectSession {
-    pub fn validated_data(&self) -> Result<(sora_ir::model::ConfigIr, ConfigData)> {
+    pub fn validated_data(&self) -> Result<(ConfigIr, ConfigData)> {
         self.load_data_from_root(&self.data_root())
     }
 
@@ -129,7 +136,7 @@ impl ProjectSession {
             .tables
             .iter()
             .find(|table| table.name == query.table)
-            .ok_or_else(|| anyhow::anyhow!("unknown table `{}`", query.table))?;
+            .ok_or_else(|| anyhow!("unknown table `{}`", query.table))?;
         if let Some(locale) = &query.locale
             && ir
                 .localization
@@ -143,13 +150,13 @@ impl ProjectSession {
             .tables
             .iter()
             .find(|table| table.name == query.table)
-            .ok_or_else(|| anyhow::anyhow!("validated data omitted table `{}`", query.table))?;
-        let (_, raw_data, _) = crate::mutation::load_raw_project_data(self)?;
+            .ok_or_else(|| anyhow!("validated data omitted table `{}`", query.table))?;
+        let (_, raw_data, _) = load_raw_project_data(self)?;
         let raw_table = raw_data
             .tables
             .iter()
             .find(|table| table.name == query.table)
-            .ok_or_else(|| anyhow::anyhow!("raw data omitted table `{}`", query.table))?;
+            .ok_or_else(|| anyhow!("raw data omitted table `{}`", query.table))?;
         let revision = self.revision();
         let query_hash = query_hash(query)?;
         let offset = match query.cursor.as_deref() {
@@ -170,7 +177,7 @@ impl ProjectSession {
             .map(|(index, row)| {
                 (
                     index,
-                    crate::mutation::data_row_hash(raw_table.rows.get(index).unwrap_or(row)),
+                    data_row_hash(raw_table.rows.get(index).unwrap_or(row)),
                     row.values
                         .iter()
                         .filter(|(field, _)| include_derived || !derived.contains(field.as_str()))
@@ -219,7 +226,7 @@ impl ProjectSession {
         })
     }
 
-    pub fn diff_data_root(&self, relative_other_root: &str) -> Result<serde_json::Value> {
+    pub fn diff_data_root(&self, relative_other_root: &str) -> Result<JsonValue> {
         let project_root = self
             .manifest_path()
             .parent()
@@ -228,7 +235,7 @@ impl ProjectSession {
         if other.is_absolute()
             || other
                 .components()
-                .any(|component| !matches!(component, std::path::Component::Normal(_)))
+                .any(|component| !matches!(component, Component::Normal(_)))
         {
             bail!("other data root must be a project-relative directory");
         }
@@ -242,8 +249,8 @@ impl ProjectSession {
         }
         let (ir, current) = self.validated_data()?;
         let (_, other) = self.load_data_from_root(&canonical)?;
-        let diff = sora_core::diff::diff_config_data(&ir, &other, &current)?;
-        Ok(serde_json::to_value(diff)?)
+        let diff = diff_config_data(&ir, &other, &current)?;
+        Ok(to_value(diff)?)
     }
 
     pub(crate) fn data_root(&self) -> PathBuf {
@@ -264,10 +271,7 @@ impl ProjectSession {
         }
     }
 
-    fn load_data_from_root(
-        &self,
-        data_root: &Path,
-    ) -> Result<(sora_ir::model::ConfigIr, ConfigData)> {
+    fn load_data_from_root(&self, data_root: &Path) -> Result<(ConfigIr, ConfigData)> {
         let default_format = self
             .manifest()
             .build
@@ -280,7 +284,7 @@ impl ProjectSession {
             Arc::clone(self.runtime().source_registry()),
             Arc::clone(self.runtime().cell_parsers()),
         );
-        sora_core::pipeline::load_project_data_with_context_and_parsers(
+        load_project_data_with_context_and_parsers(
             &input,
             self.runtime().execution(),
             self.runtime().schema_parsers(),
@@ -290,15 +294,12 @@ impl ProjectSession {
     }
 }
 
-fn selected_tables<'a>(
-    ir: &'a sora_ir::model::ConfigIr,
-    query: &DataValidationQuery,
-) -> Result<Vec<&'a sora_ir::model::TableIr>> {
+fn selected_tables<'a>(ir: &'a ConfigIr, query: &DataValidationQuery) -> Result<Vec<&'a TableIr>> {
     let visible_ids = query
         .view
         .as_deref()
         .map(|view| {
-            sora_ir::projection::project_config_ir(ir, view).map(|projected| {
+            project_config_ir(ir, view).map(|projected| {
                 projected
                     .tables
                     .into_iter()
@@ -327,7 +328,7 @@ fn selected_tables<'a>(
     Ok(tables)
 }
 
-fn validate_query_fields(table: &sora_ir::model::TableIr, query: &TableQuery) -> Result<()> {
+fn validate_query_fields(table: &TableIr, query: &TableQuery) -> Result<()> {
     let known = table
         .fields
         .iter()
@@ -351,7 +352,7 @@ fn validate_query_fields(table: &sora_ir::model::TableIr, query: &TableQuery) ->
             .indexes
             .iter()
             .find(|item| item.name == index.index)
-            .ok_or_else(|| anyhow::anyhow!("unknown index `{}`", index.index))?;
+            .ok_or_else(|| anyhow!("unknown index `{}`", index.index))?;
         if definition.fields.len() != index.values.len() {
             bail!(
                 "index `{}` expects {} values, got {}",
@@ -364,11 +365,7 @@ fn validate_query_fields(table: &sora_ir::model::TableIr, query: &TableQuery) ->
     Ok(())
 }
 
-fn row_matches(
-    row: &BTreeMap<String, serde_json::Value>,
-    table: &sora_ir::model::TableIr,
-    query: &TableQuery,
-) -> bool {
+fn row_matches(row: &BTreeMap<String, JsonValue>, table: &TableIr, query: &TableQuery) -> bool {
     if let Some(key) = &query.key
         && table
             .key
@@ -404,10 +401,10 @@ fn row_matches(
 }
 
 fn project_row(
-    row: &BTreeMap<String, serde_json::Value>,
-    table: &sora_ir::model::TableIr,
+    row: &BTreeMap<String, JsonValue>,
+    table: &TableIr,
     select: &[String],
-) -> BTreeMap<String, serde_json::Value> {
+) -> BTreeMap<String, JsonValue> {
     let fields = if select.is_empty() {
         table
             .fields
@@ -427,33 +424,33 @@ fn project_row(
         .collect()
 }
 
-fn natural_value(value: &Value) -> serde_json::Value {
+fn natural_value(value: &Value) -> JsonValue {
     match value {
         Value::Bool(value) => (*value).into(),
         Value::Integer(value) => (*value).into(),
-        Value::Float(value) => serde_json::Number::from_f64(*value)
-            .map(serde_json::Value::Number)
-            .unwrap_or(serde_json::Value::Null),
+        Value::Float(value) => Number::from_f64(*value)
+            .map(JsonValue::Number)
+            .unwrap_or(JsonValue::Null),
         Value::String(value) => value.clone().into(),
         Value::List(values) => values.iter().map(natural_value).collect(),
         Value::Object(values) => values
             .iter()
             .map(|(key, value)| (key.clone(), natural_value(value)))
             .collect(),
-        Value::Null => serde_json::Value::Null,
+        Value::Null => JsonValue::Null,
     }
 }
 
 fn query_hash(query: &TableQuery) -> Result<String> {
     let mut stable = query.clone();
     stable.cursor = None;
-    let bytes = serde_json::to_vec(&stable)?;
+    let bytes = to_vec(&stable)?;
     let digest = Sha256::digest(bytes);
     Ok(digest.iter().map(|byte| format!("{byte:02x}")).collect())
 }
 
 fn encode_cursor(revision: &str, table: &str, query_hash: &str, offset: usize) -> Result<String> {
-    Ok(URL_SAFE_NO_PAD.encode(serde_json::to_vec(&QueryCursor {
+    Ok(URL_SAFE_NO_PAD.encode(to_vec(&QueryCursor {
         revision: revision.to_owned(),
         table: table.to_owned(),
         query_hash: query_hash.to_owned(),
@@ -465,17 +462,16 @@ fn decode_cursor(cursor: &str, revision: &str, table: &str, query_hash: &str) ->
     let bytes = URL_SAFE_NO_PAD
         .decode(cursor)
         .context("invalid table query cursor encoding")?;
-    let cursor: QueryCursor =
-        serde_json::from_slice(&bytes).context("invalid table query cursor payload")?;
+    let cursor: QueryCursor = from_slice(&bytes).context("invalid table query cursor payload")?;
     if cursor.revision != revision || cursor.table != table || cursor.query_hash != query_hash {
         bail!("table query cursor does not match the current revision or query");
     }
     Ok(cursor.offset)
 }
 
-fn stable_json(value: Option<&serde_json::Value>) -> String {
+fn stable_json(value: Option<&JsonValue>) -> String {
     value
-        .and_then(|value| serde_json::to_string(value).ok())
+        .and_then(|value| to_string(value).ok())
         .unwrap_or_default()
 }
 

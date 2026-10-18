@@ -90,10 +90,13 @@ mod tests {
     use crate::options::{EnumRepr, RuntimeFormat, TypeScriptCodegenOptions};
     use sora_ir::{model::ConfigIr, normalize::normalize_schema};
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir as system_temp_dir;
+    use std::fs::{read_to_string, remove_dir_all};
     use std::{
         path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
     };
+    use toml::from_str;
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -104,12 +107,12 @@ mod tests {
 
         TypeScriptCodeGenerator.generate(&ir, &base).unwrap();
 
-        let item = std::fs::read_to_string(base.join("item.ts")).unwrap();
-        let item_type = std::fs::read_to_string(base.join("item_type.ts")).unwrap();
-        let action = std::fs::read_to_string(base.join("action.ts")).unwrap();
-        let runtime = std::fs::read_to_string(base.join("sora_runtime.ts")).unwrap();
-        let config = std::fs::read_to_string(base.join("sora_config.ts")).unwrap();
-        let index = std::fs::read_to_string(base.join("index.ts")).unwrap();
+        let item = read_to_string(base.join("item.ts")).unwrap();
+        let item_type = read_to_string(base.join("item_type.ts")).unwrap();
+        let action = read_to_string(base.join("action.ts")).unwrap();
+        let runtime = read_to_string(base.join("sora_runtime.ts")).unwrap();
+        let config = read_to_string(base.join("sora_config.ts")).unwrap();
+        let index = read_to_string(base.join("index.ts")).unwrap();
 
         assert!(item.contains("export interface Item"));
         assert!(item.contains("largeId: bigint;"));
@@ -137,7 +140,7 @@ mod tests {
         assert!(index.contains("export * from \"./sora_config.js\";"));
         assert!(index.ends_with('\n'));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -156,14 +159,14 @@ mod tests {
             )
             .unwrap();
 
-        let item_type = std::fs::read_to_string(base.join("item_type.ts")).unwrap();
+        let item_type = read_to_string(base.join("item_type.ts")).unwrap();
         assert!(item_type.contains("export type ItemType ="));
         assert!(item_type.contains("| 10"));
         assert!(item_type.contains("| 20"));
         assert!(item_type.contains("Weapon: 10"));
         assert!(item_type.contains("return id as ItemType;"));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -191,10 +194,10 @@ mod tests {
                 )
                 .unwrap();
 
-            let config = std::fs::read_to_string(base.join("sora_config.ts")).unwrap();
-            let runtime = std::fs::read_to_string(base.join("sora_runtime.ts")).unwrap();
-            let item = std::fs::read_to_string(base.join("item.ts")).unwrap();
-            let item_type = std::fs::read_to_string(base.join("item_type.ts")).unwrap();
+            let config = read_to_string(base.join("sora_config.ts")).unwrap();
+            let runtime = read_to_string(base.join("sora_runtime.ts")).unwrap();
+            let item = read_to_string(base.join("item.ts")).unwrap();
+            let item_type = read_to_string(base.join("item_type.ts")).unwrap();
 
             assert!(!config.contains("SoraValueBundle"));
             assert!(!config.contains(parse_fn));
@@ -212,13 +215,13 @@ mod tests {
                 assert!(runtime.contains("new protobuf.Type(\"Bundle\")"));
             }
 
-            let _ = std::fs::remove_dir_all(base);
+            let _ = remove_dir_all(base);
         }
     }
 
     #[test]
     fn generates_namespaced_typescript_modules() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -257,10 +260,10 @@ type = "struct<quests.Reward>"
         let base = temp_dir();
         TypeScriptCodeGenerator.generate(&ir, &base).unwrap();
 
-        let item = std::fs::read_to_string(base.join("items/item.ts")).unwrap();
-        let root_index = std::fs::read_to_string(base.join("index.ts")).unwrap();
-        let items_index = std::fs::read_to_string(base.join("items/index.ts")).unwrap();
-        let config = std::fs::read_to_string(base.join("sora_config.ts")).unwrap();
+        let item = read_to_string(base.join("items/item.ts")).unwrap();
+        let root_index = read_to_string(base.join("index.ts")).unwrap();
+        let items_index = read_to_string(base.join("items/index.ts")).unwrap();
+        let config = read_to_string(base.join("sora_config.ts")).unwrap();
         assert!(item.contains("from \"../sora_runtime.js\""));
         assert!(item.contains("from \"./../common/reward.js\""));
         assert!(item.contains("Reward as CommonReward"));
@@ -272,11 +275,11 @@ type = "struct<quests.Reward>"
         assert!(config.contains("itemsItem(): ItemsItemTable"));
         assert!(root_index.contains("export * as items from \"./items/index.js\";"));
         assert!(items_index.contains("export * from \"./item.js\";"));
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -339,6 +342,6 @@ fields = ["item_type"]
 
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-typescript-codegen-test-{unique}"))
+        system_temp_dir().join(format!("sora-typescript-codegen-test-{unique}"))
     }
 }

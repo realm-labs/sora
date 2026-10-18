@@ -1,6 +1,7 @@
 use std::{collections::BTreeMap, fmt};
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value as JsonValue;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ConfigIr {
@@ -193,7 +194,7 @@ pub struct ViewIr {
     pub groups: Vec<String>,
     pub tables: ViewTableSelectionIr,
     pub table_names: BTreeMap<String, String>,
-    pub bindings: BTreeMap<String, serde_json::Value>,
+    pub bindings: BTreeMap<String, JsonValue>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]

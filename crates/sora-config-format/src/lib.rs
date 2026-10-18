@@ -1,13 +1,20 @@
 use std::{
     fs, io,
     path::{Path, PathBuf},
+    result::Result as StdResult,
 };
 
 use mlua::{Lua, LuaOptions, LuaSerdeExt, StdLib};
+use scon::{ParseOptions, analyze_source, from_value, to_string as to_scon_string};
 use serde::{Serialize, de::DeserializeOwned};
-use serde_json::{Map, Value};
+use serde_json::{
+    Map, Value, from_str as from_json_str, to_string_pretty as to_json_string_pretty, to_value,
+};
+use serde_yaml::{from_str as from_yaml_str, to_string as to_yaml_string};
+use thiserror::Error;
+use toml::{from_str as from_toml_str, to_string_pretty as to_toml_string_pretty};
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Error)]
 pub enum DocumentError {
     #[error("failed to read file `{path}`: {source}")]
     Read { path: PathBuf, source: io::Error },
@@ -25,7 +32,7 @@ pub enum DocumentError {
     MissingExtension { path: PathBuf },
 }
 
-pub type Result<T> = std::result::Result<T, DocumentError>;
+pub type Result<T> = StdResult<T, DocumentError>;
 
 pub fn load_document<T>(path: &Path) -> Result<T>
 where
@@ -57,18 +64,16 @@ where
 {
     match document_format(path)? {
         DocumentFormat::Toml => {
-            toml::to_string_pretty(value).map_err(|source| DocumentError::Render {
+            to_toml_string_pretty(value).map_err(|source| DocumentError::Render {
                 path: path.to_path_buf(),
                 message: source.to_string(),
             })
         }
-        DocumentFormat::Yaml => {
-            serde_yaml::to_string(value).map_err(|source| DocumentError::Render {
-                path: path.to_path_buf(),
-                message: source.to_string(),
-            })
-        }
-        DocumentFormat::Json => serde_json::to_string_pretty(value)
+        DocumentFormat::Yaml => to_yaml_string(value).map_err(|source| DocumentError::Render {
+            path: path.to_path_buf(),
+            message: source.to_string(),
+        }),
+        DocumentFormat::Json => to_json_string_pretty(value)
             .map(|mut text| {
                 text.push('\n');
                 text
@@ -78,7 +83,7 @@ where
                 message: source.to_string(),
             }),
         DocumentFormat::Lua => render_lua(path, value),
-        DocumentFormat::Scon => scon::to_string(value).map_err(|source| DocumentError::Render {
+        DocumentFormat::Scon => to_scon_string(value).map_err(|source| DocumentError::Render {
             path: path.to_path_buf(),
             message: source.to_string(),
         }),
@@ -89,7 +94,7 @@ fn parse_toml<T>(path: &Path, content: &str) -> Result<T>
 where
     T: DeserializeOwned,
 {
-    toml::from_str(content).map_err(|source| DocumentError::Parse {
+    from_toml_str(content).map_err(|source| DocumentError::Parse {
         path: path.to_path_buf(),
         message: source.to_string(),
     })
@@ -99,7 +104,7 @@ fn parse_yaml<T>(path: &Path, content: &str) -> Result<T>
 where
     T: DeserializeOwned,
 {
-    serde_yaml::from_str(content).map_err(|source| DocumentError::Parse {
+    from_yaml_str(content).map_err(|source| DocumentError::Parse {
         path: path.to_path_buf(),
         message: source.to_string(),
     })
@@ -109,7 +114,7 @@ fn parse_json<T>(path: &Path, content: &str) -> Result<T>
 where
     T: DeserializeOwned,
 {
-    serde_json::from_str(content).map_err(|source| DocumentError::Parse {
+    from_json_str(content).map_err(|source| DocumentError::Parse {
         path: path.to_path_buf(),
         message: source.to_string(),
     })
@@ -146,9 +151,9 @@ fn parse_scon<T>(path: &Path, content: &str) -> Result<T>
 where
     T: DeserializeOwned,
 {
-    let analysis = scon::analyze_source(
+    let analysis = analyze_source(
         content,
-        scon::ParseOptions {
+        ParseOptions {
             file: Some(path.to_path_buf()),
         },
     );
@@ -185,7 +190,7 @@ where
         path: path.to_path_buf(),
         message: "SCON analysis produced no value".to_owned(),
     })?;
-    scon::from_value(value).map_err(|source| DocumentError::Parse {
+    from_value(value).map_err(|source| DocumentError::Parse {
         path: path.to_path_buf(),
         message: source.to_string(),
     })
@@ -195,7 +200,7 @@ fn render_lua<T>(path: &Path, value: &T) -> Result<String>
 where
     T: Serialize,
 {
-    let value = serde_json::to_value(value).map_err(|source| DocumentError::Render {
+    let value = to_value(value).map_err(|source| DocumentError::Render {
         path: path.to_path_buf(),
         message: source.to_string(),
     })?;

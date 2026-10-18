@@ -311,6 +311,8 @@ pub fn resolve_source_format(
 
 #[cfg(test)]
 mod tests {
+    use sora_ir::model::TableModeIr;
+
     use super::*;
 
     #[test]
@@ -335,7 +337,7 @@ mod tests {
             name: "Item".to_owned(),
             canonical_name: "Item".to_owned(),
             groups: Default::default(),
-            mode: sora_ir::model::TableModeIr::List,
+            mode: TableModeIr::List,
             key: None,
             source: Some(TableSourceIr {
                 format: Some("csv".to_owned()),

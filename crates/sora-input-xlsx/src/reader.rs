@@ -3,7 +3,7 @@ use std::{
     path::Path,
 };
 
-use calamine::{Data, Reader, open_workbook_auto};
+use calamine::{Data, Range, Reader, open_workbook_auto};
 use sora_data::model::{
     ConfigData, LocalizationRowData, LocalizationSourceData, RowData, TableData, Value,
 };
@@ -261,7 +261,7 @@ fn load_xlsx_localization_source_data_from_range(
     source: &LocalizationSourceIr,
     path: &Path,
     sheet: &str,
-    range: calamine::Range<Data>,
+    range: Range<Data>,
 ) -> Result<LocalizationSourceData> {
     let columns = localization_columns(path, sheet, &range)?;
     let mut rows = Vec::new();
@@ -289,7 +289,7 @@ fn load_xlsx_localization_source_data_from_range(
 fn localization_columns(
     path: &Path,
     sheet: &str,
-    range: &calamine::Range<Data>,
+    range: &Range<Data>,
 ) -> Result<Vec<(String, usize)>> {
     let Some(field_row) = range.rows().nth(FIELD_ROW as usize) else {
         return Err(SoraError::InvalidSchema(format!(
@@ -324,7 +324,7 @@ fn load_xlsx_table_data_from_range(
     table: &TableIr,
     path: &Path,
     sheet: &str,
-    range: calamine::Range<Data>,
+    range: Range<Data>,
     parser_registry: &ParserRegistry,
 ) -> Result<TableData> {
     verify_projection(ir, table, path, sheet, &range)?;
@@ -418,7 +418,7 @@ fn field_columns(
     ir: &ConfigIr,
     path: &Path,
     sheet: &str,
-    range: &calamine::Range<Data>,
+    range: &Range<Data>,
 ) -> Result<Vec<FieldColumns>> {
     let expected_columns = table
         .fields
@@ -470,7 +470,7 @@ fn field_columns(
         .enumerate()
         .skip(FIELD_START_COLUMN as usize)
     {
-        let field_name = crate::value::cell_to_string(cell);
+        let field_name = cell_to_string(cell);
         let field_name = field_name.trim();
         if field_name.is_empty() {
             continue;
@@ -560,7 +560,7 @@ struct TaggedRowContext<'a> {
 
 fn tagged_columns_value(
     ir: &ConfigIr,
-    field: &sora_ir::model::FieldIr,
+    field: &FieldIr,
     columns: &BTreeMap<String, usize>,
     row: &[Data],
     row_context: TaggedRowContext<'_>,
@@ -736,13 +736,17 @@ mod tests {
     use super::*;
     use rust_xlsxwriter::{Format, Workbook};
     use sora_data::model::Value;
+    use sora_data::validate::validate_config_data;
     use sora_excel::projection::table_template_rows;
     use sora_ir::{normalize::normalize_schema, validate::validate_config_ir};
     use std::{
         collections::BTreeMap,
+        env::temp_dir as env_temp_dir,
+        fs::{create_dir_all, remove_dir_all},
         path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
     };
+    use toml::from_str;
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -769,7 +773,7 @@ mod tests {
         assert_eq!(data.tables[0].rows.len(), 2);
         assert_eq!(data.tables[0].rows[0].values["id"], Value::Integer(1002));
         assert_eq!(data.tables[0].rows[1].values["id"], Value::Integer(1001));
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -785,7 +789,7 @@ mod tests {
         let error = load_xlsx_config_data(&ir, &base).unwrap_err();
 
         assert!(error.to_string().contains("exactly one table definition"));
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -815,12 +819,12 @@ mod tests {
             Value::String("January".to_owned())
         );
         assert!(
-            sora_data::validate::validate_config_data(&ir, &data)
+            validate_config_data(&ir, &data)
                 .unwrap_err()
                 .to_string()
                 .contains("duplicate key `1001`")
         );
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -841,7 +845,7 @@ mod tests {
         let error = load_xlsx_config_data(&ir, &base).unwrap_err();
 
         assert!(error.to_string().contains("matched no worksheets"));
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -869,7 +873,7 @@ mod tests {
             Value::String("Magic Stone".to_owned())
         );
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -891,7 +895,7 @@ mod tests {
             Value::String("Blocked".to_owned())
         );
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -912,7 +916,7 @@ mod tests {
         assert_eq!(data.tables[0].rows.len(), 1);
         assert_eq!(data.tables[0].rows[0].values["id"], Value::Integer(1));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -944,7 +948,7 @@ mod tests {
             Value::String("terrain.grass".to_owned())
         );
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -977,7 +981,7 @@ mod tests {
             Value::String("Material".to_owned())
         );
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -1021,7 +1025,7 @@ mod tests {
             ]))
         );
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -1043,7 +1047,7 @@ mod tests {
         assert!(message.contains("worksheet `Item` row 8, column 2, field `id`"));
         assert!(message.contains("expected integer"));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -1076,7 +1080,7 @@ mod tests {
             ])
         );
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -1097,7 +1101,7 @@ mod tests {
             ]))
         );
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -1119,7 +1123,7 @@ mod tests {
             ]))
         );
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -1146,7 +1150,7 @@ mod tests {
             ]))
         );
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -1187,7 +1191,7 @@ mod tests {
             ]))
         );
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -1209,11 +1213,11 @@ mod tests {
         assert!(message.contains("worksheet `EventConditionEntry` row 8, column 5, field `value`"));
         assert!(message.contains("is not part of union variant `QuestCompleted`"));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     fn string_ref_ir() -> ConfigIr {
-        let schema = toml::from_str(
+        let schema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1261,7 +1265,7 @@ type = "ref<Terrain.id>"
     }
 
     fn example_ir() -> ConfigIr {
-        let schema = toml::from_str(
+        let schema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1306,7 +1310,7 @@ type = "i32"
     }
 
     fn namespaced_ir() -> ConfigIr {
-        let schema = toml::from_str(
+        let schema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1339,7 +1343,7 @@ type = "enum<worldgen.geography.TraversalBarrierKind>"
     }
 
     fn complex_ir() -> ConfigIr {
-        let schema = toml::from_str(
+        let schema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1395,7 +1399,7 @@ type = "struct<Reward>"
     }
 
     fn tuple_ir() -> ConfigIr {
-        let schema = toml::from_str(
+        let schema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1443,7 +1447,7 @@ parser = { kind = "tuple" }
     }
 
     fn tuple_list_ir() -> ConfigIr {
-        let schema = toml::from_str(
+        let schema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1496,7 +1500,7 @@ parser = { kind = "tuple_list" }
     }
 
     fn interval_ir() -> ConfigIr {
-        let schema = toml::from_str(
+        let schema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1524,7 +1528,7 @@ type = "interval<i32>"
     }
 
     fn tagged_union_ir() -> ConfigIr {
-        let schema = toml::from_str(
+        let schema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1580,7 +1584,7 @@ parser = { kind = "tagged_columns", prefix = "" }
     }
 
     fn struct_columns_ir() -> ConfigIr {
-        let schema = toml::from_str(
+        let schema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1726,7 +1730,7 @@ parser = { kind = "columns", prefix = "cost_" }
             }
         }
 
-        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        create_dir_all(path.parent().unwrap()).unwrap();
         workbook.save(path).unwrap();
     }
 
@@ -1759,12 +1763,12 @@ parser = { kind = "columns", prefix = "cost_" }
                 }
             }
         }
-        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        create_dir_all(path.parent().unwrap()).unwrap();
         workbook.save(path).unwrap();
     }
 
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-input-xlsx-test-{unique}"))
+        env_temp_dir().join(format!("sora-input-xlsx-test-{unique}"))
     }
 }

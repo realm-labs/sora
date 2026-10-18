@@ -1,17 +1,18 @@
 use std::{
     collections::BTreeMap,
+    iter::once,
     net::{IpAddr, SocketAddr},
     sync::{
         Arc,
         atomic::{AtomicU64, Ordering},
     },
-    time::{Duration, Instant},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 use anyhow::{Context, Result};
 use axum::{
     Json, Router,
-    body::Body,
+    body::{Body, to_bytes},
     extract::State,
     http::{
         HeaderMap, HeaderValue, Request, Response, StatusCode,
@@ -19,23 +20,31 @@ use axum::{
     },
     response::IntoResponse,
     routing::{any, get},
+    serve,
 };
 use hmac::{Hmac, Mac};
 use rmcp::transport::streamable_http_server::{StreamableHttpServerConfig, StreamableHttpService};
 use sha2::Sha256;
 use sora_workspace::WorkspaceService;
 use thiserror::Error;
-use tokio::sync::{Mutex, Semaphore};
+use tokio::{
+    net::TcpListener,
+    runtime::Runtime,
+    signal::ctrl_c,
+    sync::{Mutex, Semaphore},
+};
 use tokio_util::sync::CancellationToken;
 use tower_http::sensitive_headers::SetSensitiveRequestHeadersLayer;
+use tracing::{info, warn};
 use url::Url;
 use uuid::Uuid;
+
+use crate::SoraMcpServer;
 
 use super::{
     AuthorizationPrincipal, OAuthAuthenticator, OAuthError, OAuthResourceServerConfig,
     ProtectedResourceMetadata, SecureSessionConfig, SecureSessionManager,
 };
-use crate::SoraMcpServer;
 
 const MCP_PATH: &str = "/mcp";
 const RESOURCE_METADATA_PATH: &str = "/.well-known/oauth-protected-resource";
@@ -416,26 +425,23 @@ fn router_with_state(state: Arc<HttpState>) -> Router {
         .route(MCP_PATH, any(handle_mcp))
         .route(RESOURCE_METADATA_PATH, get(handle_resource_metadata))
         .with_state(state)
-        .layer(SetSensitiveRequestHeadersLayer::new(std::iter::once(
-            AUTHORIZATION,
-        )))
+        .layer(SetSensitiveRequestHeadersLayer::new(once(AUTHORIZATION)))
 }
 
 /// Runs the Streamable HTTP listener until Ctrl-C or listener failure.
 pub fn serve_http(workspace: Arc<WorkspaceService>, config: HttpServerConfig) -> Result<()> {
     let bind = config.bind;
-    let runtime =
-        tokio::runtime::Runtime::new().context("failed to start MCP HTTP async runtime")?;
+    let runtime = Runtime::new().context("failed to start MCP HTTP async runtime")?;
     runtime.block_on(async move {
         let cancellation = CancellationToken::new();
         let router = build_http_router(workspace, config, cancellation.clone()).await?;
-        let listener = tokio::net::TcpListener::bind(bind)
+        let listener = TcpListener::bind(bind)
             .await
             .with_context(|| format!("failed to bind MCP HTTP listener at {bind}"))?;
-        tracing::info!(bind = %bind, "Sora MCP Streamable HTTP listener started");
-        axum::serve(listener, router)
+        info!(bind = %bind, "Sora MCP Streamable HTTP listener started");
+        serve(listener, router)
             .with_graceful_shutdown(async move {
-                if tokio::signal::ctrl_c().await.is_ok() {
+                if ctrl_c().await.is_ok() {
                     cancellation.cancel();
                 }
             })
@@ -468,7 +474,7 @@ async fn handle_mcp(State(state): State<Arc<HttpState>>, request: Request<Body>)
             } else {
                 StatusCode::UNAUTHORIZED
             };
-            tracing::warn!(
+            warn!(
                 %request_id,
                 %method,
                 status = status.as_u16(),
@@ -519,7 +525,7 @@ async fn handle_mcp(State(state): State<Arc<HttpState>>, request: Request<Body>)
     };
 
     let (parts, body) = request.into_parts();
-    let body = match axum::body::to_bytes(body, state.config.max_request_body_bytes).await {
+    let body = match to_bytes(body, state.config.max_request_body_bytes).await {
         Ok(body) => body,
         Err(_) => {
             return limited_response(
@@ -535,7 +541,7 @@ async fn handle_mcp(State(state): State<Arc<HttpState>>, request: Request<Body>)
         .handle(Request::from_parts(parts, Body::from(body)))
         .await;
     let status = response.status();
-    tracing::info!(
+    info!(
         %request_id,
         authorization_context = principal.context.as_ref(),
         %method,
@@ -565,7 +571,7 @@ fn limited_response(
         }
         HttpRequestError::PayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
     };
-    tracing::warn!(
+    warn!(
         %request_id,
         authorization_context = principal.context.as_ref(),
         method,
@@ -594,26 +600,29 @@ fn derive_signing_key(
 }
 
 fn unix_seconds() -> u64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
         .map_or(0, |duration| duration.as_secs())
 }
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        net::{IpAddr, Ipv4Addr, SocketAddr},
-        sync::Arc,
-    };
-
     use axum::{
         body::Body,
         http::{Request, StatusCode},
     };
     use jsonwebtoken::jwk::JwkSet;
+    use serde_json::from_str;
     use sora_workspace::WorkspaceService;
+    use std::{
+        collections::BTreeMap,
+        net::{IpAddr, Ipv4Addr, SocketAddr},
+        sync::Arc,
+    };
+    use tokio::sync::{Mutex, Semaphore};
     use tokio_util::sync::CancellationToken;
     use tower::ServiceExt;
+    use url::Url;
 
     use super::{
         AuthorizationPrincipal, HttpConfigError, HttpServerConfig, HttpState, OAuthAuthenticator,
@@ -626,7 +635,7 @@ mod tests {
     fn non_loopback_listener_requires_oauth() {
         let config = HttpServerConfig::new(
             SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), 8080),
-            url::Url::parse("https://sora.example.com/mcp").expect("valid URL"),
+            Url::parse("https://sora.example.com/mcp").expect("valid URL"),
         );
         assert!(matches!(
             config.validate(),
@@ -638,7 +647,7 @@ mod tests {
     fn origin_must_be_an_exact_web_origin() {
         let mut config = HttpServerConfig::new(
             SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 8080),
-            url::Url::parse("http://127.0.0.1:8080/mcp").expect("valid URL"),
+            Url::parse("http://127.0.0.1:8080/mcp").expect("valid URL"),
         );
         config.allowed_origins = vec!["https://client.example.com/path".to_owned()];
         assert!(matches!(
@@ -651,7 +660,7 @@ mod tests {
     fn local_http_configuration_is_valid() {
         let config = HttpServerConfig::new(
             SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 8080),
-            url::Url::parse("http://127.0.0.1:8080/mcp").expect("valid URL"),
+            Url::parse("http://127.0.0.1:8080/mcp").expect("valid URL"),
         );
         assert!(config.validate().is_ok());
     }
@@ -810,13 +819,13 @@ mod tests {
     async fn protected_router_advertises_metadata_and_challenges_missing_token() {
         let mut config = local_config();
         let oauth = OAuthResourceServerConfig::new(
-            url::Url::parse("https://id.example.com").expect("valid issuer"),
+            Url::parse("https://id.example.com").expect("valid issuer"),
             "http://127.0.0.1:8080/mcp",
         );
         config.oauth = Some(oauth.clone());
         let authenticator = OAuthAuthenticator::for_testing(
             oauth,
-            serde_json::from_str::<JwkSet>(r#"{"keys":[]}"#).expect("valid JWKS"),
+            from_str::<JwkSet>(r#"{"keys":[]}"#).expect("valid JWKS"),
         );
         let router = router_with_state(test_state(config, Some(Arc::new(authenticator))));
 
@@ -852,7 +861,7 @@ mod tests {
     fn local_config() -> HttpServerConfig {
         HttpServerConfig::new(
             SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 8080),
-            url::Url::parse("http://127.0.0.1:8080/mcp").expect("valid URL"),
+            Url::parse("http://127.0.0.1:8080/mcp").expect("valid URL"),
         )
     }
 
@@ -870,10 +879,10 @@ mod tests {
     ) -> Arc<HttpState> {
         Arc::new(HttpState {
             workspace: Arc::new(WorkspaceService::new()),
-            concurrency: Arc::new(tokio::sync::Semaphore::new(config.max_concurrent_requests)),
+            concurrency: Arc::new(Semaphore::new(config.max_concurrent_requests)),
             config,
             authenticator,
-            transports: tokio::sync::Mutex::new(std::collections::BTreeMap::new()),
+            transports: Mutex::new(BTreeMap::new()),
             signing_key: [7; 32],
             cancellation: CancellationToken::new(),
         })

@@ -1,24 +1,32 @@
 use std::{
     collections::BTreeMap,
+    env::temp_dir as system_temp_dir,
     fs,
     path::{Path, PathBuf},
+    process::id as process_id,
     sync::atomic::{AtomicU64, Ordering},
 };
 
-use sha2::Digest;
-use sora_data::model::{ConfigData, RowData, TableData, Value};
+use serde_json::{Value as JsonValue, json, to_vec};
+use sha2::{Digest, Sha256};
+use sora_core::pipeline::load_schema_ir;
+use sora_data::model::{ConfigData, LocalizationData, RowData, TableData, Value};
 use sora_excel::generator::ExcelTemplateGenerator;
 use sora_input_schema::input::ProjectSchemaInput;
+use sora_ir::normalize::normalize_schema;
+use sora_schema::model::ProjectSchema;
 use sora_workspace::{
     DataOperation, ProjectId, RowSelector, RuntimeOptions, WorkspaceService,
     execute_data_operations,
 };
+use toml::from_str as from_toml_str;
+use umya_spreadsheet::{reader::xlsx::read as read_xlsx, writer::xlsx::write as write_xlsx};
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 #[test]
 fn map_singleton_and_list_selectors_enforce_identity() {
-    let schema: sora_schema::model::ProjectSchema = toml::from_str(
+    let schema: ProjectSchema = from_toml_str(
         r#"
 project = { id = "selectors" }
 groups = { common = { default = true } }
@@ -57,7 +65,7 @@ type = "string"
 "#,
     )
     .unwrap();
-    let ir = sora_ir::normalize::normalize_schema(schema).unwrap();
+    let ir = normalize_schema(schema).unwrap();
     let data = ConfigData {
         tables: vec![
             table(
@@ -72,15 +80,13 @@ type = "string"
     let operations = vec![
         DataOperation::UpdateFields {
             table: "MapTable".to_owned(),
-            selector: RowSelector::Map {
-                key: serde_json::json!(1),
-            },
-            fields: BTreeMap::from([("name".to_owned(), serde_json::json!("map"))]),
+            selector: RowSelector::Map { key: json!(1) },
+            fields: BTreeMap::from([("name".to_owned(), json!("map"))]),
         },
         DataOperation::UpdateFields {
             table: "SingletonTable".to_owned(),
             selector: RowSelector::Singleton,
-            fields: BTreeMap::from([("value".to_owned(), serde_json::json!("singleton"))]),
+            fields: BTreeMap::from([("value".to_owned(), json!("singleton"))]),
         },
         DataOperation::UpdateFields {
             table: "ListTable".to_owned(),
@@ -88,17 +94,12 @@ type = "string"
                 index: 0,
                 expected_row_hash: list_hash,
             },
-            fields: BTreeMap::from([("value".to_owned(), serde_json::json!("list"))]),
+            fields: BTreeMap::from([("value".to_owned(), json!("list"))]),
         },
     ];
 
-    let execution = execute_data_operations(
-        &ir,
-        &data,
-        &sora_data::model::LocalizationData::default(),
-        &operations,
-    )
-    .unwrap();
+    let execution =
+        execute_data_operations(&ir, &data, &LocalizationData::default(), &operations).unwrap();
 
     assert_eq!(execution.data.tables[0].rows[0].values["name"], text("map"));
     assert_eq!(
@@ -133,12 +134,10 @@ fn preview_and_apply_roundtrip_every_mutable_file_format() {
                 &revision.data,
                 vec![DataOperation::UpdateFields {
                     table: "Item".to_owned(),
-                    selector: RowSelector::Map {
-                        key: serde_json::json!(1),
-                    },
+                    selector: RowSelector::Map { key: json!(1) },
                     fields: BTreeMap::from([(
                         "name".to_owned(),
-                        serde_json::json!(format!("updated-{format}")),
+                        json!(format!("updated-{format}")),
                     )]),
                 }],
             )
@@ -166,14 +165,14 @@ fn preview_and_apply_roundtrip_every_mutable_file_format() {
 fn xlsx_mutation_preserves_styles_legacy_columns_and_other_sheets() {
     let root = project("xlsx");
     let path = source_path(&root, "xlsx");
-    let mut workbook = umya_spreadsheet::reader::xlsx::read(&path).unwrap();
+    let mut workbook = read_xlsx(&path).unwrap();
     let sheet = workbook.get_sheet_by_name_mut("Item").unwrap();
     sheet.get_style_mut((3, 8)).set_background_color("FF00FF00");
     sheet.get_cell_mut((4, 3)).set_value("legacy");
     sheet.get_cell_mut((4, 8)).set_value("keep-me");
     let other = workbook.new_sheet("Notes").unwrap();
     other.get_cell_mut("A1").set_value("untouched");
-    umya_spreadsheet::writer::xlsx::write(&workbook, &path).unwrap();
+    write_xlsx(&workbook, &path).unwrap();
     let before_style = workbook
         .get_sheet_by_name("Item")
         .unwrap()
@@ -197,10 +196,8 @@ fn xlsx_mutation_preserves_styles_legacy_columns_and_other_sheets() {
             &revision.data,
             vec![DataOperation::UpdateFields {
                 table: "Item".to_owned(),
-                selector: RowSelector::Map {
-                    key: serde_json::json!(1),
-                },
-                fields: BTreeMap::from([("name".to_owned(), serde_json::json!("updated"))]),
+                selector: RowSelector::Map { key: json!(1) },
+                fields: BTreeMap::from([("name".to_owned(), json!("updated"))]),
             }],
         )
         .unwrap();
@@ -208,7 +205,7 @@ fn xlsx_mutation_preserves_styles_legacy_columns_and_other_sheets() {
         .apply_data_mutation(&id, "test", &plan.plan_id, "xlsx-preserve")
         .unwrap();
 
-    let workbook = umya_spreadsheet::reader::xlsx::read(&path).unwrap();
+    let workbook = read_xlsx(&path).unwrap();
     assert_eq!(
         workbook
             .get_sheet_by_name("Item")
@@ -353,16 +350,12 @@ name = "string"
             vec![
                 DataOperation::UpdateFields {
                     table: "Item".to_owned(),
-                    selector: RowSelector::Map {
-                        key: serde_json::json!(1),
-                    },
-                    fields: BTreeMap::from([("name".to_owned(), serde_json::json!("updated"))]),
+                    selector: RowSelector::Map { key: json!(1) },
+                    fields: BTreeMap::from([("name".to_owned(), json!("updated"))]),
                 },
                 DataOperation::DeleteRow {
                     table: "Item".to_owned(),
-                    selector: RowSelector::Map {
-                        key: serde_json::json!(2),
-                    },
+                    selector: RowSelector::Map { key: json!(2) },
                 },
             ],
         )
@@ -432,10 +425,7 @@ name = "string"
         .unwrap(),
         "csv" => fs::write(root.join("data/items.csv"), "id,name\n1,old\n").unwrap(),
         "xlsx" => {
-            let ir = sora_core::pipeline::load_schema_ir(&ProjectSchemaInput::new(
-                root.join("project.toml"),
-            ))
-            .unwrap();
+            let ir = load_schema_ir(&ProjectSchemaInput::new(root.join("project.toml"))).unwrap();
             ExcelTemplateGenerator
                 .generate_with_rows(&ir, &root.join("data"), |_| {
                     vec![vec!["1".to_owned(), "old".to_owned()]]
@@ -478,13 +468,13 @@ fn row_hash(row: &RowData) -> String {
         .iter()
         .map(|(key, value)| {
             let value = match value {
-                Value::String(value) => serde_json::Value::String(value.clone()),
+                Value::String(value) => JsonValue::String(value.clone()),
                 _ => unreachable!(),
             };
             (key.clone(), value)
         })
         .collect::<BTreeMap<_, _>>();
-    let digest = sha2::Sha256::digest(serde_json::to_vec(&natural).unwrap());
+    let digest = Sha256::digest(to_vec(&natural).unwrap());
     format!(
         "row:{}",
         digest
@@ -496,8 +486,8 @@ fn row_hash(row: &RowData) -> String {
 
 fn temp_dir(label: &str) -> PathBuf {
     let nonce = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    std::env::temp_dir().join(format!(
+    system_temp_dir().join(format!(
         "sora-data-mutation-{label}-{}-{nonce}",
-        std::process::id()
+        process_id()
     ))
 }

@@ -1,4 +1,5 @@
 use serde::Serialize;
+use serde_json::to_string_pretty;
 use sora_data::model::TableData;
 use sora_diagnostics::{Result, SoraError};
 
@@ -38,8 +39,8 @@ impl DataExporter for DebugJsonExporter {
                 }
             }
             create_parent_dir(&file_path)?;
-            let content = serde_json::to_string_pretty(&DebugTableView { table })
-                .map_err(SoraError::SerializeData)?;
+            let content =
+                to_string_pretty(&DebugTableView { table }).map_err(SoraError::SerializeData)?;
             write_file(file_path, content)?;
         }
 
@@ -57,8 +58,10 @@ mod tests {
     use super::*;
     use crate::exporter::ExportOutput;
     use sora_data::model::{ConfigData, RowData, TableData, Value};
+    use sora_execution::ExecutionContext;
     use sora_ir::{model::ConfigIr, normalize::normalize_schema};
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir as system_temp_dir;
     use std::{
         collections::BTreeMap,
         fs,
@@ -66,6 +69,7 @@ mod tests {
         sync::atomic::{AtomicUsize, Ordering},
         time::{SystemTime, UNIX_EPOCH},
     };
+    use toml::from_str;
 
     #[test]
     fn debug_json_exporter_writes_table_file() {
@@ -78,7 +82,7 @@ mod tests {
                 ir: &ir,
                 data: &data,
                 locale_catalog: None,
-                execution: &sora_execution::ExecutionContext::default(),
+                execution: &ExecutionContext::default(),
                 options: Default::default(),
                 output: ExportOutput::Directory(out_dir.clone()),
             })
@@ -103,7 +107,7 @@ mod tests {
                 ir: &ir,
                 data: &data,
                 locale_catalog: None,
-                execution: &sora_execution::ExecutionContext::default(),
+                execution: &ExecutionContext::default(),
                 options: Default::default(),
                 output: ExportOutput::Directory(out_dir.clone()),
             })
@@ -114,7 +118,7 @@ mod tests {
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -156,6 +160,6 @@ type = "i32"
             .unwrap()
             .as_nanos();
         let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-export-debug-json-test-{unique}-{id}"))
+        system_temp_dir().join(format!("sora-export-debug-json-test-{unique}-{id}"))
     }
 }

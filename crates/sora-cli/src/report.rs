@@ -1,14 +1,15 @@
 use std::fmt;
 
+use anyhow::Error as AnyhowError;
 use sora_diagnostics::SoraError;
 use sora_workspace::diagnostics_from_anyhow;
 
 pub struct ErrorReport<'a> {
-    error: &'a anyhow::Error,
+    error: &'a AnyhowError,
 }
 
 impl<'a> ErrorReport<'a> {
-    pub fn new(error: &'a anyhow::Error) -> Self {
+    pub fn new(error: &'a AnyhowError) -> Self {
         Self { error }
     }
 }
@@ -81,7 +82,7 @@ impl fmt::Display for ErrorReport<'_> {
 
 #[cfg(test)]
 mod tests {
-    use anyhow::Context;
+    use anyhow::{Context, anyhow};
 
     use super::*;
 
@@ -103,7 +104,7 @@ mod tests {
 
     #[test]
     fn prints_plain_anyhow_error() {
-        let error = anyhow::anyhow!("bad argument");
+        let error = anyhow!("bad argument");
 
         assert_eq!(
             ErrorReport::new(&error).to_string(),
@@ -123,7 +124,7 @@ mod tests {
                 key: "1001".to_owned(),
             },
         ]);
-        let error = anyhow::Error::new(error).context("failed to validate data");
+        let error = AnyhowError::new(error).context("failed to validate data");
 
         let report = ErrorReport::new(&error).to_string();
 

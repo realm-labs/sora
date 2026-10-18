@@ -1,13 +1,16 @@
 use std::{
     collections::BTreeMap,
+    env::temp_dir as system_temp_dir,
     fs,
     path::{Path, PathBuf},
+    process::id as process_id,
     sync::atomic::{AtomicU64, Ordering},
 };
 
+use serde_json::{Value, json};
 use sora_workspace::{
-    BuildRequest, DataOperation, ProjectId, ProjectSession, RowSelector, RuntimeOptions,
-    TableQuery, WorkspaceService, build_project,
+    BuildRequest, DataOperation, ProjectId, ProjectRuntime, ProjectSession, RowSelector,
+    RuntimeOptions, TableQuery, WorkspaceService, build_project,
 };
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -41,13 +44,10 @@ fn project_loader_reads_multiple_files_in_stable_order_and_returns_nested_values
         .unwrap_or_else(|error| panic!("{error:#}; root={:?}", error.root_cause()));
 
     assert_eq!(report.rows.len(), 2);
-    assert_eq!(report.rows[0].values["name"], serde_json::json!("a"));
-    assert_eq!(report.rows[0].values["tags"], serde_json::json!(["x", "y"]));
-    assert_eq!(
-        report.rows[0].values["props"],
-        serde_json::json!({"rank": 1})
-    );
-    assert_eq!(report.rows[1].values["name"], serde_json::json!("z"));
+    assert_eq!(report.rows[0].values["name"], json!("a"));
+    assert_eq!(report.rows[0].values["tags"], json!(["x", "y"]));
+    assert_eq!(report.rows[0].values["props"], json!({"rank": 1}));
+    assert_eq!(report.rows[1].values["name"], json!("z"));
 
     let build = build_project(
         BuildRequest {
@@ -124,7 +124,7 @@ return { source_loaders = { custom_format = {
             ..TableQuery::default()
         })
         .unwrap();
-    assert_eq!(report.rows[0].values["name"], serde_json::json!("inferred"));
+    assert_eq!(report.rows[0].values["name"], json!("inferred"));
     let _ = fs::remove_dir_all(root);
 }
 
@@ -187,16 +187,10 @@ explicit_null = "optional<string>""#,
         })
         .unwrap();
     let row = &report.rows[0].values;
-    assert_eq!(row["null_field"], serde_json::Value::Null);
-    assert_eq!(
-        row["nullable_values"],
-        serde_json::json!(["first", null, "third"])
-    );
-    assert_eq!(
-        row["palette"],
-        serde_json::json!([[".", null], ["G", "terrain.grass"]])
-    );
-    assert_eq!(row["explicit_null"], serde_json::Value::Null);
+    assert_eq!(row["null_field"], Value::Null);
+    assert_eq!(row["nullable_values"], json!(["first", null, "third"]));
+    assert_eq!(row["palette"], json!([[".", null], ["G", "terrain.grass"]]));
+    assert_eq!(row["explicit_null"], Value::Null);
     let _ = fs::remove_dir_all(root);
 }
 
@@ -232,7 +226,7 @@ fn source_loader_cannot_override_builtin_or_duplicate_a_format() {
 return { source_loaders = { json = { load = function() return { rows = {} } end } } }
 "#,
     );
-    let error = match sora_workspace::ProjectRuntime::load(
+    let error = match ProjectRuntime::load(
         Some(&builtin.join("project.toml")),
         RuntimeOptions::default(),
     ) {
@@ -249,7 +243,7 @@ return { source_loaders = { custom_format = {
 } } }
 "#,
     );
-    let error = match sora_workspace::ProjectRuntime::load(
+    let error = match ProjectRuntime::load(
         Some(&builtin_extension.join("project.toml")),
         RuntimeOptions::default(),
     ) {
@@ -270,10 +264,7 @@ return { source_loaders = { custom_format = {
         "scripts = [\"tools/source_loaders.lua\", \"tools/duplicate.lua\"]",
     );
     fs::write(&project_path, manifest).unwrap();
-    let error = match sora_workspace::ProjectRuntime::load(
-        Some(&project_path),
-        RuntimeOptions::default(),
-    ) {
+    let error = match ProjectRuntime::load(Some(&project_path), RuntimeOptions::default()) {
         Ok(_) => panic!("duplicate loader format must fail"),
         Err(error) => error,
     };
@@ -426,7 +417,7 @@ return { source_loaders = { custom_format = {
     assert!(error.contains("instruction budget exceeded"));
 
     let cancelled = project(loader_script());
-    let runtime = sora_workspace::ProjectRuntime::load(
+    let runtime = ProjectRuntime::load(
         Some(&cancelled.join("project.toml")),
         RuntimeOptions::default(),
     )
@@ -479,10 +470,8 @@ fn loader_script_and_input_changes_affect_revision_and_custom_sources_are_read_o
             &first.data,
             vec![DataOperation::UpdateFields {
                 table: "Item".to_owned(),
-                selector: RowSelector::Map {
-                    key: serde_json::json!(1),
-                },
-                fields: BTreeMap::from([("name".to_owned(), serde_json::json!("changed"))]),
+                selector: RowSelector::Map { key: json!(1) },
+                fields: BTreeMap::from([("name".to_owned(), json!("changed"))]),
             }],
         )
         .unwrap_err();
@@ -629,8 +618,5 @@ fn write_json(path: &Path, content: &str) {
 
 fn temp_dir() -> PathBuf {
     let nonce = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    std::env::temp_dir().join(format!(
-        "sora-lua-source-loader-{}-{nonce}",
-        std::process::id()
-    ))
+    system_temp_dir().join(format!("sora-lua-source-loader-{}-{nonce}", process_id()))
 }

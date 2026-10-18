@@ -1,5 +1,8 @@
 use rmcp::{
+    RoleServer,
     handler::server::wrapper::{Json, Parameters},
+    model::{CallToolResult, ProgressNotificationParam},
+    service::RequestContext,
     tool, tool_router,
 };
 use schemars::JsonSchema;
@@ -7,6 +10,11 @@ use serde::Deserialize;
 use sora_workspace::{
     ExcelSyncApplyReport, ExcelSyncControl, ExcelSyncPhase, ExcelSyncPlan, ExcelSyncPlanError,
     ProjectId,
+};
+use tokio::{
+    spawn,
+    sync::mpsc::unbounded_channel,
+    task::{JoinError, spawn_blocking},
 };
 
 use crate::{
@@ -31,8 +39,8 @@ impl SoraMcpServer {
     async fn excel_sync_preview(
         &self,
         Parameters(input): Parameters<ExcelSyncPreviewInput>,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<Json<ToolEnvelope<ExcelSyncPlan>>, rmcp::model::CallToolResult> {
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<ToolEnvelope<ExcelSyncPlan>>, CallToolResult> {
         let id = ProjectId::new(input.project_id).map_err(|error| {
             tool_error(ToolEnvelope::<ExcelSyncPlan>::failure(
                 None,
@@ -96,8 +104,8 @@ impl SoraMcpServer {
     async fn excel_sync_apply(
         &self,
         Parameters(input): Parameters<ExcelSyncApplyInput>,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<Json<ToolEnvelope<ExcelSyncApplyReport>>, rmcp::model::CallToolResult> {
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<ToolEnvelope<ExcelSyncApplyReport>>, CallToolResult> {
         let id = ProjectId::new(input.project_id).map_err(|error| {
             tool_error(ToolEnvelope::<ExcelSyncApplyReport>::failure(
                 None,
@@ -150,18 +158,18 @@ impl SoraMcpServer {
 }
 
 async fn run_excel_worker<T, F>(
-    context: &rmcp::service::RequestContext<rmcp::RoleServer>,
+    context: &RequestContext<RoleServer>,
     worker: F,
-) -> Result<Result<T, ExcelSyncPlanError>, tokio::task::JoinError>
+) -> Result<Result<T, ExcelSyncPlanError>, JoinError>
 where
     T: Send + 'static,
     F: FnOnce(ExcelSyncControl) -> Result<T, ExcelSyncPlanError> + Send + 'static,
 {
-    let (progress_tx, mut progress_rx) = tokio::sync::mpsc::unbounded_channel();
+    let (progress_tx, mut progress_rx) = unbounded_channel();
     let cancellation = ExcelSyncControl::default();
     let cancel_from_request = cancellation.clone();
     let request_cancellation = context.ct.clone();
-    let cancellation_task = tokio::spawn(async move {
+    let cancellation_task = spawn(async move {
         request_cancellation.cancelled().await;
         cancel_from_request.cancel();
     });
@@ -170,23 +178,20 @@ where
     });
     let progress_token = context.meta.get_progress_token();
     let progress_peer = context.peer.clone();
-    let progress_task = tokio::spawn(async move {
+    let progress_task = spawn(async move {
         while let Some(progress) = progress_rx.recv().await {
             if let Some(token) = progress_token.clone() {
                 let _ = progress_peer
                     .notify_progress(
-                        rmcp::model::ProgressNotificationParam::new(
-                            token,
-                            progress.completed as f64,
-                        )
-                        .with_total(progress.total as f64)
-                        .with_message(excel_phase_name(progress.phase)),
+                        ProgressNotificationParam::new(token, progress.completed as f64)
+                            .with_total(progress.total as f64)
+                            .with_message(excel_phase_name(progress.phase)),
                     )
                     .await;
             }
         }
     });
-    let result = tokio::task::spawn_blocking(move || worker(control)).await;
+    let result = spawn_blocking(move || worker(control)).await;
     cancellation_task.abort();
     let _ = progress_task.await;
     if matches!(&result, Ok(Err(ExcelSyncPlanError::OperationCancelled)))

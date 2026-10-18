@@ -761,10 +761,13 @@ mod tests {
     use crate::options::{GodotCodegenOptions, RuntimeFormat};
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir;
+    use std::fs::{read_to_string, remove_dir_all};
+    use toml::from_str;
 
     #[test]
     fn generates_godot_json_runtime_files() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -828,8 +831,8 @@ fields = ["item_type"]
         )
         .unwrap();
         let ir = normalize_schema(schema).unwrap();
-        let out = std::env::temp_dir().join("sora-codegen-godot-test");
-        let _ = std::fs::remove_dir_all(&out);
+        let out = temp_dir().join("sora-codegen-godot-test");
+        let _ = remove_dir_all(&out);
 
         GodotCodeGenerator
             .generate_with_options(
@@ -849,10 +852,10 @@ fields = ["item_type"]
         assert!(out.join("reward_action.gd").exists());
         assert!(out.join("reward_action_add_item.gd").exists());
         assert!(out.join("reward_action_codec.gd").exists());
-        let item = std::fs::read_to_string(out.join("item.gd")).unwrap();
-        let config = std::fs::read_to_string(out.join("sora_config.gd")).unwrap();
-        let runtime = std::fs::read_to_string(out.join("sora_runtime.gd")).unwrap();
-        let union_codec = std::fs::read_to_string(out.join("reward_action_codec.gd")).unwrap();
+        let item = read_to_string(out.join("item.gd")).unwrap();
+        let config = read_to_string(out.join("sora_config.gd")).unwrap();
+        let runtime = read_to_string(out.join("sora_runtime.gd")).unwrap();
+        let union_codec = read_to_string(out.join("reward_action_codec.gd")).unwrap();
         assert!(item.contains("class ItemTable"));
         assert!(item.contains("func get_row(key_value: int) -> Item"));
         assert!(item.contains("func find_by_item_type(item_type: String) -> Array[Item]"));
@@ -868,8 +871,8 @@ fields = ["item_type"]
         assert!(union_codec.contains("var out := RewardActionAddItem.new()"));
         assert!(union_codec.contains("return out"));
 
-        let out_44 = std::env::temp_dir().join("sora-codegen-godot-44-test");
-        let _ = std::fs::remove_dir_all(&out_44);
+        let out_44 = temp_dir().join("sora-codegen-godot-44-test");
+        let _ = remove_dir_all(&out_44);
         GodotCodeGenerator
             .generate_with_options(
                 &ir,
@@ -880,8 +883,8 @@ fields = ["item_type"]
                 &out_44,
             )
             .unwrap();
-        let item_44 = std::fs::read_to_string(out_44.join("item.gd")).unwrap();
-        let config_44 = std::fs::read_to_string(out_44.join("sora_config.gd")).unwrap();
+        let item_44 = read_to_string(out_44.join("item.gd")).unwrap();
+        let config_44 = read_to_string(out_44.join("sora_config.gd")).unwrap();
         assert!(item_44.contains("var attributes: Dictionary[String, int] = {}"));
         assert!(item_44.contains("var _rows: Dictionary[int, Item] = {}"));
         assert!(item_44.contains("var _item_type: Dictionary[String, Array] = {}"));
@@ -889,8 +892,8 @@ fields = ["item_type"]
             config_44.contains("var _tables: Dictionary[String, SoraRuntime.SoraConfigTable] = {}")
         );
 
-        let _ = std::fs::remove_dir_all(out);
-        let _ = std::fs::remove_dir_all(out_44);
+        let _ = remove_dir_all(out);
+        let _ = remove_dir_all(out_44);
     }
 
     #[test]
@@ -904,7 +907,7 @@ fields = ["item_type"]
 
     #[test]
     fn generates_namespaced_godot_files_with_globally_unique_classes() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -934,20 +937,20 @@ type = "struct<common.Reward>"
         )
         .unwrap();
         let ir = normalize_schema(schema).unwrap();
-        let out = std::env::temp_dir().join("sora-codegen-godot-namespace-test");
-        let _ = std::fs::remove_dir_all(&out);
+        let out = temp_dir().join("sora-codegen-godot-namespace-test");
+        let _ = remove_dir_all(&out);
 
         GodotCodeGenerator
             .generate_with_options(&ir, GodotCodegenOptions::default(), &out)
             .unwrap();
 
-        let reward = std::fs::read_to_string(out.join("common/reward.gd")).unwrap();
-        let item = std::fs::read_to_string(out.join("items/item.gd")).unwrap();
-        let config = std::fs::read_to_string(out.join("sora_config.gd")).unwrap();
+        let reward = read_to_string(out.join("common/reward.gd")).unwrap();
+        let item = read_to_string(out.join("items/item.gd")).unwrap();
+        let config = read_to_string(out.join("sora_config.gd")).unwrap();
         assert!(reward.contains("class_name CommonReward"));
         assert!(item.contains("class_name ItemsItem"));
         assert!(item.contains("var reward: CommonReward"));
         assert!(config.contains("func items_item()"));
-        let _ = std::fs::remove_dir_all(out);
+        let _ = remove_dir_all(out);
     }
 }

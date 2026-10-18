@@ -1,13 +1,19 @@
 use rmcp::{
+    RoleServer, elicit_safe,
     handler::server::wrapper::{Json, Parameters},
+    model::CallToolResult,
+    service::{ElicitationMode, Peer, RequestContext},
     tool, tool_router,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_json::to_string_pretty;
 use sora_workspace::{
-    ProjectCandidate, ProjectId, ProjectInitApplyReport, ProjectInitPlan, ProjectInspection,
-    RuntimeOptions,
+    DiscoveredProjectInspection, ProjectCandidate, ProjectId, ProjectInitApplyReport,
+    ProjectInitPlan, ProjectInspection, RuntimeOptions,
 };
+use tokio::task::spawn_blocking;
+use tracing::info;
 
 use crate::{
     SoraMcpServer,
@@ -29,9 +35,9 @@ impl SoraMcpServer {
     async fn project_list(
         &self,
         Parameters(_input): Parameters<ProjectListInput>,
-    ) -> Result<Json<ToolEnvelope<ProjectListOutput>>, rmcp::model::CallToolResult> {
+    ) -> Result<Json<ToolEnvelope<ProjectListOutput>>, CallToolResult> {
         let workspace = self.workspace.clone();
-        match tokio::task::spawn_blocking(move || workspace.discover_projects()).await {
+        match spawn_blocking(move || workspace.discover_projects()).await {
             Ok(Ok(projects)) => {
                 let count = projects.len();
                 Ok(Json(ToolEnvelope::success(
@@ -69,14 +75,14 @@ impl SoraMcpServer {
     async fn project_open(
         &self,
         Parameters(input): Parameters<ProjectOpenInput>,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<Json<ToolEnvelope<ProjectOpenOutput>>, rmcp::model::CallToolResult> {
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<ToolEnvelope<ProjectOpenOutput>>, CallToolResult> {
         let (root_id, relative_manifest) =
             self.resolve_project_selection(input, &context.peer).await?;
         let workspace = self.workspace.clone();
         let inspect_root = root_id.clone();
         let inspect_manifest = relative_manifest.clone();
-        let inspection = tokio::task::spawn_blocking(move || {
+        let inspection = spawn_blocking(move || {
             workspace.inspect_discovered_project(&inspect_root, &inspect_manifest)
         })
         .await
@@ -89,7 +95,7 @@ impl SoraMcpServer {
                 .await?;
             self.remember_script_trust(trust_key)?;
             for script in &inspection.scripts {
-                tracing::info!(
+                info!(
                     audit_event = "project_script_trust",
                     authorization_context = self.authorization_context.as_ref(),
                     project = inspection.schema_id,
@@ -103,7 +109,7 @@ impl SoraMcpServer {
         let workspace = self.workspace.clone();
         let open_root = root_id.clone();
         let open_manifest = relative_manifest.clone();
-        let opened = tokio::task::spawn_blocking(move || {
+        let opened = spawn_blocking(move || {
             workspace.open_discovered_project(
                 &open_root,
                 &open_manifest,
@@ -116,7 +122,7 @@ impl SoraMcpServer {
         match opened {
             Ok(session) => {
                 let inspected_session = session.clone();
-                match tokio::task::spawn_blocking(move || inspected_session.inspect()).await {
+                match spawn_blocking(move || inspected_session.inspect()).await {
                     Ok(Ok(project)) => Ok(Json(ToolEnvelope::success(
                         Some(session.id().clone()),
                         Some(session.revision()),
@@ -140,8 +146,8 @@ impl SoraMcpServer {
     async fn resolve_project_selection(
         &self,
         input: ProjectOpenInput,
-        peer: &rmcp::service::Peer<rmcp::RoleServer>,
-    ) -> Result<(String, String), rmcp::model::CallToolResult> {
+        peer: &Peer<RoleServer>,
+    ) -> Result<(String, String), CallToolResult> {
         if let (Some(root_id), Some(relative_manifest)) =
             (input.root_id.clone(), input.relative_manifest.clone())
         {
@@ -149,7 +155,7 @@ impl SoraMcpServer {
         }
         if !peer
             .supported_elicitation_modes()
-            .contains(&rmcp::service::ElicitationMode::Form)
+            .contains(&ElicitationMode::Form)
         {
             return Err(project_open_error(
                 "project selection is incomplete",
@@ -157,7 +163,7 @@ impl SoraMcpServer {
             ));
         }
         let workspace = self.workspace.clone();
-        let candidates = tokio::task::spawn_blocking(move || workspace.discover_projects())
+        let candidates = spawn_blocking(move || workspace.discover_projects())
             .await
             .map_err(|error| project_open_error("project discovery worker failed", error))?
             .map_err(|error| project_open_error("failed to discover Sora projects", error))?;
@@ -167,7 +173,7 @@ impl SoraMcpServer {
                 "add an allowed root or start the server with `--project`",
             ));
         }
-        let candidates = serde_json::to_string_pretty(&candidates)
+        let candidates = to_string_pretty(&candidates)
             .map_err(|error| project_open_error("failed to describe project choices", error))?;
         let response = peer
             .elicit::<ProjectSelection>(format!(
@@ -187,19 +193,19 @@ impl SoraMcpServer {
 
     async fn request_project_script_trust(
         &self,
-        inspection: &sora_workspace::DiscoveredProjectInspection,
-        peer: &rmcp::service::Peer<rmcp::RoleServer>,
-    ) -> Result<(), rmcp::model::CallToolResult> {
+        inspection: &DiscoveredProjectInspection,
+        peer: &Peer<RoleServer>,
+    ) -> Result<(), CallToolResult> {
         if !peer
             .supported_elicitation_modes()
-            .contains(&rmcp::service::ElicitationMode::Form)
+            .contains(&ElicitationMode::Form)
         {
             return Err(project_open_error(
                 "project scripts require explicit trust",
                 "restart `sora mcp` with `--project ... --trust-project-scripts`, or use a client that supports form elicitation",
             ));
         }
-        let scripts = serde_json::to_string_pretty(&inspection.scripts)
+        let scripts = to_string_pretty(&inspection.scripts)
             .map_err(|error| project_open_error("failed to describe project scripts", error))?;
         let decision = peer
             .elicit::<ProjectTrustDecision>(format!(
@@ -231,7 +237,7 @@ impl SoraMcpServer {
             .is_ok_and(|trusted| trusted.contains(trust_key))
     }
 
-    fn remember_script_trust(&self, trust_key: String) -> Result<(), rmcp::model::CallToolResult> {
+    fn remember_script_trust(&self, trust_key: String) -> Result<(), CallToolResult> {
         self.trusted_project_scripts
             .write()
             .map_err(|_| {
@@ -257,7 +263,7 @@ impl SoraMcpServer {
     async fn project_inspect(
         &self,
         Parameters(input): Parameters<ProjectInput>,
-    ) -> Result<Json<ToolEnvelope<ProjectInspectOutput>>, rmcp::model::CallToolResult> {
+    ) -> Result<Json<ToolEnvelope<ProjectInspectOutput>>, CallToolResult> {
         let id = ProjectId::new(input.project_id).map_err(|error| {
             tool_error(ToolEnvelope::<ProjectInspectOutput>::failure(
                 None,
@@ -269,7 +275,7 @@ impl SoraMcpServer {
         match self.workspace.project(&id) {
             Ok(session) => {
                 let revision = session.revision();
-                match tokio::task::spawn_blocking(move || session.inspect()).await {
+                match spawn_blocking(move || session.inspect()).await {
                     Ok(Ok(project)) => Ok(Json(ToolEnvelope::success(
                         Some(id),
                         Some(revision),
@@ -314,10 +320,10 @@ impl SoraMcpServer {
     async fn project_init(
         &self,
         Parameters(input): Parameters<ProjectInitInput>,
-    ) -> Result<Json<ToolEnvelope<ProjectInitPlan>>, rmcp::model::CallToolResult> {
+    ) -> Result<Json<ToolEnvelope<ProjectInitPlan>>, CallToolResult> {
         let workspace = self.workspace.clone();
         let owner = self.authorization_context.clone();
-        match tokio::task::spawn_blocking(move || {
+        match spawn_blocking(move || {
             workspace.preview_project_init(
                 &owner,
                 &input.root_id,
@@ -361,11 +367,11 @@ impl SoraMcpServer {
     async fn project_init_apply(
         &self,
         Parameters(input): Parameters<ProjectInitApplyInput>,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<Json<ToolEnvelope<ProjectInitApplyReport>>, rmcp::model::CallToolResult> {
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<ToolEnvelope<ProjectInitApplyReport>>, CallToolResult> {
         let workspace = self.workspace.clone();
         let owner = self.authorization_context.clone();
-        match tokio::task::spawn_blocking(move || {
+        match spawn_blocking(move || {
             workspace.apply_project_init(&owner, &input.plan_id, &input.idempotency_key)
         })
         .await
@@ -458,12 +464,9 @@ struct ProjectTrustDecision {
     trust_project_scripts: bool,
 }
 
-rmcp::elicit_safe!(ProjectSelection, ProjectTrustDecision);
+elicit_safe!(ProjectSelection, ProjectTrustDecision);
 
-fn project_open_error(
-    summary: impl Into<String>,
-    error: impl ToString,
-) -> rmcp::model::CallToolResult {
+fn project_open_error(summary: impl Into<String>, error: impl ToString) -> CallToolResult {
     tool_error(ToolEnvelope::<ProjectOpenOutput>::failure(
         None, None, summary, error,
     ))
@@ -472,7 +475,7 @@ fn project_open_error(
 fn project_script_trust_key(
     root_id: &str,
     relative_manifest: &str,
-    inspection: &sora_workspace::DiscoveredProjectInspection,
+    inspection: &DiscoveredProjectInspection,
 ) -> String {
     let scripts = inspection
         .scripts

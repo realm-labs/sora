@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use serde_json::Value as JsonValue;
 use sora_diagnostics::{Result, SoraError};
 
 use crate::{
@@ -81,7 +82,7 @@ pub fn view_binding<'a>(
     ir: &'a ConfigIr,
     view_name: &str,
     target: &str,
-) -> Result<Option<&'a serde_json::Value>> {
+) -> Result<Option<&'a JsonValue>> {
     let view = ir
         .views
         .get(view_name)

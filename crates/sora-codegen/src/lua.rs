@@ -674,10 +674,13 @@ mod tests {
     use crate::options::{LuaCodegenOptions, LuaEnumRepr, LuaVersion, RuntimeFormat};
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir as system_temp_dir;
+    use std::fs::{read_to_string, remove_dir_all};
     use std::{
         path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
     };
+    use toml::from_str;
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -697,11 +700,11 @@ mod tests {
             )
             .unwrap();
 
-        let item = std::fs::read_to_string(base.join("item.lua")).unwrap();
-        let item_type = std::fs::read_to_string(base.join("item_type.lua")).unwrap();
-        let action = std::fs::read_to_string(base.join("action.lua")).unwrap();
-        let runtime = std::fs::read_to_string(base.join("sora_runtime.lua")).unwrap();
-        let config = std::fs::read_to_string(base.join("sora_config.lua")).unwrap();
+        let item = read_to_string(base.join("item.lua")).unwrap();
+        let item_type = read_to_string(base.join("item_type.lua")).unwrap();
+        let action = read_to_string(base.join("action.lua")).unwrap();
+        let runtime = read_to_string(base.join("sora_runtime.lua")).unwrap();
+        let config = read_to_string(base.join("sora_config.lua")).unwrap();
 
         assert!(item.contains("---@class Item"));
         assert!(item.ends_with('\n'));
@@ -728,7 +731,7 @@ mod tests {
         assert!(config.contains("function SoraConfig:item()"));
         assert!(config.ends_with('\n'));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -747,12 +750,12 @@ mod tests {
             )
             .unwrap();
 
-        let item = std::fs::read_to_string(base.join("item.lua")).unwrap();
+        let item = read_to_string(base.join("item.lua")).unwrap();
 
         assert!(item.contains("---@field large_id number"));
         assert!(item.contains("large_id = reader:read_i64()"));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -771,13 +774,13 @@ mod tests {
             )
             .unwrap();
 
-        let item_type = std::fs::read_to_string(base.join("item_type.lua")).unwrap();
+        let item_type = read_to_string(base.join("item_type.lua")).unwrap();
 
         assert!(item_type.contains("---| integer"));
         assert!(item_type.contains("Weapon = 0"));
         assert!(item_type.contains("return id"));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -796,13 +799,13 @@ mod tests {
             )
             .unwrap();
 
-        let runtime = std::fs::read_to_string(base.join("sora_runtime.lua")).unwrap();
+        let runtime = read_to_string(base.join("sora_runtime.lua")).unwrap();
         assert!(!runtime.contains("string.unpack"));
         assert!(runtime.contains("function read_f32_at(bytes, offset)"));
         assert!(runtime.contains("function read_i64_at(bytes, offset)"));
         assert!(runtime.contains("safe integer range"));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -830,11 +833,11 @@ mod tests {
                 )
                 .unwrap();
 
-            let item = std::fs::read_to_string(base.join("item.lua")).unwrap();
-            let item_type = std::fs::read_to_string(base.join("item_type.lua")).unwrap();
-            let action = std::fs::read_to_string(base.join("action.lua")).unwrap();
-            let runtime = std::fs::read_to_string(base.join("sora_runtime.lua")).unwrap();
-            let config = std::fs::read_to_string(base.join("sora_config.lua")).unwrap();
+            let item = read_to_string(base.join("item.lua")).unwrap();
+            let item_type = read_to_string(base.join("item_type.lua")).unwrap();
+            let action = read_to_string(base.join("action.lua")).unwrap();
+            let runtime = read_to_string(base.join("sora_runtime.lua")).unwrap();
+            let config = read_to_string(base.join("sora_config.lua")).unwrap();
 
             assert!(runtime.contains(&format!(
                 "function Runtime.{parse_function}(bytes, options)"
@@ -849,12 +852,12 @@ mod tests {
             assert!(item_type.contains("function ItemType.decode_value(value)"));
             assert!(action.contains("function Action.decode_value(value)"));
 
-            let _ = std::fs::remove_dir_all(base);
+            let _ = remove_dir_all(base);
         }
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -917,6 +920,6 @@ fields = ["item_type"]
 
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-lua-codegen-test-{unique}"))
+        system_temp_dir().join(format!("sora-lua-codegen-test-{unique}"))
     }
 }

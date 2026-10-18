@@ -1,4 +1,12 @@
-use std::path::{Path, PathBuf};
+use std::{
+    fmt::{Display, Formatter, Result as FmtResult},
+    io::Error as IoError,
+    path::{Path, PathBuf},
+    result::Result as StdResult,
+};
+
+use serde_json::Error as JsonError;
+use thiserror::Error;
 
 /// Structured source position for data parsing failures.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -15,8 +23,8 @@ pub enum DataLocation {
     },
 }
 
-impl std::fmt::Display for DataLocation {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for DataLocation {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match self {
             Self::SchemaDefault => formatter.write_str("schema default"),
             Self::Csv { row, column } => write!(formatter, "CSV row {row}, column {column}"),
@@ -27,25 +35,16 @@ impl std::fmt::Display for DataLocation {
     }
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Error)]
 pub enum SoraError {
     #[error("failed to read file `{path}`: {source}")]
-    ReadFile {
-        path: PathBuf,
-        source: std::io::Error,
-    },
+    ReadFile { path: PathBuf, source: IoError },
 
     #[error("failed to write file `{path}`: {source}")]
-    WriteFile {
-        path: PathBuf,
-        source: std::io::Error,
-    },
+    WriteFile { path: PathBuf, source: IoError },
 
     #[error("failed to create directory `{path}`: {source}")]
-    CreateDir {
-        path: PathBuf,
-        source: std::io::Error,
-    },
+    CreateDir { path: PathBuf, source: IoError },
 
     #[error("failed to parse schema `{path}`: {message}")]
     ParseSchema { path: PathBuf, message: String },
@@ -62,7 +61,7 @@ pub enum SoraError {
     },
 
     #[error("failed to serialize data: {0}")]
-    SerializeData(serde_json::Error),
+    SerializeData(JsonError),
 
     #[error("failed to serialize data as {format}: {message}")]
     SerializeDataFormat {
@@ -255,7 +254,7 @@ pub enum SoraError {
     },
 }
 
-pub type Result<T> = std::result::Result<T, SoraError>;
+pub type Result<T> = StdResult<T, SoraError>;
 
 impl SoraError {
     pub fn validation_errors(errors: Vec<SoraError>) -> Self {
@@ -332,6 +331,8 @@ impl SoraError {
 
 #[cfg(test)]
 mod tests {
+    use std::mem::size_of;
+
     use super::*;
 
     #[test]
@@ -353,6 +354,6 @@ mod tests {
 
     #[test]
     fn stays_below_clippys_large_error_threshold() {
-        assert!(std::mem::size_of::<SoraError>() < 128);
+        assert!(size_of::<SoraError>() < 128);
     }
 }

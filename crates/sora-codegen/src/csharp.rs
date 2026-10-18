@@ -776,10 +776,13 @@ mod namespace_tests {
     use super::*;
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir;
+    use std::fs::{read_to_string, remove_dir_all};
+    use toml::from_str;
 
     #[test]
     fn generates_native_csharp_namespaces() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -804,8 +807,8 @@ type = "struct<common.Reward>"
         )
         .unwrap();
         let ir = normalize_schema(schema).unwrap();
-        let out = std::env::temp_dir().join("sora-codegen-csharp-namespace-test");
-        let _ = std::fs::remove_dir_all(&out);
+        let out = temp_dir().join("sora-codegen-csharp-namespace-test");
+        let _ = remove_dir_all(&out);
         CSharpCodeGenerator
             .generate_with_options(
                 &ir,
@@ -817,12 +820,12 @@ type = "struct<common.Reward>"
             )
             .unwrap();
 
-        let item = std::fs::read_to_string(out.join("items/Item.cs")).unwrap();
-        let config = std::fs::read_to_string(out.join("SoraConfig.cs")).unwrap();
+        let item = read_to_string(out.join("items/Item.cs")).unwrap();
+        let config = read_to_string(out.join("SoraConfig.cs")).unwrap();
         assert!(item.contains("namespace Game.Config.Items;"));
         assert!(item.contains("global::Game.Config.Common.Reward Reward"));
         assert!(config.contains("global::Game.Config.Items.ItemTable"));
         assert!(config.contains("ItemsItem =>"));
-        let _ = std::fs::remove_dir_all(out);
+        let _ = remove_dir_all(out);
     }
 }

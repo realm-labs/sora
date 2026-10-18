@@ -6,7 +6,7 @@ use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::{
     interval::interval_record_name,
-    model::{ConfigIr, TypeIr},
+    model::{ConfigIr, FieldIr, TypeIr},
 };
 
 use crate::{
@@ -15,7 +15,7 @@ use crate::{
         BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable, BaseUnion,
         BaseUnionVariant, build_base_model, schema_flat_snake_name,
     },
-    options::{CCodegenOptions, CStandard},
+    options::{CCodegenOptions, CStandard, required_binding},
     render::{ensure_dir, render_template, write_file},
     type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
@@ -124,8 +124,7 @@ struct COptionsView {
 
 impl COptionsView {
     fn new(_ir: &ConfigIr, codegen_options: &CCodegenOptions) -> Result<Self> {
-        let prefix =
-            crate::options::required_binding("c", "prefix", codegen_options.prefix.clone())?;
+        let prefix = required_binding("c", "prefix", codegen_options.prefix.clone())?;
         if !is_c_identifier(&prefix) {
             return Err(SoraError::InvalidSchema(format!(
                 "c prefix `{prefix}` must be a valid C identifier"
@@ -1168,11 +1167,7 @@ fn c_key_match_expr(ir: &ConfigIr, ty: &TypeIr, row_value: &str, param_name: &st
     }
 }
 
-fn ref_field_type<'a>(
-    ir: &'a ConfigIr,
-    table_name: &str,
-    field_name: &str,
-) -> Option<&'a sora_ir::model::FieldIr> {
+fn ref_field_type<'a>(ir: &'a ConfigIr, table_name: &str, field_name: &str) -> Option<&'a FieldIr> {
     ir.tables
         .iter()
         .find(|table| table.name == table_name)
@@ -1214,10 +1209,13 @@ mod tests {
     use super::*;
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir as system_temp_dir;
+    use std::fs::{read_to_string, remove_dir_all};
     use std::{
         path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
     };
+    use toml::from_str;
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -1228,10 +1226,10 @@ mod tests {
 
         CCodeGenerator.generate(&ir, &base).unwrap();
 
-        let item = std::fs::read_to_string(base.join("item.h")).unwrap();
-        let action = std::fs::read_to_string(base.join("action.h")).unwrap();
-        let config = std::fs::read_to_string(base.join("sora_config.h")).unwrap();
-        let types = std::fs::read_to_string(base.join("sora_types.h")).unwrap();
+        let item = read_to_string(base.join("item.h")).unwrap();
+        let action = read_to_string(base.join("action.h")).unwrap();
+        let config = read_to_string(base.join("sora_config.h")).unwrap();
+        let types = read_to_string(base.join("sora_types.h")).unwrap();
 
         assert!(item.contains("typedef struct game_config_item"));
         assert!(item.contains("game_config_item_type item_type;"));
@@ -1251,11 +1249,11 @@ mod tests {
         assert!(types.contains("sora_string key;"));
         assert!(types.contains("int32_t value;"));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1326,6 +1324,6 @@ unique = true
 
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-c-codegen-test-{unique}"))
+        system_temp_dir().join(format!("sora-c-codegen-test-{unique}"))
     }
 }

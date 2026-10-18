@@ -1,7 +1,10 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    result::Result as StdResult,
+};
 
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, de::Error as DeserializeError};
 use sora_config_format::load_document;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -123,9 +126,9 @@ pub enum CodeFormatMode {
 }
 
 impl<'de> Deserialize<'de> for SourceFormat {
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    fn deserialize<D>(deserializer: D) -> StdResult<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let value = String::deserialize(deserializer)?;
         match value.as_str() {
@@ -134,7 +137,7 @@ impl<'de> Deserialize<'de> for SourceFormat {
             "toml" => Ok(Self::Toml),
             "xlsx" => Ok(Self::Xlsx),
             "yaml" | "yml" => Ok(Self::Yaml),
-            _ => Err(serde::de::Error::custom(format!(
+            _ => Err(DeserializeError::custom(format!(
                 "unsupported source format `{value}`; expected csv, json, toml, xlsx, or yaml"
             ))),
         }
@@ -142,15 +145,15 @@ impl<'de> Deserialize<'de> for SourceFormat {
 }
 
 impl<'de> Deserialize<'de> for ExportCompression {
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    fn deserialize<D>(deserializer: D) -> StdResult<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let value = String::deserialize(deserializer)?;
         match value.as_str() {
             "none" => Ok(Self::None),
             "zstd" => Ok(Self::Zstd),
-            _ => Err(serde::de::Error::custom(format!(
+            _ => Err(DeserializeError::custom(format!(
                 "unsupported export compression `{value}`; expected none or zstd"
             ))),
         }
@@ -158,16 +161,16 @@ impl<'de> Deserialize<'de> for ExportCompression {
 }
 
 impl<'de> Deserialize<'de> for CodeFormatMode {
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    fn deserialize<D>(deserializer: D) -> StdResult<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let value = String::deserialize(deserializer)?;
         match value.as_str() {
             "never" => Ok(Self::Never),
             "auto" => Ok(Self::Auto),
             "required" => Ok(Self::Required),
-            _ => Err(serde::de::Error::custom(format!(
+            _ => Err(DeserializeError::custom(format!(
                 "unsupported code format mode `{value}`; expected never, auto, or required"
             ))),
         }

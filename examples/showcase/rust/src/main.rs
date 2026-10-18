@@ -1,21 +1,28 @@
 mod generated;
 
 use generated::{
-    SoraConfig, SoraI18n, achievement::AchievementId, complex_action_group::ComplexActionGroupId,
-    complex_condition_group::ComplexConditionGroupId, complex_rule::ComplexRuleId,
-    event_condition::EventCondition, event_rule::EventRuleId, item::ItemId, item_type::ItemType,
-    quest::QuestId, quest_type::QuestType, reward_action::RewardAction, skill::SkillId,
+    SoraConfig, SoraI18n,
+    achievement::AchievementId,
+    complex_action_group::ComplexActionGroupId,
+    complex_condition_group::ComplexConditionGroupId,
+    complex_rule::ComplexRuleId,
+    event_condition::EventCondition,
+    event_rule::EventRuleId,
+    item::ItemId,
+    item_type::ItemType,
+    quest::QuestId,
+    quest_type::QuestType,
+    reward_action::RewardAction,
+    runtime::{LocalePack, SoraBundle},
+    skill::SkillId,
 };
 
 fn main() {
-    let bundle =
-        generated::runtime::SoraBundle::parse(include_bytes!("../../generated/config.sora"))
-            .expect("bundle");
+    let bundle = SoraBundle::parse(include_bytes!("../../generated/config.sora")).expect("bundle");
     let config = SoraConfig::from_source(&bundle).expect("config");
-    let locale_pack = generated::runtime::LocalePack::from_bytes(include_bytes!(
-        "../../generated/i18n/zh_cn.sora-i18n"
-    ))
-    .expect("locale pack");
+    let locale_pack =
+        LocalePack::from_bytes(include_bytes!("../../generated/i18n/zh_cn.sora-i18n"))
+            .expect("locale pack");
     let mut i18n = SoraI18n::new();
     i18n.mount(&config, locale_pack).expect("mount zh_cn");
     i18n.set_locale("zh_cn").expect("set zh_cn");

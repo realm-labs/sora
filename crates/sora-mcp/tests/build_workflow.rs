@@ -1,21 +1,27 @@
 use std::{
+    env::temp_dir as system_temp_dir,
     fs,
     path::PathBuf,
+    process::id as process_id,
     sync::{
         Arc,
         atomic::{AtomicU64, AtomicUsize, Ordering},
     },
 };
 
+use anyhow::{Ok as anyhow_ok, Result};
 use rmcp::{
-    ClientHandler, ServiceExt,
+    ClientHandler, RoleClient, ServiceExt,
     model::{
         CallToolRequestParams, ClientInfo, Implementation, ProgressNotificationParam,
         ReadResourceRequestParams,
     },
+    service::NotificationContext,
 };
+use serde_json::json;
 use sora_mcp::{SoraMcpServer, TARGET_PROTOCOL_VERSION};
 use sora_workspace::{ProjectId, RuntimeOptions, WorkspaceService};
+use tokio::{io::duplex, spawn};
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -36,14 +42,14 @@ impl ClientHandler for BuildClient {
     async fn on_progress(
         &self,
         _params: ProgressNotificationParam,
-        _context: rmcp::service::NotificationContext<rmcp::RoleClient>,
+        _context: NotificationContext<RoleClient>,
     ) {
         self.progress_count.fetch_add(1, Ordering::Relaxed);
     }
 }
 
 #[tokio::test]
-async fn schema_lock_build_reports_progress_and_exposes_immutable_artifact() -> anyhow::Result<()> {
+async fn schema_lock_build_reports_progress_and_exposes_immutable_artifact() -> Result<()> {
     let root = temp_project();
     let workspace = Arc::new(WorkspaceService::new());
     let session = workspace.open_project(
@@ -52,18 +58,18 @@ async fn schema_lock_build_reports_progress_and_exposes_immutable_artifact() -> 
         RuntimeOptions::default(),
     )?;
     let revision = session.revision();
-    let (server_transport, client_transport) = tokio::io::duplex(128 * 1024);
+    let (server_transport, client_transport) = duplex(128 * 1024);
     let server = SoraMcpServer::new(Arc::clone(&workspace));
-    let server_handle = tokio::spawn(async move {
+    let server_handle = spawn(async move {
         server.serve(server_transport).await?.waiting().await?;
-        anyhow::Ok(())
+        anyhow_ok(())
     });
     let client = BuildClient::default().serve(client_transport).await?;
 
     let result = client
         .call_tool(
             CallToolRequestParams::new("sora_schema_lock").with_arguments(
-                serde_json::json!({
+                json!({
                     "project_id": "demo",
                     "expected_project_revision": revision.project,
                     "view": null,
@@ -95,7 +101,7 @@ async fn schema_lock_build_reports_progress_and_exposes_immutable_artifact() -> 
 
 fn temp_project() -> PathBuf {
     let nonce = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let root = std::env::temp_dir().join(format!("sora-mcp-build-{}-{nonce}", std::process::id()));
+    let root = system_temp_dir().join(format!("sora-mcp-build-{}-{nonce}", process_id()));
     fs::create_dir_all(root.join("schema")).unwrap();
     fs::write(
         root.join("project.toml"),

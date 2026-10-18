@@ -1,12 +1,15 @@
+use std::collections::BTreeMap;
+
 use heck::{ToLowerCamelCase, ToPascalCase, ToSnakeCase};
 use serde::Serialize;
 use sora_diagnostics::Result;
 use sora_ir::{
+    fingerprint::schema_fingerprint,
     interval::{
         INTERVAL_END_FIELD, INTERVAL_END_INCLUSIVE_FIELD, INTERVAL_START_FIELD,
         INTERVAL_START_INCLUSIVE_FIELD, interval_record_name,
     },
-    model::{ConfigIr, FieldIr, IndexIr, TableIr, TableModeIr, TypeIr},
+    model::{ConfigIr, FieldIr, IndexIr, TableIr, TableModeIr, TypeIr, UnionIr},
 };
 
 #[derive(Debug, Clone, Serialize)]
@@ -203,7 +206,7 @@ pub fn build_base_model(ir: &ConfigIr) -> Result<BaseModel> {
         // Language-specific generators must fill this from their target
         // binding. Contract identity is deliberately not a namespace fallback.
         package: String::new(),
-        schema_fingerprint: sora_ir::fingerprint::schema_fingerprint(ir)?,
+        schema_fingerprint: schema_fingerprint(ir)?,
         enums,
         unions,
         records,
@@ -212,7 +215,7 @@ pub fn build_base_model(ir: &ConfigIr) -> Result<BaseModel> {
     })
 }
 
-fn build_base_union(ir: &ConfigIr, item: &sora_ir::model::UnionIr) -> Result<BaseUnion> {
+fn build_base_union(ir: &ConfigIr, item: &UnionIr) -> Result<BaseUnion> {
     let mut imports = Vec::new();
     let variants = item
         .variants
@@ -323,7 +326,7 @@ fn build_interval_record(element: &TypeIr) -> BaseRecord {
 }
 
 fn collect_interval_elements(ir: &ConfigIr) -> Vec<TypeIr> {
-    let mut values = std::collections::BTreeMap::<String, TypeIr>::new();
+    let mut values = BTreeMap::<String, TypeIr>::new();
     for field in ir
         .structs
         .iter()
@@ -341,10 +344,7 @@ fn collect_interval_elements(ir: &ConfigIr) -> Vec<TypeIr> {
     values.into_values().collect()
 }
 
-fn collect_interval_elements_from_type(
-    ty: &TypeIr,
-    values: &mut std::collections::BTreeMap<String, TypeIr>,
-) {
+fn collect_interval_elements_from_type(ty: &TypeIr, values: &mut BTreeMap<String, TypeIr>) {
     match ty {
         TypeIr::Interval(element) => {
             let name = interval_record_name(element)

@@ -5,6 +5,7 @@ use std::{
 
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+use serde_json::Value as JsonValue;
 use sora_config_format::{DocumentError, load_document, render_document};
 use sora_diagnostics::{Result, SoraError};
 use sora_schema::model::{
@@ -497,25 +498,25 @@ struct SchemaDocumentRepr {
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     views: BTreeMap<String, ViewSchema>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    codegen: Option<BTreeMap<String, serde_json::Value>>,
+    codegen: Option<BTreeMap<String, JsonValue>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     localization: Option<LocalizationRepr>,
     #[serde(rename = "build", default, skip_serializing_if = "Option::is_none")]
-    _build: Option<serde_json::Value>,
+    _build: Option<JsonValue>,
     #[serde(rename = "parsers", default, skip_serializing_if = "Option::is_none")]
-    _parsers: Option<serde_json::Value>,
+    _parsers: Option<JsonValue>,
     #[serde(
         rename = "source_loaders",
         default,
         skip_serializing_if = "Option::is_none"
     )]
-    _source_loaders: Option<serde_json::Value>,
+    _source_loaders: Option<JsonValue>,
     #[serde(
         rename = "type_mappings",
         default,
         skip_serializing_if = "Option::is_none"
     )]
-    _type_mappings: Option<serde_json::Value>,
+    _type_mappings: Option<JsonValue>,
 
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     includes: Vec<String>,
@@ -1383,7 +1384,9 @@ fn ordered_named<T>(values: Vec<(String, T)>, lua_ordered: bool) -> OrderedNamed
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sora_ir::normalize::normalize_schema;
     use std::{
+        env::temp_dir as env_temp_dir,
         fs,
         sync::atomic::{AtomicU64, Ordering},
     };
@@ -1777,7 +1780,7 @@ tables {
 
         let expected_module = load_schema_module(&source).unwrap();
         let expected_schema = load_project_schema(&source).unwrap();
-        let expected_ir = sora_ir::normalize::normalize_schema(expected_schema.clone()).unwrap();
+        let expected_ir = normalize_schema(expected_schema.clone()).unwrap();
         assert_eq!(
             expected_schema.enums[0].comment.as_deref(),
             Some("Item rarity")
@@ -1823,7 +1826,7 @@ tables {
             let schema = load_project_schema(&path).unwrap();
             assert_eq!(schema, expected_schema, "{extension}");
             assert_eq!(
-                sora_ir::normalize::normalize_schema(schema).unwrap(),
+                normalize_schema(schema).unwrap(),
                 expected_ir,
                 "{extension}"
             );
@@ -2012,6 +2015,6 @@ tables {
 
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-input-schema-test-{unique}"))
+        env_temp_dir().join(format!("sora-input-schema-test-{unique}"))
     }
 }

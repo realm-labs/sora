@@ -1,14 +1,20 @@
 use std::{path::Path, sync::Arc};
 
+use anyhow::Error as AnyhowError;
 use rmcp::{
+    RoleServer,
     handler::server::wrapper::{Json, Parameters},
+    model::{CallToolResult, ProgressNotificationParam},
+    service::RequestContext,
     tool, tool_router,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sora_workspace::{
-    BuildArtifactKind, BuildControl, BuildPhase, BuildRequest, ProjectId, ProjectRevision,
+    BuildArtifactKind, BuildControl, BuildPhase, BuildReport, BuildRequest, ProjectId,
+    ProjectRevision, build_project_with_control,
 };
+use tokio::{spawn, sync::mpsc::unbounded_channel, task::spawn_blocking};
 
 use crate::{
     SoraMcpServer,
@@ -33,8 +39,8 @@ impl SoraMcpServer {
     async fn build(
         &self,
         Parameters(input): Parameters<BuildInput>,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<Json<ToolEnvelope<BuildToolReport>>, rmcp::model::CallToolResult> {
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<ToolEnvelope<BuildToolReport>>, CallToolResult> {
         let groups = if input.outputs.is_empty() {
             vec![
                 BuildOutputGroup::SchemaLock,
@@ -77,8 +83,8 @@ impl SoraMcpServer {
     async fn codegen(
         &self,
         Parameters(input): Parameters<CodegenInput>,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<Json<ToolEnvelope<BuildToolReport>>, rmcp::model::CallToolResult> {
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<ToolEnvelope<BuildToolReport>>, CallToolResult> {
         self.execute_build(
             BuildInvocation {
                 project_id: input.project_id,
@@ -111,8 +117,8 @@ impl SoraMcpServer {
     async fn export(
         &self,
         Parameters(input): Parameters<ExportInput>,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<Json<ToolEnvelope<BuildToolReport>>, rmcp::model::CallToolResult> {
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<ToolEnvelope<BuildToolReport>>, CallToolResult> {
         self.execute_build(
             BuildInvocation {
                 project_id: input.project_id,
@@ -145,8 +151,8 @@ impl SoraMcpServer {
     async fn schema_lock(
         &self,
         Parameters(input): Parameters<GeneratedOutputInput>,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<Json<ToolEnvelope<BuildToolReport>>, rmcp::model::CallToolResult> {
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<ToolEnvelope<BuildToolReport>>, CallToolResult> {
         self.execute_build(
             BuildInvocation {
                 project_id: input.project_id,
@@ -179,8 +185,8 @@ impl SoraMcpServer {
     async fn excel_template(
         &self,
         Parameters(input): Parameters<GeneratedOutputInput>,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<Json<ToolEnvelope<BuildToolReport>>, rmcp::model::CallToolResult> {
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<ToolEnvelope<BuildToolReport>>, CallToolResult> {
         self.execute_build(
             BuildInvocation {
                 project_id: input.project_id,
@@ -202,8 +208,8 @@ impl SoraMcpServer {
     async fn execute_build(
         &self,
         input: BuildInvocation,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<Json<ToolEnvelope<BuildToolReport>>, rmcp::model::CallToolResult> {
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<ToolEnvelope<BuildToolReport>>, CallToolResult> {
         let id = ProjectId::new(input.project_id).map_err(|error| {
             tool_error(ToolEnvelope::<BuildToolReport>::failure(
                 None,
@@ -230,7 +236,7 @@ impl SoraMcpServer {
             )));
         }
 
-        let (progress_tx, mut progress_rx) = tokio::sync::mpsc::unbounded_channel();
+        let (progress_tx, mut progress_rx) = unbounded_channel();
         let request_cancellation = context.ct.clone();
         let control = BuildControl::default()
             .cancel_when(move || request_cancellation.is_cancelled())
@@ -240,17 +246,14 @@ impl SoraMcpServer {
         let worker_control = control.clone();
         let progress_token = context.meta.get_progress_token();
         let progress_peer = context.peer.clone();
-        let progress_task = tokio::spawn(async move {
+        let progress_task = spawn(async move {
             while let Some(progress) = progress_rx.recv().await {
                 if let Some(token) = progress_token.clone() {
                     let _ = progress_peer
                         .notify_progress(
-                            rmcp::model::ProgressNotificationParam::new(
-                                token,
-                                progress.completed as f64,
-                            )
-                            .with_total(progress.total as f64)
-                            .with_message(phase_name(progress.phase)),
+                            ProgressNotificationParam::new(token, progress.completed as f64)
+                                .with_total(progress.total as f64)
+                                .with_message(phase_name(progress.phase)),
                         )
                         .await;
                 }
@@ -268,8 +271,8 @@ impl SoraMcpServer {
         let owner = self.authorization_context.to_string();
         let worker_id = id.clone();
         let worker_revision = revision.clone();
-        let build_result = tokio::task::spawn_blocking(move || {
-            let report = sora_workspace::build_project_with_control(
+        let build_result = spawn_blocking(move || {
+            let report = build_project_with_control(
                 BuildRequest {
                     project: project_path,
                     default_source_format: None,
@@ -289,7 +292,7 @@ impl SoraMcpServer {
             let descriptors =
                 artifact_store.register_build(&owner, &worker_id, &project_root, &report)?;
             let output = build_tool_report(&project_root, &report, worker_revision);
-            Ok::<_, anyhow::Error>((output, descriptors))
+            Ok::<_, AnyhowError>((output, descriptors))
         })
         .await;
         let cancellation_observed = control.cancellation_observed();
@@ -418,7 +421,7 @@ struct BuildOutput {
 
 fn build_tool_report(
     project_root: &Path,
-    report: &sora_workspace::BuildReport,
+    report: &BuildReport,
     revision: ProjectRevision,
 ) -> BuildToolReport {
     BuildToolReport {

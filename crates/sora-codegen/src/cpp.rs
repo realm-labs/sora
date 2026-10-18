@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{collections::BTreeSet, path::Path};
 
 use heck::ToSnakeCase;
 use minijinja::context;
@@ -12,7 +12,7 @@ use crate::{
         BaseEnumValue, BaseField, BaseImport, BaseIndex, BaseModel, BaseRecord, BaseTable,
         BaseUnion, BaseUnionVariant, build_base_model, schema_flat_pascal_name,
     },
-    options::{CppCodegenOptions, CppStandard},
+    options::{CppCodegenOptions, CppStandard, required_binding},
     render::{ensure_dir, render_template, write_file},
     type_mapping::{TypeMapping, TypeMappingContext, TypeMappingRegistry},
 };
@@ -89,11 +89,7 @@ struct CppOptionsView {
 
 impl CppOptionsView {
     fn new(_ir: &ConfigIr, codegen_options: &CppCodegenOptions) -> Result<Self> {
-        let namespace = crate::options::required_binding(
-            "cpp",
-            "namespace",
-            codegen_options.namespace.clone(),
-        )?;
+        let namespace = required_binding("cpp", "namespace", codegen_options.namespace.clone())?;
         let namespace_segments = parse_cpp_namespace(&namespace)?;
         let standard = codegen_options.cpp_standard;
         Ok(Self {
@@ -205,7 +201,7 @@ impl CppModel {
             .iter()
             .filter(|record| record.interval_element.is_some())
             .map(|record| record.module_path.clone())
-            .collect::<std::collections::BTreeSet<_>>();
+            .collect::<BTreeSet<_>>();
         let enums = model
             .enums
             .into_iter()
@@ -631,10 +627,13 @@ mod tests {
     use super::*;
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir as system_temp_dir;
+    use std::fs::{read_to_string, remove_dir_all};
     use std::{
         path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
     };
+    use toml::from_str;
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -645,10 +644,10 @@ mod tests {
 
         CppCodeGenerator.generate(&ir, &base).unwrap();
 
-        let item = std::fs::read_to_string(base.join("item.hpp")).unwrap();
-        let action = std::fs::read_to_string(base.join("action.hpp")).unwrap();
-        let config = std::fs::read_to_string(base.join("sora_config.hpp")).unwrap();
-        let runtime = std::fs::read_to_string(base.join("sora_runtime.hpp")).unwrap();
+        let item = read_to_string(base.join("item.hpp")).unwrap();
+        let action = read_to_string(base.join("action.hpp")).unwrap();
+        let config = read_to_string(base.join("sora_config.hpp")).unwrap();
+        let runtime = read_to_string(base.join("sora_runtime.hpp")).unwrap();
 
         assert!(item.contains("struct Item"));
         assert!(item.contains("ItemType item_type;"));
@@ -666,7 +665,7 @@ mod tests {
         assert!(runtime.contains("class SoraTable"));
         assert!(runtime.contains("std::optional<T> read_optional()"));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     #[test]
@@ -686,19 +685,19 @@ mod tests {
             )
             .unwrap();
 
-        let action = std::fs::read_to_string(base.join("action.hpp")).unwrap();
-        let runtime = std::fs::read_to_string(base.join("sora_runtime.hpp")).unwrap();
+        let action = read_to_string(base.join("action.hpp")).unwrap();
+        let runtime = read_to_string(base.join("sora_runtime.hpp")).unwrap();
 
         assert!(action.contains("std::shared_ptr<Holder> value_;"));
         assert!(!action.contains("std::variant<"));
         assert!(runtime.contains("class SoraOptional"));
         assert!(runtime.contains("SoraOptional<T> read_optional()"));
 
-        let _ = std::fs::remove_dir_all(base);
+        let _ = remove_dir_all(base);
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game.config" }
 groups = { common = { default = true } }
@@ -765,6 +764,6 @@ unique = true
 
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-cpp-codegen-test-{unique}"))
+        system_temp_dir().join(format!("sora-cpp-codegen-test-{unique}"))
     }
 }

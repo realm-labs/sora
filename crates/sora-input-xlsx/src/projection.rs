@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use calamine::Data;
+use calamine::{Data, Range};
 use sora_diagnostics::{Result, SoraError};
 use sora_excel::projection::{FIELD_ROW, METADATA_ROW, schema_hash, table_metadata_name};
 use sora_ir::model::{ConfigIr, TableIr};
@@ -12,7 +12,7 @@ pub(crate) fn verify_projection(
     table: &TableIr,
     path: &Path,
     sheet: &str,
-    range: &calamine::Range<Data>,
+    range: &Range<Data>,
 ) -> Result<()> {
     let metadata_row = METADATA_ROW as usize;
     let field_row = FIELD_ROW as usize;
@@ -29,12 +29,7 @@ pub(crate) fn verify_projection(
     Ok(())
 }
 
-fn expect_table_name(
-    path: &Path,
-    sheet: &str,
-    range: &calamine::Range<Data>,
-    table: &TableIr,
-) -> Result<()> {
+fn expect_table_name(path: &Path, sheet: &str, range: &Range<Data>, table: &TableIr) -> Result<()> {
     let actual = range
         .get((METADATA_ROW as usize, 1))
         .map(cell_to_string)
@@ -56,7 +51,7 @@ fn expect_table_name(
 fn expect_cell(
     path: &Path,
     sheet: &str,
-    range: &calamine::Range<Data>,
+    range: &Range<Data>,
     row: usize,
     column: usize,
     expected: &str,

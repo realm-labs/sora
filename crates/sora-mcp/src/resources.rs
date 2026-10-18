@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::BTreeMap, sync::Arc};
 
 use rmcp::{
     ErrorData as McpError,
@@ -8,9 +8,13 @@ use rmcp::{
     },
 };
 use serde::Serialize;
+use serde_json::{Value, json, to_string_pretty, to_value};
+use sora_ir::model::ConfigIr;
 use sora_workspace::{ProjectId, TableQuery, WorkspaceService};
 
-use crate::{artifact_store::ArtifactStore, task_store::TaskStore};
+use crate::{
+    SERVER_NAME, TARGET_PROTOCOL_VERSION, artifact_store::ArtifactStore, task_store::TaskStore,
+};
 
 pub fn list(workspace: &WorkspaceService) -> Result<ListResourcesResult, McpError> {
     let mut resources = vec![
@@ -125,10 +129,10 @@ pub fn read(
     uri: &str,
 ) -> Result<ReadResourceResult, McpError> {
     let value = match uri {
-        "sora://server/info" => serde_json::json!({
-            "name": crate::SERVER_NAME,
+        "sora://server/info" => json!({
+            "name": SERVER_NAME,
             "version": env!("CARGO_PKG_VERSION"),
-            "protocol_version": crate::TARGET_PROTOCOL_VERSION.as_str(),
+            "protocol_version": TARGET_PROTOCOL_VERSION.as_str(),
         }),
         "sora://workspace/projects" => serialize_json(
             workspace
@@ -192,7 +196,7 @@ fn read_project_resource(
             let inspection = session
                 .inspect()
                 .map_err(|error| internal_error(error.to_string()))?;
-            serde_json::json!({
+            json!({
                 "build_outputs": inspection.build_outputs,
                 "codegen_targets": inspection.codegen_targets,
                 "export_formats": inspection.export_formats,
@@ -260,37 +264,33 @@ fn read_project_resource(
     json_result(uri, &value)
 }
 
-fn schema_entity(
-    schema: &sora_ir::model::ConfigIr,
-    kind: &str,
-    name: &str,
-) -> Option<serde_json::Value> {
+fn schema_entity(schema: &ConfigIr, kind: &str, name: &str) -> Option<Value> {
     match kind {
         "enum" => schema
             .enums
             .iter()
             .find(|item| item.name == name)
-            .and_then(|item| serde_json::to_value(item).ok()),
+            .and_then(|item| to_value(item).ok()),
         "struct" => schema
             .structs
             .iter()
             .find(|item| item.name == name)
-            .and_then(|item| serde_json::to_value(item).ok()),
+            .and_then(|item| to_value(item).ok()),
         "union" => schema
             .unions
             .iter()
             .find(|item| item.name == name)
-            .and_then(|item| serde_json::to_value(item).ok()),
+            .and_then(|item| to_value(item).ok()),
         "table" => schema
             .tables
             .iter()
             .find(|item| item.name == name)
-            .and_then(|item| serde_json::to_value(item).ok()),
+            .and_then(|item| to_value(item).ok()),
         _ => None,
     }
 }
 
-fn query_params(query: &str) -> std::collections::BTreeMap<String, String> {
+fn query_params(query: &str) -> BTreeMap<String, String> {
     query
         .split('&')
         .filter_map(|pair| pair.split_once('='))
@@ -327,13 +327,12 @@ fn json_resource(
         .with_mime_type("application/json")
 }
 
-fn serialize_json(value: impl Serialize) -> Result<serde_json::Value, McpError> {
-    serde_json::to_value(value).map_err(|error| internal_error(error.to_string()))
+fn serialize_json(value: impl Serialize) -> Result<Value, McpError> {
+    to_value(value).map_err(|error| internal_error(error.to_string()))
 }
 
-fn json_result(uri: &str, value: &serde_json::Value) -> Result<ReadResourceResult, McpError> {
-    let text =
-        serde_json::to_string_pretty(value).map_err(|error| internal_error(error.to_string()))?;
+fn json_result(uri: &str, value: &Value) -> Result<ReadResourceResult, McpError> {
+    let text = to_string_pretty(value).map_err(|error| internal_error(error.to_string()))?;
     Ok(ReadResourceResult::new(vec![
         ResourceContents::text(text, uri).with_mime_type("application/json"),
     ]))

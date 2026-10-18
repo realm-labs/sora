@@ -1,13 +1,15 @@
 use std::{
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
     sync::Arc,
 };
 
 use anyhow::{Result, bail};
 use sora_codegen::type_mapping::TypeMappingRegistry;
 use sora_execution::{ExecutionContext, ExecutionOptions};
-use sora_input::parser::ParserRegistry as CellParserRegistry;
-use sora_input::source::{DataSourceDependency, DataSourceRegistry};
+use sora_input::{
+    parser::ParserRegistry as CellParserRegistry,
+    source::{DataSourceDependency, DataSourceRegistry},
+};
 use sora_ir::parser::ParserRegistry as SchemaParserRegistry;
 
 use crate::{
@@ -131,12 +133,9 @@ fn resolve_source_loader_scripts(
         .iter()
         .map(|declared| {
             if declared.is_absolute()
-                || declared.components().any(|component| {
-                    !matches!(
-                        component,
-                        std::path::Component::Normal(_) | std::path::Component::CurDir
-                    )
-                })
+                || declared
+                    .components()
+                    .any(|component| !matches!(component, Component::Normal(_) | Component::CurDir))
             {
                 bail!(
                     "Lua source loader script paths must stay relative to the project: `{}`",

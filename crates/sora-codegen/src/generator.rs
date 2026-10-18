@@ -1,6 +1,8 @@
 use std::{collections::BTreeMap, path::Path};
 
 use serde::de::DeserializeOwned;
+#[cfg(test)]
+use serde_json::json;
 use serde_json::{Map, Value};
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::model::ConfigIr;
@@ -439,13 +441,13 @@ pub fn empty_options() -> Value {
 #[cfg(test)]
 pub fn default_test_options(target: &str) -> Value {
     match target {
-        "c" => serde_json::json!({ "prefix": "game_config" }),
-        "cpp" => serde_json::json!({ "namespace": "sora" }),
-        "csharp" => serde_json::json!({ "namespace": "game_config" }),
+        "c" => json!({ "prefix": "game_config" }),
+        "cpp" => json!({ "namespace": "sora" }),
+        "csharp" => json!({ "namespace": "game_config" }),
         "go" | "java" | "kotlin" | "scala" => {
-            serde_json::json!({ "package": "game_config" })
+            json!({ "package": "game_config" })
         }
-        "proto-schema" => serde_json::json!({ "package": "game_config" }),
+        "proto-schema" => json!({ "package": "game_config" }),
         _ => empty_options(),
     }
 }
@@ -512,10 +514,13 @@ mod tests {
     use super::*;
     use sora_ir::{model::TypeIr, normalize::normalize_schema};
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir;
+    use std::process::id;
     use std::{
         fs,
         sync::atomic::{AtomicU64, Ordering},
     };
+    use toml::from_str;
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -529,7 +534,7 @@ mod tests {
 
     #[test]
     fn all_builtin_generators_emit_enum_comments() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -548,9 +553,9 @@ values = [
         let ir = normalize_schema(schema).unwrap();
         let registry = CodegenRegistry::with_builtin_generators();
         let mappings = TypeMappingRegistry::new();
-        let base = std::env::temp_dir().join(format!(
+        let base = temp_dir().join(format!(
             "sora-enum-comments-{}-{}",
-            std::process::id(),
+            id(),
             TEMP_COUNTER.fetch_add(1, Ordering::Relaxed)
         ));
 
@@ -588,7 +593,7 @@ values = [
 
     #[test]
     fn all_builtin_generators_keep_same_local_names_distinct() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -620,9 +625,9 @@ type = "struct<quests.Entry>"
         let ir = normalize_schema(schema).unwrap();
         let registry = CodegenRegistry::with_builtin_generators();
         let mappings = TypeMappingRegistry::new();
-        let base = std::env::temp_dir().join(format!(
+        let base = temp_dir().join(format!(
             "sora-namespace-codegen-{}-{}",
-            std::process::id(),
+            id(),
             TEMP_COUNTER.fetch_add(1, Ordering::Relaxed)
         ));
 
@@ -662,7 +667,7 @@ type = "struct<quests.Entry>"
 
     #[test]
     fn all_builtin_generators_support_interval_types() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -686,9 +691,9 @@ type = "interval<i32>"
         ));
         let registry = CodegenRegistry::with_builtin_generators();
         let mappings = TypeMappingRegistry::new();
-        let base = std::env::temp_dir().join(format!(
+        let base = temp_dir().join(format!(
             "sora-interval-codegen-{}-{}",
-            std::process::id(),
+            id(),
             TEMP_COUNTER.fetch_add(1, Ordering::Relaxed)
         ));
 

@@ -1,13 +1,18 @@
 use rmcp::{
+    RoleServer,
     handler::server::wrapper::{Json, Parameters},
+    model::CallToolResult,
+    service::RequestContext,
     tool, tool_router,
 };
 use schemars::JsonSchema;
 use serde::Deserialize;
+use serde_json::to_value;
 use sora_workspace::{
     ProjectId, SchemaApplyReport, SchemaMutationPlan, SchemaOperation, SchemaSearchQuery,
     SchemaSearchReport, ValidationReport,
 };
+use tokio::task::spawn_blocking;
 
 use crate::{
     SoraMcpServer,
@@ -29,7 +34,7 @@ impl SoraMcpServer {
     async fn schema_validate(
         &self,
         Parameters(input): Parameters<ProjectInput>,
-    ) -> Result<Json<ToolEnvelope<ValidationReport>>, rmcp::model::CallToolResult> {
+    ) -> Result<Json<ToolEnvelope<ValidationReport>>, CallToolResult> {
         let id = ProjectId::new(input.project_id).map_err(|error| {
             tool_error(ToolEnvelope::<ValidationReport>::failure(
                 None,
@@ -40,7 +45,7 @@ impl SoraMcpServer {
         })?;
         match self.workspace.project(&id) {
             Ok(session) => {
-                let report = tokio::task::spawn_blocking(move || session.validate_schema())
+                let report = spawn_blocking(move || session.validate_schema())
                     .await
                     .map_err(|error| {
                         tool_error(ToolEnvelope::<ValidationReport>::failure(
@@ -91,7 +96,7 @@ impl SoraMcpServer {
     async fn schema_search(
         &self,
         Parameters(input): Parameters<SchemaSearchInput>,
-    ) -> Result<Json<ToolEnvelope<SchemaSearchReport>>, rmcp::model::CallToolResult> {
+    ) -> Result<Json<ToolEnvelope<SchemaSearchReport>>, CallToolResult> {
         let id = ProjectId::new(input.project_id).map_err(|error| {
             tool_error(ToolEnvelope::<SchemaSearchReport>::failure(
                 None,
@@ -103,8 +108,7 @@ impl SoraMcpServer {
         match self.workspace.project(&id) {
             Ok(session) => {
                 let revision = session.revision();
-                match tokio::task::spawn_blocking(move || session.search_schema(&input.query)).await
-                {
+                match spawn_blocking(move || session.search_schema(&input.query)).await {
                     Ok(Ok(report)) => Ok(Json(ToolEnvelope::success(
                         Some(id),
                         Some(report.revision.clone()),
@@ -147,7 +151,7 @@ impl SoraMcpServer {
     async fn schema_preview(
         &self,
         Parameters(input): Parameters<SchemaPreviewInput>,
-    ) -> Result<Json<ToolEnvelope<SchemaMutationPlan>>, rmcp::model::CallToolResult> {
+    ) -> Result<Json<ToolEnvelope<SchemaMutationPlan>>, CallToolResult> {
         let id = ProjectId::new(input.project_id).map_err(|error| {
             tool_error(ToolEnvelope::<SchemaMutationPlan>::failure(
                 None,
@@ -159,7 +163,7 @@ impl SoraMcpServer {
         let workspace = self.workspace.clone();
         let owner = self.authorization_context.clone();
         let operation_id = id.clone();
-        let result = tokio::task::spawn_blocking(move || {
+        let result = spawn_blocking(move || {
             workspace.preview_schema_mutation(
                 &operation_id,
                 &owner,
@@ -187,7 +191,7 @@ impl SoraMcpServer {
                     .map(|plan| {
                         plan.text_diffs
                             .iter()
-                            .filter_map(|diff| serde_json::to_value(diff).ok())
+                            .filter_map(|diff| to_value(diff).ok())
                             .collect()
                     })
                     .unwrap_or_default();
@@ -227,8 +231,8 @@ impl SoraMcpServer {
     async fn schema_apply(
         &self,
         Parameters(input): Parameters<SchemaApplyInput>,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<Json<ToolEnvelope<SchemaApplyReport>>, rmcp::model::CallToolResult> {
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<ToolEnvelope<SchemaApplyReport>>, CallToolResult> {
         let id = ProjectId::new(input.project_id).map_err(|error| {
             tool_error(ToolEnvelope::<SchemaApplyReport>::failure(
                 None,
@@ -240,7 +244,7 @@ impl SoraMcpServer {
         let workspace = self.workspace.clone();
         let owner = self.authorization_context.clone();
         let operation_id = id.clone();
-        let result = tokio::task::spawn_blocking(move || {
+        let result = spawn_blocking(move || {
             workspace.apply_schema_mutation(
                 &operation_id,
                 &owner,

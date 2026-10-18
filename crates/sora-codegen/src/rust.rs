@@ -1,15 +1,17 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
+    iter::repeat_n,
     path::{Path, PathBuf},
 };
 
 use heck::ToPascalCase;
 use minijinja::context;
+use semver::Version;
 use serde::Serialize;
 use sora_diagnostics::{Result, SoraError};
 use sora_ir::interval::interval_record_name;
 use sora_ir::key::{TableKeyIdentity, resolve_ref_key_identity, resolve_table_key_identity};
-use sora_ir::model::{ConfigIr, TableModeIr, TypeIr};
+use sora_ir::model::{ConfigIr, FieldIr, TableIr, TableModeIr, TypeIr};
 
 use crate::{
     generator::{CodeGenerator, CodegenContext, runtime_format_name},
@@ -171,7 +173,7 @@ fn validate_rust_crate_options(package: &RustCrateOptions) -> Result<()> {
             "invalid Rust crate name `{name}`: expected an ASCII letter followed by ASCII letters, digits, `-`, or `_`"
         )));
     }
-    semver::Version::parse(&package.version).map_err(|error| {
+    Version::parse(&package.version).map_err(|error| {
         SoraError::InvalidSchema(format!(
             "invalid Rust crate version `{}`: {error}",
             package.version
@@ -1088,7 +1090,7 @@ fn rust_named_type_path(name: &str, root_path: &str) -> String {
     )
 }
 
-fn strong_key_name(table: &sora_ir::model::TableIr, field: &sora_ir::model::FieldIr) -> String {
+fn strong_key_name(table: &TableIr, field: &FieldIr) -> String {
     format!(
         "{}{}",
         schema_local_name(&table.name).to_pascal_case(),
@@ -1112,7 +1114,7 @@ fn is_const_raw_type(ty: &TypeIr) -> bool {
 }
 
 fn rust_module_root(module_path: &str) -> String {
-    std::iter::repeat_n("super", module_path.split('/').count())
+    repeat_n("super", module_path.split('/').count())
         .collect::<Vec<_>>()
         .join("::")
 }
@@ -1164,11 +1166,15 @@ mod namespace_tests {
     use super::*;
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir;
+    use std::fs::{create_dir_all, read_to_string, remove_dir_all, write};
     use std::process::Command;
+    use std::process::id;
+    use toml::from_str;
 
     #[test]
     fn generates_nested_rust_modules() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1206,8 +1212,8 @@ type = "enum<Status>"
         )
         .unwrap();
         let ir = normalize_schema(schema).unwrap();
-        let out = std::env::temp_dir().join("sora-codegen-rust-namespace-test");
-        let _ = std::fs::remove_dir_all(&out);
+        let out = temp_dir().join("sora-codegen-rust-namespace-test");
+        let _ = remove_dir_all(&out);
 
         RustCodeGenerator
             .generate_with_options(&ir, RustCodegenOptions::default(), &out)
@@ -1218,10 +1224,10 @@ type = "enum<Status>"
         assert!(out.join("status.rs").exists());
         assert!(out.join("common/mod.rs").exists());
         assert!(out.join("items/mod.rs").exists());
-        let root = std::fs::read_to_string(out.join("mod.rs")).unwrap();
-        let items = std::fs::read_to_string(out.join("items/item.rs")).unwrap();
-        let status = std::fs::read_to_string(out.join("status.rs")).unwrap();
-        let items_mod = std::fs::read_to_string(out.join("items/mod.rs")).unwrap();
+        let root = read_to_string(out.join("mod.rs")).unwrap();
+        let items = read_to_string(out.join("items/item.rs")).unwrap();
+        let status = read_to_string(out.join("status.rs")).unwrap();
+        let items_mod = read_to_string(out.join("items/mod.rs")).unwrap();
         assert!(root.contains("pub mod common;"));
         assert!(root.contains("pub mod items;"));
         assert!(items.contains("pub reward: super::super::common::reward::Reward"));
@@ -1231,12 +1237,12 @@ type = "enum<Status>"
         assert!(!status.contains("crate::"));
         assert!(items_mod.contains("pub mod item;"));
         assert!(!items_mod.contains("pub use"));
-        let _ = std::fs::remove_dir_all(out);
+        let _ = remove_dir_all(out);
     }
 
     #[test]
     fn only_renames_fields_when_the_schema_and_rust_names_differ() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -1271,31 +1277,31 @@ type = "i32"
         )
         .unwrap();
         let ir = normalize_schema(schema).unwrap();
-        let out = std::env::temp_dir().join("sora-codegen-rust-serde-rename-test");
-        let _ = std::fs::remove_dir_all(&out);
+        let out = temp_dir().join("sora-codegen-rust-serde-rename-test");
+        let _ = remove_dir_all(&out);
 
         RustCodeGenerator
             .generate_with_options(&ir, RustCodegenOptions::default(), &out)
             .unwrap();
 
-        let cost = std::fs::read_to_string(out.join("cost.rs")).unwrap();
+        let cost = read_to_string(out.join("cost.rs")).unwrap();
         assert!(cost.contains("pub entry_cost: i32"));
         assert!(!cost.contains("#[serde(rename = \"entry_cost\")]"));
         assert!(cost.contains("#[serde(rename = \"displayName\")]\n    pub display_name: String"));
 
-        let action = std::fs::read_to_string(out.join("action.rs")).unwrap();
+        let action = read_to_string(out.join("action.rs")).unwrap();
         assert!(action.contains("resource_id: i32"));
         assert!(!action.contains("#[serde(rename = \"resource_id\")]"));
         assert!(
             action.contains("#[serde(rename = \"resourceCount\")]\n        resource_count: i32")
         );
 
-        let _ = std::fs::remove_dir_all(out);
+        let _ = remove_dir_all(out);
     }
 
     #[test]
     fn strong_table_keys_propagate_through_refs_and_compile() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "strong_keys" }
 groups = { common = { default = true } }
@@ -1443,11 +1449,8 @@ type = "union<RefChoice>"
         )
         .unwrap();
         let ir = normalize_schema(schema).unwrap();
-        let out = std::env::temp_dir().join(format!(
-            "sora-codegen-rust-strong-key-test-{}",
-            std::process::id()
-        ));
-        let _ = std::fs::remove_dir_all(&out);
+        let out = temp_dir().join(format!("sora-codegen-rust-strong-key-test-{}", id()));
+        let _ = remove_dir_all(&out);
 
         RustCodeGenerator
             .generate_with_options(
@@ -1465,16 +1468,16 @@ type = "union<RefChoice>"
             )
             .unwrap();
 
-        let biome = std::fs::read_to_string(out.join("src/world/biome.rs")).unwrap();
-        let terrain = std::fs::read_to_string(out.join("src/world/terrain.rs")).unwrap();
-        let asset = std::fs::read_to_string(out.join("src/asset.rs")).unwrap();
-        let time_point = std::fs::read_to_string(out.join("src/time_point.rs")).unwrap();
-        let localized = std::fs::read_to_string(out.join("src/localized.rs")).unwrap();
-        let alias = std::fs::read_to_string(out.join("src/biome_alias.rs")).unwrap();
-        let kind_lookup = std::fs::read_to_string(out.join("src/kind_lookup.rs")).unwrap();
-        let consumer = std::fs::read_to_string(out.join("src/consumer.rs")).unwrap();
-        let holder = std::fs::read_to_string(out.join("src/ref_holder.rs")).unwrap();
-        let choice = std::fs::read_to_string(out.join("src/ref_choice.rs")).unwrap();
+        let biome = read_to_string(out.join("src/world/biome.rs")).unwrap();
+        let terrain = read_to_string(out.join("src/world/terrain.rs")).unwrap();
+        let asset = read_to_string(out.join("src/asset.rs")).unwrap();
+        let time_point = read_to_string(out.join("src/time_point.rs")).unwrap();
+        let localized = read_to_string(out.join("src/localized.rs")).unwrap();
+        let alias = read_to_string(out.join("src/biome_alias.rs")).unwrap();
+        let kind_lookup = read_to_string(out.join("src/kind_lookup.rs")).unwrap();
+        let consumer = read_to_string(out.join("src/consumer.rs")).unwrap();
+        let holder = read_to_string(out.join("src/ref_holder.rs")).unwrap();
+        let choice = read_to_string(out.join("src/ref_choice.rs")).unwrap();
 
         assert!(biome.contains("pub struct BiomeId("));
         assert!(biome.contains("pub id: BiomeId"));
@@ -1501,8 +1504,8 @@ type = "union<RefChoice>"
         assert!(holder.contains("pub biome: super::world::biome::BiomeId"));
         assert!(choice.contains("id: super::world::biome::BiomeId"));
 
-        std::fs::create_dir_all(out.join("tests")).unwrap();
-        std::fs::write(
+        create_dir_all(out.join("tests")).unwrap();
+        write(
             out.join("tests/strong_keys.rs"),
             r#"
 use std::{any::TypeId, collections::HashMap};
@@ -1547,12 +1550,12 @@ fn keys_are_nominal_transparent_and_decodable() {
             .unwrap();
         assert!(status.success());
 
-        let _ = std::fs::remove_dir_all(out);
+        let _ = remove_dir_all(out);
     }
 
     #[test]
     fn copy_interval_serde_is_clippy_clean() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "interval_clippy" }
 groups = { common = { default = true } }
@@ -1578,11 +1581,8 @@ type = "interval<datetime>"
         )
         .unwrap();
         let ir = normalize_schema(schema).unwrap();
-        let out = std::env::temp_dir().join(format!(
-            "sora-codegen-rust-interval-clippy-test-{}",
-            std::process::id()
-        ));
-        let _ = std::fs::remove_dir_all(&out);
+        let out = temp_dir().join(format!("sora-codegen-rust-interval-clippy-test-{}", id()));
+        let _ = remove_dir_all(&out);
 
         RustCodeGenerator
             .generate_with_options(
@@ -1599,7 +1599,7 @@ type = "interval<datetime>"
             )
             .unwrap();
 
-        let interval = std::fs::read_to_string(out.join("src/interval.rs")).unwrap();
+        let interval = read_to_string(out.join("src/interval.rs")).unwrap();
         assert!(interval.contains("start: self.start,"));
         assert!(interval.contains("end: self.end,"));
         assert!(!interval.contains("self.start.clone()"));
@@ -1621,12 +1621,12 @@ type = "interval<datetime>"
             .unwrap();
         assert!(status.success());
 
-        let _ = std::fs::remove_dir_all(out);
+        let _ = remove_dir_all(out);
     }
 
     #[test]
     fn rejects_strong_key_name_collisions() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "collision" }
 groups = { common = { default = true } }
@@ -1645,7 +1645,7 @@ type = "u32"
         )
         .unwrap();
         let ir = normalize_schema(schema).unwrap();
-        let out = std::env::temp_dir().join("sora-codegen-rust-key-collision-test");
+        let out = temp_dir().join("sora-codegen-rust-key-collision-test");
         let error = RustCodeGenerator
             .generate_with_options(&ir, RustCodegenOptions::default(), &out)
             .unwrap_err();

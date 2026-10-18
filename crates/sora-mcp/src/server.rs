@@ -1,32 +1,47 @@
-use std::{
-    collections::BTreeSet,
-    future::{Future, ready},
-    sync::atomic::{AtomicU8, Ordering},
-    sync::{Arc, RwLock},
-    time::Instant,
-};
-
-use rmcp::{
-    ServerHandler,
-    handler::server::router::tool::ToolRouter,
-    model::{
-        CallToolRequestParams, CancelTaskParams, CancelTaskResult, CompleteRequestParams,
-        CompleteResult, CreateTaskResult, GetPromptRequestParams, GetPromptResult, GetTaskParams,
-        GetTaskPayloadParams, GetTaskPayloadResult, GetTaskResult, Implementation,
-        ListPromptsResult, ListResourceTemplatesResult, ListResourcesResult, ListTasksResult,
-        PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult, ServerCapabilities,
-        ServerInfo, SubscribeRequestParams, TaskStatusNotification, TaskStatusNotificationParam,
-        TasksCapability, UnsubscribeRequestParams,
-    },
-    tool_handler,
-};
-use sora_workspace::{ProjectId, WorkspaceService};
-
 use crate::{
     SERVER_NAME, TARGET_PROTOCOL_VERSION,
     artifact_store::ArtifactStore,
+    completion::complete as complete_arguments,
+    prompts::{get as get_prompt, list as list_prompts},
+    resources::{
+        exists as resource_exists, list as list_resources, read as read_resource,
+        templates as resource_templates,
+    },
     task_store::{TaskExecutionState, TaskStore},
 };
+#[allow(deprecated)]
+use rmcp::model::{LoggingLevel, LoggingMessageNotificationParam, SetLevelRequestParams};
+use rmcp::{
+    ErrorData, RoleServer, ServerHandler,
+    handler::server::{router::tool::ToolRouter, tool::ToolCallContext},
+    model::{
+        CallToolRequestParams, CallToolResult, CancelTaskParams, CancelTaskResult,
+        CompleteRequestParams, CompleteResult, CreateTaskResult, GetPromptRequestParams,
+        GetPromptResult, GetTaskParams, GetTaskPayloadParams, GetTaskPayloadResult, GetTaskResult,
+        Implementation, ListPromptsResult, ListResourceTemplatesResult, ListResourcesResult,
+        ListTasksResult, PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult,
+        ResourceUpdatedNotificationParam, ServerCapabilities, ServerInfo, ServerNotification,
+        SubscribeRequestParams, TaskStatusNotification, TaskStatusNotificationParam,
+        TasksCapability, UnsubscribeRequestParams,
+    },
+    service::{MaybeSendFuture, NotificationContext, Peer, RequestContext},
+    tool_handler,
+};
+use serde_json::{Value, json, to_value};
+use sora_workspace::{ProjectId, WorkspaceService};
+use std::{
+    collections::BTreeSet,
+    future::{Future, ready},
+    sync::{
+        Arc, RwLock,
+        atomic::{AtomicU8, Ordering},
+    },
+    time::Instant,
+};
+
+use tokio::spawn;
+use tracing::info;
+use url::Url;
 
 /// MCP protocol adapter backed by the shared Sora workspace service.
 #[derive(Debug, Clone)]
@@ -70,7 +85,7 @@ impl SoraMcpServer {
 
     pub(crate) async fn notify_project_resources_updated(
         &self,
-        peer: &rmcp::service::Peer<rmcp::RoleServer>,
+        peer: &Peer<RoleServer>,
         project_id: &str,
     ) {
         let prefix = format!("sora://project/{project_id}/");
@@ -84,7 +99,7 @@ impl SoraMcpServer {
         };
         for uri in subscriptions {
             let _ = peer
-                .notify_resource_updated(rmcp::model::ResourceUpdatedNotificationParam::new(uri))
+                .notify_resource_updated(ResourceUpdatedNotificationParam::new(uri))
                 .await;
         }
     }
@@ -111,7 +126,7 @@ impl SoraMcpServer {
     }
 
     #[allow(deprecated)]
-    async fn sync_client_roots(&self, peer: rmcp::service::Peer<rmcp::RoleServer>) {
+    async fn sync_client_roots(&self, peer: Peer<RoleServer>) {
         let supports_roots = peer
             .peer_info()
             .and_then(|info| info.capabilities.roots.as_ref().cloned())
@@ -130,7 +145,7 @@ impl SoraMcpServer {
             return;
         }
         for (index, root) in result.roots.into_iter().enumerate() {
-            let Ok(url) = url::Url::parse(&root.uri) else {
+            let Ok(url) = Url::parse(&root.uri) else {
                 continue;
             };
             let Ok(path) = url.to_file_path() else {
@@ -148,15 +163,15 @@ impl ServerHandler for SoraMcpServer {
     async fn call_tool(
         &self,
         request: CallToolRequestParams,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<rmcp::model::CallToolResult, rmcp::ErrorData> {
+        context: RequestContext<RoleServer>,
+    ) -> Result<CallToolResult, ErrorData> {
         let started = Instant::now();
         let tool = request.name.to_string();
         let project_id = request
             .arguments
             .as_ref()
             .and_then(|arguments| arguments.get("project_id"))
-            .and_then(serde_json::Value::as_str)
+            .and_then(Value::as_str)
             .map(str::to_owned);
         let revision_before = project_id
             .as_deref()
@@ -165,9 +180,7 @@ impl ServerHandler for SoraMcpServer {
             .map(|project| project.revision().project);
         let result = self
             .tool_router
-            .call(rmcp::handler::server::tool::ToolCallContext::new(
-                self, request, context,
-            ))
+            .call(ToolCallContext::new(self, request, context))
             .await;
         let revision_after = project_id
             .as_deref()
@@ -181,7 +194,7 @@ impl ServerHandler for SoraMcpServer {
             Ok(result) => ("success", audit_change_summary(result)),
             Err(_) => ("protocol_error", "none".to_owned()),
         };
-        tracing::info!(
+        info!(
             audit_event = "tool_call",
             tool,
             project = project_id.as_deref().unwrap_or("none"),
@@ -199,14 +212,14 @@ impl ServerHandler for SoraMcpServer {
     async fn enqueue_task(
         &self,
         mut request: CallToolRequestParams,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<CreateTaskResult, rmcp::ErrorData> {
+        context: RequestContext<RoleServer>,
+    ) -> Result<CreateTaskResult, ErrorData> {
         let ttl = request.task.take().and_then(|metadata| metadata.ttl);
         let project_id = request
             .arguments
             .as_ref()
             .and_then(|arguments| arguments.get("project_id"))
-            .and_then(serde_json::Value::as_str)
+            .and_then(Value::as_str)
             .map(str::to_owned);
         let created = self
             .tasks
@@ -218,12 +231,12 @@ impl ServerHandler for SoraMcpServer {
         let task_id = created.task.task_id.clone();
         let owner = self.authorization_context.clone();
         let server = self.clone();
-        tokio::spawn(async move {
+        spawn(async move {
             let peer = task_context.peer.clone();
             let result = server.call_tool(request, task_context).await;
             let serialized = result.and_then(|result| {
-                serde_json::to_value(result).map_err(|error| {
-                    rmcp::ErrorData::internal_error(
+                to_value(result).map_err(|error| {
+                    ErrorData::internal_error(
                         format!("failed to serialize task result: {error}"),
                         None,
                     )
@@ -234,7 +247,7 @@ impl ServerHandler for SoraMcpServer {
                 .finish(&owner, &task_id, serialized, &execution)
             {
                 let _ = peer
-                    .send_notification(rmcp::model::ServerNotification::TaskStatusNotification(
+                    .send_notification(ServerNotification::TaskStatusNotification(
                         TaskStatusNotification::new(TaskStatusNotificationParam::new(task)),
                     ))
                     .await;
@@ -246,10 +259,8 @@ impl ServerHandler for SoraMcpServer {
     fn list_tasks(
         &self,
         request: Option<PaginatedRequestParams>,
-        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> impl Future<Output = Result<ListTasksResult, rmcp::ErrorData>>
-    + rmcp::service::MaybeSendFuture
-    + '_ {
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<ListTasksResult, ErrorData>> + MaybeSendFuture + '_ {
         ready(
             self.tasks.list(
                 &self.authorization_context,
@@ -263,9 +274,8 @@ impl ServerHandler for SoraMcpServer {
     fn get_task_info(
         &self,
         request: GetTaskParams,
-        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> impl Future<Output = Result<GetTaskResult, rmcp::ErrorData>> + rmcp::service::MaybeSendFuture + '_
-    {
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<GetTaskResult, ErrorData>> + MaybeSendFuture + '_ {
         ready(
             self.tasks
                 .get(&self.authorization_context, &request.task_id)
@@ -276,10 +286,8 @@ impl ServerHandler for SoraMcpServer {
     fn get_task_result(
         &self,
         request: GetTaskPayloadParams,
-        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> impl Future<Output = Result<GetTaskPayloadResult, rmcp::ErrorData>>
-    + rmcp::service::MaybeSendFuture
-    + '_ {
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<GetTaskPayloadResult, ErrorData>> + MaybeSendFuture + '_ {
         ready(
             self.tasks
                 .result(&self.authorization_context, &request.task_id)
@@ -291,14 +299,14 @@ impl ServerHandler for SoraMcpServer {
     async fn cancel_task(
         &self,
         request: CancelTaskParams,
-        context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<CancelTaskResult, rmcp::ErrorData> {
+        context: RequestContext<RoleServer>,
+    ) -> Result<CancelTaskResult, ErrorData> {
         let task = self
             .tasks
             .cancel(&self.authorization_context, &request.task_id)?;
         let _ = context
             .peer
-            .send_notification(rmcp::model::ServerNotification::TaskStatusNotification(
+            .send_notification(ServerNotification::TaskStatusNotification(
                 TaskStatusNotification::new(TaskStatusNotificationParam::new(task.clone())),
             ))
             .await;
@@ -306,15 +314,15 @@ impl ServerHandler for SoraMcpServer {
     }
 
     #[allow(deprecated)]
-    async fn on_initialized(&self, context: rmcp::service::NotificationContext<rmcp::RoleServer>) {
+    async fn on_initialized(&self, context: NotificationContext<RoleServer>) {
         self.sync_client_roots(context.peer.clone()).await;
         if self.logging_level.load(Ordering::Relaxed) <= 1 {
             let _ = context
                 .peer
                 .notify_logging_message(
-                    rmcp::model::LoggingMessageNotificationParam::new(
-                        rmcp::model::LoggingLevel::Info,
-                        serde_json::json!({
+                    LoggingMessageNotificationParam::new(
+                        LoggingLevel::Info,
+                        json!({
                             "event": "server_initialized",
                             "protocol_version": TARGET_PROTOCOL_VERSION.as_str(),
                         }),
@@ -325,21 +333,16 @@ impl ServerHandler for SoraMcpServer {
         }
     }
 
-    async fn on_roots_list_changed(
-        &self,
-        context: rmcp::service::NotificationContext<rmcp::RoleServer>,
-    ) {
+    async fn on_roots_list_changed(&self, context: NotificationContext<RoleServer>) {
         self.sync_client_roots(context.peer).await;
     }
 
     fn complete(
         &self,
         request: CompleteRequestParams,
-        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> impl Future<Output = Result<CompleteResult, rmcp::ErrorData>>
-    + rmcp::service::MaybeSendFuture
-    + '_ {
-        ready(crate::completion::complete(
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<CompleteResult, ErrorData>> + MaybeSendFuture + '_ {
+        ready(complete_arguments(
             &self.workspace,
             &self.artifacts,
             &self.authorization_context,
@@ -350,38 +353,31 @@ impl ServerHandler for SoraMcpServer {
     fn list_prompts(
         &self,
         _request: Option<PaginatedRequestParams>,
-        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> impl Future<Output = Result<ListPromptsResult, rmcp::ErrorData>>
-    + rmcp::service::MaybeSendFuture
-    + '_ {
-        ready(Ok(crate::prompts::list()))
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<ListPromptsResult, ErrorData>> + MaybeSendFuture + '_ {
+        ready(Ok(list_prompts()))
     }
 
     fn get_prompt(
         &self,
         request: GetPromptRequestParams,
-        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> impl Future<Output = Result<GetPromptResult, rmcp::ErrorData>>
-    + rmcp::service::MaybeSendFuture
-    + '_ {
-        ready(crate::prompts::get(&self.workspace, request))
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<GetPromptResult, ErrorData>> + MaybeSendFuture + '_ {
+        ready(get_prompt(&self.workspace, request))
     }
 
     #[allow(deprecated)]
     fn set_level(
         &self,
-        request: rmcp::model::SetLevelRequestParams,
-        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> impl Future<Output = Result<(), rmcp::ErrorData>> + rmcp::service::MaybeSendFuture + '_
-    {
+        request: SetLevelRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<(), ErrorData>> + MaybeSendFuture + '_ {
         let level = match request.level {
-            rmcp::model::LoggingLevel::Debug => 0,
-            rmcp::model::LoggingLevel::Info | rmcp::model::LoggingLevel::Notice => 1,
-            rmcp::model::LoggingLevel::Warning => 2,
-            rmcp::model::LoggingLevel::Error => 3,
-            rmcp::model::LoggingLevel::Critical
-            | rmcp::model::LoggingLevel::Alert
-            | rmcp::model::LoggingLevel::Emergency => 4,
+            LoggingLevel::Debug => 0,
+            LoggingLevel::Info | LoggingLevel::Notice => 1,
+            LoggingLevel::Warning => 2,
+            LoggingLevel::Error => 3,
+            LoggingLevel::Critical | LoggingLevel::Alert | LoggingLevel::Emergency => 4,
         };
         self.logging_level.store(level, Ordering::Relaxed);
         ready(Ok(()))
@@ -390,31 +386,26 @@ impl ServerHandler for SoraMcpServer {
     fn list_resources(
         &self,
         _request: Option<PaginatedRequestParams>,
-        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> impl Future<Output = Result<ListResourcesResult, rmcp::ErrorData>>
-    + rmcp::service::MaybeSendFuture
-    + '_ {
-        ready(crate::resources::list(&self.workspace))
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<ListResourcesResult, ErrorData>> + MaybeSendFuture + '_ {
+        ready(list_resources(&self.workspace))
     }
 
     fn list_resource_templates(
         &self,
         _request: Option<PaginatedRequestParams>,
-        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> impl Future<Output = Result<ListResourceTemplatesResult, rmcp::ErrorData>>
-    + rmcp::service::MaybeSendFuture
-    + '_ {
-        ready(Ok(crate::resources::templates()))
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<ListResourceTemplatesResult, ErrorData>> + MaybeSendFuture + '_
+    {
+        ready(Ok(resource_templates()))
     }
 
     fn read_resource(
         &self,
         request: ReadResourceRequestParams,
-        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> impl Future<Output = Result<ReadResourceResult, rmcp::ErrorData>>
-    + rmcp::service::MaybeSendFuture
-    + '_ {
-        ready(crate::resources::read(
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<ReadResourceResult, ErrorData>> + MaybeSendFuture + '_ {
+        ready(read_resource(
             &self.workspace,
             &self.artifacts,
             &self.tasks,
@@ -426,10 +417,9 @@ impl ServerHandler for SoraMcpServer {
     fn subscribe(
         &self,
         request: SubscribeRequestParams,
-        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> impl Future<Output = Result<(), rmcp::ErrorData>> + rmcp::service::MaybeSendFuture + '_
-    {
-        let result = if crate::resources::exists(
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<(), ErrorData>> + MaybeSendFuture + '_ {
+        let result = if resource_exists(
             &self.workspace,
             &self.artifacts,
             &self.tasks,
@@ -438,12 +428,12 @@ impl ServerHandler for SoraMcpServer {
         ) {
             self.subscriptions
                 .write()
-                .map_err(|_| rmcp::ErrorData::internal_error("subscription lock poisoned", None))
+                .map_err(|_| ErrorData::internal_error("subscription lock poisoned", None))
                 .map(|mut subscriptions| {
                     subscriptions.insert(request.uri);
                 })
         } else {
-            Err(rmcp::ErrorData::resource_not_found(
+            Err(ErrorData::resource_not_found(
                 "resource is not available for subscription",
                 None,
             ))
@@ -454,13 +444,12 @@ impl ServerHandler for SoraMcpServer {
     fn unsubscribe(
         &self,
         request: UnsubscribeRequestParams,
-        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> impl Future<Output = Result<(), rmcp::ErrorData>> + rmcp::service::MaybeSendFuture + '_
-    {
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<(), ErrorData>> + MaybeSendFuture + '_ {
         let result = self
             .subscriptions
             .write()
-            .map_err(|_| rmcp::ErrorData::internal_error("subscription lock poisoned", None))
+            .map_err(|_| ErrorData::internal_error("subscription lock poisoned", None))
             .map(|mut subscriptions| {
                 subscriptions.remove(&request.uri);
             });
@@ -482,7 +471,7 @@ impl ServerHandler for SoraMcpServer {
     }
 }
 
-fn audit_change_summary(result: &rmcp::model::CallToolResult) -> String {
+fn audit_change_summary(result: &CallToolResult) -> String {
     const COUNTED_FIELDS: [&str; 7] = [
         "affected_files",
         "affected_entities",
@@ -503,7 +492,7 @@ fn audit_change_summary(result: &rmcp::model::CallToolResult) -> String {
         .filter_map(|field| {
             object
                 .get(*field)
-                .and_then(serde_json::Value::as_array)
+                .and_then(Value::as_array)
                 .map(|values| format!("{field}={}", values.len()))
         })
         .collect::<Vec<_>>();
@@ -619,8 +608,8 @@ mod tests {
                 assert_eq!(annotations.destructive_hint, Some(true));
                 assert_eq!(annotations.read_only_hint, Some(false));
             }
-            let input_schema = serde_json::to_value(&tool.input_schema)
-                .expect("tool input schema should serialize");
+            let input_schema =
+                to_value(&tool.input_schema).expect("tool input schema should serialize");
             assert_eq!(input_schema["type"], "object");
             assert_eq!(input_schema["additionalProperties"], false);
         }

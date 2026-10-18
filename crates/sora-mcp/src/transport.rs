@@ -1,8 +1,9 @@
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
-use rmcp::ServiceExt;
+use rmcp::{ServiceExt, transport::stdio};
 use sora_workspace::WorkspaceService;
+use tokio::runtime::Runtime;
 
 use crate::SoraMcpServer;
 
@@ -10,10 +11,10 @@ use crate::SoraMcpServer;
 ///
 /// The transport owns stdout, so all diagnostics and logging must use stderr.
 pub fn serve_stdio(workspace: Arc<WorkspaceService>) -> Result<()> {
-    let runtime = tokio::runtime::Runtime::new().context("failed to start MCP async runtime")?;
+    let runtime = Runtime::new().context("failed to start MCP async runtime")?;
     runtime.block_on(async move {
         let service = SoraMcpServer::new(workspace)
-            .serve(rmcp::transport::stdio())
+            .serve(stdio())
             .await
             .context("failed to initialize Sora MCP stdio transport")?;
         service

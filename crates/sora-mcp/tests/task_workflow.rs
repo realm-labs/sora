@@ -1,6 +1,8 @@
 use std::{
+    env::temp_dir as system_temp_dir,
     fs,
     path::PathBuf,
+    process::id as process_id,
     sync::{
         Arc,
         atomic::{AtomicU64, AtomicUsize, Ordering},
@@ -8,8 +10,9 @@ use std::{
     time::{Duration, Instant},
 };
 
+use anyhow::{Ok as anyhow_ok, Result, bail};
 use rmcp::{
-    ClientHandler, ServiceExt,
+    ClientHandler, RoleClient, ServiceExt,
     model::{
         CallToolRequest, CallToolRequestParams, CancelTaskParams, CancelTaskRequest,
         ClientCapabilities, ClientInfo, ClientRequest, GetTaskParams, GetTaskPayloadParams,
@@ -17,9 +20,12 @@ use rmcp::{
         ReadResourceRequestParams, ServerResult, TaskMetadata, TaskStatus,
         TaskStatusNotificationParam, TasksCapability,
     },
+    service::NotificationContext,
 };
+use serde_json::{json, to_value};
 use sora_mcp::{SoraMcpServer, TARGET_PROTOCOL_VERSION};
 use sora_workspace::{ProjectId, RuntimeOptions, WorkspaceService};
+use tokio::{io::duplex, spawn, task::yield_now};
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -42,14 +48,14 @@ impl ClientHandler for TaskClient {
     async fn on_task_status(
         &self,
         _params: TaskStatusNotificationParam,
-        _context: rmcp::service::NotificationContext<rmcp::RoleClient>,
+        _context: NotificationContext<RoleClient>,
     ) {
         self.status_count.fetch_add(1, Ordering::Relaxed);
     }
 }
 
 #[tokio::test]
-async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> anyhow::Result<()> {
+async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> Result<()> {
     let root = temp_project();
     let workspace = Arc::new(WorkspaceService::new());
     let session = workspace.open_project(
@@ -58,17 +64,17 @@ async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> anyhow::
         RuntimeOptions::default(),
     )?;
     let revision = session.revision();
-    let (server_transport, client_transport) = tokio::io::duplex(128 * 1024);
+    let (server_transport, client_transport) = duplex(128 * 1024);
     let server = SoraMcpServer::new(Arc::clone(&workspace));
-    let server_handle = tokio::spawn(async move {
+    let server_handle = spawn(async move {
         server.serve(server_transport).await?.waiting().await?;
-        anyhow::Ok(())
+        anyhow_ok(())
     });
     let client = TaskClient::default().serve(client_transport).await?;
 
     let request = CallToolRequestParams::new("sora_schema_lock")
         .with_arguments(
-            serde_json::json!({
+            json!({
                 "project_id": "demo",
                 "expected_project_revision": revision.project,
                 "view": null,
@@ -86,7 +92,7 @@ async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> anyhow::
         .await?
     {
         ServerResult::CreateTaskResult(result) => result.task,
-        result => anyhow::bail!("expected task result, got {result:?}"),
+        result => bail!("expected task result, got {result:?}"),
     };
 
     let completed = loop {
@@ -96,12 +102,12 @@ async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> anyhow::
             )))
             .await?;
         let ServerResult::GetTaskResult(result) = result else {
-            anyhow::bail!("expected task info");
+            bail!("expected task info");
         };
         if result.task.status != TaskStatus::Working {
             break result.task;
         }
-        tokio::task::yield_now().await;
+        yield_now().await;
     };
     assert_eq!(completed.status, TaskStatus::Completed);
     assert!(root.join("generated/schema.lock").is_file());
@@ -112,9 +118,9 @@ async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> anyhow::
         ))
         .await?;
     let payload = match payload {
-        ServerResult::CallToolResult(payload) => serde_json::to_value(payload)?,
+        ServerResult::CallToolResult(payload) => to_value(payload)?,
         ServerResult::CustomResult(payload) => payload.0,
-        payload => anyhow::bail!("expected task payload, got {payload:?}"),
+        payload => bail!("expected task payload, got {payload:?}"),
     };
     assert_eq!(payload["isError"], false);
     assert_eq!(payload["structuredContent"]["ok"], true);
@@ -123,7 +129,7 @@ async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> anyhow::
         .send_request(ClientRequest::ListTasksRequest(ListTasksRequest::default()))
         .await?;
     let ServerResult::ListTasksResult(list) = list else {
-        anyhow::bail!("expected task list");
+        bail!("expected task list");
     };
     assert_eq!(list.tasks.len(), 1);
     assert_eq!(list.tasks[0].task_id, task.task_id);
@@ -141,7 +147,7 @@ async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> anyhow::
     let notifications_before_cancel = client.service().status_count.load(Ordering::Relaxed);
     let request = CallToolRequestParams::new("sora_schema_lock")
         .with_arguments(
-            serde_json::json!({
+            json!({
                 "project_id": "demo",
                 "expected_project_revision": revision.project,
                 "view": null,
@@ -159,7 +165,7 @@ async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> anyhow::
         .await?
     {
         ServerResult::CreateTaskResult(result) => result.task,
-        result => anyhow::bail!("expected task result, got {result:?}"),
+        result => bail!("expected task result, got {result:?}"),
     };
     let cancellation = client
         .send_request(ClientRequest::CancelTaskRequest(CancelTaskRequest::new(
@@ -169,7 +175,7 @@ async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> anyhow::
     let cancellation = match cancellation {
         ServerResult::CancelTaskResult(result) => result.task,
         ServerResult::GetTaskResult(result) => result.task,
-        result => anyhow::bail!("expected cancellation result, got {result:?}"),
+        result => bail!("expected cancellation result, got {result:?}"),
     };
     assert!(matches!(
         cancellation.status,
@@ -189,7 +195,7 @@ async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> anyhow::
             )))
             .await?;
         let ServerResult::GetTaskResult(result) = result else {
-            anyhow::bail!("expected cancelled task info");
+            bail!("expected cancelled task info");
         };
         if !matches!(
             result.task.status,
@@ -198,16 +204,16 @@ async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> anyhow::
             break result.task;
         }
         if Instant::now() >= deadline {
-            anyhow::bail!("cancelled task did not reach a terminal state");
+            bail!("cancelled task did not reach a terminal state");
         }
-        tokio::task::yield_now().await;
+        yield_now().await;
     };
     assert!(client.service().status_count.load(Ordering::Relaxed) > notifications_before_cancel);
     let schema_lock = fs::read_to_string(root.join("generated/schema.lock"))?;
     match cancelled.status {
         TaskStatus::Cancelled => assert_eq!(schema_lock, "sentinel"),
         TaskStatus::Completed => assert_ne!(schema_lock, "sentinel"),
-        status => anyhow::bail!("expected terminal cancellation result, got {status:?}"),
+        status => bail!("expected terminal cancellation result, got {status:?}"),
     }
 
     client.cancel().await?;
@@ -218,7 +224,7 @@ async fn task_augmented_build_can_be_polled_and_read_as_a_resource() -> anyhow::
 
 fn temp_project() -> PathBuf {
     let nonce = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let root = std::env::temp_dir().join(format!("sora-mcp-task-{}-{nonce}", std::process::id()));
+    let root = system_temp_dir().join(format!("sora-mcp-task-{}-{nonce}", process_id()));
     fs::create_dir_all(root.join("schema")).unwrap();
     fs::write(
         root.join("project.toml"),

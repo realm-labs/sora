@@ -1,9 +1,10 @@
-use std::{collections::BTreeMap, fmt};
+use std::{collections::BTreeMap, fmt, result::Result};
 
 use serde::{
     Deserialize, Deserializer, Serialize,
-    de::{SeqAccess, Visitor},
+    de::{Error as DeserializeError, SeqAccess, Visitor},
 };
+use serde_json::Value as JsonValue;
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct ProjectSchema {
@@ -84,7 +85,7 @@ pub struct ViewSchema {
     pub names: ViewNamesSchema,
 
     #[serde(default)]
-    pub bindings: BTreeMap<String, serde_json::Value>,
+    pub bindings: BTreeMap<String, JsonValue>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize, Serialize)]
@@ -131,11 +132,11 @@ fn default_localization_key() -> String {
 #[derive(Debug, Clone, PartialEq, Deserialize, Default)]
 pub struct CodegenSchema {
     #[serde(flatten)]
-    pub targets: BTreeMap<String, serde_json::Value>,
+    pub targets: BTreeMap<String, JsonValue>,
 }
 
 impl CodegenSchema {
-    pub fn target_options(&self, target: &str) -> Option<&serde_json::Value> {
+    pub fn target_options(&self, target: &str) -> Option<&JsonValue> {
         self.targets.get(target)
     }
 }
@@ -322,7 +323,7 @@ pub struct GroupSetSchema {
 }
 
 impl<'de> Deserialize<'de> for GroupSetSchema {
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -335,16 +336,16 @@ impl<'de> Deserialize<'de> for GroupSetSchema {
                 formatter.write_str("a group string or list of group strings")
             }
 
-            fn visit_str<E>(self, value: &str) -> std::result::Result<Self::Value, E>
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
             where
-                E: serde::de::Error,
+                E: DeserializeError,
             {
                 Ok(GroupSetSchema {
                     values: vec![value.to_owned()],
                 })
             }
 
-            fn visit_seq<A>(self, mut seq: A) -> std::result::Result<Self::Value, A::Error>
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
             where
                 A: SeqAccess<'de>,
             {
@@ -513,27 +514,27 @@ enum_repr = "string"
 
         assert_eq!(
             schema.codegen.targets["rust"]["map_type"],
-            serde_json::Value::String("fx_hash_map".to_owned())
+            JsonValue::String("fx_hash_map".to_owned())
         );
         assert_eq!(
             schema.codegen.targets["rust"]["string_storage"],
-            serde_json::Value::String("arc".to_owned())
+            JsonValue::String("arc".to_owned())
         );
         assert_eq!(
             schema.codegen.targets["godot"]["runtime_format"],
-            serde_json::Value::String("json".to_owned())
+            JsonValue::String("json".to_owned())
         );
         assert_eq!(
             schema.codegen.targets["godot"]["godot_version"],
-            serde_json::Value::String("4.4".to_owned())
+            JsonValue::String("4.4".to_owned())
         );
         assert_eq!(
             schema.codegen.targets["cpp"]["namespace"],
-            serde_json::Value::String("sora::game_config".to_owned())
+            JsonValue::String("sora::game_config".to_owned())
         );
         assert_eq!(
             schema.codegen.targets["javascript"]["emit_dts"],
-            serde_json::Value::Bool(false)
+            JsonValue::Bool(false)
         );
     }
 }

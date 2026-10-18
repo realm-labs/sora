@@ -1,18 +1,20 @@
-use std::{collections::BTreeSet, net::SocketAddr, path::Path, sync::Arc};
+use std::{collections::BTreeSet, io::stderr, net::SocketAddr, path::Path, sync::Arc};
 
-use anyhow::{Context, Result, bail};
-use sora_mcp::{HttpServerConfig, OAuthResourceServerConfig};
+use anyhow::{Context, Result, anyhow, bail};
+use sora_mcp::{HttpServerConfig, OAuthResourceServerConfig, serve_http, serve_stdio};
 use sora_workspace::{RuntimeOptions, WorkspaceService};
+use tracing_subscriber::fmt as tracing_fmt;
+use url::Url;
 
 use crate::args::{McpArgs, McpTransportArg};
 
 pub fn run(args: McpArgs, runtime_options: RuntimeOptions) -> Result<()> {
-    tracing_subscriber::fmt()
+    tracing_fmt()
         .json()
         .with_ansi(false)
-        .with_writer(std::io::stderr)
+        .with_writer(stderr)
         .try_init()
-        .map_err(|error| anyhow::anyhow!("failed to initialize MCP audit logging: {error}"))?;
+        .map_err(|error| anyhow!("failed to initialize MCP audit logging: {error}"))?;
     let workspace = Arc::new(WorkspaceService::new());
     if let Some(project) = &args.project {
         let root = project.parent().unwrap_or_else(|| Path::new("."));
@@ -31,11 +33,11 @@ pub fn run(args: McpArgs, runtime_options: RuntimeOptions) -> Result<()> {
     match args.transport {
         McpTransportArg::Stdio => {
             reject_http_only_arguments(&args)?;
-            sora_mcp::serve_stdio(workspace)
+            serve_stdio(workspace)
         }
         McpTransportArg::Http => {
             let config = http_config(&args)?;
-            sora_mcp::serve_http(workspace, config)
+            serve_http(workspace, config)
         }
     }
 }
@@ -57,7 +59,7 @@ fn http_config(args: &McpArgs) -> Result<HttpServerConfig> {
     let bind = SocketAddr::new(args.host, args.port);
     let public_url = match &args.public_url {
         Some(url) => url.clone(),
-        None if args.host.is_loopback() => url::Url::parse(&format!("http://{bind}/mcp"))
+        None if args.host.is_loopback() => Url::parse(&format!("http://{bind}/mcp"))
             .context("failed to derive local MCP public URL")?,
         None => bail!("--public-url is required for a non-loopback HTTP listener"),
     };

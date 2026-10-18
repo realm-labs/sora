@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use serde::Serialize;
+use serde_json::to_vec_pretty;
 use sora_diagnostics::{Result, SoraError};
 
 use crate::{
@@ -32,7 +33,7 @@ impl DataExporter for I18nJsonExporter {
         };
         let view = locale_view(self.format_name(), &request)?;
         create_parent_dir(path)?;
-        let content = serde_json::to_vec_pretty(&view).map_err(SoraError::SerializeData)?;
+        let content = to_vec_pretty(&view).map_err(SoraError::SerializeData)?;
         write_file(path.clone(), content)
     }
 }

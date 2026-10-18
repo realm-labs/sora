@@ -1,19 +1,22 @@
 use std::{
+    fmt::{Debug, Formatter, Result as FmtResult},
     str,
     sync::Arc,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
-use futures_util::StreamExt;
+use futures_util::{Stream, StreamExt};
 use hmac::{Hmac, Mac};
 use rmcp::{
     model::{ClientJsonRpcMessage, ServerJsonRpcMessage},
     transport::streamable_http_server::{
         RestoreOutcome, SessionId, SessionManager,
-        session::ServerSseMessage,
-        session::local::{
-            LocalSessionManager, LocalSessionManagerError, SessionConfig, SessionTransport,
+        session::{
+            ServerSseMessage,
+            local::{
+                LocalSessionManager, LocalSessionManagerError, SessionConfig, SessionTransport,
+            },
         },
     },
 };
@@ -179,8 +182,8 @@ pub struct SecureSessionManager {
     creation_lock: Mutex<()>,
 }
 
-impl std::fmt::Debug for SecureSessionManager {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for SecureSessionManager {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         formatter
             .debug_struct("SecureSessionManager")
             .field("max_sessions", &self.max_sessions)
@@ -218,8 +221,8 @@ impl SecureSessionManager {
     fn secure_stream(
         &self,
         session_id: SessionId,
-        stream: impl futures_util::Stream<Item = ServerSseMessage> + Send + Sync + 'static,
-    ) -> impl futures_util::Stream<Item = ServerSseMessage> + Send + Sync + 'static {
+        stream: impl Stream<Item = ServerSseMessage> + Send + Sync + 'static,
+    ) -> impl Stream<Item = ServerSseMessage> + Send + Sync + 'static {
         let codec = self.codec.clone();
         stream.map(move |mut message| {
             if let Some(raw_event_id) = message.event_id.take() {
@@ -262,10 +265,7 @@ impl SessionManager for SecureSessionManager {
         &self,
         id: &SessionId,
         message: ClientJsonRpcMessage,
-    ) -> Result<
-        impl futures_util::Stream<Item = ServerSseMessage> + Send + Sync + 'static,
-        Self::Error,
-    > {
+    ) -> Result<impl Stream<Item = ServerSseMessage> + Send + Sync + 'static, Self::Error> {
         let stream = self.inner.create_stream(id, message).await?;
         Ok(self.secure_stream(id.clone(), stream))
     }
@@ -281,10 +281,7 @@ impl SessionManager for SecureSessionManager {
     async fn create_standalone_stream(
         &self,
         id: &SessionId,
-    ) -> Result<
-        impl futures_util::Stream<Item = ServerSseMessage> + Send + Sync + 'static,
-        Self::Error,
-    > {
+    ) -> Result<impl Stream<Item = ServerSseMessage> + Send + Sync + 'static, Self::Error> {
         let stream = self.inner.create_standalone_stream(id).await?;
         Ok(self.secure_stream(id.clone(), stream))
     }
@@ -293,10 +290,7 @@ impl SessionManager for SecureSessionManager {
         &self,
         id: &SessionId,
         last_event_id: String,
-    ) -> Result<
-        impl futures_util::Stream<Item = ServerSseMessage> + Send + Sync + 'static,
-        Self::Error,
-    > {
+    ) -> Result<impl Stream<Item = ServerSseMessage> + Send + Sync + 'static, Self::Error> {
         let raw_event_id = self.codec.decode(id, &last_event_id)?;
         let stream = self.inner.resume(id, raw_event_id).await?;
         Ok(self.secure_stream(id.clone(), stream))
@@ -318,7 +312,7 @@ impl SessionManager for SecureSessionManager {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use std::{sync::Arc, time::Duration};
 
     use super::{EventCursorCodec, SecureSessionError};
 
@@ -327,7 +321,7 @@ mod tests {
         let codec = EventCursorCodec::new(
             b"01234567890123456789012345678901",
             Arc::from("subject-a"),
-            std::time::Duration::from_secs(60),
+            Duration::from_secs(60),
         )
         .expect("valid signer");
         let session: Arc<str> = Arc::from("session-a");
@@ -347,7 +341,7 @@ mod tests {
         let other = EventCursorCodec::new(
             b"01234567890123456789012345678901",
             Arc::from("subject-b"),
-            std::time::Duration::from_secs(60),
+            Duration::from_secs(60),
         )
         .expect("valid signer");
         assert!(matches!(
@@ -361,7 +355,7 @@ mod tests {
         let codec = EventCursorCodec::new(
             b"01234567890123456789012345678901",
             Arc::from("subject"),
-            std::time::Duration::from_secs(60),
+            Duration::from_secs(60),
         )
         .expect("valid signer");
         let session: Arc<str> = Arc::from("session");

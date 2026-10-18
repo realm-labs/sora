@@ -1,5 +1,7 @@
 use std::{
+    env::temp_dir as system_temp_dir,
     fs,
+    process::id as process_id,
     sync::{
         Arc, Mutex,
         atomic::{AtomicU64, Ordering},
@@ -17,9 +19,9 @@ static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 #[test]
 fn excel_sync_preview_is_read_only_and_apply_is_revision_bound_and_idempotent() {
     let nonce = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let root = std::env::temp_dir().join(format!(
+    let root = system_temp_dir().join(format!(
         "sora-workspace-excel-sync-{}-{nonce}",
-        std::process::id()
+        process_id()
     ));
     fs::create_dir_all(root.join("data")).unwrap();
     fs::write(

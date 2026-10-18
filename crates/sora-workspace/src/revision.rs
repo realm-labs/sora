@@ -1,12 +1,14 @@
 use std::{
     collections::BTreeSet,
     fs,
+    io::Result as IoResult,
     path::{Path, PathBuf},
 };
 
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
+use sora_config_format::load_document;
 
 use crate::{ProjectManifest, ProjectRevision};
 
@@ -79,7 +81,7 @@ fn collect_schema_files(
             path.display()
         );
     }
-    let document: IncludeDocument = sora_config_format::load_document(&key)
+    let document: IncludeDocument = load_document(&key)
         .with_context(|| format!("failed to inspect schema includes in `{}`", path.display()))?;
     files.push(key.clone());
     let parent = key.parent().unwrap_or_else(|| Path::new("."));
@@ -126,7 +128,7 @@ fn collect_files(root: &Path) -> Result<Vec<PathBuf>> {
             .with_context(|| format!("failed to read data directory `{}`", directory.display()))?;
         let mut paths = entries
             .map(|entry| entry.map(|entry| entry.path()))
-            .collect::<std::io::Result<Vec<_>>>()
+            .collect::<IoResult<Vec<_>>>()
             .with_context(|| {
                 format!(
                     "failed to enumerate data directory `{}`",
@@ -215,6 +217,7 @@ struct RevisionProject {
 
 #[cfg(test)]
 mod tests {
+    use std::{env::temp_dir as system_temp_dir, process::id as process_id};
     use std::{
         sync::atomic::{AtomicU64, Ordering},
         time::{SystemTime, UNIX_EPOCH},
@@ -262,9 +265,9 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        std::env::temp_dir().join(format!(
+        system_temp_dir().join(format!(
             "sora-workspace-revision-{}-{time}-{nonce}",
-            std::process::id()
+            process_id()
         ))
     }
 }

@@ -1,19 +1,25 @@
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
+    io::Result as IoResult,
     path::{Component, Path, PathBuf},
-    sync::{Arc, Mutex},
+    result::Result as StdResult,
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicUsize, Ordering},
+    },
 };
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Error as AnyhowError, Result, bail};
 use mlua::{
-    Error as LuaError, Function, HookTriggers, Lua, LuaOptions, StdLib, Table, Value as LuaValue,
-    VmState,
+    Error as LuaError, Function, HookTriggers, Lua, LuaOptions, Result as LuaResult, StdLib, Table,
+    Value as LuaValue, VmState,
 };
+use serde_json::{Value as JsonValue, from_str};
 use sha2::{Digest, Sha256};
 use sora_data::model::{RowData, TableData, Value};
-use sora_diagnostics::SoraError;
+use sora_diagnostics::{Result as DiagnosticResult, SoraError};
+use sora_execution::ExecutionContext;
 use sora_input::source::{
     DataSourceDependency, DataSourceLoader, DataSourceRegistry, DataSourceRequest,
 };
@@ -63,7 +69,7 @@ pub(crate) fn register_lua_source_loaders(
                     script_digest: digest.clone(),
                     dependencies: Arc::new(Mutex::new(BTreeMap::new())),
                 })
-                .map_err(anyhow::Error::from)?;
+                .map_err(AnyhowError::from)?;
         }
     }
     Ok(())
@@ -81,7 +87,7 @@ fn discover_definitions(path: &Path, source: &str) -> Result<Vec<LoaderDefinitio
         .load(source)
         .set_name(normalized_path(path))
         .eval()
-        .map_err(|error| anyhow::Error::from(map_lua_error(path, error)))?;
+        .map_err(|error| AnyhowError::from(map_lua_error(path, error)))?;
     let loaders: Table = root.get("source_loaders").with_context(|| {
         format!(
             "Lua source loader script `{}` must return a table with `source_loaders`",
@@ -173,13 +179,13 @@ impl DataSourceLoader for LuaSourceLoader {
         dependencies
     }
 
-    fn load_table(&self, request: DataSourceRequest<'_>) -> sora_diagnostics::Result<TableData> {
+    fn load_table(&self, request: DataSourceRequest<'_>) -> DiagnosticResult<TableData> {
         self.load(request)
     }
 }
 
 impl LuaSourceLoader {
-    fn load(&self, request: DataSourceRequest<'_>) -> sora_diagnostics::Result<TableData> {
+    fn load(&self, request: DataSourceRequest<'_>) -> DiagnosticResult<TableData> {
         if request.execution.is_cancelled() {
             return Err(SoraError::OperationCancelled {
                 operation: "Lua source load",
@@ -232,7 +238,7 @@ impl LuaSourceLoader {
             .and_then(|()| source.set("path", request.source.file.as_str()))
             .map_err(|error| map_lua_error(&self.script_label, error))?;
 
-        let result = (|| -> mlua::Result<Table> {
+        let result = (|| -> LuaResult<Table> {
             let root: Table = lua
                 .load(&self.script_source)
                 .set_name(normalized_path(&self.script_label))
@@ -289,7 +295,7 @@ impl LuaSourceLoader {
     }
 }
 
-fn source_lua(execution: Option<&sora_execution::ExecutionContext>) -> Result<Lua> {
+fn source_lua(execution: Option<&ExecutionContext>) -> Result<Lua> {
     let lua = Lua::new_with(
         StdLib::TABLE | StdLib::STRING | StdLib::MATH | StdLib::UTF8,
         LuaOptions::default(),
@@ -337,7 +343,7 @@ struct FileCapabilityState {
     dependency_scope: DependencyScope,
 }
 
-fn create_host_context(lua: &Lua, state: Arc<Mutex<FileCapabilityState>>) -> mlua::Result<Table> {
+fn create_host_context(lua: &Lua, state: Arc<Mutex<FileCapabilityState>>) -> LuaResult<Table> {
     let context = lua.create_table()?;
     let null = create_null_sentinel(lua)?;
     context.set("null", null.clone())?;
@@ -369,7 +375,7 @@ fn create_host_context(lua: &Lua, state: Arc<Mutex<FileCapabilityState>>) -> mlu
     context.set(
         "json_decode",
         lua.create_function(move |lua, text: String| {
-            let value: serde_json::Value = serde_json::from_str(&text)
+            let value: JsonValue = from_str(&text)
                 .map_err(|error| LuaError::external(format!("invalid JSON: {error}")))?;
             json_to_lua(lua, &value, &null, 0)
         })?,
@@ -383,7 +389,7 @@ fn create_host_context(lua: &Lua, state: Arc<Mutex<FileCapabilityState>>) -> mlu
     )?;
     context.set(
         "error",
-        lua.create_function(|_, diagnostic: Table| -> mlua::Result<()> {
+        lua.create_function(|_, diagnostic: Table| -> LuaResult<()> {
             let path = diagnostic
                 .get::<Option<String>>("path")?
                 .unwrap_or_default();
@@ -404,7 +410,7 @@ fn create_host_context(lua: &Lua, state: Arc<Mutex<FileCapabilityState>>) -> mlu
 fn read_capability_file(
     state: &Arc<Mutex<FileCapabilityState>>,
     relative: &str,
-) -> mlua::Result<Vec<u8>> {
+) -> LuaResult<Vec<u8>> {
     let mut state = state
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
@@ -447,7 +453,7 @@ fn list_capability_directory(
     lua: &Lua,
     state: &Arc<Mutex<FileCapabilityState>>,
     relative: &str,
-) -> mlua::Result<Table> {
+) -> LuaResult<Table> {
     let mut state = state
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
@@ -460,7 +466,7 @@ fn list_capability_directory(
             LuaError::external(format!("failed to enumerate source directory: {error}"))
         })?
         .map(|entry| entry.map(|entry| entry.path()))
-        .collect::<std::io::Result<Vec<_>>>()
+        .collect::<IoResult<Vec<_>>>()
         .map_err(LuaError::external)?;
     entries.sort_by(|left, right| {
         normalized_path(left.strip_prefix(&state.root).unwrap_or(left)).cmp(&normalized_path(
@@ -509,7 +515,7 @@ fn list_capability_directory(
 fn resolve_capability_path(
     state: &FileCapabilityState,
     relative: &str,
-) -> mlua::Result<(PathBuf, PathBuf)> {
+) -> LuaResult<(PathBuf, PathBuf)> {
     validate_relative_path(relative).map_err(LuaError::external)?;
     let relative = if relative.is_empty() {
         Path::new(".")
@@ -550,7 +556,7 @@ fn resolve_capability_path(
     Ok((canonical, state.source_label.join(suffix)))
 }
 
-fn validate_relative_path(value: &str) -> std::result::Result<(), String> {
+fn validate_relative_path(value: &str) -> StdResult<(), String> {
     let path = Path::new(value);
     if path.is_absolute()
         || path
@@ -562,10 +568,7 @@ fn validate_relative_path(value: &str) -> std::result::Result<(), String> {
     Ok(())
 }
 
-fn lua_object_to_row(
-    table: Table,
-    depth: usize,
-) -> std::result::Result<BTreeMap<String, Value>, String> {
+fn lua_object_to_row(table: Table, depth: usize) -> StdResult<BTreeMap<String, Value>, String> {
     if depth > MAX_VALUE_DEPTH {
         return Err(format!("value nesting exceeds {MAX_VALUE_DEPTH}"));
     }
@@ -589,7 +592,7 @@ fn lua_object_to_row(
     Ok(out)
 }
 
-fn lua_value_to_data(value: LuaValue, depth: usize) -> std::result::Result<Value, String> {
+fn lua_value_to_data(value: LuaValue, depth: usize) -> StdResult<Value, String> {
     if depth > MAX_VALUE_DEPTH {
         return Err(format!("value nesting exceeds {MAX_VALUE_DEPTH}"));
     }
@@ -631,7 +634,7 @@ fn lua_value_to_data(value: LuaValue, depth: usize) -> std::result::Result<Value
     })
 }
 
-fn validate_sequence_table(table: &Table) -> std::result::Result<usize, String> {
+fn validate_sequence_table(table: &Table) -> StdResult<usize, String> {
     let len = table.raw_len();
     let mut entries = 0usize;
     for pair in table.clone().pairs::<LuaValue, LuaValue>() {
@@ -652,21 +655,16 @@ fn validate_sequence_table(table: &Table) -> std::result::Result<usize, String> 
     Ok(len)
 }
 
-fn json_to_lua(
-    lua: &Lua,
-    value: &serde_json::Value,
-    null: &Table,
-    depth: usize,
-) -> mlua::Result<LuaValue> {
+fn json_to_lua(lua: &Lua, value: &JsonValue, null: &Table, depth: usize) -> LuaResult<LuaValue> {
     if depth > MAX_VALUE_DEPTH {
         return Err(LuaError::external(format!(
             "JSON nesting exceeds {MAX_VALUE_DEPTH}"
         )));
     }
     Ok(match value {
-        serde_json::Value::Null => LuaValue::Table(null.clone()),
-        serde_json::Value::Bool(value) => LuaValue::Boolean(*value),
-        serde_json::Value::Number(value) => {
+        JsonValue::Null => LuaValue::Table(null.clone()),
+        JsonValue::Bool(value) => LuaValue::Boolean(*value),
+        JsonValue::Number(value) => {
             if let Some(value) = value.as_i64() {
                 LuaValue::Integer(value)
             } else {
@@ -677,8 +675,8 @@ fn json_to_lua(
                 )
             }
         }
-        serde_json::Value::String(value) => LuaValue::String(lua.create_string(value)?),
-        serde_json::Value::Array(values) => {
+        JsonValue::String(value) => LuaValue::String(lua.create_string(value)?),
+        JsonValue::Array(values) => {
             let table = lua.create_table_with_capacity(values.len(), 0)?;
             for (index, value) in values.iter().enumerate() {
                 table.raw_set(index + 1, json_to_lua(lua, value, null, depth + 1)?)?;
@@ -686,7 +684,7 @@ fn json_to_lua(
             mark_array(lua, &table)?;
             LuaValue::Table(table)
         }
-        serde_json::Value::Object(values) => {
+        JsonValue::Object(values) => {
             let table = lua.create_table_with_capacity(0, values.len())?;
             for (key, value) in values {
                 table.raw_set(key.as_str(), json_to_lua(lua, value, null, depth + 1)?)?;
@@ -696,7 +694,7 @@ fn json_to_lua(
     })
 }
 
-fn create_null_sentinel(lua: &Lua) -> mlua::Result<Table> {
+fn create_null_sentinel(lua: &Lua) -> LuaResult<Table> {
     let null = lua.create_table()?;
     let meta = lua.create_table()?;
     meta.raw_set("__sora_null", true)?;
@@ -712,7 +710,7 @@ fn is_null_sentinel(table: &Table) -> bool {
         .unwrap_or(false)
 }
 
-fn mark_array(lua: &Lua, table: &Table) -> mlua::Result<()> {
+fn mark_array(lua: &Lua, table: &Table) -> LuaResult<()> {
     let meta = lua.create_table()?;
     meta.raw_set("__sora_array", true)?;
     table.set_metatable(Some(meta))?;

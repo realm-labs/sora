@@ -1,11 +1,17 @@
 use std::sync::Arc;
 
+use anyhow::{Ok as anyhow_ok, Result, anyhow};
 use rmcp::{
     ClientHandler, ServiceExt,
-    model::{ClientInfo, Implementation, ProtocolVersion},
+    model::{
+        ArgumentInfo, ClientInfo, CompleteRequestParams, Implementation, ProtocolVersion,
+        ReadResourceRequestParams, Reference,
+    },
 };
+use serde_json::Value;
 use sora_mcp::{SERVER_NAME, SoraMcpServer, TARGET_PROTOCOL_VERSION};
 use sora_workspace::WorkspaceService;
+use tokio::{io::duplex, spawn};
 
 #[derive(Debug, Clone)]
 struct ContractClient;
@@ -21,18 +27,18 @@ impl ClientHandler for ContractClient {
 }
 
 #[tokio::test]
-async fn lifecycle_negotiates_the_pinned_protocol_and_lists_strict_tools() -> anyhow::Result<()> {
-    let (server_transport, client_transport) = tokio::io::duplex(16 * 1024);
+async fn lifecycle_negotiates_the_pinned_protocol_and_lists_strict_tools() -> Result<()> {
+    let (server_transport, client_transport) = duplex(16 * 1024);
     let server = SoraMcpServer::new(Arc::new(WorkspaceService::new()));
-    let server_handle = tokio::spawn(async move {
+    let server_handle = spawn(async move {
         server.serve(server_transport).await?.waiting().await?;
-        anyhow::Ok(())
+        anyhow_ok(())
     });
 
     let client = ContractClient.serve(client_transport).await?;
     let peer_info = client
         .peer_info()
-        .ok_or_else(|| anyhow::anyhow!("server initialization info is missing"))?;
+        .ok_or_else(|| anyhow!("server initialization info is missing"))?;
     assert_eq!(peer_info.protocol_version, ProtocolVersion::V_2025_11_25);
     assert_eq!(peer_info.server_info.name, SERVER_NAME);
 
@@ -47,7 +53,7 @@ async fn lifecycle_negotiates_the_pinned_protocol_and_lists_strict_tools() -> an
     for tool in tools.tools {
         assert_eq!(
             tool.input_schema.get("additionalProperties"),
-            Some(&serde_json::Value::Bool(false))
+            Some(&Value::Bool(false))
         );
         assert!(tool.output_schema.is_some());
     }
@@ -61,15 +67,13 @@ async fn lifecycle_negotiates_the_pinned_protocol_and_lists_strict_tools() -> an
     let templates = client.list_resource_templates(None).await?;
     assert_eq!(templates.resource_templates.len(), 6);
     let server_info = client
-        .read_resource(rmcp::model::ReadResourceRequestParams::new(
-            "sora://server/info",
-        ))
+        .read_resource(ReadResourceRequestParams::new("sora://server/info"))
         .await?;
     assert_eq!(server_info.contents.len(), 1);
     let completion = client
-        .complete(rmcp::model::CompleteRequestParams::new(
-            rmcp::model::Reference::for_resource("sora://project/{project_id}/table/{table}/rows"),
-            rmcp::model::ArgumentInfo::new("project_id", ""),
+        .complete(CompleteRequestParams::new(
+            Reference::for_resource("sora://project/{project_id}/table/{table}/rows"),
+            ArgumentInfo::new("project_id", ""),
         ))
         .await?;
     assert!(completion.completion.values.is_empty());

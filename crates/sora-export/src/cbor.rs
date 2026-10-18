@@ -1,3 +1,4 @@
+use serde_cbor::to_vec;
 use sora_diagnostics::{Result, SoraError};
 
 use crate::{
@@ -26,11 +27,13 @@ impl DataExporter for CborBundleExporter {
         };
 
         create_parent_dir(&path)?;
-        let content = serde_cbor::to_vec(&DataBundleView::new("cbor", request.ir, request.data)?)
-            .map_err(|error| SoraError::SerializeDataFormat {
-            format: self.format_name(),
-            message: error.to_string(),
-        })?;
+        let content =
+            to_vec(&DataBundleView::new("cbor", request.ir, request.data)?).map_err(|error| {
+                SoraError::SerializeDataFormat {
+                    format: self.format_name(),
+                    message: error.to_string(),
+                }
+            })?;
         write_file(path, content)
     }
 }
@@ -39,9 +42,12 @@ impl DataExporter for CborBundleExporter {
 mod tests {
     use super::*;
     use crate::exporter::ExportOutput;
+    use serde_cbor::{Value as CborValue, from_slice};
     use sora_data::model::{ConfigData, RowData, TableData, Value};
+    use sora_execution::ExecutionContext;
     use sora_ir::{model::ConfigIr, normalize::normalize_schema};
     use sora_schema::model::ProjectSchema;
+    use std::env::temp_dir as system_temp_dir;
     use std::{
         collections::BTreeMap,
         fs,
@@ -49,6 +55,7 @@ mod tests {
         sync::atomic::{AtomicUsize, Ordering},
         time::{SystemTime, UNIX_EPOCH},
     };
+    use toml::from_str;
 
     #[test]
     fn cbor_exporter_writes_bundle_file() {
@@ -61,34 +68,34 @@ mod tests {
                 ir: &ir,
                 data: &data,
                 locale_catalog: None,
-                execution: &sora_execution::ExecutionContext::default(),
+                execution: &ExecutionContext::default(),
                 options: Default::default(),
                 output: ExportOutput::File(path.clone()),
             })
             .unwrap();
 
-        let value: serde_cbor::Value = serde_cbor::from_slice(&fs::read(&path).unwrap()).unwrap();
-        let serde_cbor::Value::Map(fields) = value else {
+        let value: CborValue = from_slice(&fs::read(&path).unwrap()).unwrap();
+        let CborValue::Map(fields) = value else {
             panic!("expected cbor map");
         };
         assert!(fields.iter().any(|(key, value)| {
-            matches!(key, serde_cbor::Value::Text(key) if key == "format")
-                && matches!(value, serde_cbor::Value::Text(value) if value == "cbor")
+            matches!(key, CborValue::Text(key) if key == "format")
+                && matches!(value, CborValue::Text(value) if value == "cbor")
         }));
         assert!(fields.iter().any(|(key, value)| {
-            matches!(key, serde_cbor::Value::Text(key) if key == "schema_fingerprint")
-                && matches!(value, serde_cbor::Value::Text(value) if value.len() > 8)
+            matches!(key, CborValue::Text(key) if key == "schema_fingerprint")
+                && matches!(value, CborValue::Text(value) if value.len() > 8)
         }));
         assert!(fields.iter().any(|(key, value)| {
-            matches!(key, serde_cbor::Value::Text(key) if key == "data_fingerprint")
-                && matches!(value, serde_cbor::Value::Text(value) if value.len() > 8)
+            matches!(key, CborValue::Text(key) if key == "data_fingerprint")
+                && matches!(value, CborValue::Text(value) if value.len() > 8)
         }));
 
         let _ = fs::remove_dir_all(path.parent().unwrap());
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -130,6 +137,6 @@ type = "i32"
             .unwrap()
             .as_nanos();
         let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-export-cbor-test-{unique}-{id}"))
+        system_temp_dir().join(format!("sora-export-cbor-test-{unique}-{id}"))
     }
 }

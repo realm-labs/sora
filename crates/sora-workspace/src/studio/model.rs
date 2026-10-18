@@ -2,8 +2,10 @@
 
 use std::collections::BTreeMap;
 
-pub use crate::{Diagnostic as StudioDiagnostic, DiagnosticSeverity};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+pub use crate::{Diagnostic as StudioDiagnostic, DiagnosticSeverity};
 
 #[derive(Debug, Serialize)]
 pub struct StudioSchemaResponse {
@@ -27,7 +29,7 @@ pub struct StudioPreviewResponse {
 pub struct StudioSchema {
     pub project_id: String,
     pub groups: BTreeMap<String, bool>,
-    pub views: BTreeMap<String, serde_json::Value>,
+    pub views: BTreeMap<String, Value>,
     pub sources: Vec<String>,
     #[serde(default)]
     pub module_namespaces: BTreeMap<String, String>,

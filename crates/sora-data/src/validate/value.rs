@@ -1,6 +1,7 @@
 use std::{
     cmp::Ordering,
     collections::{BTreeMap, BTreeSet},
+    iter::once,
 };
 
 use sora_diagnostics::{Result, SoraError};
@@ -451,7 +452,7 @@ fn validate_union_object(
         .fields
         .iter()
         .map(|field| field.name.as_str())
-        .chain(std::iter::once(union_ir.tag.as_str()))
+        .chain(once(union_ir.tag.as_str()))
         .collect::<BTreeSet<_>>();
     for field_name in values.keys() {
         if !field_names.contains(field_name.as_str()) {

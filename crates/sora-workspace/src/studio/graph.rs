@@ -1,5 +1,9 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    iter::once,
+};
 
+use serde_json::{json, to_string};
 use sora_ir::model::{ConfigIr, FieldIr, TableModeIr, TypeIr};
 use sora_schema::model::{
     FieldSchema, GroupSetSchema, ParserSchema, ProjectSchema, TableFieldFromSchema,
@@ -93,7 +97,7 @@ pub(crate) fn build_schema(
             .variants
             .iter()
             .flat_map(|variant| {
-                std::iter::once(StudioField {
+                once(StudioField {
                     name: variant.name.clone(),
                     ty: "variant".to_owned(),
                     enum_value_id: None,
@@ -170,7 +174,7 @@ pub(crate) fn build_schema(
             if !source.sheets.is_empty() {
                 metadata.insert(
                     "sheets".to_owned(),
-                    serde_json::to_string(&source.sheets).expect("string list serializes"),
+                    to_string(&source.sheets).expect("string list serializes"),
                 );
             }
         }
@@ -219,7 +223,7 @@ pub(crate) fn build_schema(
             .map(|(name, view)| {
                 (
                     name.clone(),
-                    serde_json::json!({
+                    json!({
                         "contract": view.contract,
                         "groups": view.groups,
                         "tables": {
@@ -341,7 +345,7 @@ pub(crate) fn build_schema_from_raw(
             .variants
             .iter()
             .flat_map(|variant| {
-                std::iter::once(StudioField {
+                once(StudioField {
                     name: variant.name.clone(),
                     ty: "variant".to_owned(),
                     enum_value_id: None,
@@ -398,7 +402,7 @@ pub(crate) fn build_schema_from_raw(
             if let Some(sheets) = &source.sheets {
                 metadata.insert(
                     "sheets".to_owned(),
-                    serde_json::to_string(sheets).expect("string list serializes"),
+                    to_string(sheets).expect("string list serializes"),
                 );
             }
         }
@@ -442,7 +446,7 @@ pub(crate) fn build_schema_from_raw(
             .map(|(name, view)| {
                 (
                     name.clone(),
-                    serde_json::json!({
+                    json!({
                         "contract": view.contract,
                         "groups": view.groups,
                         "tables": {

@@ -158,8 +158,9 @@ fn wildcard_matches(pattern: &str, value: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use sora_ir::normalize::normalize_schema;
+    use sora_ir::{model::ConfigIr, normalize::normalize_schema};
     use sora_schema::model::ProjectSchema;
+    use toml::from_str;
 
     use super::*;
 
@@ -231,7 +232,7 @@ mod tests {
         assert!(error.to_string().contains("exactly one table definition"));
     }
 
-    fn schema_with_tables(tables: &[(&str, &str, &str)]) -> sora_ir::model::ConfigIr {
+    fn schema_with_tables(tables: &[(&str, &str, &str)]) -> ConfigIr {
         let tables = tables
             .iter()
             .map(|(id, name, file)| {
@@ -245,7 +246,7 @@ source = {{ format = "xlsx", file = "{file}" }}
                 )
             })
             .collect::<String>();
-        let schema: ProjectSchema = toml::from_str(&format!(
+        let schema: ProjectSchema = from_str(&format!(
             r#"project = {{ id = "test" }}
 groups = {{ common = {{ default = true }} }}
 views = {{ default = {{ contract = "test/default", groups = ["common"] }} }}

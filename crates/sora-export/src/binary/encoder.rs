@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 
+use serde::Serialize;
+use serde_json::to_vec;
 use sora_data::model::{ConfigData, TableData, Value};
 use sora_diagnostics::{Result, SoraError};
 use sora_execution::ExecutionContext;
@@ -10,6 +12,7 @@ use sora_ir::{
     },
     model::{ConfigIr, FieldIr, StructIr, TableIr, TypeIr, UnionIr},
 };
+use zstd::bulk::compress;
 
 use crate::{
     bundle::{data_fingerprint, schema_fingerprint},
@@ -53,12 +56,12 @@ impl<'a> BinaryEncoder<'a> {
         sections.push(Section::plain(
             SECTION_KIND_MANIFEST,
             "$manifest",
-            serde_json::to_vec(&self.manifest()?).map_err(SoraError::SerializeData)?,
+            to_vec(&self.manifest()?).map_err(SoraError::SerializeData)?,
         ));
         sections.push(Section::plain(
             SECTION_KIND_SCHEMA,
             "$schema",
-            serde_json::to_vec(&schema).map_err(SoraError::SerializeData)?,
+            to_vec(&schema).map_err(SoraError::SerializeData)?,
         ));
         sections.push(
             Section::plain(SECTION_KIND_STRINGS, "$strings", strings.encode()?)
@@ -567,7 +570,7 @@ impl StringTable {
     }
 }
 
-#[derive(serde::Serialize)]
+#[derive(Serialize)]
 struct BundleManifest {
     format_version: u32,
     contract_id: String,
@@ -576,7 +579,7 @@ struct BundleManifest {
     tables: Vec<ManifestTable>,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Serialize)]
 struct ManifestTable {
     name: String,
     rows: usize,
@@ -607,7 +610,7 @@ impl Section {
             ExportCompression::None => Ok(self),
             ExportCompression::Zstd { level } => {
                 let uncompressed_len = self.payload.len();
-                let payload = zstd::bulk::compress(&self.payload, level)
+                let payload = compress(&self.payload, level)
                     .map_err(|error| binary_error(format!("zstd compression failed: {error}")))?;
                 Ok(Self {
                     compression: COMPRESSION_ZSTD,

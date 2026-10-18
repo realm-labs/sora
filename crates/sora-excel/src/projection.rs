@@ -1,3 +1,5 @@
+use std::iter::once;
+
 use sora_ir::{
     input_projection::{TaggedColumnKind, struct_columns, tagged_columns},
     model::{ConfigIr, FieldIr, StructIr, TableIr, TableModeIr, TypeIr},
@@ -36,22 +38,22 @@ pub fn table_template_rows(ir: &ConfigIr, table: &TableIr) -> Vec<Vec<String>> {
             "@schema".to_owned(),
             schema_hash(ir, table),
         ],
-        std::iter::once("#name".to_owned())
+        once("#name".to_owned())
             .chain(columns.iter().map(|column| column.name.clone()))
             .collect(),
-        std::iter::once("#field".to_owned())
+        once("#field".to_owned())
             .chain(columns.iter().map(|column| column.name.clone()))
             .collect(),
-        std::iter::once("#type".to_owned())
+        once("#type".to_owned())
             .chain(columns.iter().map(|column| column.type_hint.clone()))
             .collect(),
-        std::iter::once("#groups".to_owned())
+        once("#groups".to_owned())
             .chain(columns.iter().map(|column| column.groups.clone()))
             .collect(),
-        std::iter::once("#input".to_owned())
+        once("#input".to_owned())
             .chain(columns.iter().map(|column| column.input.clone()))
             .collect(),
-        std::iter::once("#desc".to_owned())
+        once("#desc".to_owned())
             .chain(columns.iter().map(|column| column.comment.clone()))
             .collect(),
     ]
@@ -371,6 +373,7 @@ mod tests {
     use super::*;
     use sora_ir::{model::ConfigIr, normalize::normalize_schema};
     use sora_schema::model::ProjectSchema;
+    use toml::from_str;
 
     #[test]
     fn builds_schema_projection_rows() {
@@ -478,7 +481,7 @@ mod tests {
 
     #[test]
     fn renders_interval_type_and_comment_in_template_rows() {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -608,7 +611,7 @@ comment = "Recommended level interval"
     }
 
     fn example_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -654,7 +657,7 @@ comment = "Max stack count"
     }
 
     fn tuple_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -695,7 +698,7 @@ parser = { kind = "tuple" }
     }
 
     fn tuple_list_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -736,7 +739,7 @@ parser = { kind = "tuple_list" }
     }
 
     fn tagged_union_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -785,7 +788,7 @@ parser = { kind = "tagged_columns", prefix = "" }
     }
 
     fn struct_columns_ir() -> ConfigIr {
-        let schema: ProjectSchema = toml::from_str(
+        let schema: ProjectSchema = from_str(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }

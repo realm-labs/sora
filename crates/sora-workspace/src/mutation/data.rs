@@ -1,16 +1,28 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
+    fs::read_dir,
+    mem::replace,
     path::{Path, PathBuf},
     sync::Arc,
 };
 
+use anyhow::Result as AnyhowResult;
+use chrono::{DateTime, Utc};
+use csv::WriterBuilder;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_json::{Number, Value as JsonValue, to_string, to_vec, to_vec_pretty};
+use serde_yaml::to_string as to_yaml_string;
 use sha2::{Digest, Sha256};
-use sora_data::model::{
-    ConfigData, LocalizationData, LocalizationRowData, RowData, TableData, Value,
+use sora_core::pipeline::load_schema_ir_with_parsers;
+use sora_data::{
+    derived::materialize_derived_fields,
+    localization::build_locale_catalog,
+    model::{ConfigData, LocalizationData, LocalizationRowData, RowData, TableData, Value},
+    validate::validate_config_data,
 };
 use sora_input::{
+    defaults::materialize_defaults_with_parsers,
     source::{
         SourceFormat, resolve_localization_source_format_with_registry,
         resolve_table_source_format_with_registry,
@@ -24,18 +36,22 @@ use sora_ir::{
         INTERVAL_END_FIELD, INTERVAL_END_INCLUSIVE_FIELD, INTERVAL_START_FIELD,
         INTERVAL_START_INCLUSIVE_FIELD, interval_element,
     },
-    model::{ConfigIr, FieldIr, TableIr, TableModeIr, TypeIr},
+    model::{ConfigIr, FieldIr, LocalizationSourceIr, StructIr, TableIr, TableModeIr, TypeIr},
+};
+use toml::to_string_pretty as to_toml_string_pretty;
+use umya_spreadsheet::{
+    reader::xlsx::read as read_xlsx, writer::xlsx::write_writer as write_xlsx_to_writer,
 };
 
 use super::FileWrite;
-use crate::{ProjectSession, source::MixedProjectInput};
+use crate::{ProjectSession, SourceFormat as ManifestSourceFormat, source::MixedProjectInput};
 
 /// Closed set of supported row selectors.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum RowSelector {
     Map {
-        key: serde_json::Value,
+        key: JsonValue,
     },
     Singleton,
     List {
@@ -50,18 +66,18 @@ pub enum RowSelector {
 pub enum DataOperation {
     InsertRow {
         table: String,
-        row: BTreeMap<String, serde_json::Value>,
+        row: BTreeMap<String, JsonValue>,
         index: Option<usize>,
     },
     UpsertRow {
         table: String,
         selector: RowSelector,
-        row: BTreeMap<String, serde_json::Value>,
+        row: BTreeMap<String, JsonValue>,
     },
     UpdateFields {
         table: String,
         selector: RowSelector,
-        fields: BTreeMap<String, serde_json::Value>,
+        fields: BTreeMap<String, JsonValue>,
     },
     DeleteRow {
         table: String,
@@ -96,8 +112,8 @@ pub struct RowChange {
     pub kind: String,
     pub before_index: Option<usize>,
     pub after_index: Option<usize>,
-    pub before: Option<BTreeMap<String, serde_json::Value>>,
-    pub after: Option<BTreeMap<String, serde_json::Value>>,
+    pub before: Option<BTreeMap<String, JsonValue>>,
+    pub after: Option<BTreeMap<String, JsonValue>>,
 }
 
 /// One logical localization entry change.
@@ -240,12 +256,9 @@ pub fn execute_data_operations(
 
 pub(crate) fn load_raw_project_data(
     session: &ProjectSession,
-) -> anyhow::Result<(ConfigIr, ConfigData, LocalizationData)> {
+) -> AnyhowResult<(ConfigIr, ConfigData, LocalizationData)> {
     let schema_input = ProjectSchemaInput::new(session.manifest_path());
-    let ir = sora_core::pipeline::load_schema_ir_with_parsers(
-        &schema_input,
-        session.runtime().schema_parsers(),
-    )?;
+    let ir = load_schema_ir_with_parsers(&schema_input, session.runtime().schema_parsers())?;
     let input = MixedProjectInput::with_source_registry(
         schema_input,
         session.data_root(),
@@ -253,7 +266,7 @@ pub(crate) fn load_raw_project_data(
             .manifest()
             .build
             .default_source_format
-            .map(crate::SourceFormat::as_str),
+            .map(ManifestSourceFormat::as_str),
         Arc::clone(session.runtime().source_registry()),
         Arc::clone(session.runtime().cell_parsers()),
     );
@@ -268,15 +281,12 @@ pub(crate) fn validate_mutated_data(
     ir: &ConfigIr,
     data: &ConfigData,
     localization: &LocalizationData,
-) -> anyhow::Result<ConfigData> {
-    let materialized = sora_input::defaults::materialize_defaults_with_parsers(
-        ir,
-        data,
-        session.runtime().cell_parsers(),
-    )?;
-    let materialized = sora_data::derived::materialize_derived_fields(ir, &materialized)?;
-    sora_data::validate::validate_config_data(ir, &materialized)?;
-    sora_data::localization::build_locale_catalog(ir, &materialized, localization)?;
+) -> AnyhowResult<ConfigData> {
+    let materialized =
+        materialize_defaults_with_parsers(ir, data, session.runtime().cell_parsers())?;
+    let materialized = materialize_derived_fields(ir, &materialized)?;
+    validate_config_data(ir, &materialized)?;
+    build_locale_catalog(ir, &materialized, localization)?;
     Ok(materialized)
 }
 
@@ -292,13 +302,8 @@ pub(crate) fn render_data_writes(
     let mut impacts = Vec::new();
     let data_root = session.data_root();
     let mut xlsx_tables = BTreeMap::<PathBuf, Vec<(&TableIr, &[RowData])>>::new();
-    let mut xlsx_localization = BTreeMap::<
-        PathBuf,
-        Vec<(
-            &sora_ir::model::LocalizationSourceIr,
-            &[LocalizationRowData],
-        )>,
-    >::new();
+    let mut xlsx_localization =
+        BTreeMap::<PathBuf, Vec<(&LocalizationSourceIr, &[LocalizationRowData])>>::new();
     for table in &ir.tables {
         if !affected_tables.contains(&table.name) {
             continue;
@@ -319,7 +324,7 @@ pub(crate) fn render_data_writes(
                 .manifest()
                 .build
                 .default_source_format
-                .map(crate::SourceFormat::as_str),
+                .map(ManifestSourceFormat::as_str),
             session.runtime().source_registry(),
         )
         .map_err(|error| DataMutationError::Render(error.to_string()))?;
@@ -379,7 +384,7 @@ pub(crate) fn render_data_writes(
                     .manifest()
                     .build
                     .default_source_format
-                    .map(crate::SourceFormat::as_str),
+                    .map(ManifestSourceFormat::as_str),
                 session.runtime().source_registry(),
             )
             .map_err(|error| DataMutationError::Render(error.to_string()))?;
@@ -449,12 +454,12 @@ fn render_directory_source(
             .unwrap_or_else(|| directory.join(format!("sora-{index:06}.{extension}")));
         let content = match format {
             SourceFormat::Json => {
-                let mut content = serde_json::to_vec_pretty(&natural_row(row))
+                let mut content = to_vec_pretty(&natural_row(row))
                     .map_err(|error| DataMutationError::Render(error.to_string()))?;
                 content.push(b'\n');
                 content
             }
-            SourceFormat::Yaml => serde_yaml::to_string(&natural_row(row))
+            SourceFormat::Yaml => to_yaml_string(&natural_row(row))
                 .map(String::into_bytes)
                 .map_err(|error| DataMutationError::Render(error.to_string()))?,
             _ => {
@@ -478,8 +483,8 @@ fn collect_directory_files(
     extension: &str,
     files: &mut Vec<PathBuf>,
 ) -> Result<(), DataMutationError> {
-    for entry in std::fs::read_dir(directory)
-        .map_err(|error| DataMutationError::Render(error.to_string()))?
+    for entry in
+        read_dir(directory).map_err(|error| DataMutationError::Render(error.to_string()))?
     {
         let entry = entry.map_err(|error| DataMutationError::Render(error.to_string()))?;
         let path = entry.path();
@@ -506,21 +511,18 @@ impl MutableTableSource for BuiltinTableWriter {
     ) -> Result<Vec<u8>, DataMutationError> {
         match self.format {
             SourceFormat::Json => {
-                let mut bytes =
-                    serde_json::to_vec_pretty(&rows.iter().map(natural_row).collect::<Vec<_>>())
-                        .map_err(|error| DataMutationError::Render(error.to_string()))?;
+                let mut bytes = to_vec_pretty(&rows.iter().map(natural_row).collect::<Vec<_>>())
+                    .map_err(|error| DataMutationError::Render(error.to_string()))?;
                 bytes.push(b'\n');
                 Ok(bytes)
             }
-            SourceFormat::Yaml => {
-                serde_yaml::to_string(&rows.iter().map(natural_row).collect::<Vec<_>>())
-                    .map(String::into_bytes)
-                    .map_err(|error| DataMutationError::Render(error.to_string()))
-            }
+            SourceFormat::Yaml => to_yaml_string(&rows.iter().map(natural_row).collect::<Vec<_>>())
+                .map(String::into_bytes)
+                .map_err(|error| DataMutationError::Render(error.to_string())),
             SourceFormat::Toml => {
                 let value =
                     BTreeMap::from([("rows", rows.iter().map(toml_row).collect::<Vec<_>>())]);
-                toml::to_string_pretty(&value)
+                to_toml_string_pretty(&value)
                     .map(String::into_bytes)
                     .map_err(|error| DataMutationError::Render(error.to_string()))
             }
@@ -583,7 +585,7 @@ fn execute_operation(
             let next = input_row(table, row)?;
             match resolve_selector(table, data, selector) {
                 Ok(index) => {
-                    let before = std::mem::replace(&mut data.rows[index], next.clone());
+                    let before = replace(&mut data.rows[index], next.clone());
                     Ok(row_change(
                         table,
                         "upsert_update",
@@ -775,7 +777,7 @@ fn execute_localization_operation(
                 key: key.clone(),
                 locale: None,
                 before: Some(
-                    serde_json::to_string(&before)
+                    to_string(&before)
                         .map_err(|error| DataMutationError::Render(error.to_string()))?,
                 ),
                 after: None,
@@ -869,7 +871,7 @@ fn unique_match(
 
 fn input_row(
     table: &TableIr,
-    row: &BTreeMap<String, serde_json::Value>,
+    row: &BTreeMap<String, JsonValue>,
 ) -> Result<RowData, DataMutationError> {
     validate_input_fields(table, row)?;
     Ok(RowData {
@@ -906,7 +908,7 @@ fn validate_input_fields<T>(
 fn json_to_value(
     table: &TableIr,
     field: &str,
-    value: &serde_json::Value,
+    value: &JsonValue,
 ) -> Result<Value, DataMutationError> {
     natural_json_to_value(value).map_err(|message| DataMutationError::InvalidValue {
         table: table.name.clone(),
@@ -915,11 +917,11 @@ fn json_to_value(
     })
 }
 
-fn natural_json_to_value(value: &serde_json::Value) -> Result<Value, String> {
+fn natural_json_to_value(value: &JsonValue) -> Result<Value, String> {
     Ok(match value {
-        serde_json::Value::Null => Value::Null,
-        serde_json::Value::Bool(value) => Value::Bool(*value),
-        serde_json::Value::Number(value) => {
+        JsonValue::Null => Value::Null,
+        JsonValue::Bool(value) => Value::Bool(*value),
+        JsonValue::Number(value) => {
             if let Some(value) = value.as_i64() {
                 Value::Integer(value)
             } else if let Some(value) = value.as_f64() {
@@ -928,14 +930,14 @@ fn natural_json_to_value(value: &serde_json::Value) -> Result<Value, String> {
                 return Err("number is outside the supported range".to_owned());
             }
         }
-        serde_json::Value::String(value) => Value::String(value.clone()),
-        serde_json::Value::Array(values) => Value::List(
+        JsonValue::String(value) => Value::String(value.clone()),
+        JsonValue::Array(values) => Value::List(
             values
                 .iter()
                 .map(natural_json_to_value)
                 .collect::<Result<_, _>>()?,
         ),
-        serde_json::Value::Object(values) => Value::Object(
+        JsonValue::Object(values) => Value::Object(
             values
                 .iter()
                 .map(|(key, value)| Ok((key.clone(), natural_json_to_value(value)?)))
@@ -969,7 +971,7 @@ fn render_csv(
     rows: &[RowData],
 ) -> Result<Vec<u8>, DataMutationError> {
     let columns = projected_columns(ir, table);
-    let mut writer = csv::WriterBuilder::new().from_writer(Vec::new());
+    let mut writer = WriterBuilder::new().from_writer(Vec::new());
     writer
         .write_record(columns.iter().map(|column| column.name.as_str()))
         .map_err(|error| DataMutationError::Render(error.to_string()))?;
@@ -990,18 +992,17 @@ fn render_localization_text(
 ) -> Result<Vec<u8>, DataMutationError> {
     match format {
         SourceFormat::Json => {
-            let mut bytes =
-                serde_json::to_vec_pretty(&rows.iter().map(|row| &row.values).collect::<Vec<_>>())
-                    .map_err(|error| DataMutationError::Render(error.to_string()))?;
+            let mut bytes = to_vec_pretty(&rows.iter().map(|row| &row.values).collect::<Vec<_>>())
+                .map_err(|error| DataMutationError::Render(error.to_string()))?;
             bytes.push(b'\n');
             Ok(bytes)
         }
         SourceFormat::Yaml => {
-            serde_yaml::to_string(&rows.iter().map(|row| &row.values).collect::<Vec<_>>())
+            to_yaml_string(&rows.iter().map(|row| &row.values).collect::<Vec<_>>())
                 .map(String::into_bytes)
                 .map_err(|error| DataMutationError::Render(error.to_string()))
         }
-        SourceFormat::Toml => toml::to_string_pretty(&BTreeMap::from([(
+        SourceFormat::Toml => to_toml_string_pretty(&BTreeMap::from([(
             "rows",
             rows.iter().map(|row| &row.values).collect::<Vec<_>>(),
         )]))
@@ -1009,7 +1010,7 @@ fn render_localization_text(
         .map_err(|error| DataMutationError::Render(error.to_string())),
         SourceFormat::Csv => {
             let columns = source_columns;
-            let mut writer = csv::WriterBuilder::new().from_writer(Vec::new());
+            let mut writer = WriterBuilder::new().from_writer(Vec::new());
             writer
                 .write_record(columns)
                 .map_err(|error| DataMutationError::Render(error.to_string()))?;
@@ -1138,7 +1139,7 @@ fn cell_text(ir: &ConfigIr, field: &FieldIr, value: &Value) -> String {
     }
     let parser = field.parser.as_ref();
     if parser.is_some_and(|parser| parser.kind == "json") {
-        return serde_json::to_string(&natural_value(value)).unwrap_or_default();
+        return to_string(&natural_value(value)).unwrap_or_default();
     }
     if parser.is_some_and(|parser| parser.kind == "tuple")
         && let Value::Object(values) = value
@@ -1246,8 +1247,7 @@ fn interval_bound_text(element: &TypeIr, value: &Value) -> Option<String> {
     match (element, value) {
         (TypeIr::Duration, Value::Integer(value)) => Some(format!("{value}ms")),
         (TypeIr::DateTime, Value::Integer(value)) => {
-            chrono::DateTime::<chrono::Utc>::from_timestamp_millis(*value)
-                .map(|value| value.to_rfc3339())
+            DateTime::<Utc>::from_timestamp_millis(*value).map(|value| value.to_rfc3339())
         }
         (_, Value::Integer(value)) => Some(value.to_string()),
         (_, Value::Float(value)) => Some(value.to_string()),
@@ -1255,7 +1255,7 @@ fn interval_bound_text(element: &TypeIr, value: &Value) -> Option<String> {
     }
 }
 
-fn struct_for_type<'a>(ir: &'a ConfigIr, ty: &TypeIr) -> Option<&'a sora_ir::model::StructIr> {
+fn struct_for_type<'a>(ir: &'a ConfigIr, ty: &TypeIr) -> Option<&'a StructIr> {
     match ty {
         TypeIr::Optional(inner) => struct_for_type(ir, inner),
         TypeIr::Struct(name) => ir.structs.iter().find(|item| item.name == *name),
@@ -1263,7 +1263,7 @@ fn struct_for_type<'a>(ir: &'a ConfigIr, ty: &TypeIr) -> Option<&'a sora_ir::mod
     }
 }
 
-fn list_struct_for_type<'a>(ir: &'a ConfigIr, ty: &TypeIr) -> Option<&'a sora_ir::model::StructIr> {
+fn list_struct_for_type<'a>(ir: &'a ConfigIr, ty: &TypeIr) -> Option<&'a StructIr> {
     match ty {
         TypeIr::Optional(inner) => list_struct_for_type(ir, inner),
         TypeIr::List(inner) | TypeIr::Set(inner) | TypeIr::Array { element: inner, .. } => {
@@ -1277,13 +1277,10 @@ fn render_xlsx(
     path: &Path,
     ir: &ConfigIr,
     tables: &[(&TableIr, &[RowData])],
-    localization_sources: &[(
-        &sora_ir::model::LocalizationSourceIr,
-        &[LocalizationRowData],
-    )],
+    localization_sources: &[(&LocalizationSourceIr, &[LocalizationRowData])],
 ) -> Result<Vec<u8>, DataMutationError> {
-    let mut workbook = umya_spreadsheet::reader::xlsx::read(path)
-        .map_err(|error| DataMutationError::Render(error.to_string()))?;
+    let mut workbook =
+        read_xlsx(path).map_err(|error| DataMutationError::Render(error.to_string()))?;
     for (table, rows) in tables {
         let source = table
             .source
@@ -1365,39 +1362,39 @@ fn render_xlsx(
         }
     }
     let mut bytes = Vec::new();
-    umya_spreadsheet::writer::xlsx::write_writer(&workbook, &mut bytes)
+    write_xlsx_to_writer(&workbook, &mut bytes)
         .map_err(|error| DataMutationError::Render(error.to_string()))?;
     Ok(bytes)
 }
 
-fn natural_row(row: &RowData) -> BTreeMap<String, serde_json::Value> {
+fn natural_row(row: &RowData) -> BTreeMap<String, JsonValue> {
     row.values
         .iter()
         .map(|(field, value)| (field.clone(), natural_value(value)))
         .collect()
 }
 
-fn toml_row(row: &RowData) -> BTreeMap<String, serde_json::Value> {
+fn toml_row(row: &RowData) -> BTreeMap<String, JsonValue> {
     natural_row(row)
         .into_iter()
         .filter(|(_, value)| !value.is_null())
         .collect()
 }
 
-fn natural_value(value: &Value) -> serde_json::Value {
+fn natural_value(value: &Value) -> JsonValue {
     match value {
         Value::Bool(value) => (*value).into(),
         Value::Integer(value) => (*value).into(),
-        Value::Float(value) => serde_json::Number::from_f64(*value)
-            .map(serde_json::Value::Number)
-            .unwrap_or(serde_json::Value::Null),
+        Value::Float(value) => Number::from_f64(*value)
+            .map(JsonValue::Number)
+            .unwrap_or(JsonValue::Null),
         Value::String(value) => value.clone().into(),
         Value::List(values) => values.iter().map(natural_value).collect(),
         Value::Object(values) => values
             .iter()
             .map(|(key, value)| (key.clone(), natural_value(value)))
             .collect(),
-        Value::Null => serde_json::Value::Null,
+        Value::Null => JsonValue::Null,
     }
 }
 
@@ -1408,14 +1405,12 @@ fn scalar_text(value: &Value) -> String {
         Value::Float(value) => value.to_string(),
         Value::String(value) => value.clone(),
         Value::Null => String::new(),
-        Value::List(_) | Value::Object(_) => {
-            serde_json::to_string(&natural_value(value)).unwrap_or_default()
-        }
+        Value::List(_) | Value::Object(_) => to_string(&natural_value(value)).unwrap_or_default(),
     }
 }
 
 pub(crate) fn data_row_hash(row: &RowData) -> String {
-    let bytes = serde_json::to_vec(&natural_row(row)).unwrap_or_default();
+    let bytes = to_vec(&natural_row(row)).unwrap_or_default();
     let digest = Sha256::digest(bytes);
     format!(
         "row:{}",

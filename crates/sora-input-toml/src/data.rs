@@ -5,6 +5,7 @@ use sora_data::model::{ConfigData, RowData, TableData, Value};
 use sora_diagnostics::{Result, SoraError};
 use sora_input::source::{SourceFormat, resolve_table_source_format};
 use sora_ir::model::ConfigIr;
+use toml::{Value as TomlValue, de::Error as TomlParseError, from_str};
 
 pub fn load_config_data(ir: &ConfigIr, data_root: &Path) -> Result<ConfigData> {
     let mut tables = Vec::new();
@@ -39,7 +40,7 @@ pub fn load_table_data_file(table_name: &str, path: &Path) -> Result<TableData> 
         source,
     })?;
     let parsed: TomlRows =
-        toml::from_str(&content).map_err(|source: toml::de::Error| SoraError::ParseData {
+        from_str(&content).map_err(|source: TomlParseError| SoraError::ParseData {
             path: path.to_path_buf(),
             message: source.to_string(),
         })?;
@@ -64,28 +65,28 @@ pub fn load_table_data_file(table_name: &str, path: &Path) -> Result<TableData> 
 #[derive(Debug, Deserialize)]
 struct TomlRows {
     #[serde(default)]
-    rows: Vec<BTreeMap<String, toml::Value>>,
+    rows: Vec<BTreeMap<String, TomlValue>>,
 }
 
-fn convert_toml_value(value: toml::Value) -> Result<Value> {
+fn convert_toml_value(value: TomlValue) -> Result<Value> {
     Ok(match value {
-        toml::Value::String(value) => Value::String(value),
-        toml::Value::Integer(value) => Value::Integer(value),
-        toml::Value::Float(value) => Value::Float(value),
-        toml::Value::Boolean(value) => Value::Bool(value),
-        toml::Value::Array(values) => Value::List(
+        TomlValue::String(value) => Value::String(value),
+        TomlValue::Integer(value) => Value::Integer(value),
+        TomlValue::Float(value) => Value::Float(value),
+        TomlValue::Boolean(value) => Value::Bool(value),
+        TomlValue::Array(values) => Value::List(
             values
                 .into_iter()
                 .map(convert_toml_value)
                 .collect::<Result<Vec<_>>>()?,
         ),
-        toml::Value::Table(values) => Value::Object(
+        TomlValue::Table(values) => Value::Object(
             values
                 .into_iter()
                 .map(|(key, value)| Ok((key, convert_toml_value(value)?)))
                 .collect::<Result<BTreeMap<_, _>>>()?,
         ),
-        toml::Value::Datetime(value) => Value::String(value.to_string()),
+        TomlValue::Datetime(value) => Value::String(value.to_string()),
     })
 }
 
@@ -97,6 +98,7 @@ mod tests {
     use sora_ir::normalize::normalize_schema;
     use sora_schema::model::ProjectSchema;
     use std::{
+        env::temp_dir as env_temp_dir,
         fs,
         path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
@@ -133,7 +135,7 @@ name = "Iron Sword"
         let base = temp_dir();
         let data_dir = base.join("data");
         fs::create_dir_all(&data_dir).unwrap();
-        let schema = toml::from_str::<ProjectSchema>(
+        let schema = from_str::<ProjectSchema>(
             r#"
 project = { id = "game_config" }
 groups = { common = { default = true } }
@@ -181,6 +183,6 @@ id = 1001
 
     fn temp_dir() -> PathBuf {
         let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("sora-input-toml-data-test-{unique}"))
+        env_temp_dir().join(format!("sora-input-toml-data-test-{unique}"))
     }
 }
