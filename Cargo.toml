@@ -64,7 +64,7 @@ rmcp = { version = "3.5.1", default-features = false, features = [
     "transport-io",
     "transport-streamable-http-server",
 ] }
-rust_xlsxwriter = "0.100"
+rust_xlsxwriter = "0.104"
 rustc-hash = "2"
 schemars = { version = "1.2", features = ["chrono04"] }
 semver = "1"
